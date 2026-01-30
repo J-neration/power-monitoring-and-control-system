@@ -1,0 +1,26 @@
+{
+  "name": "@pmcs/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "lint": "echo \"No linter configured\""
+  },
+  "dependencies": {
+    "@prisma/client": "5.22.0",
+    "fastify": "4.26.2",
+    "@fastify/websocket": "8.2.0",
+    "pino": "8.17.2",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "18.19.39",
+    "pino-pretty": "10.2.3",
+    "prisma": "5.22.0",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}

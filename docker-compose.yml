@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: pmcs-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pmcs
+      POSTGRES_PASSWORD: pmcs
+      POSTGRES_DB: pmcs
+    ports:
+      - "5432:5432"
+    volumes:
+      - pmcs_pgdata:/var/lib/postgresql/data
+
+volumes:
+  pmcs_pgdata:
