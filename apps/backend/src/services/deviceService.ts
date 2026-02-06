@@ -5,27 +5,23 @@ export type Device = {
   name: string;
   location: string;
   status: DeviceStatus;
-  inputs: number;
-  outputs: number;
   lastSeenAt: string;
-  lastValue?: number | string;
-  lastIp?: string;
-  vL1?: number | string;
-  vL2?: number | string;
-  vL3?: number | string;
-  iL1?: number | string;
-  iL2?: number | string;
-  iL3?: number | string;
+  lastValue: number;
+  lastIp: string;
+  vL1: number;
+  vL2: number;
+  vL3: number;
+  iL1: number;
+  iL2: number;
+  iL3: number;
 };
 
 const devices: Device[] = [
   {
-    id: "HMI-1",
-    name: "HMI Matrix A",
+    id: "device-001",
+    name: "Device 001",
     location: "Rack 1",
     status: "online",
-    inputs: 8,
-    outputs: 8,
     lastSeenAt: new Date().toISOString(),
     lastValue: 0,
     lastIp: "unknown",
@@ -37,12 +33,10 @@ const devices: Device[] = [
     iL3: 0,
   },
   {
-    id: "HMI-2",
-    name: "Capture Node 3",
+    id: "device-002",
+    name: "Device 002",
     location: "Studio 2",
     status: "warning",
-    inputs: 4,
-    outputs: 2,
     lastSeenAt: new Date().toISOString(),
     lastValue: 0,
     lastIp: "unknown",
@@ -60,14 +54,14 @@ export const deviceService = {
   get: ({ id }: { id: string }) => devices.find((device) => device.id === id),
   upsertFromPayload: (payload: {
     device_id?: string;
-    value?: number | string;
+    value?: number;
     ip?: string;
-    vL1?: number | string;
-    vL2?: number | string;
-    vL3?: number | string;
-    iL1?: number | string;
-    iL2?: number | string;
-    iL3?: number | string;
+    vL1?: number;
+    vL2?: number;
+    vL3?: number;
+    iL1?: number;
+    iL2?: number;
+    iL3?: number;
   }) => {
     const id = payload.device_id?.trim();
     if (!id) {
@@ -111,8 +105,6 @@ export const deviceService = {
       name: id,
       location: "LTE",
       status: "online",
-      inputs: 0,
-      outputs: 0,
       lastSeenAt: now,
       lastValue: payload.value ?? 0,
       lastIp: payload.ip ?? "unknown",

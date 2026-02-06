@@ -11,10 +11,16 @@ model Device {
   id         String   @id @default(cuid())
   name       String
   location   String
-  status     String
-  inputs     Int
-  outputs    Int
+  status     String   @default("offline")
   lastSeenAt DateTime @default(now())
+  lastValue  Float    @default(0)
+  lastIp     String   @default("unknown")
+  vL1        Float    @default(0)
+  vL2        Float    @default(0)
+  vL3        Float    @default(0)
+  iL1        Float    @default(0)
+  iL2        Float    @default(0)
+  iL3        Float    @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
