@@ -4,6 +4,7 @@ import { z } from "zod";
 import { buildLogger } from "./lib/logger.js";
 import { healthRoutes } from "./routes/health.js";
 import { deviceRoutes } from "./routes/devices.js";
+import { receiverRoutes } from "./routes/receiver.js";
 
 const envSchema = z.object({
   PORT: z.number().int().positive(),
@@ -31,6 +32,7 @@ export const buildServer = async (env: Env) => {
 
   await server.register(healthRoutes, { prefix: "/health" });
   await server.register(deviceRoutes, { prefix: "/devices" });
+  await server.register(receiverRoutes, { prefix: "/receiver" });
 
   server.get("/ws", { websocket: true }, (connection) => {
     connection.socket.send(
