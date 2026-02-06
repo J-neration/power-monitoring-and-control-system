@@ -5,8 +5,6 @@ export type Device = {
   name: string;
   location: string;
   status: DeviceStatus;
-  inputs: number;
-  outputs: number;
   lastSeenAt: string;
   lastValue?: number | string;
   lastIp?: string;
