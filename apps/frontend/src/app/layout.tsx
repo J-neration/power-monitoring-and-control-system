@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 export const metadata = {
   title: "PMCS Dashboard",
-  description: "HDMI monitoring and control",
+  description: "HMI monitoring and control",
 };
 
 type RootLayoutProps = {

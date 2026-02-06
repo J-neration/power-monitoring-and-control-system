@@ -1,6 +1,6 @@
 # Power Monitoring & Control System (PMCS)
 
-Template for a full-stack HDMI monitoring and control application using:
+Template for a full-stack HMI monitoring and control application using:
 
 - Frontend: Next.js (React)
 - Backend: Fastify (Node.js)

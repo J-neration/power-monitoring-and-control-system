@@ -7,9 +7,9 @@ export default async function HomePage() {
   return (
     <main>
       <section className="panel">
-        <h1>HDMI Monitoring & Control</h1>
+        <h1>HMI Monitoring & Control</h1>
         <p style={{ opacity: 0.75, marginTop: 8 }}>
-          Live view of HDMI endpoints, signal routing, and device health.
+          Live view of HMI endpoints, signal routing, and device health.
         </p>
       </section>
 
