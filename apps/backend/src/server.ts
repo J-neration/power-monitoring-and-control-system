@@ -28,6 +28,14 @@ export const buildServer = async (env: Env) => {
     logger: buildLogger(),
   });
 
+  server.addContentTypeParser(
+    "*",
+    { parseAs: "string" },
+    (_request, body, done) => {
+      done(null, body);
+    },
+  );
+
   await server.register(websocket);
 
   await server.register(healthRoutes, { prefix: "/health" });

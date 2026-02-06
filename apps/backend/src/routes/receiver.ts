@@ -15,7 +15,27 @@ type ReceiverBody = {
 
 export const receiverRoutes: FastifyPluginAsync = async (server) => {
   server.post("/", async (request, reply) => {
-    const body = (request.body ?? {}) as ReceiverBody;
+    const rawBody = request.body;
+    let body: ReceiverBody = {};
+
+    if (typeof rawBody === "string") {
+      try {
+        body = JSON.parse(rawBody) as ReceiverBody;
+      } catch (error) {
+        server.log.warn({ error }, "Failed to parse LTE payload as JSON");
+        body = {};
+      }
+    } else if (Buffer.isBuffer(rawBody)) {
+      try {
+        body = JSON.parse(rawBody.toString("utf-8")) as ReceiverBody;
+      } catch (error) {
+        server.log.warn({ error }, "Failed to parse LTE payload buffer as JSON");
+        body = {};
+      }
+    } else if (rawBody && typeof rawBody === "object") {
+      body = rawBody as ReceiverBody;
+    }
+
     server.log.info({ body }, "Received LTE payload");
     const device = deviceService.upsertFromPayload({
       device_id: body.device_id,
