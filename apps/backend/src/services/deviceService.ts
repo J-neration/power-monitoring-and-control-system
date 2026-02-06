@@ -1,3 +1,5 @@
+import { deviceRegistry } from "../data/deviceRegistry.js";
+
 export type DeviceStatus = "online" | "offline" | "warning";
 
 export type Device = {
@@ -5,8 +7,6 @@ export type Device = {
   name: string;
   location: string;
   status: DeviceStatus;
-  inputs: number;
-  outputs: number;
   lastSeenAt: string;
   lastValue?: number | string;
   lastIp?: string;
@@ -18,144 +18,26 @@ export type Device = {
   iL3?: number | string;
 };
 
-const devices: Device[] = [
-  {
-    id: "HMI-1",
-    name: "HMI Matrix A",
-    location: "Rack 1",
-    status: "online",
-    inputs: 8,
-    outputs: 8,
-    lastSeenAt: new Date().toISOString(),
-    lastValue: 0,
-    lastIp: "unknown",
-    vL1: 0,
-    vL2: 0,
-    vL3: 0,
-    iL1: 0,
-    iL2: 0,
-    iL3: 0,
-  },
-  {
-    id: "HMI-2",
-    name: "Capture Node 3",
-    location: "Studio 2",
-    status: "warning",
-    inputs: 4,
-    outputs: 2,
-    lastSeenAt: new Date().toISOString(),
-    lastValue: 0,
-    lastIp: "unknown",
-    vL1: 0,
-    vL2: 0,
-    vL3: 0,
-    iL1: 0,
-    iL2: 0,
-    iL3: 0,
-  },
-  {
-    id: "HMI-3",
-    name: "Control Room A",
-    location: "Rack 1",
-    status: "online",
-    inputs: 12,
-    outputs: 6,
-    lastSeenAt: new Date().toISOString(),
-    lastValue: 0,
-    lastIp: "unknown",
-    vL1: 0,
-    vL2: 0,
-    vL3: 0,
-    iL1: 0,
-    iL2: 0,
-    iL3: 0,
-  },
-  {
-    id: "HMI-4",
-    name: "Capture Node 7",
-    location: "Studio 2",
-    status: "offline",
-    inputs: 6,
-    outputs: 4,
-    lastSeenAt: new Date().toISOString(),
-    lastValue: 0,
-    lastIp: "unknown",
-    vL1: 0,
-    vL2: 0,
-    vL3: 0,
-    iL1: 0,
-    iL2: 0,
-    iL3: 0,
-  },
-  {
-    id: "HMI-5",
-    name: "Power Gateway 1",
-    location: "Rack 1",
-    status: "online",
-    inputs: 10,
-    outputs: 4,
-    lastSeenAt: new Date().toISOString(),
-    lastValue: 0,
-    lastIp: "unknown",
-    vL1: 0,
-    vL2: 0,
-    vL3: 0,
-    iL1: 0,
-    iL2: 0,
-    iL3: 0,
-  },
-  {
-    id: "HMI-6",
-    name: "Power Gateway 2",
-    location: "Rack 1",
-    status: "online",
-    inputs: 10,
-    outputs: 4,
-    lastSeenAt: new Date().toISOString(),
-    lastValue: 0,
-    lastIp: "unknown",
-    vL1: 0,
-    vL2: 0,
-    vL3: 0,
-    iL1: 0,
-    iL2: 0,
-    iL3: 0,
-  },
-  {
-    id: "HMI-7",
-    name: "Panel Controller 1",
-    location: "Rack 1",
-    status: "warning",
-    inputs: 8,
-    outputs: 2,
-    lastSeenAt: new Date().toISOString(),
-    lastValue: 0,
-    lastIp: "unknown",
-    vL1: 0,
-    vL2: 0,
-    vL3: 0,
-    iL1: 0,
-    iL2: 0,
-    iL3: 0,
-  },
-  {
-    id: "HMI-8",
-    name: "Panel Controller 2",
-    location: "Rack 1",
-    status: "offline",
-    inputs: 8,
-    outputs: 2,
-    lastSeenAt: new Date().toISOString(),
-    lastValue: 0,
-    lastIp: "unknown",
-    vL1: 0,
-    vL2: 0,
-    vL3: 0,
-    iL1: 0,
-    iL2: 0,
-    iL3: 0,
-  },
-];
+const now = () => new Date().toISOString();
+
+const devices: Device[] = deviceRegistry.map((entry) => ({
+  id: entry.id,
+  name: entry.name,
+  location: entry.location,
+  status: entry.status ?? "offline",
+  lastSeenAt: now(),
+  lastValue: 0,
+  lastIp: "unknown",
+  vL1: 0,
+  vL2: 0,
+  vL3: 0,
+  iL1: 0,
+  iL2: 0,
+  iL3: 0,
+}));
+
+const getRegistryEntry = (id: string) =>
+  deviceRegistry.find((entry) => entry.id === id);
 
 export const deviceService = {
   list: () => devices,
@@ -177,10 +59,15 @@ export const deviceService = {
     }
 
     const now = new Date().toISOString();
+    const registry = getRegistryEntry(id);
     const existing = devices.find((device) => device.id === id);
     if (existing) {
       existing.status = "online";
       existing.lastSeenAt = now;
+      if (registry) {
+        existing.name = registry.name;
+        existing.location = registry.location;
+      }
       if (payload.value !== undefined) {
         existing.lastValue = payload.value;
       }
@@ -210,11 +97,9 @@ export const deviceService = {
 
     const created: Device = {
       id,
-      name: id,
-      location: "LTE",
+      name: registry?.name ?? id,
+      location: registry?.location ?? "Unknown",
       status: "online",
-      inputs: 0,
-      outputs: 0,
       lastSeenAt: now,
       lastValue: payload.value ?? 0,
       lastIp: payload.ip ?? "unknown",
