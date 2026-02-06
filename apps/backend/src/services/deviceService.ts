@@ -8,50 +8,62 @@ export type Device = {
   location: string;
   status: DeviceStatus;
   lastSeenAt: string;
-  lastValue?: number | string;
-  lastIp?: string;
-  vL1?: number | string;
-  vL2?: number | string;
-  vL3?: number | string;
-  iL1?: number | string;
-  iL2?: number | string;
-  iL3?: number | string;
+  lastValue: number;
+  lastIp: string;
+  vL1: number;
+  vL2: number;
+  vL3: number;
+  iL1: number;
+  iL2: number;
+  iL3: number;
 };
 
-const now = () => new Date().toISOString();
-
-const devices: Device[] = deviceRegistry.map((entry) => ({
-  id: entry.id,
-  name: entry.name,
-  location: entry.location,
-  status: entry.status ?? "offline",
-  lastSeenAt: now(),
-  lastValue: 0,
-  lastIp: "unknown",
-  vL1: 0,
-  vL2: 0,
-  vL3: 0,
-  iL1: 0,
-  iL2: 0,
-  iL3: 0,
-}));
-
-const getRegistryEntry = (id: string) =>
-  deviceRegistry.find((entry) => entry.id === id);
+const devices: Device[] = [
+  {
+    id: "device-001",
+    name: "Device 001",
+    location: "Rack 1",
+    status: "online",
+    lastSeenAt: new Date().toISOString(),
+    lastValue: 0,
+    lastIp: "unknown",
+    vL1: 0,
+    vL2: 0,
+    vL3: 0,
+    iL1: 0,
+    iL2: 0,
+    iL3: 0,
+  },
+  {
+    id: "device-002",
+    name: "Device 002",
+    location: "Studio 2",
+    status: "warning",
+    lastSeenAt: new Date().toISOString(),
+    lastValue: 0,
+    lastIp: "unknown",
+    vL1: 0,
+    vL2: 0,
+    vL3: 0,
+    iL1: 0,
+    iL2: 0,
+    iL3: 0,
+  },
+];
 
 export const deviceService = {
   list: () => devices,
   get: ({ id }: { id: string }) => devices.find((device) => device.id === id),
   upsertFromPayload: (payload: {
     device_id?: string;
-    value?: number | string;
+    value?: number;
     ip?: string;
-    vL1?: number | string;
-    vL2?: number | string;
-    vL3?: number | string;
-    iL1?: number | string;
-    iL2?: number | string;
-    iL3?: number | string;
+    vL1?: number;
+    vL2?: number;
+    vL3?: number;
+    iL1?: number;
+    iL2?: number;
+    iL3?: number;
   }) => {
     const id = payload.device_id?.trim();
     if (!id) {
