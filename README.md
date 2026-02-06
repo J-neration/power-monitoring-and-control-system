@@ -19,7 +19,7 @@ Template for a full-stack HMI monitoring and control application using:
 ### 1) Install dependencies
 
 ```bash
-npm install
+yarn
 ```
 
 ### 2) Start database
