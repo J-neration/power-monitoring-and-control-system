@@ -1,3 +1,5 @@
+import { deviceRegistry } from "../data/deviceRegistry.js";
+
 export type DeviceStatus = "online" | "offline" | "warning";
 
 export type Device = {
@@ -69,10 +71,15 @@ export const deviceService = {
     }
 
     const now = new Date().toISOString();
+    const registry = getRegistryEntry(id);
     const existing = devices.find((device) => device.id === id);
     if (existing) {
       existing.status = "online";
       existing.lastSeenAt = now;
+      if (registry) {
+        existing.name = registry.name;
+        existing.location = registry.location;
+      }
       if (payload.value !== undefined) {
         existing.lastValue = payload.value;
       }
@@ -102,8 +109,8 @@ export const deviceService = {
 
     const created: Device = {
       id,
-      name: id,
-      location: "LTE",
+      name: registry?.name ?? id,
+      location: registry?.location ?? "Unknown",
       status: "online",
       lastSeenAt: now,
       lastValue: payload.value ?? 0,

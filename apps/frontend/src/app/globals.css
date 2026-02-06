@@ -32,11 +32,42 @@ main {
   padding: 32px;
 }
 
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .panel {
   background: #151a23;
   border: 1px solid #252b3a;
   border-radius: 16px;
   padding: 20px;
+}
+
+.location-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.location-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.location-subtitle {
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
+.location-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .grid {
