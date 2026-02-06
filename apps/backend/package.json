@@ -10,16 +10,19 @@
     "lint": "echo \"No linter configured\""
   },
   "dependencies": {
-    "@prisma/client": "5.22.0",
-    "fastify": "4.26.2",
     "@fastify/websocket": "8.2.0",
+    "@prisma/adapter-pg": "^7.3.0",
+    "@prisma/client": "7.3.0",
+    "dotenv": "^17.2.4",
+    "fastify": "4.26.2",
+    "pg": "^8.18.0",
     "pino": "8.17.2",
     "zod": "latest"
   },
   "devDependencies": {
     "@types/node": "18.19.39",
     "pino-pretty": "10.2.3",
-    "prisma": "5.22.0",
+    "prisma": "7.3.0",
     "tsx": "latest",
     "typescript": "latest"
   }
