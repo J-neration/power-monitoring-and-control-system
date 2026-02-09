@@ -32,31 +32,101 @@ export const StatusCard = ({ device }: StatusCardProps) => {
       <p style={{ fontSize: 12, opacity: 0.6, marginTop: 6 }}>
         Device ID: {device.id}
       </p>
-      <div style={{ display: "flex", gap: 16, marginTop: 16 }}>
-        <div>
-          <p style={{ fontSize: 12, opacity: 0.6 }}>V L1</p>
-          <strong>{device.vL1 ?? "-"}</strong>
-        </div>
-        <div>
-          <p style={{ fontSize: 12, opacity: 0.6 }}>V L2</p>
-          <strong>{device.vL2 ?? "-"}</strong>
-        </div>
-        <div>
-          <p style={{ fontSize: 12, opacity: 0.6 }}>V L3</p>
-          <strong>{device.vL3 ?? "-"}</strong>
-        </div>
-        <div>
-          <p style={{ fontSize: 12, opacity: 0.6 }}>I L1</p>
-          <strong>{device.iL1 ?? "-"}</strong>
-        </div>
-        <div>
-          <p style={{ fontSize: 12, opacity: 0.6 }}>I L2</p>
-          <strong>{device.iL2 ?? "-"}</strong>
-        </div>
-        <div>
-          <p style={{ fontSize: 12, opacity: 0.6 }}>I L3</p>
-          <strong>{device.iL3 ?? "-"}</strong>
-        </div>
+      <div className="metrics-split">
+        <table className="metrics-table">
+          <thead>
+            <tr>
+              <th className="metrics-cell metrics-title" colSpan={4}>
+                <span className="metrics-chip metrics-chip-grid">Grid</span>
+              </th>
+            </tr>
+            <tr>
+              <th className="metrics-cell metrics-label" />
+              <th className="metrics-cell metrics-value">L1</th>
+              <th className="metrics-cell metrics-value">L2</th>
+              <th className="metrics-cell metrics-value">L3</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="metrics-cell metrics-label">Current</td>
+              <td className="metrics-cell metrics-value">
+                {device.gridCurrentL1 ?? "-"}
+              </td>
+              <td className="metrics-cell metrics-value">
+                {device.gridCurrentL2 ?? "-"}
+              </td>
+              <td className="metrics-cell metrics-value">
+                {device.gridCurrentL3 ?? "-"}
+              </td>
+            </tr>
+            <tr>
+              <td className="metrics-cell metrics-label">Current THD</td>
+              <td className="metrics-cell metrics-value">
+                {device.gridCurrentTHDL1 ?? "-"}
+              </td>
+              <td className="metrics-cell metrics-value">
+                {device.gridCurrentTHDL2 ?? "-"}
+              </td>
+              <td className="metrics-cell metrics-value">
+                {device.gridCurrentTHDL3 ?? "-"}
+              </td>
+            </tr>
+            <tr>
+              <td className="metrics-cell metrics-label">TPF</td>
+              <td className="metrics-cell metrics-value" colSpan={3}>
+                {device.tpf2 ?? "-"}
+              </td>
+            </tr>
+            <tr>
+              <td className="metrics-cell metrics-label">DPF</td>
+              <td className="metrics-cell metrics-value" colSpan={3}>
+                {device.dpf2 ?? "-"}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <table className="metrics-table">
+          <thead>
+            <tr>
+              <th className="metrics-cell metrics-title" colSpan={4}>
+                <span className="metrics-chip metrics-chip-load">Load</span>
+              </th>
+            </tr>
+            <tr>
+              <th className="metrics-cell metrics-label" />
+              <th className="metrics-cell metrics-value">L1</th>
+              <th className="metrics-cell metrics-value">L2</th>
+              <th className="metrics-cell metrics-value">L3</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="metrics-cell metrics-label">Current</td>
+              <td className="metrics-cell metrics-value">
+                {device.loadCurrentL1 ?? "-"}
+              </td>
+              <td className="metrics-cell metrics-value">
+                {device.loadCurrentL2 ?? "-"}
+              </td>
+              <td className="metrics-cell metrics-value">
+                {device.loadCurrentL3 ?? "-"}
+              </td>
+            </tr>
+            <tr>
+              <td className="metrics-cell metrics-label">TPF</td>
+              <td className="metrics-cell metrics-value" colSpan={3}>
+                {device.tpf1 ?? "-"}
+              </td>
+            </tr>
+            <tr>
+              <td className="metrics-cell metrics-label">DPF</td>
+              <td className="metrics-cell metrics-value" colSpan={3}>
+                {device.dpf1 ?? "-"}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       <div style={{ marginTop: 12 }}>
         <p style={{ fontSize: 12, opacity: 0.6 }}>

@@ -1,116 +1,120 @@
 import { deviceRegistry } from "../data/deviceRegistry.js";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient, type Device } from "../../prisma/generated/client/client.js";
 
 export type DeviceStatus = "online" | "offline" | "warning";
 
-export type Device = {
-  id: string;
-  name: string;
-  location: string;
-  status: DeviceStatus;
-  lastSeenAt: string;
-  lastValue?: number | string;
-  lastIp?: string;
-  vL1?: number | string;
-  vL2?: number | string;
-  vL3?: number | string;
-  iL1?: number | string;
-  iL2?: number | string;
-  iL3?: number | string;
-};
-
-const now = () => new Date().toISOString();
-
-const devices: Device[] = deviceRegistry.map((entry) => ({
-  id: entry.id,
-  name: entry.name,
-  location: entry.location,
-  status: entry.status ?? "offline",
-  lastSeenAt: now(),
-  lastValue: 0,
-  lastIp: "unknown",
-  vL1: 0,
-  vL2: 0,
-  vL3: 0,
-  iL1: 0,
-  iL2: 0,
-  iL3: 0,
-}));
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({
+    connectionString:
+      process.env.DATABASE_URL ?? "postgresql://pmcs:pmcs@localhost:5432/pmcs",
+  }),
+});
 
 const getRegistryEntry = (id: string) =>
   deviceRegistry.find((entry) => entry.id === id);
 
+const toNumber = (value?: number | string) => {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : undefined;
+  }
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
 export const deviceService = {
-  list: () => devices,
-  get: ({ id }: { id: string }) => devices.find((device) => device.id === id),
-  upsertFromPayload: (payload: {
+  list: async (): Promise<Device[]> => {
+    return prisma.device.findMany({ orderBy: { id: "asc" } });
+  },
+  get: async ({ id }: { id: string }): Promise<Device | null> => {
+    return prisma.device.findUnique({ where: { id } });
+  },
+  upsertFromPayload: async (payload: {
     device_id?: string;
     value?: number | string;
     ip?: string;
-    vL1?: number | string;
-    vL2?: number | string;
-    vL3?: number | string;
-    iL1?: number | string;
-    iL2?: number | string;
-    iL3?: number | string;
-  }) => {
+    gridCurrentL1?: number | string;
+    gridCurrentL2?: number | string;
+    gridCurrentL3?: number | string;
+    loadCurrentL1?: number | string;
+    loadCurrentL2?: number | string;
+    loadCurrentL3?: number | string;
+    tpf1?: number | string;
+    tpf2?: number | string;
+    dpf1?: number | string;
+    dpf2?: number | string;
+    gridCurrentTHDL1?: number | string;
+    gridCurrentTHDL2?: number | string;
+    gridCurrentTHDL3?: number | string;
+  }): Promise<Device | null> => {
     const id = payload.device_id?.trim();
     if (!id) {
       return null;
     }
 
-    const now = new Date().toISOString();
     const registry = getRegistryEntry(id);
-    const existing = devices.find((device) => device.id === id);
-    if (existing) {
-      existing.status = "online";
-      existing.lastSeenAt = now;
-      if (registry) {
-        existing.name = registry.name;
-        existing.location = registry.location;
-      }
-      if (payload.value !== undefined) {
-        existing.lastValue = payload.value;
-      }
-      if (payload.ip) {
-        existing.lastIp = payload.ip;
-      }
-      if (payload.vL1 !== undefined) {
-        existing.vL1 = payload.vL1;
-      }
-      if (payload.vL2 !== undefined) {
-        existing.vL2 = payload.vL2;
-      }
-      if (payload.vL3 !== undefined) {
-        existing.vL3 = payload.vL3;
-      }
-      if (payload.iL1 !== undefined) {
-        existing.iL1 = payload.iL1;
-      }
-      if (payload.iL2 !== undefined) {
-        existing.iL2 = payload.iL2;
-      }
-      if (payload.iL3 !== undefined) {
-        existing.iL3 = payload.iL3;
-      }
-      return existing;
-    }
+    const lastValue = toNumber(payload.value);
+    const gridCurrentL1 = toNumber(payload.gridCurrentL1);
+    const gridCurrentL2 = toNumber(payload.gridCurrentL2);
+    const gridCurrentL3 = toNumber(payload.gridCurrentL3);
+    const loadCurrentL1 = toNumber(payload.loadCurrentL1);
+    const loadCurrentL2 = toNumber(payload.loadCurrentL2);
+    const loadCurrentL3 = toNumber(payload.loadCurrentL3);
+    const tpf1 = toNumber(payload.tpf1);
+    const tpf2 = toNumber(payload.tpf2);
+    const dpf1 = toNumber(payload.dpf1);
+    const dpf2 = toNumber(payload.dpf2);
+    const gridCurrentTHDL1 = toNumber(payload.gridCurrentTHDL1);
+    const gridCurrentTHDL2 = toNumber(payload.gridCurrentTHDL2);
+    const gridCurrentTHDL3 = toNumber(payload.gridCurrentTHDL3);
 
-    const created: Device = {
-      id,
-      name: registry?.name ?? id,
-      location: registry?.location ?? "Unknown",
-      status: "online",
-      lastSeenAt: now,
-      lastValue: payload.value ?? 0,
-      lastIp: payload.ip ?? "unknown",
-      vL1: payload.vL1 ?? 0,
-      vL2: payload.vL2 ?? 0,
-      vL3: payload.vL3 ?? 0,
-      iL1: payload.iL1 ?? 0,
-      iL2: payload.iL2 ?? 0,
-      iL3: payload.iL3 ?? 0,
-    };
-    devices.push(created);
-    return created;
+    return prisma.device.upsert({
+      where: { id },
+      update: {
+        status: "online",
+        lastSeenAt: new Date(),
+        ...(registry ? { name: registry.name, location: registry.location } : {}),
+        ...(payload.ip ? { lastIp: payload.ip } : {}),
+        ...(lastValue !== undefined ? { lastValue } : {}),
+        ...(gridCurrentL1 !== undefined ? { gridCurrentL1 } : {}),
+        ...(gridCurrentL2 !== undefined ? { gridCurrentL2 } : {}),
+        ...(gridCurrentL3 !== undefined ? { gridCurrentL3 } : {}),
+        ...(loadCurrentL1 !== undefined ? { loadCurrentL1 } : {}),
+        ...(loadCurrentL2 !== undefined ? { loadCurrentL2 } : {}),
+        ...(loadCurrentL3 !== undefined ? { loadCurrentL3 } : {}),
+        ...(tpf1 !== undefined ? { tpf1 } : {}),
+        ...(tpf2 !== undefined ? { tpf2 } : {}),
+        ...(dpf1 !== undefined ? { dpf1 } : {}),
+        ...(dpf2 !== undefined ? { dpf2 } : {}),
+        ...(gridCurrentTHDL1 !== undefined ? { gridCurrentTHDL1 } : {}),
+        ...(gridCurrentTHDL2 !== undefined ? { gridCurrentTHDL2 } : {}),
+        ...(gridCurrentTHDL3 !== undefined ? { gridCurrentTHDL3 } : {}),
+      },
+      create: {
+        id,
+        name: registry?.name ?? id,
+        location: registry?.location ?? "Unknown",
+        status: "online",
+        lastSeenAt: new Date(),
+        ...(payload.ip ? { lastIp: payload.ip } : {}),
+        ...(lastValue !== undefined ? { lastValue } : {}),
+        ...(gridCurrentL1 !== undefined ? { gridCurrentL1 } : {}),
+        ...(gridCurrentL2 !== undefined ? { gridCurrentL2 } : {}),
+        ...(gridCurrentL3 !== undefined ? { gridCurrentL3 } : {}),
+        ...(loadCurrentL1 !== undefined ? { loadCurrentL1 } : {}),
+        ...(loadCurrentL2 !== undefined ? { loadCurrentL2 } : {}),
+        ...(loadCurrentL3 !== undefined ? { loadCurrentL3 } : {}),
+        ...(tpf1 !== undefined ? { tpf1 } : {}),
+        ...(tpf2 !== undefined ? { tpf2 } : {}),
+        ...(dpf1 !== undefined ? { dpf1 } : {}),
+        ...(dpf2 !== undefined ? { dpf2 } : {}),
+        ...(gridCurrentTHDL1 !== undefined ? { gridCurrentTHDL1 } : {}),
+        ...(gridCurrentTHDL2 !== undefined ? { gridCurrentTHDL2 } : {}),
+        ...(gridCurrentTHDL3 !== undefined ? { gridCurrentTHDL3 } : {}),
+      },
+    });
   },
 };
