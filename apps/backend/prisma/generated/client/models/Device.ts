@@ -27,13 +27,28 @@ export type AggregateDevice = {
 }
 
 export type DeviceAvgAggregateOutputType = {
+  moduleStatus: number | null
   lastValue: number | null
+  vL1: number | null
+  vL2: number | null
+  vL3: number | null
   gridCurrentL1: number | null
   gridCurrentL2: number | null
   gridCurrentL3: number | null
   loadCurrentL1: number | null
   loadCurrentL2: number | null
   loadCurrentL3: number | null
+  loadCurrentTHDL1: number | null
+  loadCurrentTHDL2: number | null
+  loadCurrentTHDL3: number | null
+  uncompS: number | null
+  uncompP: number | null
+  uncompQ: number | null
+  uncompH: number | null
+  compS: number | null
+  compP: number | null
+  compQ: number | null
+  compH: number | null
   tpf1: number | null
   tpf2: number | null
   dpf1: number | null
@@ -44,13 +59,28 @@ export type DeviceAvgAggregateOutputType = {
 }
 
 export type DeviceSumAggregateOutputType = {
+  moduleStatus: number[]
   lastValue: number | null
+  vL1: number | null
+  vL2: number | null
+  vL3: number | null
   gridCurrentL1: number | null
   gridCurrentL2: number | null
   gridCurrentL3: number | null
   loadCurrentL1: number | null
   loadCurrentL2: number | null
   loadCurrentL3: number | null
+  loadCurrentTHDL1: number | null
+  loadCurrentTHDL2: number | null
+  loadCurrentTHDL3: number | null
+  uncompS: number | null
+  uncompP: number | null
+  uncompQ: number | null
+  uncompH: number | null
+  compS: number | null
+  compP: number | null
+  compQ: number | null
+  compH: number | null
   tpf1: number | null
   tpf2: number | null
   dpf1: number | null
@@ -68,12 +98,26 @@ export type DeviceMinAggregateOutputType = {
   lastSeenAt: Date | null
   lastValue: number | null
   lastIp: string | null
+  vL1: number | null
+  vL2: number | null
+  vL3: number | null
   gridCurrentL1: number | null
   gridCurrentL2: number | null
   gridCurrentL3: number | null
   loadCurrentL1: number | null
   loadCurrentL2: number | null
   loadCurrentL3: number | null
+  loadCurrentTHDL1: number | null
+  loadCurrentTHDL2: number | null
+  loadCurrentTHDL3: number | null
+  uncompS: number | null
+  uncompP: number | null
+  uncompQ: number | null
+  uncompH: number | null
+  compS: number | null
+  compP: number | null
+  compQ: number | null
+  compH: number | null
   tpf1: number | null
   tpf2: number | null
   dpf1: number | null
@@ -93,12 +137,26 @@ export type DeviceMaxAggregateOutputType = {
   lastSeenAt: Date | null
   lastValue: number | null
   lastIp: string | null
+  vL1: number | null
+  vL2: number | null
+  vL3: number | null
   gridCurrentL1: number | null
   gridCurrentL2: number | null
   gridCurrentL3: number | null
   loadCurrentL1: number | null
   loadCurrentL2: number | null
   loadCurrentL3: number | null
+  loadCurrentTHDL1: number | null
+  loadCurrentTHDL2: number | null
+  loadCurrentTHDL3: number | null
+  uncompS: number | null
+  uncompP: number | null
+  uncompQ: number | null
+  uncompH: number | null
+  compS: number | null
+  compP: number | null
+  compQ: number | null
+  compH: number | null
   tpf1: number | null
   tpf2: number | null
   dpf1: number | null
@@ -115,15 +173,30 @@ export type DeviceCountAggregateOutputType = {
   name: number
   location: number
   status: number
+  moduleStatus: number
   lastSeenAt: number
   lastValue: number
   lastIp: number
+  vL1: number
+  vL2: number
+  vL3: number
   gridCurrentL1: number
   gridCurrentL2: number
   gridCurrentL3: number
   loadCurrentL1: number
   loadCurrentL2: number
   loadCurrentL3: number
+  loadCurrentTHDL1: number
+  loadCurrentTHDL2: number
+  loadCurrentTHDL3: number
+  uncompS: number
+  uncompP: number
+  uncompQ: number
+  uncompH: number
+  compS: number
+  compP: number
+  compQ: number
+  compH: number
   tpf1: number
   tpf2: number
   dpf1: number
@@ -138,13 +211,28 @@ export type DeviceCountAggregateOutputType = {
 
 
 export type DeviceAvgAggregateInputType = {
+  moduleStatus?: true
   lastValue?: true
+  vL1?: true
+  vL2?: true
+  vL3?: true
   gridCurrentL1?: true
   gridCurrentL2?: true
   gridCurrentL3?: true
   loadCurrentL1?: true
   loadCurrentL2?: true
   loadCurrentL3?: true
+  loadCurrentTHDL1?: true
+  loadCurrentTHDL2?: true
+  loadCurrentTHDL3?: true
+  uncompS?: true
+  uncompP?: true
+  uncompQ?: true
+  uncompH?: true
+  compS?: true
+  compP?: true
+  compQ?: true
+  compH?: true
   tpf1?: true
   tpf2?: true
   dpf1?: true
@@ -155,13 +243,28 @@ export type DeviceAvgAggregateInputType = {
 }
 
 export type DeviceSumAggregateInputType = {
+  moduleStatus?: true
   lastValue?: true
+  vL1?: true
+  vL2?: true
+  vL3?: true
   gridCurrentL1?: true
   gridCurrentL2?: true
   gridCurrentL3?: true
   loadCurrentL1?: true
   loadCurrentL2?: true
   loadCurrentL3?: true
+  loadCurrentTHDL1?: true
+  loadCurrentTHDL2?: true
+  loadCurrentTHDL3?: true
+  uncompS?: true
+  uncompP?: true
+  uncompQ?: true
+  uncompH?: true
+  compS?: true
+  compP?: true
+  compQ?: true
+  compH?: true
   tpf1?: true
   tpf2?: true
   dpf1?: true
@@ -179,12 +282,26 @@ export type DeviceMinAggregateInputType = {
   lastSeenAt?: true
   lastValue?: true
   lastIp?: true
+  vL1?: true
+  vL2?: true
+  vL3?: true
   gridCurrentL1?: true
   gridCurrentL2?: true
   gridCurrentL3?: true
   loadCurrentL1?: true
   loadCurrentL2?: true
   loadCurrentL3?: true
+  loadCurrentTHDL1?: true
+  loadCurrentTHDL2?: true
+  loadCurrentTHDL3?: true
+  uncompS?: true
+  uncompP?: true
+  uncompQ?: true
+  uncompH?: true
+  compS?: true
+  compP?: true
+  compQ?: true
+  compH?: true
   tpf1?: true
   tpf2?: true
   dpf1?: true
@@ -204,12 +321,26 @@ export type DeviceMaxAggregateInputType = {
   lastSeenAt?: true
   lastValue?: true
   lastIp?: true
+  vL1?: true
+  vL2?: true
+  vL3?: true
   gridCurrentL1?: true
   gridCurrentL2?: true
   gridCurrentL3?: true
   loadCurrentL1?: true
   loadCurrentL2?: true
   loadCurrentL3?: true
+  loadCurrentTHDL1?: true
+  loadCurrentTHDL2?: true
+  loadCurrentTHDL3?: true
+  uncompS?: true
+  uncompP?: true
+  uncompQ?: true
+  uncompH?: true
+  compS?: true
+  compP?: true
+  compQ?: true
+  compH?: true
   tpf1?: true
   tpf2?: true
   dpf1?: true
@@ -226,15 +357,30 @@ export type DeviceCountAggregateInputType = {
   name?: true
   location?: true
   status?: true
+  moduleStatus?: true
   lastSeenAt?: true
   lastValue?: true
   lastIp?: true
+  vL1?: true
+  vL2?: true
+  vL3?: true
   gridCurrentL1?: true
   gridCurrentL2?: true
   gridCurrentL3?: true
   loadCurrentL1?: true
   loadCurrentL2?: true
   loadCurrentL3?: true
+  loadCurrentTHDL1?: true
+  loadCurrentTHDL2?: true
+  loadCurrentTHDL3?: true
+  uncompS?: true
+  uncompP?: true
+  uncompQ?: true
+  uncompH?: true
+  compS?: true
+  compP?: true
+  compQ?: true
+  compH?: true
   tpf1?: true
   tpf2?: true
   dpf1?: true
@@ -338,15 +484,30 @@ export type DeviceGroupByOutputType = {
   name: string
   location: string
   status: string
+  moduleStatus: number[]
   lastSeenAt: Date
   lastValue: number
   lastIp: string
+  vL1: number
+  vL2: number
+  vL3: number
   gridCurrentL1: number
   gridCurrentL2: number
   gridCurrentL3: number
   loadCurrentL1: number
   loadCurrentL2: number
   loadCurrentL3: number
+  loadCurrentTHDL1: number
+  loadCurrentTHDL2: number
+  loadCurrentTHDL3: number
+  uncompS: number
+  uncompP: number
+  uncompQ: number
+  uncompH: number
+  compS: number
+  compP: number
+  compQ: number
+  compH: number
   tpf1: number
   tpf2: number
   dpf1: number
@@ -386,15 +547,30 @@ export type DeviceWhereInput = {
   name?: Prisma.StringFilter<"Device"> | string
   location?: Prisma.StringFilter<"Device"> | string
   status?: Prisma.StringFilter<"Device"> | string
+  moduleStatus?: Prisma.IntNullableListFilter<"Device">
   lastSeenAt?: Prisma.DateTimeFilter<"Device"> | Date | string
   lastValue?: Prisma.FloatFilter<"Device"> | number
   lastIp?: Prisma.StringFilter<"Device"> | string
+  vL1?: Prisma.FloatFilter<"Device"> | number
+  vL2?: Prisma.FloatFilter<"Device"> | number
+  vL3?: Prisma.FloatFilter<"Device"> | number
   gridCurrentL1?: Prisma.FloatFilter<"Device"> | number
   gridCurrentL2?: Prisma.FloatFilter<"Device"> | number
   gridCurrentL3?: Prisma.FloatFilter<"Device"> | number
   loadCurrentL1?: Prisma.FloatFilter<"Device"> | number
   loadCurrentL2?: Prisma.FloatFilter<"Device"> | number
   loadCurrentL3?: Prisma.FloatFilter<"Device"> | number
+  loadCurrentTHDL1?: Prisma.FloatFilter<"Device"> | number
+  loadCurrentTHDL2?: Prisma.FloatFilter<"Device"> | number
+  loadCurrentTHDL3?: Prisma.FloatFilter<"Device"> | number
+  uncompS?: Prisma.FloatFilter<"Device"> | number
+  uncompP?: Prisma.FloatFilter<"Device"> | number
+  uncompQ?: Prisma.FloatFilter<"Device"> | number
+  uncompH?: Prisma.FloatFilter<"Device"> | number
+  compS?: Prisma.FloatFilter<"Device"> | number
+  compP?: Prisma.FloatFilter<"Device"> | number
+  compQ?: Prisma.FloatFilter<"Device"> | number
+  compH?: Prisma.FloatFilter<"Device"> | number
   tpf1?: Prisma.FloatFilter<"Device"> | number
   tpf2?: Prisma.FloatFilter<"Device"> | number
   dpf1?: Prisma.FloatFilter<"Device"> | number
@@ -411,15 +587,30 @@ export type DeviceOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   location?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  moduleStatus?: Prisma.SortOrder
   lastSeenAt?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
   lastIp?: Prisma.SortOrder
+  vL1?: Prisma.SortOrder
+  vL2?: Prisma.SortOrder
+  vL3?: Prisma.SortOrder
   gridCurrentL1?: Prisma.SortOrder
   gridCurrentL2?: Prisma.SortOrder
   gridCurrentL3?: Prisma.SortOrder
   loadCurrentL1?: Prisma.SortOrder
   loadCurrentL2?: Prisma.SortOrder
   loadCurrentL3?: Prisma.SortOrder
+  loadCurrentTHDL1?: Prisma.SortOrder
+  loadCurrentTHDL2?: Prisma.SortOrder
+  loadCurrentTHDL3?: Prisma.SortOrder
+  uncompS?: Prisma.SortOrder
+  uncompP?: Prisma.SortOrder
+  uncompQ?: Prisma.SortOrder
+  uncompH?: Prisma.SortOrder
+  compS?: Prisma.SortOrder
+  compP?: Prisma.SortOrder
+  compQ?: Prisma.SortOrder
+  compH?: Prisma.SortOrder
   tpf1?: Prisma.SortOrder
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
@@ -439,15 +630,30 @@ export type DeviceWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"Device"> | string
   location?: Prisma.StringFilter<"Device"> | string
   status?: Prisma.StringFilter<"Device"> | string
+  moduleStatus?: Prisma.IntNullableListFilter<"Device">
   lastSeenAt?: Prisma.DateTimeFilter<"Device"> | Date | string
   lastValue?: Prisma.FloatFilter<"Device"> | number
   lastIp?: Prisma.StringFilter<"Device"> | string
+  vL1?: Prisma.FloatFilter<"Device"> | number
+  vL2?: Prisma.FloatFilter<"Device"> | number
+  vL3?: Prisma.FloatFilter<"Device"> | number
   gridCurrentL1?: Prisma.FloatFilter<"Device"> | number
   gridCurrentL2?: Prisma.FloatFilter<"Device"> | number
   gridCurrentL3?: Prisma.FloatFilter<"Device"> | number
   loadCurrentL1?: Prisma.FloatFilter<"Device"> | number
   loadCurrentL2?: Prisma.FloatFilter<"Device"> | number
   loadCurrentL3?: Prisma.FloatFilter<"Device"> | number
+  loadCurrentTHDL1?: Prisma.FloatFilter<"Device"> | number
+  loadCurrentTHDL2?: Prisma.FloatFilter<"Device"> | number
+  loadCurrentTHDL3?: Prisma.FloatFilter<"Device"> | number
+  uncompS?: Prisma.FloatFilter<"Device"> | number
+  uncompP?: Prisma.FloatFilter<"Device"> | number
+  uncompQ?: Prisma.FloatFilter<"Device"> | number
+  uncompH?: Prisma.FloatFilter<"Device"> | number
+  compS?: Prisma.FloatFilter<"Device"> | number
+  compP?: Prisma.FloatFilter<"Device"> | number
+  compQ?: Prisma.FloatFilter<"Device"> | number
+  compH?: Prisma.FloatFilter<"Device"> | number
   tpf1?: Prisma.FloatFilter<"Device"> | number
   tpf2?: Prisma.FloatFilter<"Device"> | number
   dpf1?: Prisma.FloatFilter<"Device"> | number
@@ -464,15 +670,30 @@ export type DeviceOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   location?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  moduleStatus?: Prisma.SortOrder
   lastSeenAt?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
   lastIp?: Prisma.SortOrder
+  vL1?: Prisma.SortOrder
+  vL2?: Prisma.SortOrder
+  vL3?: Prisma.SortOrder
   gridCurrentL1?: Prisma.SortOrder
   gridCurrentL2?: Prisma.SortOrder
   gridCurrentL3?: Prisma.SortOrder
   loadCurrentL1?: Prisma.SortOrder
   loadCurrentL2?: Prisma.SortOrder
   loadCurrentL3?: Prisma.SortOrder
+  loadCurrentTHDL1?: Prisma.SortOrder
+  loadCurrentTHDL2?: Prisma.SortOrder
+  loadCurrentTHDL3?: Prisma.SortOrder
+  uncompS?: Prisma.SortOrder
+  uncompP?: Prisma.SortOrder
+  uncompQ?: Prisma.SortOrder
+  uncompH?: Prisma.SortOrder
+  compS?: Prisma.SortOrder
+  compP?: Prisma.SortOrder
+  compQ?: Prisma.SortOrder
+  compH?: Prisma.SortOrder
   tpf1?: Prisma.SortOrder
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
@@ -497,15 +718,30 @@ export type DeviceScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Device"> | string
   location?: Prisma.StringWithAggregatesFilter<"Device"> | string
   status?: Prisma.StringWithAggregatesFilter<"Device"> | string
+  moduleStatus?: Prisma.IntNullableListFilter<"Device">
   lastSeenAt?: Prisma.DateTimeWithAggregatesFilter<"Device"> | Date | string
   lastValue?: Prisma.FloatWithAggregatesFilter<"Device"> | number
   lastIp?: Prisma.StringWithAggregatesFilter<"Device"> | string
+  vL1?: Prisma.FloatWithAggregatesFilter<"Device"> | number
+  vL2?: Prisma.FloatWithAggregatesFilter<"Device"> | number
+  vL3?: Prisma.FloatWithAggregatesFilter<"Device"> | number
   gridCurrentL1?: Prisma.FloatWithAggregatesFilter<"Device"> | number
   gridCurrentL2?: Prisma.FloatWithAggregatesFilter<"Device"> | number
   gridCurrentL3?: Prisma.FloatWithAggregatesFilter<"Device"> | number
   loadCurrentL1?: Prisma.FloatWithAggregatesFilter<"Device"> | number
   loadCurrentL2?: Prisma.FloatWithAggregatesFilter<"Device"> | number
   loadCurrentL3?: Prisma.FloatWithAggregatesFilter<"Device"> | number
+  loadCurrentTHDL1?: Prisma.FloatWithAggregatesFilter<"Device"> | number
+  loadCurrentTHDL2?: Prisma.FloatWithAggregatesFilter<"Device"> | number
+  loadCurrentTHDL3?: Prisma.FloatWithAggregatesFilter<"Device"> | number
+  uncompS?: Prisma.FloatWithAggregatesFilter<"Device"> | number
+  uncompP?: Prisma.FloatWithAggregatesFilter<"Device"> | number
+  uncompQ?: Prisma.FloatWithAggregatesFilter<"Device"> | number
+  uncompH?: Prisma.FloatWithAggregatesFilter<"Device"> | number
+  compS?: Prisma.FloatWithAggregatesFilter<"Device"> | number
+  compP?: Prisma.FloatWithAggregatesFilter<"Device"> | number
+  compQ?: Prisma.FloatWithAggregatesFilter<"Device"> | number
+  compH?: Prisma.FloatWithAggregatesFilter<"Device"> | number
   tpf1?: Prisma.FloatWithAggregatesFilter<"Device"> | number
   tpf2?: Prisma.FloatWithAggregatesFilter<"Device"> | number
   dpf1?: Prisma.FloatWithAggregatesFilter<"Device"> | number
@@ -522,15 +758,30 @@ export type DeviceCreateInput = {
   name: string
   location: string
   status?: string
+  moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
   lastSeenAt?: Date | string
   lastValue?: number
   lastIp?: string
+  vL1?: number
+  vL2?: number
+  vL3?: number
   gridCurrentL1?: number
   gridCurrentL2?: number
   gridCurrentL3?: number
   loadCurrentL1?: number
   loadCurrentL2?: number
   loadCurrentL3?: number
+  loadCurrentTHDL1?: number
+  loadCurrentTHDL2?: number
+  loadCurrentTHDL3?: number
+  uncompS?: number
+  uncompP?: number
+  uncompQ?: number
+  uncompH?: number
+  compS?: number
+  compP?: number
+  compQ?: number
+  compH?: number
   tpf1?: number
   tpf2?: number
   dpf1?: number
@@ -547,15 +798,30 @@ export type DeviceUncheckedCreateInput = {
   name: string
   location: string
   status?: string
+  moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
   lastSeenAt?: Date | string
   lastValue?: number
   lastIp?: string
+  vL1?: number
+  vL2?: number
+  vL3?: number
   gridCurrentL1?: number
   gridCurrentL2?: number
   gridCurrentL3?: number
   loadCurrentL1?: number
   loadCurrentL2?: number
   loadCurrentL3?: number
+  loadCurrentTHDL1?: number
+  loadCurrentTHDL2?: number
+  loadCurrentTHDL3?: number
+  uncompS?: number
+  uncompP?: number
+  uncompQ?: number
+  uncompH?: number
+  compS?: number
+  compP?: number
+  compQ?: number
+  compH?: number
   tpf1?: number
   tpf2?: number
   dpf1?: number
@@ -572,15 +838,30 @@ export type DeviceUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   location?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
   lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastValue?: Prisma.FloatFieldUpdateOperationsInput | number
   lastIp?: Prisma.StringFieldUpdateOperationsInput | string
+  vL1?: Prisma.FloatFieldUpdateOperationsInput | number
+  vL2?: Prisma.FloatFieldUpdateOperationsInput | number
+  vL3?: Prisma.FloatFieldUpdateOperationsInput | number
   gridCurrentL1?: Prisma.FloatFieldUpdateOperationsInput | number
   gridCurrentL2?: Prisma.FloatFieldUpdateOperationsInput | number
   gridCurrentL3?: Prisma.FloatFieldUpdateOperationsInput | number
   loadCurrentL1?: Prisma.FloatFieldUpdateOperationsInput | number
   loadCurrentL2?: Prisma.FloatFieldUpdateOperationsInput | number
   loadCurrentL3?: Prisma.FloatFieldUpdateOperationsInput | number
+  loadCurrentTHDL1?: Prisma.FloatFieldUpdateOperationsInput | number
+  loadCurrentTHDL2?: Prisma.FloatFieldUpdateOperationsInput | number
+  loadCurrentTHDL3?: Prisma.FloatFieldUpdateOperationsInput | number
+  uncompS?: Prisma.FloatFieldUpdateOperationsInput | number
+  uncompP?: Prisma.FloatFieldUpdateOperationsInput | number
+  uncompQ?: Prisma.FloatFieldUpdateOperationsInput | number
+  uncompH?: Prisma.FloatFieldUpdateOperationsInput | number
+  compS?: Prisma.FloatFieldUpdateOperationsInput | number
+  compP?: Prisma.FloatFieldUpdateOperationsInput | number
+  compQ?: Prisma.FloatFieldUpdateOperationsInput | number
+  compH?: Prisma.FloatFieldUpdateOperationsInput | number
   tpf1?: Prisma.FloatFieldUpdateOperationsInput | number
   tpf2?: Prisma.FloatFieldUpdateOperationsInput | number
   dpf1?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -597,15 +878,30 @@ export type DeviceUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   location?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
   lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastValue?: Prisma.FloatFieldUpdateOperationsInput | number
   lastIp?: Prisma.StringFieldUpdateOperationsInput | string
+  vL1?: Prisma.FloatFieldUpdateOperationsInput | number
+  vL2?: Prisma.FloatFieldUpdateOperationsInput | number
+  vL3?: Prisma.FloatFieldUpdateOperationsInput | number
   gridCurrentL1?: Prisma.FloatFieldUpdateOperationsInput | number
   gridCurrentL2?: Prisma.FloatFieldUpdateOperationsInput | number
   gridCurrentL3?: Prisma.FloatFieldUpdateOperationsInput | number
   loadCurrentL1?: Prisma.FloatFieldUpdateOperationsInput | number
   loadCurrentL2?: Prisma.FloatFieldUpdateOperationsInput | number
   loadCurrentL3?: Prisma.FloatFieldUpdateOperationsInput | number
+  loadCurrentTHDL1?: Prisma.FloatFieldUpdateOperationsInput | number
+  loadCurrentTHDL2?: Prisma.FloatFieldUpdateOperationsInput | number
+  loadCurrentTHDL3?: Prisma.FloatFieldUpdateOperationsInput | number
+  uncompS?: Prisma.FloatFieldUpdateOperationsInput | number
+  uncompP?: Prisma.FloatFieldUpdateOperationsInput | number
+  uncompQ?: Prisma.FloatFieldUpdateOperationsInput | number
+  uncompH?: Prisma.FloatFieldUpdateOperationsInput | number
+  compS?: Prisma.FloatFieldUpdateOperationsInput | number
+  compP?: Prisma.FloatFieldUpdateOperationsInput | number
+  compQ?: Prisma.FloatFieldUpdateOperationsInput | number
+  compH?: Prisma.FloatFieldUpdateOperationsInput | number
   tpf1?: Prisma.FloatFieldUpdateOperationsInput | number
   tpf2?: Prisma.FloatFieldUpdateOperationsInput | number
   dpf1?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -622,15 +918,30 @@ export type DeviceCreateManyInput = {
   name: string
   location: string
   status?: string
+  moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
   lastSeenAt?: Date | string
   lastValue?: number
   lastIp?: string
+  vL1?: number
+  vL2?: number
+  vL3?: number
   gridCurrentL1?: number
   gridCurrentL2?: number
   gridCurrentL3?: number
   loadCurrentL1?: number
   loadCurrentL2?: number
   loadCurrentL3?: number
+  loadCurrentTHDL1?: number
+  loadCurrentTHDL2?: number
+  loadCurrentTHDL3?: number
+  uncompS?: number
+  uncompP?: number
+  uncompQ?: number
+  uncompH?: number
+  compS?: number
+  compP?: number
+  compQ?: number
+  compH?: number
   tpf1?: number
   tpf2?: number
   dpf1?: number
@@ -647,15 +958,30 @@ export type DeviceUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   location?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
   lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastValue?: Prisma.FloatFieldUpdateOperationsInput | number
   lastIp?: Prisma.StringFieldUpdateOperationsInput | string
+  vL1?: Prisma.FloatFieldUpdateOperationsInput | number
+  vL2?: Prisma.FloatFieldUpdateOperationsInput | number
+  vL3?: Prisma.FloatFieldUpdateOperationsInput | number
   gridCurrentL1?: Prisma.FloatFieldUpdateOperationsInput | number
   gridCurrentL2?: Prisma.FloatFieldUpdateOperationsInput | number
   gridCurrentL3?: Prisma.FloatFieldUpdateOperationsInput | number
   loadCurrentL1?: Prisma.FloatFieldUpdateOperationsInput | number
   loadCurrentL2?: Prisma.FloatFieldUpdateOperationsInput | number
   loadCurrentL3?: Prisma.FloatFieldUpdateOperationsInput | number
+  loadCurrentTHDL1?: Prisma.FloatFieldUpdateOperationsInput | number
+  loadCurrentTHDL2?: Prisma.FloatFieldUpdateOperationsInput | number
+  loadCurrentTHDL3?: Prisma.FloatFieldUpdateOperationsInput | number
+  uncompS?: Prisma.FloatFieldUpdateOperationsInput | number
+  uncompP?: Prisma.FloatFieldUpdateOperationsInput | number
+  uncompQ?: Prisma.FloatFieldUpdateOperationsInput | number
+  uncompH?: Prisma.FloatFieldUpdateOperationsInput | number
+  compS?: Prisma.FloatFieldUpdateOperationsInput | number
+  compP?: Prisma.FloatFieldUpdateOperationsInput | number
+  compQ?: Prisma.FloatFieldUpdateOperationsInput | number
+  compH?: Prisma.FloatFieldUpdateOperationsInput | number
   tpf1?: Prisma.FloatFieldUpdateOperationsInput | number
   tpf2?: Prisma.FloatFieldUpdateOperationsInput | number
   dpf1?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -672,15 +998,30 @@ export type DeviceUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   location?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
   lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastValue?: Prisma.FloatFieldUpdateOperationsInput | number
   lastIp?: Prisma.StringFieldUpdateOperationsInput | string
+  vL1?: Prisma.FloatFieldUpdateOperationsInput | number
+  vL2?: Prisma.FloatFieldUpdateOperationsInput | number
+  vL3?: Prisma.FloatFieldUpdateOperationsInput | number
   gridCurrentL1?: Prisma.FloatFieldUpdateOperationsInput | number
   gridCurrentL2?: Prisma.FloatFieldUpdateOperationsInput | number
   gridCurrentL3?: Prisma.FloatFieldUpdateOperationsInput | number
   loadCurrentL1?: Prisma.FloatFieldUpdateOperationsInput | number
   loadCurrentL2?: Prisma.FloatFieldUpdateOperationsInput | number
   loadCurrentL3?: Prisma.FloatFieldUpdateOperationsInput | number
+  loadCurrentTHDL1?: Prisma.FloatFieldUpdateOperationsInput | number
+  loadCurrentTHDL2?: Prisma.FloatFieldUpdateOperationsInput | number
+  loadCurrentTHDL3?: Prisma.FloatFieldUpdateOperationsInput | number
+  uncompS?: Prisma.FloatFieldUpdateOperationsInput | number
+  uncompP?: Prisma.FloatFieldUpdateOperationsInput | number
+  uncompQ?: Prisma.FloatFieldUpdateOperationsInput | number
+  uncompH?: Prisma.FloatFieldUpdateOperationsInput | number
+  compS?: Prisma.FloatFieldUpdateOperationsInput | number
+  compP?: Prisma.FloatFieldUpdateOperationsInput | number
+  compQ?: Prisma.FloatFieldUpdateOperationsInput | number
+  compH?: Prisma.FloatFieldUpdateOperationsInput | number
   tpf1?: Prisma.FloatFieldUpdateOperationsInput | number
   tpf2?: Prisma.FloatFieldUpdateOperationsInput | number
   dpf1?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -692,20 +1033,43 @@ export type DeviceUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+export type IntNullableListFilter<$PrismaModel = never> = {
+  equals?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel> | null
+  has?: number | Prisma.IntFieldRefInput<$PrismaModel> | null
+  hasEvery?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
+  hasSome?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
+  isEmpty?: boolean
+}
+
 export type DeviceCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   location?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  moduleStatus?: Prisma.SortOrder
   lastSeenAt?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
   lastIp?: Prisma.SortOrder
+  vL1?: Prisma.SortOrder
+  vL2?: Prisma.SortOrder
+  vL3?: Prisma.SortOrder
   gridCurrentL1?: Prisma.SortOrder
   gridCurrentL2?: Prisma.SortOrder
   gridCurrentL3?: Prisma.SortOrder
   loadCurrentL1?: Prisma.SortOrder
   loadCurrentL2?: Prisma.SortOrder
   loadCurrentL3?: Prisma.SortOrder
+  loadCurrentTHDL1?: Prisma.SortOrder
+  loadCurrentTHDL2?: Prisma.SortOrder
+  loadCurrentTHDL3?: Prisma.SortOrder
+  uncompS?: Prisma.SortOrder
+  uncompP?: Prisma.SortOrder
+  uncompQ?: Prisma.SortOrder
+  uncompH?: Prisma.SortOrder
+  compS?: Prisma.SortOrder
+  compP?: Prisma.SortOrder
+  compQ?: Prisma.SortOrder
+  compH?: Prisma.SortOrder
   tpf1?: Prisma.SortOrder
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
@@ -718,13 +1082,28 @@ export type DeviceCountOrderByAggregateInput = {
 }
 
 export type DeviceAvgOrderByAggregateInput = {
+  moduleStatus?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
+  vL1?: Prisma.SortOrder
+  vL2?: Prisma.SortOrder
+  vL3?: Prisma.SortOrder
   gridCurrentL1?: Prisma.SortOrder
   gridCurrentL2?: Prisma.SortOrder
   gridCurrentL3?: Prisma.SortOrder
   loadCurrentL1?: Prisma.SortOrder
   loadCurrentL2?: Prisma.SortOrder
   loadCurrentL3?: Prisma.SortOrder
+  loadCurrentTHDL1?: Prisma.SortOrder
+  loadCurrentTHDL2?: Prisma.SortOrder
+  loadCurrentTHDL3?: Prisma.SortOrder
+  uncompS?: Prisma.SortOrder
+  uncompP?: Prisma.SortOrder
+  uncompQ?: Prisma.SortOrder
+  uncompH?: Prisma.SortOrder
+  compS?: Prisma.SortOrder
+  compP?: Prisma.SortOrder
+  compQ?: Prisma.SortOrder
+  compH?: Prisma.SortOrder
   tpf1?: Prisma.SortOrder
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
@@ -742,12 +1121,26 @@ export type DeviceMaxOrderByAggregateInput = {
   lastSeenAt?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
   lastIp?: Prisma.SortOrder
+  vL1?: Prisma.SortOrder
+  vL2?: Prisma.SortOrder
+  vL3?: Prisma.SortOrder
   gridCurrentL1?: Prisma.SortOrder
   gridCurrentL2?: Prisma.SortOrder
   gridCurrentL3?: Prisma.SortOrder
   loadCurrentL1?: Prisma.SortOrder
   loadCurrentL2?: Prisma.SortOrder
   loadCurrentL3?: Prisma.SortOrder
+  loadCurrentTHDL1?: Prisma.SortOrder
+  loadCurrentTHDL2?: Prisma.SortOrder
+  loadCurrentTHDL3?: Prisma.SortOrder
+  uncompS?: Prisma.SortOrder
+  uncompP?: Prisma.SortOrder
+  uncompQ?: Prisma.SortOrder
+  uncompH?: Prisma.SortOrder
+  compS?: Prisma.SortOrder
+  compP?: Prisma.SortOrder
+  compQ?: Prisma.SortOrder
+  compH?: Prisma.SortOrder
   tpf1?: Prisma.SortOrder
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
@@ -767,12 +1160,26 @@ export type DeviceMinOrderByAggregateInput = {
   lastSeenAt?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
   lastIp?: Prisma.SortOrder
+  vL1?: Prisma.SortOrder
+  vL2?: Prisma.SortOrder
+  vL3?: Prisma.SortOrder
   gridCurrentL1?: Prisma.SortOrder
   gridCurrentL2?: Prisma.SortOrder
   gridCurrentL3?: Prisma.SortOrder
   loadCurrentL1?: Prisma.SortOrder
   loadCurrentL2?: Prisma.SortOrder
   loadCurrentL3?: Prisma.SortOrder
+  loadCurrentTHDL1?: Prisma.SortOrder
+  loadCurrentTHDL2?: Prisma.SortOrder
+  loadCurrentTHDL3?: Prisma.SortOrder
+  uncompS?: Prisma.SortOrder
+  uncompP?: Prisma.SortOrder
+  uncompQ?: Prisma.SortOrder
+  uncompH?: Prisma.SortOrder
+  compS?: Prisma.SortOrder
+  compP?: Prisma.SortOrder
+  compQ?: Prisma.SortOrder
+  compH?: Prisma.SortOrder
   tpf1?: Prisma.SortOrder
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
@@ -785,13 +1192,28 @@ export type DeviceMinOrderByAggregateInput = {
 }
 
 export type DeviceSumOrderByAggregateInput = {
+  moduleStatus?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
+  vL1?: Prisma.SortOrder
+  vL2?: Prisma.SortOrder
+  vL3?: Prisma.SortOrder
   gridCurrentL1?: Prisma.SortOrder
   gridCurrentL2?: Prisma.SortOrder
   gridCurrentL3?: Prisma.SortOrder
   loadCurrentL1?: Prisma.SortOrder
   loadCurrentL2?: Prisma.SortOrder
   loadCurrentL3?: Prisma.SortOrder
+  loadCurrentTHDL1?: Prisma.SortOrder
+  loadCurrentTHDL2?: Prisma.SortOrder
+  loadCurrentTHDL3?: Prisma.SortOrder
+  uncompS?: Prisma.SortOrder
+  uncompP?: Prisma.SortOrder
+  uncompQ?: Prisma.SortOrder
+  uncompH?: Prisma.SortOrder
+  compS?: Prisma.SortOrder
+  compP?: Prisma.SortOrder
+  compQ?: Prisma.SortOrder
+  compH?: Prisma.SortOrder
   tpf1?: Prisma.SortOrder
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
@@ -801,8 +1223,17 @@ export type DeviceSumOrderByAggregateInput = {
   gridCurrentTHDL3?: Prisma.SortOrder
 }
 
+export type DeviceCreatemoduleStatusInput = {
+  set: number[]
+}
+
 export type StringFieldUpdateOperationsInput = {
   set?: string
+}
+
+export type DeviceUpdatemoduleStatusInput = {
+  set?: number[]
+  push?: number | number[]
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -824,15 +1255,30 @@ export type DeviceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name?: boolean
   location?: boolean
   status?: boolean
+  moduleStatus?: boolean
   lastSeenAt?: boolean
   lastValue?: boolean
   lastIp?: boolean
+  vL1?: boolean
+  vL2?: boolean
+  vL3?: boolean
   gridCurrentL1?: boolean
   gridCurrentL2?: boolean
   gridCurrentL3?: boolean
   loadCurrentL1?: boolean
   loadCurrentL2?: boolean
   loadCurrentL3?: boolean
+  loadCurrentTHDL1?: boolean
+  loadCurrentTHDL2?: boolean
+  loadCurrentTHDL3?: boolean
+  uncompS?: boolean
+  uncompP?: boolean
+  uncompQ?: boolean
+  uncompH?: boolean
+  compS?: boolean
+  compP?: boolean
+  compQ?: boolean
+  compH?: boolean
   tpf1?: boolean
   tpf2?: boolean
   dpf1?: boolean
@@ -849,15 +1295,30 @@ export type DeviceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   name?: boolean
   location?: boolean
   status?: boolean
+  moduleStatus?: boolean
   lastSeenAt?: boolean
   lastValue?: boolean
   lastIp?: boolean
+  vL1?: boolean
+  vL2?: boolean
+  vL3?: boolean
   gridCurrentL1?: boolean
   gridCurrentL2?: boolean
   gridCurrentL3?: boolean
   loadCurrentL1?: boolean
   loadCurrentL2?: boolean
   loadCurrentL3?: boolean
+  loadCurrentTHDL1?: boolean
+  loadCurrentTHDL2?: boolean
+  loadCurrentTHDL3?: boolean
+  uncompS?: boolean
+  uncompP?: boolean
+  uncompQ?: boolean
+  uncompH?: boolean
+  compS?: boolean
+  compP?: boolean
+  compQ?: boolean
+  compH?: boolean
   tpf1?: boolean
   tpf2?: boolean
   dpf1?: boolean
@@ -874,15 +1335,30 @@ export type DeviceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   name?: boolean
   location?: boolean
   status?: boolean
+  moduleStatus?: boolean
   lastSeenAt?: boolean
   lastValue?: boolean
   lastIp?: boolean
+  vL1?: boolean
+  vL2?: boolean
+  vL3?: boolean
   gridCurrentL1?: boolean
   gridCurrentL2?: boolean
   gridCurrentL3?: boolean
   loadCurrentL1?: boolean
   loadCurrentL2?: boolean
   loadCurrentL3?: boolean
+  loadCurrentTHDL1?: boolean
+  loadCurrentTHDL2?: boolean
+  loadCurrentTHDL3?: boolean
+  uncompS?: boolean
+  uncompP?: boolean
+  uncompQ?: boolean
+  uncompH?: boolean
+  compS?: boolean
+  compP?: boolean
+  compQ?: boolean
+  compH?: boolean
   tpf1?: boolean
   tpf2?: boolean
   dpf1?: boolean
@@ -899,15 +1375,30 @@ export type DeviceSelectScalar = {
   name?: boolean
   location?: boolean
   status?: boolean
+  moduleStatus?: boolean
   lastSeenAt?: boolean
   lastValue?: boolean
   lastIp?: boolean
+  vL1?: boolean
+  vL2?: boolean
+  vL3?: boolean
   gridCurrentL1?: boolean
   gridCurrentL2?: boolean
   gridCurrentL3?: boolean
   loadCurrentL1?: boolean
   loadCurrentL2?: boolean
   loadCurrentL3?: boolean
+  loadCurrentTHDL1?: boolean
+  loadCurrentTHDL2?: boolean
+  loadCurrentTHDL3?: boolean
+  uncompS?: boolean
+  uncompP?: boolean
+  uncompQ?: boolean
+  uncompH?: boolean
+  compS?: boolean
+  compP?: boolean
+  compQ?: boolean
+  compH?: boolean
   tpf1?: boolean
   tpf2?: boolean
   dpf1?: boolean
@@ -919,7 +1410,7 @@ export type DeviceSelectScalar = {
   updatedAt?: boolean
 }
 
-export type DeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "location" | "status" | "lastSeenAt" | "lastValue" | "lastIp" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "createdAt" | "updatedAt", ExtArgs["result"]["device"]>
+export type DeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "location" | "status" | "moduleStatus" | "lastSeenAt" | "lastValue" | "lastIp" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "uncompS" | "uncompP" | "uncompQ" | "uncompH" | "compS" | "compP" | "compQ" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "createdAt" | "updatedAt", ExtArgs["result"]["device"]>
 
 export type $DevicePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Device"
@@ -929,15 +1420,30 @@ export type $DevicePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     name: string
     location: string
     status: string
+    moduleStatus: number[]
     lastSeenAt: Date
     lastValue: number
     lastIp: string
+    vL1: number
+    vL2: number
+    vL3: number
     gridCurrentL1: number
     gridCurrentL2: number
     gridCurrentL3: number
     loadCurrentL1: number
     loadCurrentL2: number
     loadCurrentL3: number
+    loadCurrentTHDL1: number
+    loadCurrentTHDL2: number
+    loadCurrentTHDL3: number
+    uncompS: number
+    uncompP: number
+    uncompQ: number
+    uncompH: number
+    compS: number
+    compP: number
+    compQ: number
+    compH: number
     tpf1: number
     tpf2: number
     dpf1: number
@@ -1374,15 +1880,30 @@ export interface DeviceFieldRefs {
   readonly name: Prisma.FieldRef<"Device", 'String'>
   readonly location: Prisma.FieldRef<"Device", 'String'>
   readonly status: Prisma.FieldRef<"Device", 'String'>
+  readonly moduleStatus: Prisma.FieldRef<"Device", 'Int[]'>
   readonly lastSeenAt: Prisma.FieldRef<"Device", 'DateTime'>
   readonly lastValue: Prisma.FieldRef<"Device", 'Float'>
   readonly lastIp: Prisma.FieldRef<"Device", 'String'>
+  readonly vL1: Prisma.FieldRef<"Device", 'Float'>
+  readonly vL2: Prisma.FieldRef<"Device", 'Float'>
+  readonly vL3: Prisma.FieldRef<"Device", 'Float'>
   readonly gridCurrentL1: Prisma.FieldRef<"Device", 'Float'>
   readonly gridCurrentL2: Prisma.FieldRef<"Device", 'Float'>
   readonly gridCurrentL3: Prisma.FieldRef<"Device", 'Float'>
   readonly loadCurrentL1: Prisma.FieldRef<"Device", 'Float'>
   readonly loadCurrentL2: Prisma.FieldRef<"Device", 'Float'>
   readonly loadCurrentL3: Prisma.FieldRef<"Device", 'Float'>
+  readonly loadCurrentTHDL1: Prisma.FieldRef<"Device", 'Float'>
+  readonly loadCurrentTHDL2: Prisma.FieldRef<"Device", 'Float'>
+  readonly loadCurrentTHDL3: Prisma.FieldRef<"Device", 'Float'>
+  readonly uncompS: Prisma.FieldRef<"Device", 'Float'>
+  readonly uncompP: Prisma.FieldRef<"Device", 'Float'>
+  readonly uncompQ: Prisma.FieldRef<"Device", 'Float'>
+  readonly uncompH: Prisma.FieldRef<"Device", 'Float'>
+  readonly compS: Prisma.FieldRef<"Device", 'Float'>
+  readonly compP: Prisma.FieldRef<"Device", 'Float'>
+  readonly compQ: Prisma.FieldRef<"Device", 'Float'>
+  readonly compH: Prisma.FieldRef<"Device", 'Float'>
   readonly tpf1: Prisma.FieldRef<"Device", 'Float'>
   readonly tpf2: Prisma.FieldRef<"Device", 'Float'>
   readonly dpf1: Prisma.FieldRef<"Device", 'Float'>

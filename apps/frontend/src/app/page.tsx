@@ -1,5 +1,48 @@
 import { fetchDevices } from "../lib/api";
-import { StatusCard } from "../components/StatusCard";
+import { DeviceSummaryCard } from "../components/DeviceSummaryCard";
+import { Device } from "../types/device";
+
+const toTimestamp = (value: string) => {
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const formatUpdated = (devices: Device[]) => {
+  const latest = devices
+    .map((device) => toTimestamp(device.lastSeenAt))
+    .reduce((max, value) => (value > max ? value : max), 0);
+  if (!latest) {
+    return "-";
+  }
+  return new Date(latest).toLocaleString();
+};
+
+const summarizeStatus = (devices: Device[]) => {
+  return devices.reduce(
+    (acc, device) => {
+      acc.total += 1;
+      if (device.status === "running") {
+        acc.ok += 1;
+      } else if (device.status === "fault") {
+        acc.fault += 1;
+      } else {
+        acc.check += 1;
+      }
+      return acc;
+    },
+    { total: 0, ok: 0, check: 0, fault: 0 },
+  );
+};
+
+const statusDotColor = (summary: ReturnType<typeof summarizeStatus>) => {
+  if (summary.fault > 0) {
+    return "#e74c3c";
+  }
+  if (summary.check > 0) {
+    return "#f1c40f";
+  }
+  return "#2ecc71";
+};
 
 export default async function HomePage() {
   const devices = await fetchDevices();
@@ -14,43 +57,53 @@ export default async function HomePage() {
 
   return (
     <main>
-      <section className="panel">
-        <h1>HMI Monitoring & Control</h1>
-        <p style={{ opacity: 0.75, marginTop: 8 }}>
-          Live view of HMI endpoints, signal routing, and device health.
-        </p>
-      </section>
-
       <section className="dashboard">
         {Object.entries(locations).map(([location, locationDevices]) => (
           <div key={location} className="panel location-panel">
             {(() => {
-              const counts = locationDevices.reduce(
-                (acc, device) => {
-                  acc[device.status] += 1;
-                  return acc;
-                },
-                { online: 0, warning: 0, offline: 0 },
-              );
+              const summary = summarizeStatus(locationDevices);
+              const representative = locationDevices[0];
               return (
                 <>
                   <div className="location-header">
-                    <div>
-                      <h2>{location}</h2>
+                    <div className="location-meta">
+                      <div className="location-title">
+                        <span
+                          className="location-dot"
+                          style={{ background: statusDotColor(summary) }}
+                        />
+                        <h2>{location}</h2>
+                      </div>
                       <p className="location-subtitle">
-                        {locationDevices.length} device
-                        {locationDevices.length === 1 ? "" : "s"}
+                        대표 장치: {representative?.id ?? "-"}
+                      </p>
+                      <p className="location-subtitle">
+                        마지막 업데이트: {formatUpdated(locationDevices)}
                       </p>
                     </div>
-                    <div className="location-badges">
-                      <span className="badge">ONLINE {counts.online}</span>
-                      <span className="badge">WARNING {counts.warning}</span>
-                      <span className="badge">OFFLINE {counts.offline}</span>
+                    <div className="summary-cards">
+                      <div className="summary-card">
+                        <span>합계</span>
+                        <strong>{summary.total}</strong>
+                      </div>
+                      <div className="summary-card summary-card-ok">
+                        <span>정상</span>
+                        <strong>{summary.ok}</strong>
+                      </div>
+                      <div className="summary-card summary-card-check">
+                        <span>점검 필요</span>
+                        <strong>{summary.check}</strong>
+                      </div>
+                      <div className="summary-card summary-card-fault">
+                        <span>고장</span>
+                        <strong>{summary.fault}</strong>
+                      </div>
                     </div>
                   </div>
-                  <div className="grid">
+                  <div className="location-divider" />
+                  <div className="device-grid">
                     {locationDevices.map((device) => (
-                      <StatusCard key={device.id} device={device} />
+                      <DeviceSummaryCard key={device.id} device={device} />
                     ))}
                   </div>
                 </>

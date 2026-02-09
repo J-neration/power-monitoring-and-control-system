@@ -10,3 +10,17 @@ export const fetchDevices = async (): Promise<Device[]> => {
   const data = (await response.json()) as { devices: Device[] };
   return data.devices;
 };
+
+export const fetchDevice = async (id: string): Promise<Device | null> => {
+  const response = await fetch(`${apiBase}/devices/${id}`, {
+    cache: "no-store",
+  });
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error("Failed to fetch device");
+  }
+  const data = (await response.json()) as { device: Device };
+  return data.device ?? null;
+};

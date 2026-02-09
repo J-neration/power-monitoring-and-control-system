@@ -59,6 +59,24 @@ main {
   gap: 12px;
 }
 
+.location-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.location-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.location-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+}
+
 .location-subtitle {
   opacity: 0.7;
   margin-top: 4px;
@@ -69,6 +87,240 @@ main {
   gap: 8px;
   flex-wrap: wrap;
 }
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(96px, 1fr));
+  gap: 12px;
+}
+
+.summary-card {
+  background: #f1f1f1;
+  color: #111827;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 96px;
+}
+
+.summary-card span {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.summary-card strong {
+  font-size: 28px;
+}
+
+.summary-card-ok {
+  background: #9be7a6;
+}
+
+.summary-card-check {
+  background: #e7eb95;
+}
+
+.summary-card-fault {
+  background: #f2a2a2;
+}
+
+.location-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin-top: 16px;
+}
+
+.device-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.device-card {
+  background: #f1f3f5;
+  color: #111827;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  max-width: 260px;
+  width: 100%;
+  min-height: 220px;
+}
+
+.device-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.device-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.device-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.device-id {
+  letter-spacing: 0.4px;
+}
+
+.device-name {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.device-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.device-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 16px;
+}
+
+.device-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.device-metric span {
+  color: #4b5563;
+  font-weight: 600;
+}
+
+.device-metric strong {
+  font-weight: 700;
+}
+
+.detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+
+.detail-back:hover {
+  opacity: 1;
+}
+
+.detail-subtitle {
+  opacity: 0.7;
+}
+
+.detail-content {
+  display: flex;
+  justify-content: center;
+}
+
+.detail-footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.detail-voltage {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-voltage strong {
+  font-size: 14px;
+  color: #f5f6f7;
+}
+
+.module-status {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.module-status-title {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.module-status-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.module-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.module-chip-running {
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.35);
+}
+
+.module-chip-standby {
+  color: #f1c40f;
+  border: 1px solid rgba(241, 196, 15, 0.35);
+}
+
+.module-chip-start {
+  color: #3498db;
+  border: 1px solid rgba(52, 152, 219, 0.35);
+}
+
+.module-chip-fault {
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.35);
+}
+
+.module-chip-offline {
+  color: #9aa4b2;
+  border: 1px solid rgba(154, 164, 178, 0.35);
+}
+
+.module-chip-unknown {
+  color: #cbd5f5;
+  border: 1px solid rgba(203, 213, 245, 0.35);
+}
+
+
 
 .grid {
   display: grid;
@@ -86,36 +338,40 @@ main {
   background: #222836;
 }
 
-.metrics-table {
-  width: 420px;
-  max-width: 100%;
-  margin-top: 16px;
-  border-collapse: collapse;
-  table-layout: fixed;
+.detail-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+  margin-top: 12px;
 }
 
-.metrics-cell {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 6px 8px;
+.detail-metrics-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
   font-size: 16px;
 }
 
-.metrics-label {
+.detail-metrics-table thead th {
+  font-weight: 700;
+  padding: 6px 4px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.detail-metrics-table tbody td {
+  padding: 8px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.detail-metrics-label {
   text-align: left;
   font-weight: 600;
-  opacity: 0.8;
-  white-space: nowrap;
-  width: 140px;
+  width: 50%;
 }
 
-.metrics-value {
+.detail-metrics-value {
   text-align: center;
-}
-
-.metrics-title {
-  text-align: center;
-  font-weight: 700;
-  letter-spacing: 0.2px;
+  font-weight: 600;
 }
 
 .metrics-chip {
@@ -142,35 +398,38 @@ main {
   border-color: rgba(231, 76, 60, 0.45);
 }
 
-.metrics-split {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 16px;
-}
-
 @media (max-width: 520px) {
-  .metrics-table {
-    width: 100%;
-    margin-top: 0;
-  }
-
-  .metrics-cell {
-    padding: 4px 6px;
-    font-size: 14px;
-  }
-
-  .metrics-label {
-    width: 92px;
-    white-space: normal;
-  }
-
   .metrics-chip {
     font-size: 12px;
   }
 
-  .metrics-split {
+  .detail-metrics {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 16px;
+  }
+
+  .detail-metrics-table {
+    font-size: 14px;
+  }
+
+  .detail-metrics-table thead th,
+  .detail-metrics-table tbody td {
+    padding: 6px 2px;
+  }
+
+  .detail-metrics-label {
+    width: 46%;
+  }
+
+  .summary-cards {
+    grid-template-columns: repeat(2, minmax(96px, 1fr));
+  }
+
+  .summary-card {
+    padding: 12px;
+  }
+
+  .summary-card strong {
+    font-size: 24px;
   }
 }
