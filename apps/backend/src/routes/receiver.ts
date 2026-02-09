@@ -4,12 +4,27 @@ import { deviceService } from "../services/deviceService.js";
 type ReceiverBody = {
   device_id?: string;
   value?: number | string;
+  moduleStatus?: number[];
+  vL1?: number | string;
+  vL2?: number | string;
+  vL3?: number | string;
   gridCurrentL1?: number | string;
   gridCurrentL2?: number | string;
   gridCurrentL3?: number | string;
   loadCurrentL1?: number | string;
   loadCurrentL2?: number | string;
   loadCurrentL3?: number | string;
+  loadCurrentTHDL1?: number | string;
+  loadCurrentTHDL2?: number | string;
+  loadCurrentTHDL3?: number | string;
+  uncompS?: number | string;
+  uncompP?: number | string;
+  uncompQ?: number | string;
+  uncompH?: number | string;
+  compS?: number | string;
+  compP?: number | string;
+  compQ?: number | string;
+  compH?: number | string;
   tpf1?: number | string;
   tpf2?: number | string;
   dpf1?: number | string;
@@ -47,6 +62,10 @@ export const receiverRoutes: FastifyPluginAsync = async (server) => {
     const device = await deviceService.upsertFromPayload({
       device_id: body.device_id,
       value: body.value,
+      moduleStatus: body.moduleStatus,
+      vL1: body.vL1,
+      vL2: body.vL2,
+      vL3: body.vL3,
       ip: request.ip,
       gridCurrentL1: body.gridCurrentL1,
       gridCurrentL2: body.gridCurrentL2,
@@ -54,6 +73,17 @@ export const receiverRoutes: FastifyPluginAsync = async (server) => {
       loadCurrentL1: body.loadCurrentL1,
       loadCurrentL2: body.loadCurrentL2,
       loadCurrentL3: body.loadCurrentL3,
+      loadCurrentTHDL1: body.loadCurrentTHDL1,
+      loadCurrentTHDL2: body.loadCurrentTHDL2,
+      loadCurrentTHDL3: body.loadCurrentTHDL3,
+      uncompS: body.uncompS,
+      uncompP: body.uncompP,
+      uncompQ: body.uncompQ,
+      uncompH: body.uncompH,
+      compS: body.compS,
+      compP: body.compP,
+      compQ: body.compQ,
+      compH: body.compH,
       tpf1: body.tpf1,
       tpf2: body.tpf2,
       dpf1: body.dpf1,
