@@ -6,25 +6,25 @@ import DashboardAccordion from "../components/DashboardAccordion";
 
 const now = () => new Date().toISOString();
 
-const mockDevices17: Device[] = [
-  { id: "site-seoul", name: "서울 테스트", location: "서울", status: "running", lastSeenAt: now(), numOfMods: 8, moduleStatus: Array(8).fill(2) },
-  { id: "site-busan", name: "부산 테스트", location: "부산", status: "running", lastSeenAt: now(), numOfMods: 8, moduleStatus: [2,2,2,2,2,2,2,2] },
-  { id: "site-daegu", name: "대구 테스트", location: "대구", status: "standby", lastSeenAt: now(), numOfMods: 8, moduleStatus: [2,2,2,1,1,2,2,2] },
-  { id: "site-incheon", name: "인천 테스트", location: "인천", status: "running", lastSeenAt: now(), numOfMods: 8, moduleStatus: [2,2,2,2,2,2,2,2] },
-  { id: "site-gwangju", name: "광주 테스트", location: "광주", status: "fault", lastSeenAt: now(), numOfMods: 8, moduleStatus: [2,2,3,2,2,2,2,2] },
-  { id: "site-daejeon", name: "대전 테스트", location: "대전", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
-  { id: "site-ulsan", name: "울산 테스트", location: "울산", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
-  { id: "site-sejong", name: "세종 테스트", location: "세종", status: "standby", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,1,1,2,2,2] },
-  { id: "site-gyeonggi", name: "경기도 테스트", location: "경기도", status: "running", lastSeenAt: now(), numOfMods: 10, moduleStatus: Array(10).fill(2) },
-  { id: "site-gangwon", name: "강원도 테스트", location: "강원도", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
-  { id: "site-chungbuk", name: "충청북도 테스트", location: "충청북도", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
-  { id: "site-chungnam", name: "충청남도 테스트", location: "충청남도", status: "standby", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,1,1,2,2] },
-  { id: "site-jeonbuk", name: "전북특별자치도 테스트", location: "전북특별자치도", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
-  { id: "site-jeonnam", name: "전라남도 테스트", location: "전라남도", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
-  { id: "site-gyeongbuk", name: "경상북도 테스트", location: "경상북도", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
-  { id: "site-gyeongnam", name: "경상남도 테스트", location: "경상남도", status: "fault", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,3,2,2,2,2] },
-  { id: "site-jeju", name: "제주특별자치도 테스트", location: "제주특별자치도", status: "running", lastSeenAt: now(), numOfMods: 4, moduleStatus: [2,2,2,2] },
-];
+// const mockDevices17: Device[] = [
+//   { id: "site-seoul", name: "서울 테스트", location: "서울", status: "running", lastSeenAt: now(), numOfMods: 8, moduleStatus: Array(8).fill(2) },
+//   { id: "site-busan", name: "부산 테스트", location: "부산", status: "running", lastSeenAt: now(), numOfMods: 8, moduleStatus: [2,2,2,2,2,2,2,2] },
+//   { id: "site-daegu", name: "대구 테스트", location: "대구", status: "standby", lastSeenAt: now(), numOfMods: 8, moduleStatus: [2,2,2,1,1,2,2,2] },
+//   { id: "site-incheon", name: "인천 테스트", location: "인천", status: "running", lastSeenAt: now(), numOfMods: 8, moduleStatus: [2,2,2,2,2,2,2,2] },
+//   { id: "site-gwangju", name: "광주 테스트", location: "광주", status: "fault", lastSeenAt: now(), numOfMods: 8, moduleStatus: [2,2,3,2,2,2,2,2] },
+//   { id: "site-daejeon", name: "대전 테스트", location: "대전", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
+//   { id: "site-ulsan", name: "울산 테스트", location: "울산", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
+//   { id: "site-sejong", name: "세종 테스트", location: "세종", status: "standby", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,1,1,2,2,2] },
+//   { id: "site-gyeonggi", name: "경기도 테스트", location: "경기도", status: "running", lastSeenAt: now(), numOfMods: 10, moduleStatus: Array(10).fill(2) },
+//   { id: "site-gangwon", name: "강원도 테스트", location: "강원도", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
+//   { id: "site-chungbuk", name: "충청북도 테스트", location: "충청북도", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
+//   { id: "site-chungnam", name: "충청남도 테스트", location: "충청남도", status: "standby", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,1,1,2,2] },
+//   { id: "site-jeonbuk", name: "전북특별자치도 테스트", location: "전북특별자치도", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
+//   { id: "site-jeonnam", name: "전라남도 테스트", location: "전라남도", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
+//   { id: "site-gyeongbuk", name: "경상북도 테스트", location: "경상북도", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
+//   { id: "site-gyeongnam", name: "경상남도 테스트", location: "경상남도", status: "fault", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,3,2,2,2,2] },
+//   { id: "site-jeju", name: "제주특별자치도 테스트", location: "제주특별자치도", status: "running", lastSeenAt: now(), numOfMods: 4, moduleStatus: [2,2,2,2] },
+// ];
 const knownRegions = [
   "서울",
   "부산",
@@ -46,23 +46,23 @@ const knownRegions = [
 ];
 
 const regionMarkers: Record<string, { top: string; left: string }> = {
-  서울: { top: "26%", left: "43%" },
-  부산: { top: "68%", left: "66%" },
-  대구: { top: "55%", left: "58%" },
-  인천: { top: "34%", left: "40%" },
-  광주: { top: "68%", left: "34%" },
-  대전: { top: "52%", left: "46%" },
-  울산: { top: "64%", left: "66%" },
-  세종: { top: "48%", left: "46%" },
-  경기도: { top: "23%", left: "38%" },
-  강원도: { top: "20%", left: "58%" },
-  충청북도: { top: "30%", left: "58%" },
-  충청남도: { top: "30%", left: "58%" },
-  전북특별자치도: { top: "50%", left: "38%" },
-  전라남도: { top: "60%", left: "35%" },
-  경상북도: { top: "50%", left: "58%" },
-  경상남도: { top: "50%", left: "58%" },
-  제주특별자치도: { top: "87%", left: "30%" },
+  경기도: { top: "26%", left: "41.5%" },
+  부산: { top: "68.5%", left: "79%" },
+  대구: { top: "55%", left: "68%" },
+  인천: { top: "24%", left: "28%" },
+  광주: { top: "68.5%", left: "33.5%" },
+  대전: { top: "48.5%", left: "47%" },
+  울산: { top: "62%", left: "82%" },
+  세종: { top: "42%", left: "47%" },
+  서울: { top: "21.7%", left: "36.3%" },
+  강원도: { top: "19.7%", left: "68%" },
+  충청북도: { top: "33%", left: "57.5%" },
+  충청남도: { top: "42%", left: "28%" },
+  전북특별자치도: { top: "55%", left: "33.4%" },
+  전라남도: { top: "75%", left: "31%" },
+  경상북도: { top: "44%", left: "71%" },
+  경상남도: { top: "64%", left: "65.5%" },
+  제주특별자치도: { top: "96.5%", left: "25.2%" },
 };
 type HomePageProps = {
   searchParams?: { region?: string };
@@ -159,8 +159,8 @@ const summarizeStatus = (devices: Device[]) => {
 
 
 export default async function HomePage({ searchParams }: HomePageProps) {
-  // const devices = await fetchDevices();
-  const devices = mockDevices17;
+  const devices = await fetchDevices();
+  // const devices = mockDevices17;
   const regions = devices.reduce<Record<string, typeof devices>>(
     (acc, device) => {
       const key = extractRegion(device.location);

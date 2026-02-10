@@ -107,7 +107,7 @@ main {
 }
 
 .map-marker:hover{
-  transform: translate(-50%, -50%) scale(1.12);
+  transform: translate(-50%, -50%) scale(1.6);
 }
 /* running → 초록 (기존 유지) */
 .map-marker.running{
