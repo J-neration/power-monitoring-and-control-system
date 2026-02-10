@@ -5,65 +5,44 @@ export type DeviceRegistryEntry = {
   name: string;
   location: string;
   status?: DeviceStatus;
+  capacity?: number;
 };
 
 export const deviceRegistry: DeviceRegistryEntry[] = [
   {
-    id: "HMI-1",
-    name: "HMI Matrix A",
-    location: "Rack 1",
-    status: "online",
-  },
-  {
-    id: "HMI-2",
-    name: "Capture Node 3",
-    location: "Studio 2",
-    status: "warning",
-  },
-  {
-    id: "HMI-3",
-    name: "Control Room A",
-    location: "Rack 1",
-    status: "online",
-  },
-  {
-    id: "HMI-4",
-    name: "Capture Node 7",
-    location: "Studio 2",
-    status: "offline",
-  },
-  {
-    id: "HMI-5",
-    name: "Power Gateway 1",
-    location: "Rack 1",
-    status: "online",
-  },
-  {
-    id: "HMI-6",
-    name: "Power Gateway 2",
-    location: "Rack 1",
-    status: "online",
-  },
-  {
-    id: "HMI-7",
-    name: "Panel Controller 1",
-    location: "Rack 1",
-    status: "warning",
-  },
-  {
-    id: "HMI-8",
-    name: "Panel Controller 2",
-    location: "Rack 1",
-    status: "offline",
-  },
-  {
     id: "PSVG-RNDTEST1",
-    name: "R&D Test Unit",
-    location: "Prime Solution",
+    name: "프라임 솔루션 ",
+    location: "경기도 안양시 동안구 시민대로",
+    capacity: 200,
   },
   {
     id: "PSVG-RNDTEST2",
-    name: "R&D Test Unit",
-    location: "Prime Solution",
+    name: "평촌 스마트베이이",
+    location: "경기도 안양시 벌말로 232",
+    capacity: 200,
+  },
+  {
+    id: "PSVG-RNDTEST3",
+    name: "부산 시청",
+    location: "부산광역시 연제구 중앙대로 1001 (부산시청)",
+    capacity: 150,
+  },
+  {
+    id: "PSVG-RNDTEST4",
+    name: "서울 시청",
+    location: "서울특별시 중구 세종대로 110 (서울시청)",
+    capacity: 150,
+  },
+  {
+    id: "PSVG-RNDTEST5",
+    name: "군산 시청",
+    location: "전북특별자치도 군산시 시청로17 (군산시청)",
+    capacity: 200,
+  },
+  {
+    id: "PSVG-RNDTEST6",
+    name: "제주특별자치도청",
+    location: "제주특별자치도 제주시 특별자치도, 문연로 6 (제주도청)",
+    capacity: 50,
   },
 ];

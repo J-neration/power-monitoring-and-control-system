@@ -13,6 +13,8 @@ model Device {
   location   String
   status     String   @default("offline")
   moduleStatus Int[]  @default([])
+  numOfMods  Int     @default(0)
+  capacity  Float   @default(0)
   lastSeenAt DateTime @default(now())
   lastValue  Float    @default(0)
   lastIp     String   @default("unknown")

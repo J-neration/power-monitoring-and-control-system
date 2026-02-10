@@ -86,6 +86,7 @@ export const deviceService = {
     device_id?: string;
     value?: number | string;
     moduleStatus?: number[];
+    numOfMods?: number | string;
     ip?: string;
     vL1?: number | string;
     vL2?: number | string;
@@ -123,6 +124,8 @@ export const deviceService = {
     const registry = getRegistryEntry(id);
     const lastValue = toNumber(payload.value);
     const moduleStatus = toStatusList(payload.moduleStatus);
+    const numOfMods = toNumber(payload.numOfMods);
+    const capacity = toNumber(registry?.capacity);
     const status =
       moduleStatus && moduleStatus.length > 0
         ? toStatus(moduleStatus[0])
@@ -161,9 +164,11 @@ export const deviceService = {
         status: status ?? "running",
         lastSeenAt: new Date(),
         ...(registry ? { name: registry.name, location: registry.location } : {}),
+        ...(capacity !== undefined ? { capacity } : {}),
         ...(payload.ip ? { lastIp: payload.ip } : {}),
         ...(lastValue !== undefined ? { lastValue } : {}),
         ...(moduleStatus !== undefined ? { moduleStatus } : {}),
+        ...(numOfMods !== undefined ? { numOfMods: Math.trunc(numOfMods) } : {}),
         ...(vL1 !== undefined ? { vL1 } : {}),
         ...(vL2 !== undefined ? { vL2 } : {}),
         ...(vL3 !== undefined ? { vL3 } : {}),
@@ -198,9 +203,11 @@ export const deviceService = {
         location: registry?.location ?? "Unknown",
         status: status ?? "running",
         lastSeenAt: new Date(),
+        ...(capacity !== undefined ? { capacity } : {}),
         ...(payload.ip ? { lastIp: payload.ip } : {}),
         ...(lastValue !== undefined ? { lastValue } : {}),
         ...(moduleStatus !== undefined ? { moduleStatus } : {}),
+        ...(numOfMods !== undefined ? { numOfMods: Math.trunc(numOfMods) } : {}),
         ...(vL1 !== undefined ? { vL1 } : {}),
         ...(vL2 !== undefined ? { vL2 } : {}),
         ...(vL3 !== undefined ? { vL3 } : {}),

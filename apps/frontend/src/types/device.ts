@@ -14,6 +14,8 @@ export type Device = {
   lastValue?: number | string;
   lastIp?: string;
   moduleStatus?: number[];
+  numOfMods?: number | string;
+  capacity?: number | string;
   vL1?: number | string;
   vL2?: number | string;
   vL3?: number | string;
