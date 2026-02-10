@@ -20,7 +20,7 @@ const config: runtime.GetPrismaClientConfig = {
   "clientVersion": "7.3.0",
   "engineVersion": "9d6ad21cbbceab97458517b147a6a09ff43aa735",
   "activeProvider": "postgresql",
-  "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"./generated/client\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel Device {\n  id               String   @id @default(cuid())\n  name             String\n  location         String\n  status           String   @default(\"offline\")\n  moduleStatus     Int[]    @default([])\n  numOfMods        Int      @default(0)\n  capacity         Float    @default(0)\n  lastSeenAt       DateTime @default(now())\n  lastValue        Float    @default(0)\n  lastIp           String   @default(\"unknown\")\n  vL1              Float    @default(0)\n  vL2              Float    @default(0)\n  vL3              Float    @default(0)\n  gridCurrentL1    Float    @default(0)\n  gridCurrentL2    Float    @default(0)\n  gridCurrentL3    Float    @default(0)\n  loadCurrentL1    Float    @default(0)\n  loadCurrentL2    Float    @default(0)\n  loadCurrentL3    Float    @default(0)\n  loadCurrentTHDL1 Float    @default(0)\n  loadCurrentTHDL2 Float    @default(0)\n  loadCurrentTHDL3 Float    @default(0)\n  uncompS          Float    @default(0)\n  uncompP          Float    @default(0)\n  uncompQ          Float    @default(0)\n  uncompH          Float    @default(0)\n  compS            Float    @default(0)\n  compP            Float    @default(0)\n  compQ            Float    @default(0)\n  compH            Float    @default(0)\n  tpf1             Float    @default(0)\n  tpf2             Float    @default(0)\n  dpf1             Float    @default(0)\n  dpf2             Float    @default(0)\n  gridCurrentTHDL1 Float    @default(0)\n  gridCurrentTHDL2 Float    @default(0)\n  gridCurrentTHDL3 Float    @default(0)\n  createdAt        DateTime @default(now())\n  updatedAt        DateTime @updatedAt\n}\n",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"./generated/client\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\n/**\n * =========================\n * 1) Site (고객사/현장)\n * =========================\n */\nmodel Site {\n  id      String @id // siteId (slug) e.g. \"prime-solution\"\n  name    String\n  region  String\n  address String\n\n  installations Installation[]\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n}\n\n/**\n * =========================\n * 2) Installation (설치지점)\n * =========================\n */\nmodel Installation {\n  id       String @id // device_id (PSVG-RNDTESTx)\n  siteId   String\n  label    String // 변전실 / 102동 / 전기실\n  capacity Float? // 설치지점 용량 (필요 없으면 빼도 됨)\n\n  site      Site    @relation(fields: [siteId], references: [id], onDelete: Cascade)\n  telemetry Device? // 최신 텔레메트리 (1:1)\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  @@index([siteId])\n}\n\n/**\n * =========================\n * 3) Device (최신 텔레메트리)\n * =========================\n */\nmodel Device {\n  installationId String @id // = device_id, Installation.id와 동일\n  status         String @default(\"offline\")\n\n  moduleStatus Int[] @default([])\n  numOfMods    Int   @default(0)\n\n  lastSeenAt DateTime @default(now())\n  lastValue  Float?\n  lastIp     String?  @default(\"unknown\")\n\n  vL1              Float?\n  vL2              Float?\n  vL3              Float?\n  gridCurrentL1    Float?\n  gridCurrentL2    Float?\n  gridCurrentL3    Float?\n  loadCurrentL1    Float?\n  loadCurrentL2    Float?\n  loadCurrentL3    Float?\n  loadCurrentTHDL1 Float?\n  loadCurrentTHDL2 Float?\n  loadCurrentTHDL3 Float?\n\n  uncompS Float?\n  uncompP Float?\n  uncompQ Float?\n  uncompH Float?\n  compS   Float?\n  compP   Float?\n  compQ   Float?\n  compH   Float?\n\n  tpf1 Float?\n  tpf2 Float?\n  dpf1 Float?\n  dpf2 Float?\n\n  gridCurrentTHDL1 Float?\n  gridCurrentTHDL2 Float?\n  gridCurrentTHDL3 Float?\n\n  installation Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n}\n",
   "runtimeDataModel": {
     "models": {},
     "enums": {},
@@ -28,7 +28,7 @@ const config: runtime.GetPrismaClientConfig = {
   }
 }
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"Device\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"moduleStatus\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"numOfMods\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"capacity\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"lastSeenAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"lastValue\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"lastIp\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"vL1\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"vL2\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"vL3\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"gridCurrentL1\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"gridCurrentL2\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"gridCurrentL3\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"loadCurrentL1\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"loadCurrentL2\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"loadCurrentL3\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"loadCurrentTHDL1\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"loadCurrentTHDL2\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"loadCurrentTHDL3\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"uncompS\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"uncompP\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"uncompQ\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"uncompH\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"compS\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"compP\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"compQ\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"compH\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"tpf1\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"tpf2\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"dpf1\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"dpf2\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"gridCurrentTHDL1\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"gridCurrentTHDL2\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"gridCurrentTHDL3\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Site\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"region\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"address\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"installations\",\"kind\":\"object\",\"type\":\"Installation\",\"relationName\":\"InstallationToSite\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Installation\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"siteId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"label\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"capacity\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"site\",\"kind\":\"object\",\"type\":\"Site\",\"relationName\":\"InstallationToSite\"},{\"name\":\"telemetry\",\"kind\":\"object\",\"type\":\"Device\",\"relationName\":\"DeviceToInstallation\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Device\":{\"fields\":[{\"name\":\"installationId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"moduleStatus\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"numOfMods\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"lastSeenAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"lastValue\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"lastIp\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"vL1\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"vL2\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"vL3\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"gridCurrentL1\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"gridCurrentL2\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"gridCurrentL3\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"loadCurrentL1\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"loadCurrentL2\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"loadCurrentL3\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"loadCurrentTHDL1\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"loadCurrentTHDL2\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"loadCurrentTHDL3\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"uncompS\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"uncompP\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"uncompQ\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"uncompH\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"compS\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"compP\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"compQ\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"compH\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"tpf1\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"tpf2\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"dpf1\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"dpf2\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"gridCurrentTHDL1\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"gridCurrentTHDL2\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"gridCurrentTHDL3\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"installation\",\"kind\":\"object\",\"type\":\"Installation\",\"relationName\":\"DeviceToInstallation\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 
 async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Module> {
   const { Buffer } = await import('node:buffer')
@@ -60,8 +60,8 @@ export interface PrismaClientConstructor {
    * @example
    * ```
    * const prisma = new PrismaClient()
-   * // Fetch zero or more Devices
-   * const devices = await prisma.device.findMany()
+   * // Fetch zero or more Sites
+   * const sites = await prisma.site.findMany()
    * ```
    * 
    * Read more in our [docs](https://pris.ly/d/client).
@@ -82,8 +82,8 @@ export interface PrismaClientConstructor {
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more Devices
- * const devices = await prisma.device.findMany()
+ * // Fetch zero or more Sites
+ * const sites = await prisma.site.findMany()
  * ```
  * 
  * Read more in our [docs](https://pris.ly/d/client).
@@ -177,6 +177,26 @@ export interface PrismaClient<
   }>>
 
       /**
+   * `prisma.site`: Exposes CRUD operations for the **Site** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Sites
+    * const sites = await prisma.site.findMany()
+    * ```
+    */
+  get site(): Prisma.SiteDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.installation`: Exposes CRUD operations for the **Installation** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Installations
+    * const installations = await prisma.installation.findMany()
+    * ```
+    */
+  get installation(): Prisma.InstallationDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
    * `prisma.device`: Exposes CRUD operations for the **Device** model.
     * Example usage:
     * ```ts

@@ -8,5 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
+export type * from './models/Site.js'
+export type * from './models/Installation.js'
 export type * from './models/Device.js'
 export type * from './commonInputTypes.js'

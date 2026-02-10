@@ -384,6 +384,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
+  Site: 'Site',
+  Installation: 'Installation',
   Device: 'Device'
 } as const
 
@@ -400,10 +402,158 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "device"
+    modelProps: "site" | "installation" | "device"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
+    Site: {
+      payload: Prisma.$SitePayload<ExtArgs>
+      fields: Prisma.SiteFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SiteFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SitePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SiteFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SitePayload>
+        }
+        findFirst: {
+          args: Prisma.SiteFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SitePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SiteFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SitePayload>
+        }
+        findMany: {
+          args: Prisma.SiteFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SitePayload>[]
+        }
+        create: {
+          args: Prisma.SiteCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SitePayload>
+        }
+        createMany: {
+          args: Prisma.SiteCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SiteCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SitePayload>[]
+        }
+        delete: {
+          args: Prisma.SiteDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SitePayload>
+        }
+        update: {
+          args: Prisma.SiteUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SitePayload>
+        }
+        deleteMany: {
+          args: Prisma.SiteDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SiteUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SiteUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SitePayload>[]
+        }
+        upsert: {
+          args: Prisma.SiteUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SitePayload>
+        }
+        aggregate: {
+          args: Prisma.SiteAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSite>
+        }
+        groupBy: {
+          args: Prisma.SiteGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SiteGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SiteCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SiteCountAggregateOutputType> | number
+        }
+      }
+    }
+    Installation: {
+      payload: Prisma.$InstallationPayload<ExtArgs>
+      fields: Prisma.InstallationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.InstallationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.InstallationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationPayload>
+        }
+        findFirst: {
+          args: Prisma.InstallationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.InstallationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationPayload>
+        }
+        findMany: {
+          args: Prisma.InstallationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationPayload>[]
+        }
+        create: {
+          args: Prisma.InstallationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationPayload>
+        }
+        createMany: {
+          args: Prisma.InstallationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.InstallationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationPayload>[]
+        }
+        delete: {
+          args: Prisma.InstallationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationPayload>
+        }
+        update: {
+          args: Prisma.InstallationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationPayload>
+        }
+        deleteMany: {
+          args: Prisma.InstallationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.InstallationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.InstallationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationPayload>[]
+        }
+        upsert: {
+          args: Prisma.InstallationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationPayload>
+        }
+        aggregate: {
+          args: Prisma.InstallationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateInstallation>
+        }
+        groupBy: {
+          args: Prisma.InstallationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InstallationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.InstallationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InstallationCountAggregateOutputType> | number
+        }
+      }
+    }
     Device: {
       payload: Prisma.$DevicePayload<ExtArgs>
       fields: Prisma.DeviceFieldRefs
@@ -517,14 +667,35 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-export const DeviceScalarFieldEnum = {
+export const SiteScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  location: 'location',
+  region: 'region',
+  address: 'address',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SiteScalarFieldEnum = (typeof SiteScalarFieldEnum)[keyof typeof SiteScalarFieldEnum]
+
+
+export const InstallationScalarFieldEnum = {
+  id: 'id',
+  siteId: 'siteId',
+  label: 'label',
+  capacity: 'capacity',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InstallationScalarFieldEnum = (typeof InstallationScalarFieldEnum)[keyof typeof InstallationScalarFieldEnum]
+
+
+export const DeviceScalarFieldEnum = {
+  installationId: 'installationId',
   status: 'status',
   moduleStatus: 'moduleStatus',
   numOfMods: 'numOfMods',
-  capacity: 'capacity',
   lastSeenAt: 'lastSeenAt',
   lastValue: 'lastValue',
   lastIp: 'lastIp',
@@ -578,6 +749,14 @@ export const QueryMode = {
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
 
 
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
 
 /**
  * Field references
@@ -599,16 +778,16 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
 
 
 /**
- * Reference to a field of type 'Int[]'
+ * Reference to a field of type 'DateTime'
  */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
     
 
 
 /**
- * Reference to a field of type 'Int'
+ * Reference to a field of type 'DateTime[]'
  */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
     
 
 
@@ -627,16 +806,16 @@ export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMode
 
 
 /**
- * Reference to a field of type 'DateTime'
+ * Reference to a field of type 'Int[]'
  */
-export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 
 /**
- * Reference to a field of type 'DateTime[]'
+ * Reference to a field of type 'Int'
  */
-export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
     
 
 /**
@@ -734,6 +913,8 @@ export type PrismaClientOptions = ({
   comments?: runtime.SqlCommenterPlugin[]
 }
 export type GlobalOmitConfig = {
+  site?: Prisma.SiteOmit
+  installation?: Prisma.InstallationOmit
   device?: Prisma.DeviceOmit
 }
 

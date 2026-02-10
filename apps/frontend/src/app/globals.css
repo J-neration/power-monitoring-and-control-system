@@ -54,12 +54,10 @@ main {
   justify-content: center;
   
 }
-.map-panel.panel{
-  background-color: #000B39;
-}
+
 .map-canvas{
   position: relative;
-  background-color: #000B39;
+  /* background-color: #000B39; */
   /* 좌표계 고정 */
   aspect-ratio: 3 / 4;
 
@@ -213,10 +211,10 @@ main {
 .region-device-top {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  /* align-items: center; */
   justify-content: space-between;
   gap: 10px;
-  font-size: 13px;
+  font-size: 14px;
   opacity: 0.8;
 }
 
@@ -300,7 +298,7 @@ main {
 }
 
 .panel {
-  background: #151a23;
+  background: #16171D;
   /* border: 1px solid #252b3a; */
   /* border-radius: 16px; */
   padding: 20px;

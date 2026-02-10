@@ -29,8 +29,8 @@ export * from "./enums.js"
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more Devices
- * const devices = await prisma.device.findMany()
+ * // Fetch zero or more Sites
+ * const sites = await prisma.site.findMany()
  * ```
  * 
  * Read more in our [docs](https://pris.ly/d/client).
@@ -40,7 +40,23 @@ export type PrismaClient<LogOpts extends Prisma.LogLevel = never, OmitOpts exten
 export { Prisma }
 
 /**
+ * Model Site
+ * =========================
+ *  * 1) Site (고객사/현장)
+ *  * =========================
+ */
+export type Site = Prisma.SiteModel
+/**
+ * Model Installation
+ * =========================
+ *  * 2) Installation (설치지점)
+ *  * =========================
+ */
+export type Installation = Prisma.InstallationModel
+/**
  * Model Device
- * 
+ * =========================
+ *  * 3) Device (최신 텔레메트리)
+ *  * =========================
  */
 export type Device = Prisma.DeviceModel

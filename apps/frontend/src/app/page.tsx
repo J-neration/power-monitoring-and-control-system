@@ -89,21 +89,8 @@ const toInt = (value?: number | string) => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
-const toStatusLabel = (status?: Device["status"]) => {
-  switch (status) {
-    case "running":
-      return "RUNNING";
-    case "standby":
-      return "STANDBY";
-    case "start":
-      return "START";
-    case "fault":
-      return "FAULT";
-    case "offline":
-    default:
-      return "OFFLINE";
-  }
-};
+
+
 type RegionStatus =
   | "running"
   | "standby"
@@ -126,13 +113,6 @@ const getRegionStatus = (
   return "running";
 };
 
-const formatCapacity = (value?: number | string) => {
-  const parsed = toInt(value);
-  if (!parsed || parsed <= 0) {
-    return "-";
-  }
-  return `${parsed}A`;
-};
 
 const summarizeStatus = (devices: Device[]) => {
   return devices.reduce(
