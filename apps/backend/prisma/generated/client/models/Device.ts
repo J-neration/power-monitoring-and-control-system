@@ -786,7 +786,7 @@ export type DeviceCreateInput = {
   gridCurrentTHDL3?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  installation: Prisma.InstallationCreateNestedOneWithoutTelemetryInput
+  installation: Prisma.InstallationCreateNestedOneWithoutDeviceInput
 }
 
 export type DeviceUncheckedCreateInput = {
@@ -864,7 +864,7 @@ export type DeviceUpdateInput = {
   gridCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  installation?: Prisma.InstallationUpdateOneRequiredWithoutTelemetryNestedInput
+  installation?: Prisma.InstallationUpdateOneRequiredWithoutDeviceNestedInput
 }
 
 export type DeviceUncheckedUpdateInput = {

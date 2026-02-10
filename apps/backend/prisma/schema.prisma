@@ -32,7 +32,7 @@ model Installation {
   capacity  Float?                               // 설치지점 용량 (필요 없으면 빼도 됨)
 
   site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  telemetry Device?                               // 최신 텔레메트리 (1:1)
+  device Device?                               // 최신 텔레메트리 (1:1)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
