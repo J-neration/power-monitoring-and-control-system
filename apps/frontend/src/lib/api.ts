@@ -1,18 +1,52 @@
 import { Device } from "../types/device";
+import type { DeviceWithInstallation, Site } from "../types/site";
 
 const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
 
-export const fetchDevices = async (): Promise<Device[]> => {
+
+export const fetchDevicesRaw = async (): Promise<DeviceWithInstallation[]> => {
   const response = await fetch(`${apiBase}/devices`, { cache: "no-store" });
   if (!response.ok) {
     throw new Error("Failed to fetch devices");
   }
-  const data = (await response.json()) as { devices: Device[] };
+  const data = (await response.json()) as { devices: DeviceWithInstallation[] };
   return data.devices;
 };
 
-export const fetchDevice = async (id: string): Promise<Device | null> => {
-  const response = await fetch(`${apiBase}/devices/${id}`, {
+export const fetchSites = async (): Promise<Site[]> => {
+  const devices = await fetchDevicesRaw();
+
+  // Group by site
+  const siteMap = new Map<string, Site>();
+
+  for (const d of devices) {
+    const site = d.installation.site;
+    const siteId = site.id;
+
+    const current = siteMap.get(siteId) ?? {
+      id: site.id,
+      name: site.name,
+      region: site.region,
+      address: site.address,
+      installations: [],
+    };
+
+    // Each device corresponds to one installationId
+    current.installations.push({
+      id: d.installation.id,
+      label: d.installation.label,
+      capacity: d.installation.capacity ?? null,
+      device: d, // OK: DeviceWithInstallation extends Device
+    });
+
+    siteMap.set(siteId, current);
+  }
+
+  return Array.from(siteMap.values());
+};
+
+export const fetchDevice = async (installationId: string) => {
+  const response = await fetch(`${apiBase}/devices/${installationId}`, {
     cache: "no-store",
   });
   if (response.status === 404) {
@@ -21,6 +55,6 @@ export const fetchDevice = async (id: string): Promise<Device | null> => {
   if (!response.ok) {
     throw new Error("Failed to fetch device");
   }
-  const data = (await response.json()) as { device: Device };
+  const data = (await response.json()) as { device: DeviceWithInstallation };
   return data.device ?? null;
 };

@@ -2,38 +2,35 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef } from "react";
-import { Device } from "../types/device";
+import type { Site } from "../types/site";
+import type { DeviceStatus } from "../types/device";
 
-const toInt = (value?: number | string) => {
-  if (value === undefined || value === null) return undefined;
-  if (typeof value === "number") return Number.isFinite(value) ? Math.trunc(value) : undefined;
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) ? parsed : undefined;
+type Props = {
+  regionEntries: [string, Site[]][];
+  selectedRegion?: string;
 };
 
-const summarizeStatus = (devices: Device[]) => {
-  return devices.reduce(
-    (acc, device) => {
-      const totalMods =
-        toInt(device.numOfMods) ??
-        (device.moduleStatus ? device.moduleStatus.length : 0);
-      const list = device.moduleStatus ?? [];
-      const running = list.filter((code) => code === 2).length;
-      const fault = list.filter((code) => code === 3).length;
-      const check = list.filter((code) => code !== 2 && code !== 3).length;
-      const missing = Math.max(0, totalMods - list.length);
-
-      acc.total += totalMods;
-      acc.ok += running;
-      acc.fault += fault;
-      acc.check += check + missing;
-      return acc;
-    },
-    { total: 0, ok: 0, check: 0, fault: 0 },
-  );
+const statusPriority: Record<DeviceStatus, number> = {
+  fault: 4,
+  offline: 3,
+  start: 2,
+  standby: 2,
+  running: 1,
 };
 
-const toStatusLabel = (status?: Device["status"]) => {
+const deriveSiteStatus = (site: Site): DeviceStatus => {
+  // 설치된 installation들의 device.status 중 가장 “심각한” 상태를 사이트 상태로
+  let worst: DeviceStatus = "running";
+  for (const inst of site.installations) {
+    const s = inst.device?.status ?? "offline";
+    if (statusPriority[s] > statusPriority[worst]) {
+      worst = s;
+    }
+  }
+  return worst;
+};
+
+const toStatusLabel = (status: DeviceStatus) => {
   switch (status) {
     case "running":
       return "RUNNING";
@@ -49,7 +46,7 @@ const toStatusLabel = (status?: Device["status"]) => {
   }
 };
 
-const toStatusClass = (status?: Device["status"]) => {
+const toStatusClass = (status: DeviceStatus) => {
   switch (status) {
     case "running":
       return "region-device-status running";
@@ -64,21 +61,9 @@ const toStatusClass = (status?: Device["status"]) => {
   }
 };
 
-const formatCapacity = (value?: number | string) => {
-  const parsed = toInt(value);
-  if (!parsed || parsed <= 0) return "-";
-  return `${parsed}A`;
-};
-
-type Props = {
-  regionEntries: [string, Device[]][];
-  selectedRegion?: string;
-};
-
 export default function DashboardAccordion({ regionEntries, selectedRegion }: Props) {
   const refs = useRef<Record<string, HTMLDetailsElement | null>>({});
 
-  // ✅ 열릴 region 결정: 쿼리가 유효하면 그걸, 아니면 첫 번째 region
   const openRegion = useMemo(() => {
     if (selectedRegion && regionEntries.some(([r]) => r === selectedRegion)) {
       return selectedRegion;
@@ -86,7 +71,6 @@ export default function DashboardAccordion({ regionEntries, selectedRegion }: Pr
     return regionEntries[0]?.[0] ?? "기타";
   }, [selectedRegion, regionEntries]);
 
-  // ✅ 선택된 region 아코디언으로 스크롤
   useEffect(() => {
     const el = refs.current[openRegion];
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -94,8 +78,7 @@ export default function DashboardAccordion({ regionEntries, selectedRegion }: Pr
 
   return (
     <div className="region-accordion-list">
-      {regionEntries.map(([region, regionDevices]) => {
-        const regionSummary = summarizeStatus(regionDevices);
+      {regionEntries.map(([region, regionSites]) => {
         const isOpen = region === openRegion;
 
         return (
@@ -111,8 +94,7 @@ export default function DashboardAccordion({ regionEntries, selectedRegion }: Pr
               <strong className="region-title">{region}</strong>
 
               <span className="region-accordion-counts">
-                합계 {regionSummary.total} · 정상 {regionSummary.ok} · 점검{" "}
-                {regionSummary.check} · 고장 {regionSummary.fault}
+                사이트 {regionSites.length}개
               </span>
 
               <span className="region-accordion-chevron" aria-hidden="true">
@@ -122,29 +104,33 @@ export default function DashboardAccordion({ regionEntries, selectedRegion }: Pr
 
             <div className="region-accordion-content">
               <div className="region-device-cards">
-                {regionDevices
+                {regionSites
                   .slice()
-                  .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "", "ko"))
-                  .map((device) => (
-                    <Link
-                      key={device.id}
-                      className="region-device-card"
-                      href={`/devices/${encodeURIComponent(device.id)}`}
-                    >
-                      <div className="region-device-top">
-                        <strong className="region-title">{device.name ?? "-"}</strong>
-                      </div>
+                  .sort((a, b) => a.name.localeCompare(b.name, "ko"))
+                  .map((site) => {
+                    const siteStatus = deriveSiteStatus(site);
+                    return (
+                      <Link
+                        key={site.id}
+                        className="region-device-card"
+                        href={`/sites/${encodeURIComponent(site.id)}`}
+                      >
+                        <div className="region-device-top">
+                          <strong className="region-title">{site.name}</strong>
+                          <span className="region-device-menu">{site.address}</span>
+                        </div>
 
-                      <div className="region-device-bottom">
-                        <strong className="region-device-capacity">
-                          {formatCapacity(device.capacity)}
-                        </strong>
-                        <span className={toStatusClass(device.status)}>
-                          {toStatusLabel(device.status)}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
+                        <div className="region-device-bottom">
+                          <strong className="region-device-capacity">
+                            {site.installations.length}개 설치
+                          </strong>
+                          <span className={toStatusClass(siteStatus)}>
+                            {toStatusLabel(siteStatus)}
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
               </div>
             </div>
           </details>

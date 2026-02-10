@@ -1,30 +1,8 @@
 import Link from "next/link";
-import { fetchDevices } from "../lib/api";
-import { Device } from "../types/device";
+import { fetchSites } from "../lib/api";
+import type { Site } from "../types/site";
 import DashboardAccordion from "../components/DashboardAccordion";
 
-
-const now = () => new Date().toISOString();
-
-// const mockDevices17: Device[] = [
-//   { id: "site-seoul", name: "서울 테스트", location: "서울", status: "running", lastSeenAt: now(), numOfMods: 8, moduleStatus: Array(8).fill(2) },
-//   { id: "site-busan", name: "부산 테스트", location: "부산", status: "running", lastSeenAt: now(), numOfMods: 8, moduleStatus: [2,2,2,2,2,2,2,2] },
-//   { id: "site-daegu", name: "대구 테스트", location: "대구", status: "standby", lastSeenAt: now(), numOfMods: 8, moduleStatus: [2,2,2,1,1,2,2,2] },
-//   { id: "site-incheon", name: "인천 테스트", location: "인천", status: "running", lastSeenAt: now(), numOfMods: 8, moduleStatus: [2,2,2,2,2,2,2,2] },
-//   { id: "site-gwangju", name: "광주 테스트", location: "광주", status: "fault", lastSeenAt: now(), numOfMods: 8, moduleStatus: [2,2,3,2,2,2,2,2] },
-//   { id: "site-daejeon", name: "대전 테스트", location: "대전", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
-//   { id: "site-ulsan", name: "울산 테스트", location: "울산", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
-//   { id: "site-sejong", name: "세종 테스트", location: "세종", status: "standby", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,1,1,2,2,2] },
-//   { id: "site-gyeonggi", name: "경기도 테스트", location: "경기도", status: "running", lastSeenAt: now(), numOfMods: 10, moduleStatus: Array(10).fill(2) },
-//   { id: "site-gangwon", name: "강원도 테스트", location: "강원도", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
-//   { id: "site-chungbuk", name: "충청북도 테스트", location: "충청북도", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
-//   { id: "site-chungnam", name: "충청남도 테스트", location: "충청남도", status: "standby", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,1,1,2,2] },
-//   { id: "site-jeonbuk", name: "전북특별자치도 테스트", location: "전북특별자치도", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
-//   { id: "site-jeonnam", name: "전라남도 테스트", location: "전라남도", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
-//   { id: "site-gyeongbuk", name: "경상북도 테스트", location: "경상북도", status: "running", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,2,2,2,2,2] },
-//   { id: "site-gyeongnam", name: "경상남도 테스트", location: "경상남도", status: "fault", lastSeenAt: now(), numOfMods: 6, moduleStatus: [2,3,2,2,2,2] },
-//   { id: "site-jeju", name: "제주특별자치도 테스트", location: "제주특별자치도", status: "running", lastSeenAt: now(), numOfMods: 4, moduleStatus: [2,2,2,2] },
-// ];
 const knownRegions = [
   "서울",
   "부산",
@@ -64,9 +42,11 @@ const regionMarkers: Record<string, { top: string; left: string }> = {
   경상남도: { top: "64%", left: "65.5%" },
   제주특별자치도: { top: "96.5%", left: "25.2%" },
 };
+
 type HomePageProps = {
   searchParams?: { region?: string };
 };
+
 const extractRegion = (location?: string) => {
   if (!location) {
     return "기타";
@@ -89,8 +69,6 @@ const toInt = (value?: number | string) => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
-
-
 type RegionStatus =
   | "running"
   | "standby"
@@ -99,56 +77,49 @@ type RegionStatus =
   | "offline";
 
 const getRegionStatus = (
-  summary: ReturnType<typeof summarizeStatus>
+  summary: ReturnType<typeof summarizeStatus>,
 ): RegionStatus => {
-  if (summary.fault > 0) {
-    return "fault";
-  }
-
-  if (summary.check > 0) {
-    // check는 standby / start 계열로 본다
-    return "standby";
-  }
-
+  if (summary.fault > 0) return "fault";
+  if (summary.standby > 0) return "standby";
   return "running";
 };
 
 
-const summarizeStatus = (devices: Device[]) => {
-  return devices.reduce(
-    (acc, device) => {
-      const totalMods =
-        toInt(device.numOfMods) ??
-        (device.moduleStatus ? device.moduleStatus.length : 0);
-      const list = device.moduleStatus ?? [];
-      const running = list.filter((code) => code === 2).length;
-      const fault = list.filter((code) => code === 3).length;
-      const check = list.filter((code) => code !== 2 && code !== 3).length;
-      const missing = Math.max(0, totalMods - list.length);
+const summarizeStatus = (installations: Site["installations"]) => {
+  return installations.reduce(
+    (acc, inst) => {
+      const device = inst.device;
+      if (!device) {
+        acc.offline += 1;
+        return acc;
+      }
 
-      acc.total += totalMods;
-      acc.ok += running;
+      const list = device.moduleStatus ?? [];
+      const running = list.filter((c) => c === 2).length;
+      const fault = list.filter((c) => c === 3).length;
+      const check = list.filter((c) => c !== 2 && c !== 3).length;
+
+      acc.running += running;
       acc.fault += fault;
-      acc.check += check + missing;
+      acc.standby += check;
       return acc;
     },
-    { total: 0, ok: 0, check: 0, fault: 0 },
+    { running: 0, standby: 0, start: 0, fault: 0, offline: 0 },
   );
 };
 
 
 
+
 export default async function HomePage({ searchParams }: HomePageProps) {
-  const devices = await fetchDevices();
-  // const devices = mockDevices17;
-  const regions = devices.reduce<Record<string, typeof devices>>(
-    (acc, device) => {
-      const key = extractRegion(device.location);
-      acc[key] = acc[key] ? [...acc[key], device] : [device];
-      return acc;
-    },
-    {},
-  );
+  const sites = await fetchSites();
+
+  const regions = sites.reduce<Record<string, Site[]>>((acc, site) => {
+    const key = site.region || "기타";
+    acc[key] = acc[key] ? [...acc[key], site] : [site];
+    return acc;
+  }, {});
+  
   const regionEntries = Object.entries(regions).sort(([a], [b]) =>
     a.localeCompare(b, "ko"),
   );
@@ -161,8 +132,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       <section className="dashboard-map">
         <div className="map-panel panel">
           <div className="map-canvas">
-            {regionEntries.map(([region, regionDevices]) => {
-              const summary = summarizeStatus(regionDevices);
+            {regionEntries.map(([region, regionSites]) => {
+              const summary = summarizeStatus(
+                regionSites.flatMap((s) => s.installations),
+              );
+
               const marker = regionMarkers[region];
               if (!marker) {
                 return null;
@@ -188,7 +162,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <div className="region-panel panel">
           <div className="region-panel-header">
             <span className="region-panel-subtitle">
-              총 {devices.length}개 사이트
+              총 {regionEntries.length}개 지역
             </span>
           </div>
           <DashboardAccordion
