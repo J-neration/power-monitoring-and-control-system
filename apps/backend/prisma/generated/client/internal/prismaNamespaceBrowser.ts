@@ -51,6 +51,8 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
+  Site: 'Site',
+  Installation: 'Installation',
   Device: 'Device'
 } as const
 
@@ -70,12 +72,35 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-export const DeviceScalarFieldEnum = {
+export const SiteScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  location: 'location',
+  region: 'region',
+  address: 'address',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SiteScalarFieldEnum = (typeof SiteScalarFieldEnum)[keyof typeof SiteScalarFieldEnum]
+
+
+export const InstallationScalarFieldEnum = {
+  id: 'id',
+  siteId: 'siteId',
+  label: 'label',
+  capacity: 'capacity',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InstallationScalarFieldEnum = (typeof InstallationScalarFieldEnum)[keyof typeof InstallationScalarFieldEnum]
+
+
+export const DeviceScalarFieldEnum = {
+  installationId: 'installationId',
   status: 'status',
   moduleStatus: 'moduleStatus',
+  numOfMods: 'numOfMods',
   lastSeenAt: 'lastSeenAt',
   lastValue: 'lastValue',
   lastIp: 'lastIp',
@@ -127,4 +152,12 @@ export const QueryMode = {
 } as const
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 

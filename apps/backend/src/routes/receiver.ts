@@ -5,6 +5,7 @@ type ReceiverBody = {
   device_id?: string;
   value?: number | string;
   moduleStatus?: number[];
+  numOfMods?: number | string;
   vL1?: number | string;
   vL2?: number | string;
   vL3?: number | string;
@@ -63,6 +64,7 @@ export const receiverRoutes: FastifyPluginAsync = async (server) => {
       device_id: body.device_id,
       value: body.value,
       moduleStatus: body.moduleStatus,
+      numOfMods: body.numOfMods,
       vL1: body.vL1,
       vL2: body.vL2,
       vL3: body.vL3,

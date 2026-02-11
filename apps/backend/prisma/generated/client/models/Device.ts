@@ -14,7 +14,9 @@ import type * as Prisma from "../internal/prismaNamespace.js"
 
 /**
  * Model Device
- * 
+ * =========================
+ *  * 3) Device (최신 텔레메트리)
+ *  * =========================
  */
 export type DeviceModel = runtime.Types.Result.DefaultSelection<Prisma.$DevicePayload>
 
@@ -28,6 +30,7 @@ export type AggregateDevice = {
 
 export type DeviceAvgAggregateOutputType = {
   moduleStatus: number | null
+  numOfMods: number | null
   lastValue: number | null
   vL1: number | null
   vL2: number | null
@@ -60,6 +63,7 @@ export type DeviceAvgAggregateOutputType = {
 
 export type DeviceSumAggregateOutputType = {
   moduleStatus: number[]
+  numOfMods: number | null
   lastValue: number | null
   vL1: number | null
   vL2: number | null
@@ -91,10 +95,9 @@ export type DeviceSumAggregateOutputType = {
 }
 
 export type DeviceMinAggregateOutputType = {
-  id: string | null
-  name: string | null
-  location: string | null
+  installationId: string | null
   status: string | null
+  numOfMods: number | null
   lastSeenAt: Date | null
   lastValue: number | null
   lastIp: string | null
@@ -130,10 +133,9 @@ export type DeviceMinAggregateOutputType = {
 }
 
 export type DeviceMaxAggregateOutputType = {
-  id: string | null
-  name: string | null
-  location: string | null
+  installationId: string | null
   status: string | null
+  numOfMods: number | null
   lastSeenAt: Date | null
   lastValue: number | null
   lastIp: string | null
@@ -169,11 +171,10 @@ export type DeviceMaxAggregateOutputType = {
 }
 
 export type DeviceCountAggregateOutputType = {
-  id: number
-  name: number
-  location: number
+  installationId: number
   status: number
   moduleStatus: number
+  numOfMods: number
   lastSeenAt: number
   lastValue: number
   lastIp: number
@@ -212,6 +213,7 @@ export type DeviceCountAggregateOutputType = {
 
 export type DeviceAvgAggregateInputType = {
   moduleStatus?: true
+  numOfMods?: true
   lastValue?: true
   vL1?: true
   vL2?: true
@@ -244,6 +246,7 @@ export type DeviceAvgAggregateInputType = {
 
 export type DeviceSumAggregateInputType = {
   moduleStatus?: true
+  numOfMods?: true
   lastValue?: true
   vL1?: true
   vL2?: true
@@ -275,10 +278,9 @@ export type DeviceSumAggregateInputType = {
 }
 
 export type DeviceMinAggregateInputType = {
-  id?: true
-  name?: true
-  location?: true
+  installationId?: true
   status?: true
+  numOfMods?: true
   lastSeenAt?: true
   lastValue?: true
   lastIp?: true
@@ -314,10 +316,9 @@ export type DeviceMinAggregateInputType = {
 }
 
 export type DeviceMaxAggregateInputType = {
-  id?: true
-  name?: true
-  location?: true
+  installationId?: true
   status?: true
+  numOfMods?: true
   lastSeenAt?: true
   lastValue?: true
   lastIp?: true
@@ -353,11 +354,10 @@ export type DeviceMaxAggregateInputType = {
 }
 
 export type DeviceCountAggregateInputType = {
-  id?: true
-  name?: true
-  location?: true
+  installationId?: true
   status?: true
   moduleStatus?: true
+  numOfMods?: true
   lastSeenAt?: true
   lastValue?: true
   lastIp?: true
@@ -480,41 +480,40 @@ export type DeviceGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalA
 }
 
 export type DeviceGroupByOutputType = {
-  id: string
-  name: string
-  location: string
+  installationId: string
   status: string
   moduleStatus: number[]
+  numOfMods: number
   lastSeenAt: Date
-  lastValue: number
-  lastIp: string
-  vL1: number
-  vL2: number
-  vL3: number
-  gridCurrentL1: number
-  gridCurrentL2: number
-  gridCurrentL3: number
-  loadCurrentL1: number
-  loadCurrentL2: number
-  loadCurrentL3: number
-  loadCurrentTHDL1: number
-  loadCurrentTHDL2: number
-  loadCurrentTHDL3: number
-  uncompS: number
-  uncompP: number
-  uncompQ: number
-  uncompH: number
-  compS: number
-  compP: number
-  compQ: number
-  compH: number
-  tpf1: number
-  tpf2: number
-  dpf1: number
-  dpf2: number
-  gridCurrentTHDL1: number
-  gridCurrentTHDL2: number
-  gridCurrentTHDL3: number
+  lastValue: number | null
+  lastIp: string | null
+  vL1: number | null
+  vL2: number | null
+  vL3: number | null
+  gridCurrentL1: number | null
+  gridCurrentL2: number | null
+  gridCurrentL3: number | null
+  loadCurrentL1: number | null
+  loadCurrentL2: number | null
+  loadCurrentL3: number | null
+  loadCurrentTHDL1: number | null
+  loadCurrentTHDL2: number | null
+  loadCurrentTHDL3: number | null
+  uncompS: number | null
+  uncompP: number | null
+  uncompQ: number | null
+  uncompH: number | null
+  compS: number | null
+  compP: number | null
+  compQ: number | null
+  compH: number | null
+  tpf1: number | null
+  tpf2: number | null
+  dpf1: number | null
+  dpf2: number | null
+  gridCurrentTHDL1: number | null
+  gridCurrentTHDL2: number | null
+  gridCurrentTHDL3: number | null
   createdAt: Date
   updatedAt: Date
   _count: DeviceCountAggregateOutputType | null
@@ -543,164 +542,163 @@ export type DeviceWhereInput = {
   AND?: Prisma.DeviceWhereInput | Prisma.DeviceWhereInput[]
   OR?: Prisma.DeviceWhereInput[]
   NOT?: Prisma.DeviceWhereInput | Prisma.DeviceWhereInput[]
-  id?: Prisma.StringFilter<"Device"> | string
-  name?: Prisma.StringFilter<"Device"> | string
-  location?: Prisma.StringFilter<"Device"> | string
+  installationId?: Prisma.StringFilter<"Device"> | string
   status?: Prisma.StringFilter<"Device"> | string
   moduleStatus?: Prisma.IntNullableListFilter<"Device">
+  numOfMods?: Prisma.IntFilter<"Device"> | number
   lastSeenAt?: Prisma.DateTimeFilter<"Device"> | Date | string
-  lastValue?: Prisma.FloatFilter<"Device"> | number
-  lastIp?: Prisma.StringFilter<"Device"> | string
-  vL1?: Prisma.FloatFilter<"Device"> | number
-  vL2?: Prisma.FloatFilter<"Device"> | number
-  vL3?: Prisma.FloatFilter<"Device"> | number
-  gridCurrentL1?: Prisma.FloatFilter<"Device"> | number
-  gridCurrentL2?: Prisma.FloatFilter<"Device"> | number
-  gridCurrentL3?: Prisma.FloatFilter<"Device"> | number
-  loadCurrentL1?: Prisma.FloatFilter<"Device"> | number
-  loadCurrentL2?: Prisma.FloatFilter<"Device"> | number
-  loadCurrentL3?: Prisma.FloatFilter<"Device"> | number
-  loadCurrentTHDL1?: Prisma.FloatFilter<"Device"> | number
-  loadCurrentTHDL2?: Prisma.FloatFilter<"Device"> | number
-  loadCurrentTHDL3?: Prisma.FloatFilter<"Device"> | number
-  uncompS?: Prisma.FloatFilter<"Device"> | number
-  uncompP?: Prisma.FloatFilter<"Device"> | number
-  uncompQ?: Prisma.FloatFilter<"Device"> | number
-  uncompH?: Prisma.FloatFilter<"Device"> | number
-  compS?: Prisma.FloatFilter<"Device"> | number
-  compP?: Prisma.FloatFilter<"Device"> | number
-  compQ?: Prisma.FloatFilter<"Device"> | number
-  compH?: Prisma.FloatFilter<"Device"> | number
-  tpf1?: Prisma.FloatFilter<"Device"> | number
-  tpf2?: Prisma.FloatFilter<"Device"> | number
-  dpf1?: Prisma.FloatFilter<"Device"> | number
-  dpf2?: Prisma.FloatFilter<"Device"> | number
-  gridCurrentTHDL1?: Prisma.FloatFilter<"Device"> | number
-  gridCurrentTHDL2?: Prisma.FloatFilter<"Device"> | number
-  gridCurrentTHDL3?: Prisma.FloatFilter<"Device"> | number
+  lastValue?: Prisma.FloatNullableFilter<"Device"> | number | null
+  lastIp?: Prisma.StringNullableFilter<"Device"> | string | null
+  vL1?: Prisma.FloatNullableFilter<"Device"> | number | null
+  vL2?: Prisma.FloatNullableFilter<"Device"> | number | null
+  vL3?: Prisma.FloatNullableFilter<"Device"> | number | null
+  gridCurrentL1?: Prisma.FloatNullableFilter<"Device"> | number | null
+  gridCurrentL2?: Prisma.FloatNullableFilter<"Device"> | number | null
+  gridCurrentL3?: Prisma.FloatNullableFilter<"Device"> | number | null
+  loadCurrentL1?: Prisma.FloatNullableFilter<"Device"> | number | null
+  loadCurrentL2?: Prisma.FloatNullableFilter<"Device"> | number | null
+  loadCurrentL3?: Prisma.FloatNullableFilter<"Device"> | number | null
+  loadCurrentTHDL1?: Prisma.FloatNullableFilter<"Device"> | number | null
+  loadCurrentTHDL2?: Prisma.FloatNullableFilter<"Device"> | number | null
+  loadCurrentTHDL3?: Prisma.FloatNullableFilter<"Device"> | number | null
+  uncompS?: Prisma.FloatNullableFilter<"Device"> | number | null
+  uncompP?: Prisma.FloatNullableFilter<"Device"> | number | null
+  uncompQ?: Prisma.FloatNullableFilter<"Device"> | number | null
+  uncompH?: Prisma.FloatNullableFilter<"Device"> | number | null
+  compS?: Prisma.FloatNullableFilter<"Device"> | number | null
+  compP?: Prisma.FloatNullableFilter<"Device"> | number | null
+  compQ?: Prisma.FloatNullableFilter<"Device"> | number | null
+  compH?: Prisma.FloatNullableFilter<"Device"> | number | null
+  tpf1?: Prisma.FloatNullableFilter<"Device"> | number | null
+  tpf2?: Prisma.FloatNullableFilter<"Device"> | number | null
+  dpf1?: Prisma.FloatNullableFilter<"Device"> | number | null
+  dpf2?: Prisma.FloatNullableFilter<"Device"> | number | null
+  gridCurrentTHDL1?: Prisma.FloatNullableFilter<"Device"> | number | null
+  gridCurrentTHDL2?: Prisma.FloatNullableFilter<"Device"> | number | null
+  gridCurrentTHDL3?: Prisma.FloatNullableFilter<"Device"> | number | null
   createdAt?: Prisma.DateTimeFilter<"Device"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Device"> | Date | string
+  installation?: Prisma.XOR<Prisma.InstallationScalarRelationFilter, Prisma.InstallationWhereInput>
 }
 
 export type DeviceOrderByWithRelationInput = {
-  id?: Prisma.SortOrder
-  name?: Prisma.SortOrder
-  location?: Prisma.SortOrder
+  installationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   moduleStatus?: Prisma.SortOrder
+  numOfMods?: Prisma.SortOrder
   lastSeenAt?: Prisma.SortOrder
-  lastValue?: Prisma.SortOrder
-  lastIp?: Prisma.SortOrder
-  vL1?: Prisma.SortOrder
-  vL2?: Prisma.SortOrder
-  vL3?: Prisma.SortOrder
-  gridCurrentL1?: Prisma.SortOrder
-  gridCurrentL2?: Prisma.SortOrder
-  gridCurrentL3?: Prisma.SortOrder
-  loadCurrentL1?: Prisma.SortOrder
-  loadCurrentL2?: Prisma.SortOrder
-  loadCurrentL3?: Prisma.SortOrder
-  loadCurrentTHDL1?: Prisma.SortOrder
-  loadCurrentTHDL2?: Prisma.SortOrder
-  loadCurrentTHDL3?: Prisma.SortOrder
-  uncompS?: Prisma.SortOrder
-  uncompP?: Prisma.SortOrder
-  uncompQ?: Prisma.SortOrder
-  uncompH?: Prisma.SortOrder
-  compS?: Prisma.SortOrder
-  compP?: Prisma.SortOrder
-  compQ?: Prisma.SortOrder
-  compH?: Prisma.SortOrder
-  tpf1?: Prisma.SortOrder
-  tpf2?: Prisma.SortOrder
-  dpf1?: Prisma.SortOrder
-  dpf2?: Prisma.SortOrder
-  gridCurrentTHDL1?: Prisma.SortOrder
-  gridCurrentTHDL2?: Prisma.SortOrder
-  gridCurrentTHDL3?: Prisma.SortOrder
+  lastValue?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastIp?: Prisma.SortOrderInput | Prisma.SortOrder
+  vL1?: Prisma.SortOrderInput | Prisma.SortOrder
+  vL2?: Prisma.SortOrderInput | Prisma.SortOrder
+  vL3?: Prisma.SortOrderInput | Prisma.SortOrder
+  gridCurrentL1?: Prisma.SortOrderInput | Prisma.SortOrder
+  gridCurrentL2?: Prisma.SortOrderInput | Prisma.SortOrder
+  gridCurrentL3?: Prisma.SortOrderInput | Prisma.SortOrder
+  loadCurrentL1?: Prisma.SortOrderInput | Prisma.SortOrder
+  loadCurrentL2?: Prisma.SortOrderInput | Prisma.SortOrder
+  loadCurrentL3?: Prisma.SortOrderInput | Prisma.SortOrder
+  loadCurrentTHDL1?: Prisma.SortOrderInput | Prisma.SortOrder
+  loadCurrentTHDL2?: Prisma.SortOrderInput | Prisma.SortOrder
+  loadCurrentTHDL3?: Prisma.SortOrderInput | Prisma.SortOrder
+  uncompS?: Prisma.SortOrderInput | Prisma.SortOrder
+  uncompP?: Prisma.SortOrderInput | Prisma.SortOrder
+  uncompQ?: Prisma.SortOrderInput | Prisma.SortOrder
+  uncompH?: Prisma.SortOrderInput | Prisma.SortOrder
+  compS?: Prisma.SortOrderInput | Prisma.SortOrder
+  compP?: Prisma.SortOrderInput | Prisma.SortOrder
+  compQ?: Prisma.SortOrderInput | Prisma.SortOrder
+  compH?: Prisma.SortOrderInput | Prisma.SortOrder
+  tpf1?: Prisma.SortOrderInput | Prisma.SortOrder
+  tpf2?: Prisma.SortOrderInput | Prisma.SortOrder
+  dpf1?: Prisma.SortOrderInput | Prisma.SortOrder
+  dpf2?: Prisma.SortOrderInput | Prisma.SortOrder
+  gridCurrentTHDL1?: Prisma.SortOrderInput | Prisma.SortOrder
+  gridCurrentTHDL2?: Prisma.SortOrderInput | Prisma.SortOrder
+  gridCurrentTHDL3?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  installation?: Prisma.InstallationOrderByWithRelationInput
 }
 
 export type DeviceWhereUniqueInput = Prisma.AtLeast<{
-  id?: string
+  installationId?: string
   AND?: Prisma.DeviceWhereInput | Prisma.DeviceWhereInput[]
   OR?: Prisma.DeviceWhereInput[]
   NOT?: Prisma.DeviceWhereInput | Prisma.DeviceWhereInput[]
-  name?: Prisma.StringFilter<"Device"> | string
-  location?: Prisma.StringFilter<"Device"> | string
   status?: Prisma.StringFilter<"Device"> | string
   moduleStatus?: Prisma.IntNullableListFilter<"Device">
+  numOfMods?: Prisma.IntFilter<"Device"> | number
   lastSeenAt?: Prisma.DateTimeFilter<"Device"> | Date | string
-  lastValue?: Prisma.FloatFilter<"Device"> | number
-  lastIp?: Prisma.StringFilter<"Device"> | string
-  vL1?: Prisma.FloatFilter<"Device"> | number
-  vL2?: Prisma.FloatFilter<"Device"> | number
-  vL3?: Prisma.FloatFilter<"Device"> | number
-  gridCurrentL1?: Prisma.FloatFilter<"Device"> | number
-  gridCurrentL2?: Prisma.FloatFilter<"Device"> | number
-  gridCurrentL3?: Prisma.FloatFilter<"Device"> | number
-  loadCurrentL1?: Prisma.FloatFilter<"Device"> | number
-  loadCurrentL2?: Prisma.FloatFilter<"Device"> | number
-  loadCurrentL3?: Prisma.FloatFilter<"Device"> | number
-  loadCurrentTHDL1?: Prisma.FloatFilter<"Device"> | number
-  loadCurrentTHDL2?: Prisma.FloatFilter<"Device"> | number
-  loadCurrentTHDL3?: Prisma.FloatFilter<"Device"> | number
-  uncompS?: Prisma.FloatFilter<"Device"> | number
-  uncompP?: Prisma.FloatFilter<"Device"> | number
-  uncompQ?: Prisma.FloatFilter<"Device"> | number
-  uncompH?: Prisma.FloatFilter<"Device"> | number
-  compS?: Prisma.FloatFilter<"Device"> | number
-  compP?: Prisma.FloatFilter<"Device"> | number
-  compQ?: Prisma.FloatFilter<"Device"> | number
-  compH?: Prisma.FloatFilter<"Device"> | number
-  tpf1?: Prisma.FloatFilter<"Device"> | number
-  tpf2?: Prisma.FloatFilter<"Device"> | number
-  dpf1?: Prisma.FloatFilter<"Device"> | number
-  dpf2?: Prisma.FloatFilter<"Device"> | number
-  gridCurrentTHDL1?: Prisma.FloatFilter<"Device"> | number
-  gridCurrentTHDL2?: Prisma.FloatFilter<"Device"> | number
-  gridCurrentTHDL3?: Prisma.FloatFilter<"Device"> | number
+  lastValue?: Prisma.FloatNullableFilter<"Device"> | number | null
+  lastIp?: Prisma.StringNullableFilter<"Device"> | string | null
+  vL1?: Prisma.FloatNullableFilter<"Device"> | number | null
+  vL2?: Prisma.FloatNullableFilter<"Device"> | number | null
+  vL3?: Prisma.FloatNullableFilter<"Device"> | number | null
+  gridCurrentL1?: Prisma.FloatNullableFilter<"Device"> | number | null
+  gridCurrentL2?: Prisma.FloatNullableFilter<"Device"> | number | null
+  gridCurrentL3?: Prisma.FloatNullableFilter<"Device"> | number | null
+  loadCurrentL1?: Prisma.FloatNullableFilter<"Device"> | number | null
+  loadCurrentL2?: Prisma.FloatNullableFilter<"Device"> | number | null
+  loadCurrentL3?: Prisma.FloatNullableFilter<"Device"> | number | null
+  loadCurrentTHDL1?: Prisma.FloatNullableFilter<"Device"> | number | null
+  loadCurrentTHDL2?: Prisma.FloatNullableFilter<"Device"> | number | null
+  loadCurrentTHDL3?: Prisma.FloatNullableFilter<"Device"> | number | null
+  uncompS?: Prisma.FloatNullableFilter<"Device"> | number | null
+  uncompP?: Prisma.FloatNullableFilter<"Device"> | number | null
+  uncompQ?: Prisma.FloatNullableFilter<"Device"> | number | null
+  uncompH?: Prisma.FloatNullableFilter<"Device"> | number | null
+  compS?: Prisma.FloatNullableFilter<"Device"> | number | null
+  compP?: Prisma.FloatNullableFilter<"Device"> | number | null
+  compQ?: Prisma.FloatNullableFilter<"Device"> | number | null
+  compH?: Prisma.FloatNullableFilter<"Device"> | number | null
+  tpf1?: Prisma.FloatNullableFilter<"Device"> | number | null
+  tpf2?: Prisma.FloatNullableFilter<"Device"> | number | null
+  dpf1?: Prisma.FloatNullableFilter<"Device"> | number | null
+  dpf2?: Prisma.FloatNullableFilter<"Device"> | number | null
+  gridCurrentTHDL1?: Prisma.FloatNullableFilter<"Device"> | number | null
+  gridCurrentTHDL2?: Prisma.FloatNullableFilter<"Device"> | number | null
+  gridCurrentTHDL3?: Prisma.FloatNullableFilter<"Device"> | number | null
   createdAt?: Prisma.DateTimeFilter<"Device"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Device"> | Date | string
-}, "id">
+  installation?: Prisma.XOR<Prisma.InstallationScalarRelationFilter, Prisma.InstallationWhereInput>
+}, "installationId">
 
 export type DeviceOrderByWithAggregationInput = {
-  id?: Prisma.SortOrder
-  name?: Prisma.SortOrder
-  location?: Prisma.SortOrder
+  installationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   moduleStatus?: Prisma.SortOrder
+  numOfMods?: Prisma.SortOrder
   lastSeenAt?: Prisma.SortOrder
-  lastValue?: Prisma.SortOrder
-  lastIp?: Prisma.SortOrder
-  vL1?: Prisma.SortOrder
-  vL2?: Prisma.SortOrder
-  vL3?: Prisma.SortOrder
-  gridCurrentL1?: Prisma.SortOrder
-  gridCurrentL2?: Prisma.SortOrder
-  gridCurrentL3?: Prisma.SortOrder
-  loadCurrentL1?: Prisma.SortOrder
-  loadCurrentL2?: Prisma.SortOrder
-  loadCurrentL3?: Prisma.SortOrder
-  loadCurrentTHDL1?: Prisma.SortOrder
-  loadCurrentTHDL2?: Prisma.SortOrder
-  loadCurrentTHDL3?: Prisma.SortOrder
-  uncompS?: Prisma.SortOrder
-  uncompP?: Prisma.SortOrder
-  uncompQ?: Prisma.SortOrder
-  uncompH?: Prisma.SortOrder
-  compS?: Prisma.SortOrder
-  compP?: Prisma.SortOrder
-  compQ?: Prisma.SortOrder
-  compH?: Prisma.SortOrder
-  tpf1?: Prisma.SortOrder
-  tpf2?: Prisma.SortOrder
-  dpf1?: Prisma.SortOrder
-  dpf2?: Prisma.SortOrder
-  gridCurrentTHDL1?: Prisma.SortOrder
-  gridCurrentTHDL2?: Prisma.SortOrder
-  gridCurrentTHDL3?: Prisma.SortOrder
+  lastValue?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastIp?: Prisma.SortOrderInput | Prisma.SortOrder
+  vL1?: Prisma.SortOrderInput | Prisma.SortOrder
+  vL2?: Prisma.SortOrderInput | Prisma.SortOrder
+  vL3?: Prisma.SortOrderInput | Prisma.SortOrder
+  gridCurrentL1?: Prisma.SortOrderInput | Prisma.SortOrder
+  gridCurrentL2?: Prisma.SortOrderInput | Prisma.SortOrder
+  gridCurrentL3?: Prisma.SortOrderInput | Prisma.SortOrder
+  loadCurrentL1?: Prisma.SortOrderInput | Prisma.SortOrder
+  loadCurrentL2?: Prisma.SortOrderInput | Prisma.SortOrder
+  loadCurrentL3?: Prisma.SortOrderInput | Prisma.SortOrder
+  loadCurrentTHDL1?: Prisma.SortOrderInput | Prisma.SortOrder
+  loadCurrentTHDL2?: Prisma.SortOrderInput | Prisma.SortOrder
+  loadCurrentTHDL3?: Prisma.SortOrderInput | Prisma.SortOrder
+  uncompS?: Prisma.SortOrderInput | Prisma.SortOrder
+  uncompP?: Prisma.SortOrderInput | Prisma.SortOrder
+  uncompQ?: Prisma.SortOrderInput | Prisma.SortOrder
+  uncompH?: Prisma.SortOrderInput | Prisma.SortOrder
+  compS?: Prisma.SortOrderInput | Prisma.SortOrder
+  compP?: Prisma.SortOrderInput | Prisma.SortOrder
+  compQ?: Prisma.SortOrderInput | Prisma.SortOrder
+  compH?: Prisma.SortOrderInput | Prisma.SortOrder
+  tpf1?: Prisma.SortOrderInput | Prisma.SortOrder
+  tpf2?: Prisma.SortOrderInput | Prisma.SortOrder
+  dpf1?: Prisma.SortOrderInput | Prisma.SortOrder
+  dpf2?: Prisma.SortOrderInput | Prisma.SortOrder
+  gridCurrentTHDL1?: Prisma.SortOrderInput | Prisma.SortOrder
+  gridCurrentTHDL2?: Prisma.SortOrderInput | Prisma.SortOrder
+  gridCurrentTHDL3?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.DeviceCountOrderByAggregateInput
@@ -714,323 +712,319 @@ export type DeviceScalarWhereWithAggregatesInput = {
   AND?: Prisma.DeviceScalarWhereWithAggregatesInput | Prisma.DeviceScalarWhereWithAggregatesInput[]
   OR?: Prisma.DeviceScalarWhereWithAggregatesInput[]
   NOT?: Prisma.DeviceScalarWhereWithAggregatesInput | Prisma.DeviceScalarWhereWithAggregatesInput[]
-  id?: Prisma.StringWithAggregatesFilter<"Device"> | string
-  name?: Prisma.StringWithAggregatesFilter<"Device"> | string
-  location?: Prisma.StringWithAggregatesFilter<"Device"> | string
+  installationId?: Prisma.StringWithAggregatesFilter<"Device"> | string
   status?: Prisma.StringWithAggregatesFilter<"Device"> | string
   moduleStatus?: Prisma.IntNullableListFilter<"Device">
+  numOfMods?: Prisma.IntWithAggregatesFilter<"Device"> | number
   lastSeenAt?: Prisma.DateTimeWithAggregatesFilter<"Device"> | Date | string
-  lastValue?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  lastIp?: Prisma.StringWithAggregatesFilter<"Device"> | string
-  vL1?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  vL2?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  vL3?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  gridCurrentL1?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  gridCurrentL2?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  gridCurrentL3?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  loadCurrentL1?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  loadCurrentL2?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  loadCurrentL3?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  loadCurrentTHDL1?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  loadCurrentTHDL2?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  loadCurrentTHDL3?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  uncompS?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  uncompP?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  uncompQ?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  uncompH?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  compS?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  compP?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  compQ?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  compH?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  tpf1?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  tpf2?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  dpf1?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  dpf2?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  gridCurrentTHDL1?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  gridCurrentTHDL2?: Prisma.FloatWithAggregatesFilter<"Device"> | number
-  gridCurrentTHDL3?: Prisma.FloatWithAggregatesFilter<"Device"> | number
+  lastValue?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  lastIp?: Prisma.StringNullableWithAggregatesFilter<"Device"> | string | null
+  vL1?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  vL2?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  vL3?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  gridCurrentL1?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  gridCurrentL2?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  gridCurrentL3?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  loadCurrentL1?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  loadCurrentL2?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  loadCurrentL3?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  loadCurrentTHDL1?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  loadCurrentTHDL2?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  loadCurrentTHDL3?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  uncompS?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  uncompP?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  uncompQ?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  uncompH?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  compS?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  compP?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  compQ?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  compH?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  tpf1?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  tpf2?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  dpf1?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  dpf2?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  gridCurrentTHDL1?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  gridCurrentTHDL2?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  gridCurrentTHDL3?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Device"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Device"> | Date | string
 }
 
 export type DeviceCreateInput = {
-  id?: string
-  name: string
-  location: string
   status?: string
   moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
+  numOfMods?: number
   lastSeenAt?: Date | string
-  lastValue?: number
-  lastIp?: string
-  vL1?: number
-  vL2?: number
-  vL3?: number
-  gridCurrentL1?: number
-  gridCurrentL2?: number
-  gridCurrentL3?: number
-  loadCurrentL1?: number
-  loadCurrentL2?: number
-  loadCurrentL3?: number
-  loadCurrentTHDL1?: number
-  loadCurrentTHDL2?: number
-  loadCurrentTHDL3?: number
-  uncompS?: number
-  uncompP?: number
-  uncompQ?: number
-  uncompH?: number
-  compS?: number
-  compP?: number
-  compQ?: number
-  compH?: number
-  tpf1?: number
-  tpf2?: number
-  dpf1?: number
-  dpf2?: number
-  gridCurrentTHDL1?: number
-  gridCurrentTHDL2?: number
-  gridCurrentTHDL3?: number
+  lastValue?: number | null
+  lastIp?: string | null
+  vL1?: number | null
+  vL2?: number | null
+  vL3?: number | null
+  gridCurrentL1?: number | null
+  gridCurrentL2?: number | null
+  gridCurrentL3?: number | null
+  loadCurrentL1?: number | null
+  loadCurrentL2?: number | null
+  loadCurrentL3?: number | null
+  loadCurrentTHDL1?: number | null
+  loadCurrentTHDL2?: number | null
+  loadCurrentTHDL3?: number | null
+  uncompS?: number | null
+  uncompP?: number | null
+  uncompQ?: number | null
+  uncompH?: number | null
+  compS?: number | null
+  compP?: number | null
+  compQ?: number | null
+  compH?: number | null
+  tpf1?: number | null
+  tpf2?: number | null
+  dpf1?: number | null
+  dpf2?: number | null
+  gridCurrentTHDL1?: number | null
+  gridCurrentTHDL2?: number | null
+  gridCurrentTHDL3?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  installation: Prisma.InstallationCreateNestedOneWithoutDeviceInput
 }
 
 export type DeviceUncheckedCreateInput = {
-  id?: string
-  name: string
-  location: string
+  installationId: string
   status?: string
   moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
+  numOfMods?: number
   lastSeenAt?: Date | string
-  lastValue?: number
-  lastIp?: string
-  vL1?: number
-  vL2?: number
-  vL3?: number
-  gridCurrentL1?: number
-  gridCurrentL2?: number
-  gridCurrentL3?: number
-  loadCurrentL1?: number
-  loadCurrentL2?: number
-  loadCurrentL3?: number
-  loadCurrentTHDL1?: number
-  loadCurrentTHDL2?: number
-  loadCurrentTHDL3?: number
-  uncompS?: number
-  uncompP?: number
-  uncompQ?: number
-  uncompH?: number
-  compS?: number
-  compP?: number
-  compQ?: number
-  compH?: number
-  tpf1?: number
-  tpf2?: number
-  dpf1?: number
-  dpf2?: number
-  gridCurrentTHDL1?: number
-  gridCurrentTHDL2?: number
-  gridCurrentTHDL3?: number
+  lastValue?: number | null
+  lastIp?: string | null
+  vL1?: number | null
+  vL2?: number | null
+  vL3?: number | null
+  gridCurrentL1?: number | null
+  gridCurrentL2?: number | null
+  gridCurrentL3?: number | null
+  loadCurrentL1?: number | null
+  loadCurrentL2?: number | null
+  loadCurrentL3?: number | null
+  loadCurrentTHDL1?: number | null
+  loadCurrentTHDL2?: number | null
+  loadCurrentTHDL3?: number | null
+  uncompS?: number | null
+  uncompP?: number | null
+  uncompQ?: number | null
+  uncompH?: number | null
+  compS?: number | null
+  compP?: number | null
+  compQ?: number | null
+  compH?: number | null
+  tpf1?: number | null
+  tpf2?: number | null
+  dpf1?: number | null
+  dpf2?: number | null
+  gridCurrentTHDL1?: number | null
+  gridCurrentTHDL2?: number | null
+  gridCurrentTHDL3?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type DeviceUpdateInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  location?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
+  numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
   lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lastValue?: Prisma.FloatFieldUpdateOperationsInput | number
-  lastIp?: Prisma.StringFieldUpdateOperationsInput | string
-  vL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  vL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  vL3?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentL3?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentL3?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentTHDL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentTHDL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentTHDL3?: Prisma.FloatFieldUpdateOperationsInput | number
-  uncompS?: Prisma.FloatFieldUpdateOperationsInput | number
-  uncompP?: Prisma.FloatFieldUpdateOperationsInput | number
-  uncompQ?: Prisma.FloatFieldUpdateOperationsInput | number
-  uncompH?: Prisma.FloatFieldUpdateOperationsInput | number
-  compS?: Prisma.FloatFieldUpdateOperationsInput | number
-  compP?: Prisma.FloatFieldUpdateOperationsInput | number
-  compQ?: Prisma.FloatFieldUpdateOperationsInput | number
-  compH?: Prisma.FloatFieldUpdateOperationsInput | number
-  tpf1?: Prisma.FloatFieldUpdateOperationsInput | number
-  tpf2?: Prisma.FloatFieldUpdateOperationsInput | number
-  dpf1?: Prisma.FloatFieldUpdateOperationsInput | number
-  dpf2?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentTHDL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentTHDL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentTHDL3?: Prisma.FloatFieldUpdateOperationsInput | number
+  lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompS?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompP?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompQ?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompH?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compS?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compP?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compQ?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compH?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  tpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  installation?: Prisma.InstallationUpdateOneRequiredWithoutDeviceNestedInput
 }
 
 export type DeviceUncheckedUpdateInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  location?: Prisma.StringFieldUpdateOperationsInput | string
+  installationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
+  numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
   lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lastValue?: Prisma.FloatFieldUpdateOperationsInput | number
-  lastIp?: Prisma.StringFieldUpdateOperationsInput | string
-  vL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  vL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  vL3?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentL3?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentL3?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentTHDL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentTHDL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentTHDL3?: Prisma.FloatFieldUpdateOperationsInput | number
-  uncompS?: Prisma.FloatFieldUpdateOperationsInput | number
-  uncompP?: Prisma.FloatFieldUpdateOperationsInput | number
-  uncompQ?: Prisma.FloatFieldUpdateOperationsInput | number
-  uncompH?: Prisma.FloatFieldUpdateOperationsInput | number
-  compS?: Prisma.FloatFieldUpdateOperationsInput | number
-  compP?: Prisma.FloatFieldUpdateOperationsInput | number
-  compQ?: Prisma.FloatFieldUpdateOperationsInput | number
-  compH?: Prisma.FloatFieldUpdateOperationsInput | number
-  tpf1?: Prisma.FloatFieldUpdateOperationsInput | number
-  tpf2?: Prisma.FloatFieldUpdateOperationsInput | number
-  dpf1?: Prisma.FloatFieldUpdateOperationsInput | number
-  dpf2?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentTHDL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentTHDL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentTHDL3?: Prisma.FloatFieldUpdateOperationsInput | number
+  lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompS?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompP?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompQ?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompH?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compS?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compP?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compQ?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compH?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  tpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type DeviceCreateManyInput = {
-  id?: string
-  name: string
-  location: string
+  installationId: string
   status?: string
   moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
+  numOfMods?: number
   lastSeenAt?: Date | string
-  lastValue?: number
-  lastIp?: string
-  vL1?: number
-  vL2?: number
-  vL3?: number
-  gridCurrentL1?: number
-  gridCurrentL2?: number
-  gridCurrentL3?: number
-  loadCurrentL1?: number
-  loadCurrentL2?: number
-  loadCurrentL3?: number
-  loadCurrentTHDL1?: number
-  loadCurrentTHDL2?: number
-  loadCurrentTHDL3?: number
-  uncompS?: number
-  uncompP?: number
-  uncompQ?: number
-  uncompH?: number
-  compS?: number
-  compP?: number
-  compQ?: number
-  compH?: number
-  tpf1?: number
-  tpf2?: number
-  dpf1?: number
-  dpf2?: number
-  gridCurrentTHDL1?: number
-  gridCurrentTHDL2?: number
-  gridCurrentTHDL3?: number
+  lastValue?: number | null
+  lastIp?: string | null
+  vL1?: number | null
+  vL2?: number | null
+  vL3?: number | null
+  gridCurrentL1?: number | null
+  gridCurrentL2?: number | null
+  gridCurrentL3?: number | null
+  loadCurrentL1?: number | null
+  loadCurrentL2?: number | null
+  loadCurrentL3?: number | null
+  loadCurrentTHDL1?: number | null
+  loadCurrentTHDL2?: number | null
+  loadCurrentTHDL3?: number | null
+  uncompS?: number | null
+  uncompP?: number | null
+  uncompQ?: number | null
+  uncompH?: number | null
+  compS?: number | null
+  compP?: number | null
+  compQ?: number | null
+  compH?: number | null
+  tpf1?: number | null
+  tpf2?: number | null
+  dpf1?: number | null
+  dpf2?: number | null
+  gridCurrentTHDL1?: number | null
+  gridCurrentTHDL2?: number | null
+  gridCurrentTHDL3?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type DeviceUpdateManyMutationInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  location?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
+  numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
   lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lastValue?: Prisma.FloatFieldUpdateOperationsInput | number
-  lastIp?: Prisma.StringFieldUpdateOperationsInput | string
-  vL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  vL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  vL3?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentL3?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentL3?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentTHDL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentTHDL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentTHDL3?: Prisma.FloatFieldUpdateOperationsInput | number
-  uncompS?: Prisma.FloatFieldUpdateOperationsInput | number
-  uncompP?: Prisma.FloatFieldUpdateOperationsInput | number
-  uncompQ?: Prisma.FloatFieldUpdateOperationsInput | number
-  uncompH?: Prisma.FloatFieldUpdateOperationsInput | number
-  compS?: Prisma.FloatFieldUpdateOperationsInput | number
-  compP?: Prisma.FloatFieldUpdateOperationsInput | number
-  compQ?: Prisma.FloatFieldUpdateOperationsInput | number
-  compH?: Prisma.FloatFieldUpdateOperationsInput | number
-  tpf1?: Prisma.FloatFieldUpdateOperationsInput | number
-  tpf2?: Prisma.FloatFieldUpdateOperationsInput | number
-  dpf1?: Prisma.FloatFieldUpdateOperationsInput | number
-  dpf2?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentTHDL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentTHDL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentTHDL3?: Prisma.FloatFieldUpdateOperationsInput | number
+  lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompS?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompP?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompQ?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompH?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compS?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compP?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compQ?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compH?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  tpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type DeviceUncheckedUpdateManyInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  location?: Prisma.StringFieldUpdateOperationsInput | string
+  installationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
+  numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
   lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lastValue?: Prisma.FloatFieldUpdateOperationsInput | number
-  lastIp?: Prisma.StringFieldUpdateOperationsInput | string
-  vL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  vL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  vL3?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentL3?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentL3?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentTHDL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentTHDL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  loadCurrentTHDL3?: Prisma.FloatFieldUpdateOperationsInput | number
-  uncompS?: Prisma.FloatFieldUpdateOperationsInput | number
-  uncompP?: Prisma.FloatFieldUpdateOperationsInput | number
-  uncompQ?: Prisma.FloatFieldUpdateOperationsInput | number
-  uncompH?: Prisma.FloatFieldUpdateOperationsInput | number
-  compS?: Prisma.FloatFieldUpdateOperationsInput | number
-  compP?: Prisma.FloatFieldUpdateOperationsInput | number
-  compQ?: Prisma.FloatFieldUpdateOperationsInput | number
-  compH?: Prisma.FloatFieldUpdateOperationsInput | number
-  tpf1?: Prisma.FloatFieldUpdateOperationsInput | number
-  tpf2?: Prisma.FloatFieldUpdateOperationsInput | number
-  dpf1?: Prisma.FloatFieldUpdateOperationsInput | number
-  dpf2?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentTHDL1?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentTHDL2?: Prisma.FloatFieldUpdateOperationsInput | number
-  gridCurrentTHDL3?: Prisma.FloatFieldUpdateOperationsInput | number
+  lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompS?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompP?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompQ?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompH?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compS?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compP?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compQ?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compH?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  tpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type DeviceNullableScalarRelationFilter = {
+  is?: Prisma.DeviceWhereInput | null
+  isNot?: Prisma.DeviceWhereInput | null
 }
 
 export type IntNullableListFilter<$PrismaModel = never> = {
@@ -1042,11 +1036,10 @@ export type IntNullableListFilter<$PrismaModel = never> = {
 }
 
 export type DeviceCountOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  name?: Prisma.SortOrder
-  location?: Prisma.SortOrder
+  installationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   moduleStatus?: Prisma.SortOrder
+  numOfMods?: Prisma.SortOrder
   lastSeenAt?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
   lastIp?: Prisma.SortOrder
@@ -1083,6 +1076,7 @@ export type DeviceCountOrderByAggregateInput = {
 
 export type DeviceAvgOrderByAggregateInput = {
   moduleStatus?: Prisma.SortOrder
+  numOfMods?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
   vL1?: Prisma.SortOrder
   vL2?: Prisma.SortOrder
@@ -1114,10 +1108,9 @@ export type DeviceAvgOrderByAggregateInput = {
 }
 
 export type DeviceMaxOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  name?: Prisma.SortOrder
-  location?: Prisma.SortOrder
+  installationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  numOfMods?: Prisma.SortOrder
   lastSeenAt?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
   lastIp?: Prisma.SortOrder
@@ -1153,10 +1146,9 @@ export type DeviceMaxOrderByAggregateInput = {
 }
 
 export type DeviceMinOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  name?: Prisma.SortOrder
-  location?: Prisma.SortOrder
+  installationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  numOfMods?: Prisma.SortOrder
   lastSeenAt?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
   lastIp?: Prisma.SortOrder
@@ -1193,6 +1185,7 @@ export type DeviceMinOrderByAggregateInput = {
 
 export type DeviceSumOrderByAggregateInput = {
   moduleStatus?: Prisma.SortOrder
+  numOfMods?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
   vL1?: Prisma.SortOrder
   vL2?: Prisma.SortOrder
@@ -1223,12 +1216,40 @@ export type DeviceSumOrderByAggregateInput = {
   gridCurrentTHDL3?: Prisma.SortOrder
 }
 
-export type DeviceCreatemoduleStatusInput = {
-  set: number[]
+export type DeviceCreateNestedOneWithoutInstallationInput = {
+  create?: Prisma.XOR<Prisma.DeviceCreateWithoutInstallationInput, Prisma.DeviceUncheckedCreateWithoutInstallationInput>
+  connectOrCreate?: Prisma.DeviceCreateOrConnectWithoutInstallationInput
+  connect?: Prisma.DeviceWhereUniqueInput
 }
 
-export type StringFieldUpdateOperationsInput = {
-  set?: string
+export type DeviceUncheckedCreateNestedOneWithoutInstallationInput = {
+  create?: Prisma.XOR<Prisma.DeviceCreateWithoutInstallationInput, Prisma.DeviceUncheckedCreateWithoutInstallationInput>
+  connectOrCreate?: Prisma.DeviceCreateOrConnectWithoutInstallationInput
+  connect?: Prisma.DeviceWhereUniqueInput
+}
+
+export type DeviceUpdateOneWithoutInstallationNestedInput = {
+  create?: Prisma.XOR<Prisma.DeviceCreateWithoutInstallationInput, Prisma.DeviceUncheckedCreateWithoutInstallationInput>
+  connectOrCreate?: Prisma.DeviceCreateOrConnectWithoutInstallationInput
+  upsert?: Prisma.DeviceUpsertWithoutInstallationInput
+  disconnect?: Prisma.DeviceWhereInput | boolean
+  delete?: Prisma.DeviceWhereInput | boolean
+  connect?: Prisma.DeviceWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DeviceUpdateToOneWithWhereWithoutInstallationInput, Prisma.DeviceUpdateWithoutInstallationInput>, Prisma.DeviceUncheckedUpdateWithoutInstallationInput>
+}
+
+export type DeviceUncheckedUpdateOneWithoutInstallationNestedInput = {
+  create?: Prisma.XOR<Prisma.DeviceCreateWithoutInstallationInput, Prisma.DeviceUncheckedCreateWithoutInstallationInput>
+  connectOrCreate?: Prisma.DeviceCreateOrConnectWithoutInstallationInput
+  upsert?: Prisma.DeviceUpsertWithoutInstallationInput
+  disconnect?: Prisma.DeviceWhereInput | boolean
+  delete?: Prisma.DeviceWhereInput | boolean
+  connect?: Prisma.DeviceWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DeviceUpdateToOneWithWhereWithoutInstallationInput, Prisma.DeviceUpdateWithoutInstallationInput>, Prisma.DeviceUncheckedUpdateWithoutInstallationInput>
+}
+
+export type DeviceCreatemoduleStatusInput = {
+  set: number[]
 }
 
 export type DeviceUpdatemoduleStatusInput = {
@@ -1236,11 +1257,7 @@ export type DeviceUpdatemoduleStatusInput = {
   push?: number | number[]
 }
 
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string
-}
-
-export type FloatFieldUpdateOperationsInput = {
+export type IntFieldUpdateOperationsInput = {
   set?: number
   increment?: number
   decrement?: number
@@ -1248,14 +1265,185 @@ export type FloatFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
+}
+
+export type DeviceCreateWithoutInstallationInput = {
+  status?: string
+  moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
+  numOfMods?: number
+  lastSeenAt?: Date | string
+  lastValue?: number | null
+  lastIp?: string | null
+  vL1?: number | null
+  vL2?: number | null
+  vL3?: number | null
+  gridCurrentL1?: number | null
+  gridCurrentL2?: number | null
+  gridCurrentL3?: number | null
+  loadCurrentL1?: number | null
+  loadCurrentL2?: number | null
+  loadCurrentL3?: number | null
+  loadCurrentTHDL1?: number | null
+  loadCurrentTHDL2?: number | null
+  loadCurrentTHDL3?: number | null
+  uncompS?: number | null
+  uncompP?: number | null
+  uncompQ?: number | null
+  uncompH?: number | null
+  compS?: number | null
+  compP?: number | null
+  compQ?: number | null
+  compH?: number | null
+  tpf1?: number | null
+  tpf2?: number | null
+  dpf1?: number | null
+  dpf2?: number | null
+  gridCurrentTHDL1?: number | null
+  gridCurrentTHDL2?: number | null
+  gridCurrentTHDL3?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type DeviceUncheckedCreateWithoutInstallationInput = {
+  status?: string
+  moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
+  numOfMods?: number
+  lastSeenAt?: Date | string
+  lastValue?: number | null
+  lastIp?: string | null
+  vL1?: number | null
+  vL2?: number | null
+  vL3?: number | null
+  gridCurrentL1?: number | null
+  gridCurrentL2?: number | null
+  gridCurrentL3?: number | null
+  loadCurrentL1?: number | null
+  loadCurrentL2?: number | null
+  loadCurrentL3?: number | null
+  loadCurrentTHDL1?: number | null
+  loadCurrentTHDL2?: number | null
+  loadCurrentTHDL3?: number | null
+  uncompS?: number | null
+  uncompP?: number | null
+  uncompQ?: number | null
+  uncompH?: number | null
+  compS?: number | null
+  compP?: number | null
+  compQ?: number | null
+  compH?: number | null
+  tpf1?: number | null
+  tpf2?: number | null
+  dpf1?: number | null
+  dpf2?: number | null
+  gridCurrentTHDL1?: number | null
+  gridCurrentTHDL2?: number | null
+  gridCurrentTHDL3?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type DeviceCreateOrConnectWithoutInstallationInput = {
+  where: Prisma.DeviceWhereUniqueInput
+  create: Prisma.XOR<Prisma.DeviceCreateWithoutInstallationInput, Prisma.DeviceUncheckedCreateWithoutInstallationInput>
+}
+
+export type DeviceUpsertWithoutInstallationInput = {
+  update: Prisma.XOR<Prisma.DeviceUpdateWithoutInstallationInput, Prisma.DeviceUncheckedUpdateWithoutInstallationInput>
+  create: Prisma.XOR<Prisma.DeviceCreateWithoutInstallationInput, Prisma.DeviceUncheckedCreateWithoutInstallationInput>
+  where?: Prisma.DeviceWhereInput
+}
+
+export type DeviceUpdateToOneWithWhereWithoutInstallationInput = {
+  where?: Prisma.DeviceWhereInput
+  data: Prisma.XOR<Prisma.DeviceUpdateWithoutInstallationInput, Prisma.DeviceUncheckedUpdateWithoutInstallationInput>
+}
+
+export type DeviceUpdateWithoutInstallationInput = {
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
+  numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
+  lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompS?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompP?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompQ?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompH?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compS?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compP?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compQ?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compH?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  tpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type DeviceUncheckedUpdateWithoutInstallationInput = {
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
+  numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
+  lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompS?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompP?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompQ?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  uncompH?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compS?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compP?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compQ?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  compH?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  tpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 
 
 export type DeviceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
-  id?: boolean
-  name?: boolean
-  location?: boolean
+  installationId?: boolean
   status?: boolean
   moduleStatus?: boolean
+  numOfMods?: boolean
   lastSeenAt?: boolean
   lastValue?: boolean
   lastIp?: boolean
@@ -1288,14 +1476,14 @@ export type DeviceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   gridCurrentTHDL3?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["device"]>
 
 export type DeviceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
-  id?: boolean
-  name?: boolean
-  location?: boolean
+  installationId?: boolean
   status?: boolean
   moduleStatus?: boolean
+  numOfMods?: boolean
   lastSeenAt?: boolean
   lastValue?: boolean
   lastIp?: boolean
@@ -1328,14 +1516,14 @@ export type DeviceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   gridCurrentTHDL3?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["device"]>
 
 export type DeviceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
-  id?: boolean
-  name?: boolean
-  location?: boolean
+  installationId?: boolean
   status?: boolean
   moduleStatus?: boolean
+  numOfMods?: boolean
   lastSeenAt?: boolean
   lastValue?: boolean
   lastIp?: boolean
@@ -1368,14 +1556,14 @@ export type DeviceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   gridCurrentTHDL3?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["device"]>
 
 export type DeviceSelectScalar = {
-  id?: boolean
-  name?: boolean
-  location?: boolean
+  installationId?: boolean
   status?: boolean
   moduleStatus?: boolean
+  numOfMods?: boolean
   lastSeenAt?: boolean
   lastValue?: boolean
   lastIp?: boolean
@@ -1410,47 +1598,57 @@ export type DeviceSelectScalar = {
   updatedAt?: boolean
 }
 
-export type DeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "location" | "status" | "moduleStatus" | "lastSeenAt" | "lastValue" | "lastIp" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "uncompS" | "uncompP" | "uncompQ" | "uncompH" | "compS" | "compP" | "compQ" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "createdAt" | "updatedAt", ExtArgs["result"]["device"]>
+export type DeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"installationId" | "status" | "moduleStatus" | "numOfMods" | "lastSeenAt" | "lastValue" | "lastIp" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "uncompS" | "uncompP" | "uncompQ" | "uncompH" | "compS" | "compP" | "compQ" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "createdAt" | "updatedAt", ExtArgs["result"]["device"]>
+export type DeviceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
+}
+export type DeviceIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
+}
+export type DeviceIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
+}
 
 export type $DevicePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Device"
-  objects: {}
+  objects: {
+    installation: Prisma.$InstallationPayload<ExtArgs>
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
-    id: string
-    name: string
-    location: string
+    installationId: string
     status: string
     moduleStatus: number[]
+    numOfMods: number
     lastSeenAt: Date
-    lastValue: number
-    lastIp: string
-    vL1: number
-    vL2: number
-    vL3: number
-    gridCurrentL1: number
-    gridCurrentL2: number
-    gridCurrentL3: number
-    loadCurrentL1: number
-    loadCurrentL2: number
-    loadCurrentL3: number
-    loadCurrentTHDL1: number
-    loadCurrentTHDL2: number
-    loadCurrentTHDL3: number
-    uncompS: number
-    uncompP: number
-    uncompQ: number
-    uncompH: number
-    compS: number
-    compP: number
-    compQ: number
-    compH: number
-    tpf1: number
-    tpf2: number
-    dpf1: number
-    dpf2: number
-    gridCurrentTHDL1: number
-    gridCurrentTHDL2: number
-    gridCurrentTHDL3: number
+    lastValue: number | null
+    lastIp: string | null
+    vL1: number | null
+    vL2: number | null
+    vL3: number | null
+    gridCurrentL1: number | null
+    gridCurrentL2: number | null
+    gridCurrentL3: number | null
+    loadCurrentL1: number | null
+    loadCurrentL2: number | null
+    loadCurrentL3: number | null
+    loadCurrentTHDL1: number | null
+    loadCurrentTHDL2: number | null
+    loadCurrentTHDL3: number | null
+    uncompS: number | null
+    uncompP: number | null
+    uncompQ: number | null
+    uncompH: number | null
+    compS: number | null
+    compP: number | null
+    compQ: number | null
+    compH: number | null
+    tpf1: number | null
+    tpf2: number | null
+    dpf1: number | null
+    dpf2: number | null
+    gridCurrentTHDL1: number | null
+    gridCurrentTHDL2: number | null
+    gridCurrentTHDL3: number | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["device"]>
@@ -1536,8 +1734,8 @@ export interface DeviceDelegate<ExtArgs extends runtime.Types.Extensions.Interna
    * // Get first 10 Devices
    * const devices = await prisma.device.findMany({ take: 10 })
    * 
-   * // Only select the `id`
-   * const deviceWithIdOnly = await prisma.device.findMany({ select: { id: true } })
+   * // Only select the `installationId`
+   * const deviceWithInstallationIdOnly = await prisma.device.findMany({ select: { installationId: true } })
    * 
    */
   findMany<T extends DeviceFindManyArgs>(args?: Prisma.SelectSubset<T, DeviceFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DevicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
@@ -1581,9 +1779,9 @@ export interface DeviceDelegate<ExtArgs extends runtime.Types.Extensions.Interna
    *   ]
    * })
    * 
-   * // Create many Devices and only return the `id`
-   * const deviceWithIdOnly = await prisma.device.createManyAndReturn({
-   *   select: { id: true },
+   * // Create many Devices and only return the `installationId`
+   * const deviceWithInstallationIdOnly = await prisma.device.createManyAndReturn({
+   *   select: { installationId: true },
    *   data: [
    *     // ... provide data here
    *   ]
@@ -1672,9 +1870,9 @@ export interface DeviceDelegate<ExtArgs extends runtime.Types.Extensions.Interna
    *   ]
    * })
    * 
-   * // Update zero or more Devices and only return the `id`
-   * const deviceWithIdOnly = await prisma.device.updateManyAndReturn({
-   *   select: { id: true },
+   * // Update zero or more Devices and only return the `installationId`
+   * const deviceWithInstallationIdOnly = await prisma.device.updateManyAndReturn({
+   *   select: { installationId: true },
    *   where: {
    *     // ... provide filter here
    *   },
@@ -1847,6 +2045,7 @@ readonly fields: DeviceFieldRefs;
  */
 export interface Prisma__DeviceClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  installation<T extends Prisma.InstallationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstallationDefaultArgs<ExtArgs>>): Prisma.Prisma__InstallationClient<runtime.Types.Result.GetResult<Prisma.$InstallationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1876,11 +2075,10 @@ export interface Prisma__DeviceClient<T, Null = never, ExtArgs extends runtime.T
  * Fields of the Device model
  */
 export interface DeviceFieldRefs {
-  readonly id: Prisma.FieldRef<"Device", 'String'>
-  readonly name: Prisma.FieldRef<"Device", 'String'>
-  readonly location: Prisma.FieldRef<"Device", 'String'>
+  readonly installationId: Prisma.FieldRef<"Device", 'String'>
   readonly status: Prisma.FieldRef<"Device", 'String'>
   readonly moduleStatus: Prisma.FieldRef<"Device", 'Int[]'>
+  readonly numOfMods: Prisma.FieldRef<"Device", 'Int'>
   readonly lastSeenAt: Prisma.FieldRef<"Device", 'DateTime'>
   readonly lastValue: Prisma.FieldRef<"Device", 'Float'>
   readonly lastIp: Prisma.FieldRef<"Device", 'String'>
@@ -1930,6 +2128,10 @@ export type DeviceFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Intern
    */
   omit?: Prisma.DeviceOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DeviceInclude<ExtArgs> | null
+  /**
    * Filter, which Device to fetch.
    */
   where: Prisma.DeviceWhereUniqueInput
@@ -1948,6 +2150,10 @@ export type DeviceFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensions
    */
   omit?: Prisma.DeviceOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DeviceInclude<ExtArgs> | null
+  /**
    * Filter, which Device to fetch.
    */
   where: Prisma.DeviceWhereUniqueInput
@@ -1965,6 +2171,10 @@ export type DeviceFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Omit specific fields from the Device
    */
   omit?: Prisma.DeviceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DeviceInclude<ExtArgs> | null
   /**
    * Filter, which Device to fetch.
    */
@@ -2014,6 +2224,10 @@ export type DeviceFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensions.
    */
   omit?: Prisma.DeviceOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DeviceInclude<ExtArgs> | null
+  /**
    * Filter, which Device to fetch.
    */
   where?: Prisma.DeviceWhereInput
@@ -2062,6 +2276,10 @@ export type DeviceFindManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    */
   omit?: Prisma.DeviceOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DeviceInclude<ExtArgs> | null
+  /**
    * Filter, which Devices to fetch.
    */
   where?: Prisma.DeviceWhereInput
@@ -2105,6 +2323,10 @@ export type DeviceCreateArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    */
   omit?: Prisma.DeviceOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DeviceInclude<ExtArgs> | null
+  /**
    * The data needed to create a Device.
    */
   data: Prisma.XOR<Prisma.DeviceCreateInput, Prisma.DeviceUncheckedCreateInput>
@@ -2138,6 +2360,10 @@ export type DeviceCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensio
    */
   data: Prisma.DeviceCreateManyInput | Prisma.DeviceCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DeviceIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -2152,6 +2378,10 @@ export type DeviceUpdateArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * Omit specific fields from the Device
    */
   omit?: Prisma.DeviceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DeviceInclude<ExtArgs> | null
   /**
    * The data needed to update a Device.
    */
@@ -2204,6 +2434,10 @@ export type DeviceUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensio
    * Limit how many Devices to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DeviceIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -2218,6 +2452,10 @@ export type DeviceUpsertArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * Omit specific fields from the Device
    */
   omit?: Prisma.DeviceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DeviceInclude<ExtArgs> | null
   /**
    * The filter to search for the Device to update in case it exists.
    */
@@ -2244,6 +2482,10 @@ export type DeviceDeleteArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * Omit specific fields from the Device
    */
   omit?: Prisma.DeviceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DeviceInclude<ExtArgs> | null
   /**
    * Filter which Device to delete.
    */
@@ -2276,4 +2518,8 @@ export type DeviceDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Omit specific fields from the Device
    */
   omit?: Prisma.DeviceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DeviceInclude<ExtArgs> | null
 }

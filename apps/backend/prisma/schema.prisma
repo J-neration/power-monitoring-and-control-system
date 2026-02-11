@@ -7,42 +7,86 @@ datasource db {
   provider = "postgresql"
 }
 
+/* =========================
+ * 1) Site (고객사/현장)
+ * ========================= */
+model Site {
+  id            String          @id              // siteId (slug) e.g. "prime-solution"
+  name          String
+  region        String
+  address       String
+
+  installations Installation[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+/* =========================
+ * 2) Installation (설치지점)
+ * ========================= */
+model Installation {
+  id        String   @id                         // device_id (PSVG-RNDTESTx)
+  siteId    String
+  label     String                               // 변전실 / 102동 / 전기실
+  capacity  Float?                               // 설치지점 용량 (필요 없으면 빼도 됨)
+
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  device Device?                               // 최신 텔레메트리 (1:1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([siteId])
+}
+
+/* =========================
+ * 3) Device (최신 텔레메트리)
+ * ========================= */
 model Device {
-  id         String   @id @default(cuid())
-  name       String
-  location   String
-  status     String   @default("offline")
-  moduleStatus Int[]  @default([])
-  lastSeenAt DateTime @default(now())
-  lastValue  Float    @default(0)
-  lastIp     String   @default("unknown")
-  vL1             Float @default(0)
-  vL2             Float @default(0)
-  vL3             Float @default(0)
-  gridCurrentL1    Float @default(0)
-  gridCurrentL2    Float @default(0)
-  gridCurrentL3    Float @default(0)
-  loadCurrentL1    Float @default(0)
-  loadCurrentL2    Float @default(0)
-  loadCurrentL3    Float @default(0)
-  loadCurrentTHDL1 Float @default(0)
-  loadCurrentTHDL2 Float @default(0)
-  loadCurrentTHDL3 Float @default(0)
-  uncompS          Float @default(0)
-  uncompP          Float @default(0)
-  uncompQ          Float @default(0)
-  uncompH          Float @default(0)
-  compS            Float @default(0)
-  compP            Float @default(0)
-  compQ            Float @default(0)
-  compH            Float @default(0)
-  tpf1             Float @default(0)
-  tpf2             Float @default(0)
-  dpf1             Float @default(0)
-  dpf2             Float @default(0)
-  gridCurrentTHDL1 Float @default(0)
-  gridCurrentTHDL2 Float @default(0)
-  gridCurrentTHDL3 Float @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  installationId String   @id                    // = device_id, Installation.id와 동일
+  status         String   @default("offline")
+
+  moduleStatus   Int[]    @default([])
+  numOfMods      Int      @default(0)
+
+  lastSeenAt     DateTime @default(now())
+  lastValue      Float?
+  lastIp         String?  @default("unknown")
+
+  vL1             Float?
+  vL2             Float?
+  vL3             Float?
+  gridCurrentL1    Float?
+  gridCurrentL2    Float?
+  gridCurrentL3    Float?
+  loadCurrentL1    Float?
+  loadCurrentL2    Float?
+  loadCurrentL3    Float?
+  loadCurrentTHDL1 Float?
+  loadCurrentTHDL2 Float?
+  loadCurrentTHDL3 Float?
+
+  uncompS          Float?
+  uncompP          Float?
+  uncompQ          Float?
+  uncompH          Float?
+  compS            Float?
+  compP            Float?
+  compQ            Float?
+  compH            Float?
+
+  tpf1             Float?
+  tpf2             Float?
+  dpf1             Float?
+  dpf2             Float?
+
+  gridCurrentTHDL1 Float?
+  gridCurrentTHDL2 Float?
+  gridCurrentTHDL3 Float?
+
+  installation   Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }

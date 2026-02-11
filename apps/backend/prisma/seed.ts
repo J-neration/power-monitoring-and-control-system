@@ -1,44 +1,79 @@
 import "dotenv/config";
-import { PrismaClient } from "./generated/client";
+import { PrismaClient } from "./generated/client/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { deviceRegistry } from "../src/data/deviceRegistry.js";
+import { siteRegistry } from "../src/data/deviceRegistry.js";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({
-    connectionString: process.env.DATABASE_URL
-  })
+    connectionString: process.env.DATABASE_URL,
+  }),
 });
 
 const seed = async () => {
   const now = new Date();
 
-  for (const entry of deviceRegistry) {
-    const status = entry.status ?? "offline";
-
-    await prisma.device.upsert({
-      where: { id: entry.id },
+  for (const site of siteRegistry) {
+    // 1) Site upsert
+    await prisma.site.upsert({
+      where: { id: site.siteId },
       update: {
-        name: entry.name,
-        location: entry.location,
-        status,
-        lastSeenAt: now
+        name: site.name,
+        region: site.region,
+        address: site.address,
+        updatedAt: now,
       },
       create: {
-        id: entry.id,
-        name: entry.name,
-        location: entry.location,
-        status,
-        lastSeenAt: now,
-        lastValue: 0,
-        lastIp: "unknown",
-        vL1: 0,
-        vL2: 0,
-        vL3: 0,
-        iL1: 0,
-        iL2: 0,
-        iL3: 0
-      }
+        id: site.siteId,
+        name: site.name,
+        region: site.region,
+        address: site.address,
+        createdAt: now,
+        updatedAt: now,
+      },
     });
+
+    // 2) Installations + 3) Device(telemetry) upsert
+    for (const inst of site.installations) {
+      await prisma.installation.upsert({
+        where: { id: inst.id },
+        update: {
+          siteId: site.siteId,
+          label: inst.label,
+          ...(inst.capacity !== undefined ? { capacity: inst.capacity } : {}),
+          updatedAt: now,
+        },
+        create: {
+          id: inst.id,
+          siteId: site.siteId,
+          label: inst.label,
+          ...(inst.capacity !== undefined ? { capacity: inst.capacity } : {}),
+          createdAt: now,
+          updatedAt: now,
+        },
+      });
+
+      // Device(telemetry) row (latest snapshot placeholder)
+      await prisma.device.upsert({
+        where: { installationId: inst.id },
+        update: {
+          status: inst.status ?? "offline",
+          lastSeenAt: now,
+          lastValue: 0,
+          lastIp: "unknown",
+          moduleStatus: [],
+          numOfMods: 0,
+        },
+        create: {
+          installationId: inst.id,
+          status: inst.status ?? "offline",
+          lastSeenAt: now,
+          lastValue: 0,
+          lastIp: "unknown",
+          moduleStatus: [],
+          numOfMods: 0,
+        },
+      });
+    }
   }
 };
 

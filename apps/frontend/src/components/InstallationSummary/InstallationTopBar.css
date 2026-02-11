@@ -1,0 +1,131 @@
+.topbar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  
+    padding: 22px 26px;
+    border-radius: 0; /* 이미지처럼 바 전체가 꽉 차면 0, 카드처럼 쓰면 12~16 추천 */
+    color: #ffffff;
+  }
+  
+  .topbar-left {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+  
+  .topbar-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .topbar-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.15);
+  }
+  
+  .topbar-title {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .topbar-sub {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.75);
+  }
+  
+  .topbar-right {
+    display: flex;
+    gap: 14px;
+    align-items: stretch;
+  }
+  
+  /* stat cards */
+  .stat-card {
+    width: 96px;
+    height: 86px;
+    border-radius: 8px;
+  
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  
+    padding: 12px 12px 10px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  }
+  
+  .stat-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(0, 0, 0, 0.75);
+  }
+  
+  .stat-value {
+    font-size: 28px;
+    font-weight: 900;
+    color: rgba(0, 0, 0, 0.9);
+    line-height: 1;
+  }
+  
+  /* colors close to screenshot */
+  .stat-total {
+    background: #f3f4f6;
+  }
+  
+  .stat-normal {
+    background: #9cf0a7;
+  }
+  
+  .stat-check {
+    background: #e7ef9a;
+  }
+  
+  .stat-fault {
+    background: #f3a0a0;
+  }
+  
+  /* bottom divider */
+  .topbar-divider {
+    position: absolute;
+    left: 26px;
+    right: 26px;
+    bottom: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.15);
+  }
+  @media (max-width: 720px) {
+    .topbar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+  
+    .topbar-right {
+      width: 100%;
+      flex-wrap: wrap;
+    }
+  
+    .stat-card {
+      flex: 1;
+      min-width: 140px;
+    }
+  
+    .topbar-divider {
+      left: 0;
+      right: 0;
+    }
+  }
+  

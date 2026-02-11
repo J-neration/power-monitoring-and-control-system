@@ -38,10 +38,269 @@ main {
   gap: 20px;
 }
 
+.dashboard-map {
+  align-items: start;
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.8fr);
+  gap: 20px;
+}
+
+.map-panel{
+  padding: 0;
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+}
+
+.map-canvas{
+  position: relative;
+  /* background-color: #000B39; */
+  /* 좌표계 고정 */
+  aspect-ratio: 3 / 4;
+
+  /* 최대한 크게 */
+  height: min(85vh, 760px);
+  width: auto;
+
+
+  background-image: url("/map-korea.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+.map-marker{
+  --size: 40px;
+  --c: #34C759; /* 기본값 */
+
+  position: absolute;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+
+  /* 바깥 원 (20%) */
+  background-color: rgba(var(--rgb), 0.2);
+}
+
+/* 중간 원 (40%) */
+.map-marker::before{
+  content: "";
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  background-color: rgba(var(--rgb), 0.4);
+}
+
+/* 안쪽 원 (100%) */
+.map-marker::after{
+  content: "";
+  position: absolute;
+  inset: 34%;
+  border-radius: 50%;
+  background-color: rgb(var(--rgb));
+}
+
+.map-marker:hover{
+  transform: translate(-50%, -50%) scale(1.6);
+}
+/* running → 초록 (기존 유지) */
+.map-marker.running{
+  --rgb: 52, 199, 89; /* #34C759 */
+}
+
+/* standby / start → 노랑 */
+.map-marker.standby,
+.map-marker.start{
+  --rgb: 255, 204, 0; /* #FFCC00 */
+}
+
+/* fault → 빨강 */
+.map-marker.fault{
+  --rgb: 255, 56, 60; /* #FF383C */
+}
+
+/* offline → 파랑 */
+.map-marker.offline{
+  --rgb: 4, 0, 255; /* #0400FF */
+}
+
+.region-panel{
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+}
+
+
+.region-panel-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.region-panel-subtitle {
+  opacity: 0.7;
+  margin-bottom: 16px;
+}
+
+.region-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.region-accordion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.region-accordion {
+  background: rgba(19, 23, 33, 0.9);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 8px 12px;
+}
+
+.region-accordion-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.region-accordion-summary::-webkit-details-marker {
+  display: none;
+}
+
+.region-accordion-counts {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-left: auto;
+}
+
+.region-accordion-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 4px 4px 12px;
+}
+
+.region-device-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.region-device-card {
+  background: rgba(10, 14, 24, 0.7);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  text-decoration: none;
+  color: inherit;
+}
+
+.region-device-top {
+  display: flex;
+  flex-direction: column;
+  /* align-items: center; */
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.region-device-menu {
+  font-weight: 700;
+  opacity: 0.5;
+}
+
+.region-device-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.region-device-capacity {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.region-device-status {
+  padding: 6px 12px;
+  border-radius: 2px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+}
+
+.region-device-status.running {
+  color: #00C241;
+  background: rgba(90,255,121, 0.2);
+  border: 0.5px solid #5aff7333;
+}
+
+.region-device-status.standby,
+.region-device-status.start {
+  color: #5c4b00;
+  background: rgba(231, 235, 149, 0.9);
+}
+
+.region-device-status.fault {
+  color: #6b1111;
+  background: rgba(242, 162, 162, 0.9);
+}
+
+.region-device-status.offline {
+  color: #2b2f36;
+  background: rgba(203, 213, 245, 0.6);
+}
+
+.region-card {
+  background: rgba(19, 23, 33, 0.9);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.region-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.region-card-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.region-card-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
 .panel {
-  background: #151a23;
-  border: 1px solid #252b3a;
-  border-radius: 16px;
+  background: #16171D;
+  /* border: 1px solid #252b3a; */
+  /* border-radius: 16px; */
   padding: 20px;
 }
 
@@ -210,6 +469,12 @@ main {
 }
 
 .detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.region-header {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -399,6 +664,12 @@ main {
 }
 
 @media (max-width: 520px) {
+  .dashboard-map {
+    align-items: start;
+    grid-template-columns: 1fr;
+  }
+
+  
   .metrics-chip {
     font-size: 12px;
   }
