@@ -1,4 +1,3 @@
-import { Device } from "../types/device";
 import type { DeviceWithInstallation, Site } from "../types/site";
 
 const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";

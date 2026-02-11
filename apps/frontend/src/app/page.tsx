@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { fetchSites } from "../lib/api";
 import type { Site } from "../types/site";
-import DashboardAccordion from "../components/DashboardAccordion";
+import DashboardAccordion from "../components/Dashboard/DashboardAccordion";
 
 const knownRegions = [
   "서울",

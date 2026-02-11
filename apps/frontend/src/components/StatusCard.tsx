@@ -1,14 +1,14 @@
-import { Device } from "../types/device";
+import type { DeviceStatus, DeviceWithInstallation } from "../types/site";
 
 type StatusCardProps = {
-  device: Device;
+  device: DeviceWithInstallation;
 };
 
-const statusColors: Record<Device["status"], string> = {
+const statusColors: Record<DeviceStatus, string> = {
   standby: "#9aa4b2",
-  start: "#3498db",
+  start: "#ffcc00",
   running: "#2ecc71",
-  fault: "#e74c3c",
+  fault: "#f24141",
   offline: "#6b7280",
 };
 
@@ -20,7 +20,18 @@ const moduleStatusMeta: Record<number, { label: string; className: string }> = {
   4: { label: "OFFLINE", className: "module-chip-offline" },
 };
 
+const fmt = (v: unknown, digits = 2) => {
+  if (v === null || v === undefined) return "-";
+  if (typeof v === "number") return Number.isFinite(v) ? v.toFixed(digits) : "-";
+  const s = String(v).trim();
+  return s.length ? s : "-";
+};
+
 export const StatusCard = ({ device }: StatusCardProps) => {
+  const site = device.installation?.site;
+  const title = `${site?.name ?? "Site"} / ${device.installation?.label ?? "Installation"}`;
+  const location = `${site?.region ?? ""} ${site?.address ?? ""}`.trim();
+
   return (
     <article className="panel">
       <div
@@ -37,11 +48,19 @@ export const StatusCard = ({ device }: StatusCardProps) => {
         />
         {device.status.toUpperCase()}
       </div>
-      <h3 style={{ marginTop: 12 }}>{device.name}</h3>
-      <p style={{ opacity: 0.7, marginTop: 4 }}>{device.location}</p>
+
+      {/* 기존 device.name -> site.name + installation.label */}
+      <h3 style={{ marginTop: 12 }}>{title}</h3>
+
+      {/* 기존 device.location -> site.region + site.address */}
+      <p style={{ opacity: 0.7, marginTop: 4 }}>{location || "-"}</p>
+
+      {/* 기존 device.id -> installationId */}
       <p style={{ fontSize: 12, opacity: 0.6, marginTop: 6 }}>
-        Device ID: {device.id}
+        Installation ID: {device.installationId}
+        {device.installation?.capacity != null ? ` · ${device.installation.capacity} kVAR` : ""}
       </p>
+
       <div className="detail-metrics">
         <table className="detail-metrics-table">
           <thead>
@@ -57,66 +76,55 @@ export const StatusCard = ({ device }: StatusCardProps) => {
           <tbody>
             <tr>
               <td className="detail-metrics-label">Current (A)</td>
-              <td className="detail-metrics-value">
-                {device.loadCurrentL1 ?? "-"}
-              </td>
-              <td className="detail-metrics-value">
-                {device.loadCurrentL2 ?? "-"}
-              </td>
-              <td className="detail-metrics-value">
-                {device.loadCurrentL3 ?? "-"}
-              </td>
+              <td className="detail-metrics-value">{fmt(device.loadCurrentL1, 1)}</td>
+              <td className="detail-metrics-value">{fmt(device.loadCurrentL2, 1)}</td>
+              <td className="detail-metrics-value">{fmt(device.loadCurrentL3, 1)}</td>
             </tr>
             <tr>
               <td className="detail-metrics-label">Current THD (%)</td>
-              <td className="detail-metrics-value">
-                {device.loadCurrentTHDL1 ?? "-"}
-              </td>
-              <td className="detail-metrics-value">
-                {device.loadCurrentTHDL2 ?? "-"}
-              </td>
-              <td className="detail-metrics-value">
-                {device.loadCurrentTHDL3 ?? "-"}
-              </td>
+              <td className="detail-metrics-value">{fmt(device.loadCurrentTHDL1, 1)}</td>
+              <td className="detail-metrics-value">{fmt(device.loadCurrentTHDL2, 1)}</td>
+              <td className="detail-metrics-value">{fmt(device.loadCurrentTHDL3, 1)}</td>
             </tr>
             <tr>
               <td className="detail-metrics-label">TPF (%)</td>
               <td className="detail-metrics-value" colSpan={3}>
-                {device.tpf1 ?? "-"}
+                {fmt(device.tpf1, 3)}
               </td>
             </tr>
             <tr>
               <td className="detail-metrics-label">DPF (%)</td>
               <td className="detail-metrics-value" colSpan={3}>
-                {device.dpf1 ?? "-"}
+                {fmt(device.dpf1, 3)}
               </td>
             </tr>
             <tr>
               <td className="detail-metrics-label">S (kVA)</td>
               <td className="detail-metrics-value" colSpan={3}>
-                {device.uncompS ?? "-"}
+                {fmt(device.uncompS, 2)}
               </td>
             </tr>
             <tr>
               <td className="detail-metrics-label">P (kW)</td>
               <td className="detail-metrics-value" colSpan={3}>
-                {device.uncompP ?? "-"}
+                {fmt(device.uncompP, 2)}
               </td>
             </tr>
             <tr>
               <td className="detail-metrics-label">Q (kvar)</td>
               <td className="detail-metrics-value" colSpan={3}>
-                {device.uncompQ ?? "-"}
+                {fmt(device.uncompQ, 2)}
               </td>
             </tr>
             <tr>
               <td className="detail-metrics-label">H (kvar)</td>
               <td className="detail-metrics-value" colSpan={3}>
-                {device.uncompH ?? "-"}
+                {fmt(device.uncompH, 2)}
               </td>
             </tr>
           </tbody>
         </table>
+
         <table className="detail-metrics-table">
           <thead>
             <tr>
@@ -131,84 +139,73 @@ export const StatusCard = ({ device }: StatusCardProps) => {
           <tbody>
             <tr>
               <td className="detail-metrics-label">Current (A)</td>
-              <td className="detail-metrics-value">
-                {device.gridCurrentL1 ?? "-"}
-              </td>
-              <td className="detail-metrics-value">
-                {device.gridCurrentL2 ?? "-"}
-              </td>
-              <td className="detail-metrics-value">
-                {device.gridCurrentL3 ?? "-"}
-              </td>
+              <td className="detail-metrics-value">{fmt(device.gridCurrentL1, 1)}</td>
+              <td className="detail-metrics-value">{fmt(device.gridCurrentL2, 1)}</td>
+              <td className="detail-metrics-value">{fmt(device.gridCurrentL3, 1)}</td>
             </tr>
             <tr>
               <td className="detail-metrics-label">Current THD (%)</td>
-              <td className="detail-metrics-value">
-                {device.gridCurrentTHDL1 ?? "-"}
-              </td>
-              <td className="detail-metrics-value">
-                {device.gridCurrentTHDL2 ?? "-"}
-              </td>
-              <td className="detail-metrics-value">
-                {device.gridCurrentTHDL3 ?? "-"}
+              <td className="detail-metrics-value">{fmt(device.gridCurrentTHDL1, 1)}</td>
+              <td className="detail-metrics-value">{fmt(device.gridCurrentTHDL2, 1)}</td>
+              <td className="detail-metrics-value">{fmt(device.gridCurrentTHDL3, 1)}</td>
+            </tr>
+            <tr>
+              <td className="detail-metrics-label">TPF (Grid)</td>
+              <td className="detail-metrics-value" colSpan={3}>
+                {fmt(device.tpf2, 3)}
               </td>
             </tr>
             <tr>
-              <td className="detail-metrics-label">TPF (%)</td>
+              <td className="detail-metrics-label">DPF (Grid)</td>
               <td className="detail-metrics-value" colSpan={3}>
-                {device.tpf2 ?? "-"}
-              </td>
-            </tr>
-            <tr>
-              <td className="detail-metrics-label">DPF (%)</td>
-              <td className="detail-metrics-value" colSpan={3}>
-                {device.dpf2 ?? "-"}
+                {fmt(device.dpf2, 3)}
               </td>
             </tr>
             <tr>
               <td className="detail-metrics-label">S (kVA)</td>
               <td className="detail-metrics-value" colSpan={3}>
-                {device.compS ?? "-"}
+                {fmt(device.compS, 2)}
               </td>
             </tr>
             <tr>
               <td className="detail-metrics-label">P (kW)</td>
               <td className="detail-metrics-value" colSpan={3}>
-                {device.compP ?? "-"}
+                {fmt(device.compP, 2)}
               </td>
             </tr>
             <tr>
               <td className="detail-metrics-label">Q (kvar)</td>
               <td className="detail-metrics-value" colSpan={3}>
-                {device.compQ ?? "-"}
+                {fmt(device.compQ, 2)}
               </td>
             </tr>
             <tr>
               <td className="detail-metrics-label">H (kvar)</td>
               <td className="detail-metrics-value" colSpan={3}>
-                {device.compH ?? "-"}
+                {fmt(device.compH, 2)}
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+
       <div className="detail-footer">
         <div className="detail-voltage">
           <span>Voltage</span>
           <strong>
-            L1 {device.vL1 ?? "-"} / L2 {device.vL2 ?? "-"} / L3{" "}
-            {device.vL3 ?? "-"}
+            L1 {fmt(device.vL1, 1)} / L2 {fmt(device.vL2, 1)} / L3 {fmt(device.vL3, 1)}
           </strong>
         </div>
         <div>
           <p style={{ fontSize: 12, opacity: 0.6 }}>
-            Received {new Date(device.lastSeenAt).toLocaleString()}
+            Received {device.lastSeenAt ? new Date(device.lastSeenAt).toLocaleString() : "-"}
           </p>
           {device.lastIp && (
             <p style={{ fontSize: 12, opacity: 0.6 }}>IP {device.lastIp}</p>
           )}
         </div>
       </div>
+
       {device.moduleStatus && device.moduleStatus.length > 0 && (
         <div className="module-status">
           <p className="module-status-title">Module Status</p>

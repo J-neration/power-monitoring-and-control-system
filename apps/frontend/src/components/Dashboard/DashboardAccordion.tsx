@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef } from "react";
-import type { Site } from "../types/site";
-import type { DeviceStatus } from "../types/device";
+import type { Site } from "../../types/site";
+import type { DeviceStatus } from "../../types/site";
 
 type Props = {
   regionEntries: [string, Site[]][];
