@@ -46,6 +46,40 @@ const STATUS_STYLE: Record<DeviceStatus, StatusStyle> = {
   offline: { active: "#161e2c", selected: "#1e2840", stroke: "#4B5563" },
 };
 
+function lerpColor(a: string, b: string, t: number): string {
+  const pa = [parseInt(a.slice(1, 3), 16), parseInt(a.slice(3, 5), 16), parseInt(a.slice(5, 7), 16)];
+  const pb = [parseInt(b.slice(1, 3), 16), parseInt(b.slice(3, 5), 16), parseInt(b.slice(5, 7), 16)];
+  const r = Math.round(pa[0] + (pb[0] - pa[0]) * t);
+  const g = Math.round(pa[1] + (pb[1] - pa[1]) * t);
+  const bl = Math.round(pa[2] + (pb[2] - pa[2]) * t);
+  return `#${((1 << 24) | (r << 16) | (g << 8) | bl).toString(16).slice(1)}`;
+}
+
+function regionHealthColors(stats: RegionStats): { fill: string; fillSelected: string; stroke: string } {
+  const { total, counts } = stats;
+  if (total === 0) return { fill: "#161e2c", fillSelected: "#1e2840", stroke: "#4B5563" };
+
+  const okRatio = (counts.running ?? 0) / total;
+  const faultRatio = (counts.fault ?? 0) / total;
+
+  // 100% running → pure green, 100% fault → pure red, mix → blend
+  // standby/offline pulls toward amber/grey
+  if (faultRatio > 0) {
+    const fill = lerpColor("#0a2e14", "#2d0a0a", Math.min(faultRatio * 3, 1));
+    const fillSel = lerpColor("#0f4520", "#3f0e0e", Math.min(faultRatio * 3, 1));
+    const stroke = lerpColor("#34C759", "#EF4444", Math.min(faultRatio * 2.5, 1));
+    return { fill, fillSelected: fillSel, stroke };
+  }
+  if (okRatio >= 0.8) return { fill: "#0a2e14", fillSelected: "#0f4520", stroke: "#34C759" };
+  if (okRatio >= 0.5) {
+    const fill = lerpColor("#0a2e14", "#2a1e00", 1 - okRatio);
+    const fillSel = lerpColor("#0f4520", "#3d2c00", 1 - okRatio);
+    const stroke = lerpColor("#34C759", "#F59E0B", 1 - okRatio);
+    return { fill, fillSelected: fillSel, stroke };
+  }
+  return { fill: "#2a1e00", fillSelected: "#3d2c00", stroke: "#F59E0B" };
+}
+
 const STATUS_DOT: Record<DeviceStatus, string> = {
   running: "#34C759",
   standby: "#F59E0B",
@@ -121,11 +155,17 @@ const ZOOM_STEP = 1.6;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 10;
 
+type RegionStats = {
+  majority: DeviceStatus;
+  hasFault: boolean;
+  total: number;
+  counts: Record<DeviceStatus, number>;
+  sites: Site[];
+};
+
 type Props = {
-  regionToSite: Record<string, Site>;
   allSites: Site[];
   selectedSiteId: string;
-  selectedInstId?: string;
   deriveSiteStatus: (site: Site) => DeviceStatus;
   onSelect: (installationId: string) => void;
 };
@@ -133,10 +173,8 @@ type Props = {
 type Tooltip = { lines: string[]; x: number; y: number };
 
 export default function KoreaMap({
-  regionToSite,
   allSites,
   selectedSiteId,
-  selectedInstId,
   deriveSiteStatus,
   onSelect,
 }: Props) {
@@ -144,27 +182,62 @@ export default function KoreaMap({
   const [center, setCenter] = useState<[number, number]>(INITIAL_CENTER);
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
 
-  const deviceMarkers = useMemo(() => {
-    return allSites.flatMap((site) => {
-      const base = resolveCoords(site.address, site.region);
-      if (!base) return [];
-
-      return site.installations.map((inst, instIdx) => {
-        const coords: [number, number] = inst.coordinates ?? [
-          base[0] + instIdx * 0.04,
-          base[1] + instIdx * -0.03,
-        ];
-        return {
-          id: inst.id,
-          label: inst.label,
-          coordinates: coords,
-          status: (inst.device?.status ?? "offline") as DeviceStatus,
-          siteName: site.name,
-          siteId: site.id,
-        };
-      });
-    });
+  const regionStats = useMemo(() => {
+    const map = new Map<string, RegionStats>();
+    for (const site of allSites) {
+      const region = site.region;
+      const stats = map.get(region) ?? {
+        majority: "running" as DeviceStatus,
+        hasFault: false,
+        total: 0,
+        counts: { running: 0, standby: 0, start: 0, fault: 0, offline: 0 },
+        sites: [],
+      };
+      stats.sites.push(site);
+      for (const inst of site.installations) {
+        const s = (inst.device?.status ?? "offline") as DeviceStatus;
+        stats.counts[s] = (stats.counts[s] ?? 0) + 1;
+        stats.total++;
+        if (s === "fault") stats.hasFault = true;
+      }
+      map.set(region, stats);
+    }
+    for (const [, stats] of map) {
+      let maxCount = 0;
+      let majority: DeviceStatus = "running";
+      for (const [s, count] of Object.entries(stats.counts)) {
+        if (count > maxCount) {
+          maxCount = count;
+          majority = s as DeviceStatus;
+        }
+      }
+      stats.majority = majority;
+    }
+    return map;
   }, [allSites]);
+
+  const siteMarkers = useMemo(() => {
+    return allSites.map((site) => {
+      const coords = resolveCoords(site.address, site.region);
+      if (!coords) return null;
+      const status = deriveSiteStatus(site);
+      return {
+        siteId: site.id,
+        siteName: site.name,
+        instCount: site.installations.length,
+        firstInstId: site.installations[0]?.id ?? site.id,
+        coordinates: coords,
+        status,
+      };
+    }).filter(Boolean) as {
+      siteId: string;
+      siteName: string;
+      instCount: number;
+      firstInstId: string;
+      coordinates: [number, number];
+      status: DeviceStatus;
+    }[];
+  }, [allSites, deriveSiteStatus]);
 
   const handleZoomIn  = () => setZoom((z) => Math.min(z * ZOOM_STEP, MAX_ZOOM));
   const handleZoomOut = () => setZoom((z) => Math.max(z / ZOOM_STEP, MIN_ZOOM));
@@ -223,36 +296,9 @@ export default function KoreaMap({
               geographies.map((geo) => {
                 const geoName = geo.properties.name as string;
                 const regionKey = GEO_TO_REGION[geoName];
-                const site = regionKey ? regionToSite[regionKey] : null;
-                const status = site ? deriveSiteStatus(site) : null;
-                const isSelected = !!site && site.id === selectedSiteId;
+                const stats = regionKey ? regionStats.get(regionKey) : undefined;
 
-                const makeTooltipLines = (): string[] => {
-                  if (!site || !status) return [geoName];
-                  const counts = site.installations.reduce(
-                    (acc, inst) => {
-                      acc[inst.device?.status ?? "offline"] =
-                        (acc[inst.device?.status ?? "offline"] ?? 0) + 1;
-                      return acc;
-                    },
-                    {} as Record<string, number>
-                  );
-                  const statusSummary = Object.entries(counts)
-                    .map(([s, n]) => `${STATUS_LABEL[s as DeviceStatus]} ${n}`)
-                    .join(" · ");
-                  return [
-                    site.name,
-                    `${geoName} · ${site.installations.length}개 설치`,
-                    statusSummary,
-                  ];
-                };
-
-                const handleMouseEnter = (evt: MouseEvent<SVGElement>) => {
-                  if (!site) return;
-                  setTooltip({ lines: makeTooltipLines(), x: evt.clientX, y: evt.clientY });
-                };
-
-                if (!status) {
+                if (!stats) {
                   return (
                     <Geography
                       key={geo.rsmKey}
@@ -266,33 +312,51 @@ export default function KoreaMap({
                   );
                 }
 
-                const s = STATUS_STYLE[status];
-                const fill = isSelected ? s.selected : s.active;
+                const isSelected = stats.sites.some((s) => s.id === selectedSiteId);
+                const colors = regionHealthColors(stats);
+                const fill = isSelected ? colors.fillSelected : colors.fill;
+                const firstInst = stats.sites[0]?.installations[0];
+
+                const makeTooltipLines = (): string[] => {
+                  const okPct = stats.total > 0
+                    ? Math.round(((stats.counts.running ?? 0) / stats.total) * 100)
+                    : 0;
+                  const summary = Object.entries(stats.counts)
+                    .filter(([, n]) => n > 0)
+                    .map(([s, n]) => `${STATUS_LABEL[s as DeviceStatus]} ${n}`)
+                    .join(" · ");
+                  return [
+                    `${regionKey} — ${stats.sites.length}현장 · ${stats.total}대 (정상 ${okPct}%)`,
+                    summary,
+                  ];
+                };
 
                 return (
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
-                    onClick={() => site && onSelect(site.installations[0]?.id ?? site.id)}
-                    onMouseEnter={handleMouseEnter}
+                    onClick={() => firstInst && onSelect(firstInst.id)}
+                    onMouseEnter={(evt) =>
+                      setTooltip({ lines: makeTooltipLines(), x: evt.clientX, y: evt.clientY })
+                    }
                     onMouseMove={updateTooltipPos}
                     onMouseLeave={() => setTooltip(null)}
                     style={{
                       default: {
                         fill,
-                        stroke: s.stroke,
+                        stroke: colors.stroke,
                         strokeWidth: isSelected ? 1.2 : 0.7,
                         outline: "none",
                         cursor: "pointer",
                       },
                       hover: {
-                        fill: s.selected,
-                        stroke: s.stroke,
+                        fill: colors.fillSelected,
+                        stroke: colors.stroke,
                         strokeWidth: 1.2,
                         outline: "none",
                         cursor: "pointer",
                       },
-                      pressed: { fill: s.selected, outline: "none" },
+                      pressed: { fill: colors.fillSelected, outline: "none" },
                     }}
                   />
                 );
@@ -300,21 +364,24 @@ export default function KoreaMap({
             }
           </Geographies>
 
-          {/* Device markers — always visible */}
-          {deviceMarkers.map((marker) => {
+          {/* Site markers — one dot per site, worst status */}
+          {siteMarkers.map((marker) => {
             const isFault = marker.status === "fault";
-            const isMarkerSelected = marker.id === selectedInstId;
+            const isSelected = marker.siteId === selectedSiteId;
             const color = STATUS_DOT[marker.status];
-            const innerR = (isMarkerSelected ? 4 : 3) / zoom;
-            const outerR = (isMarkerSelected ? 9 : 7) / zoom;
+            const innerR = (isSelected ? 4 : 3) / zoom;
+            const outerR = (isSelected ? 9 : 7) / zoom;
             return (
               <Marker
-                key={marker.id}
+                key={marker.siteId}
                 coordinates={marker.coordinates}
-                onClick={() => onSelect(marker.id)}
+                onClick={() => onSelect(marker.firstInstId)}
                 onMouseEnter={(evt) =>
                   setTooltip({
-                    lines: [marker.siteName, marker.label, STATUS_LABEL[marker.status]],
+                    lines: [
+                      marker.siteName,
+                      `${marker.instCount}개 설치지점 · ${STATUS_LABEL[marker.status]}`,
+                    ],
                     x: evt.clientX,
                     y: evt.clientY,
                   })
@@ -322,7 +389,6 @@ export default function KoreaMap({
                 onMouseLeave={() => setTooltip(null)}
                 style={{ cursor: "pointer" }}
               >
-                {/* Pulse ring — fault only */}
                 {isFault && (
                   <circle
                     r={outerR * 1.8}
@@ -331,7 +397,6 @@ export default function KoreaMap({
                     className="marker-pulse-ring"
                   />
                 )}
-                {/* Outer ring */}
                 <circle
                   r={outerR}
                   fill={color}
@@ -339,7 +404,6 @@ export default function KoreaMap({
                   stroke={color}
                   strokeWidth={0.8 / zoom}
                 />
-                {/* Inner dot */}
                 <circle
                   r={innerR}
                   fill={color}

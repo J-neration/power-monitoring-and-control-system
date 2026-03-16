@@ -66,7 +66,7 @@ function PfBar({
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="pf-value">{value != null ? value.toFixed(2) : "—"}</span>
+      <span className="pf-value">{value != null ? `${(value * 100).toFixed(1)}%` : "—"}</span>
     </div>
   );
 }
@@ -124,17 +124,17 @@ export default function SiteDetailPanel({
 
   const powerData = [
     {
-      name: "피상(S)",
+      name: "S (kVA)",
       보정전: device?.uncompS ?? 0,
       보정후: device?.compS ?? 0,
     },
     {
-      name: "유효(P)",
+      name: "P (kW)",
       보정전: device?.uncompP ?? 0,
       보정후: device?.compP ?? 0,
     },
     {
-      name: "무효(Q)",
+      name: "Q (kvar)",
       보정전: device?.uncompQ ?? 0,
       보정후: device?.compQ ?? 0,
     },
@@ -229,7 +229,7 @@ export default function SiteDetailPanel({
 
       {/* Power chart */}
       <div className="chart-card">
-        <h3 className="chart-title">전력 (W) — 보정 전후 비교</h3>
+        <h3 className="chart-title">전력 — 보정 전후 비교</h3>
         <ResponsiveContainer width="100%" height={130}>
           <BarChart
             data={powerData}
@@ -264,7 +264,7 @@ export default function SiteDetailPanel({
 
       {/* Power factor */}
       <div className="chart-card">
-        <h3 className="chart-title">역률</h3>
+        <h3 className="chart-title">역률 (%)</h3>
         <div className="pf-grid">
           <PfBar label="TPF 보정 전" value={device?.tpf1} />
           <PfBar label="TPF 보정 후" value={device?.tpf2} highlight />

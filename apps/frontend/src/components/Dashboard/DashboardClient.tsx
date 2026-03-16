@@ -65,14 +65,6 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
     [selectedSite, selectedInstId]
   );
 
-  const regionToSite = useMemo(() => {
-    const map: Record<string, Site> = {};
-    for (const site of sites) {
-      if (!map[site.region]) map[site.region] = site;
-    }
-    return map;
-  }, [sites]);
-
   const regionGroups = useMemo(() => {
     const map = new Map<string, Site[]>();
     for (const site of sites) {
@@ -226,10 +218,8 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
         {/* Center: map */}
         <div className="dash-map-panel">
           <KoreaMap
-            regionToSite={regionToSite}
             allSites={sites}
             selectedSiteId={selectedSite?.id ?? ""}
-            selectedInstId={selectedInstId}
             deriveSiteStatus={deriveSiteStatus}
             onSelect={handleSelectInstallation}
           />
