@@ -71,6 +71,7 @@ export type Site = {
       label: string;      // 변전실
       capacity: number | null;
       device: Device;     // telemetry
+      coordinates?: [number, number]; // [lng, lat] — optional, for map markers
     }>;
 };
 
