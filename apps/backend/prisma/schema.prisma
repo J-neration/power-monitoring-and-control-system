@@ -55,36 +55,46 @@ model Device {
   lastValue      Float?
   lastIp         String?  @default("unknown")
 
+  // 전압 (V)
   vL1             Float?
   vL2             Float?
   vL3             Float?
+
+  // 전류 (A)
   gridCurrentL1    Float?
   gridCurrentL2    Float?
   gridCurrentL3    Float?
   loadCurrentL1    Float?
   loadCurrentL2    Float?
   loadCurrentL3    Float?
+
+  // 전류 THD (%)
   loadCurrentTHDL1 Float?
   loadCurrentTHDL2 Float?
   loadCurrentTHDL3 Float?
+  gridCurrentTHDL1 Float?
+  gridCurrentTHDL2 Float?
+  gridCurrentTHDL3 Float?
 
+  // 피상전력 (kVA)
   uncompS          Float?
-  uncompP          Float?
-  uncompQ          Float?
-  uncompH          Float?
   compS            Float?
+
+  // 유효전력 (kW)
+  uncompP          Float?
   compP            Float?
+
+  // 무효전력 (kvar)
+  uncompQ          Float?
   compQ            Float?
+  uncompH          Float?
   compH            Float?
 
+  // 역률 (%)
   tpf1             Float?
   tpf2             Float?
   dpf1             Float?
   dpf2             Float?
-
-  gridCurrentTHDL1 Float?
-  gridCurrentTHDL2 Float?
-  gridCurrentTHDL3 Float?
 
   installation   Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
 
