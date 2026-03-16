@@ -25,6 +25,7 @@ export const fetchSites = async (): Promise<Site[]> => {
     const current = siteMap.get(siteId) ?? {
       id: site.id,
       name: site.name,
+      client: site.client ?? "unknown",
       region: site.region,
       address: site.address,
       installations: [],

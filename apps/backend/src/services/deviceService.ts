@@ -24,6 +24,7 @@ type RegistryHit = {
   site: {
     siteId: string;
     name: string;
+    client: string;
     region: string;
     address: string;
   };
@@ -43,6 +44,7 @@ const findRegistryByDeviceId = (deviceId: string): RegistryHit | undefined => {
         site: {
           siteId: site.siteId,
           name: site.name,
+          client: site.client,
           region: site.region,
           address: site.address,
         },
@@ -61,8 +63,8 @@ const findRegistryByDeviceId = (deviceId: string): RegistryHit | undefined => {
 const ensureUnknownSiteAndInstallation = async (deviceId: string) => {
   await prisma.site.upsert({
     where: { id: "unknown" },
-    update: { name: "Unknown", region: "기타", address: "Unknown" },
-    create: { id: "unknown", name: "Unknown", region: "기타", address: "Unknown" },
+    update: { name: "Unknown", client: "unknown", region: "기타", address: "Unknown" },
+    create: { id: "unknown", name: "Unknown", client: "unknown", region: "기타", address: "Unknown" },
   });
 
   await prisma.installation.upsert({
@@ -265,12 +267,14 @@ export const deviceService = {
           where: { id: reg.site.siteId },
           update: {
             name: reg.site.name,
+            client: reg.site.client,
             region: reg.site.region,
             address: reg.site.address,
           },
           create: {
             id: reg.site.siteId,
             name: reg.site.name,
+            client: reg.site.client,
             region: reg.site.region,
             address: reg.site.address,
           },

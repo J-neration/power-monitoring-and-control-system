@@ -15,7 +15,7 @@ import type * as Prisma from "../internal/prismaNamespace.js"
 /**
  * Model Site
  * =========================
- *  * 1) Site (고객사/현장)
+ *  * 1) Site (현장 – 아파트 단지 등)
  *  * =========================
  */
 export type SiteModel = runtime.Types.Result.DefaultSelection<Prisma.$SitePayload>
@@ -29,6 +29,7 @@ export type AggregateSite = {
 export type SiteMinAggregateOutputType = {
   id: string | null
   name: string | null
+  client: string | null
   region: string | null
   address: string | null
   createdAt: Date | null
@@ -38,6 +39,7 @@ export type SiteMinAggregateOutputType = {
 export type SiteMaxAggregateOutputType = {
   id: string | null
   name: string | null
+  client: string | null
   region: string | null
   address: string | null
   createdAt: Date | null
@@ -47,6 +49,7 @@ export type SiteMaxAggregateOutputType = {
 export type SiteCountAggregateOutputType = {
   id: number
   name: number
+  client: number
   region: number
   address: number
   createdAt: number
@@ -58,6 +61,7 @@ export type SiteCountAggregateOutputType = {
 export type SiteMinAggregateInputType = {
   id?: true
   name?: true
+  client?: true
   region?: true
   address?: true
   createdAt?: true
@@ -67,6 +71,7 @@ export type SiteMinAggregateInputType = {
 export type SiteMaxAggregateInputType = {
   id?: true
   name?: true
+  client?: true
   region?: true
   address?: true
   createdAt?: true
@@ -76,6 +81,7 @@ export type SiteMaxAggregateInputType = {
 export type SiteCountAggregateInputType = {
   id?: true
   name?: true
+  client?: true
   region?: true
   address?: true
   createdAt?: true
@@ -158,6 +164,7 @@ export type SiteGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 export type SiteGroupByOutputType = {
   id: string
   name: string
+  client: string
   region: string
   address: string
   createdAt: Date
@@ -188,6 +195,7 @@ export type SiteWhereInput = {
   NOT?: Prisma.SiteWhereInput | Prisma.SiteWhereInput[]
   id?: Prisma.StringFilter<"Site"> | string
   name?: Prisma.StringFilter<"Site"> | string
+  client?: Prisma.StringFilter<"Site"> | string
   region?: Prisma.StringFilter<"Site"> | string
   address?: Prisma.StringFilter<"Site"> | string
   createdAt?: Prisma.DateTimeFilter<"Site"> | Date | string
@@ -198,6 +206,7 @@ export type SiteWhereInput = {
 export type SiteOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  client?: Prisma.SortOrder
   region?: Prisma.SortOrder
   address?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -211,6 +220,7 @@ export type SiteWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.SiteWhereInput[]
   NOT?: Prisma.SiteWhereInput | Prisma.SiteWhereInput[]
   name?: Prisma.StringFilter<"Site"> | string
+  client?: Prisma.StringFilter<"Site"> | string
   region?: Prisma.StringFilter<"Site"> | string
   address?: Prisma.StringFilter<"Site"> | string
   createdAt?: Prisma.DateTimeFilter<"Site"> | Date | string
@@ -221,6 +231,7 @@ export type SiteWhereUniqueInput = Prisma.AtLeast<{
 export type SiteOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  client?: Prisma.SortOrder
   region?: Prisma.SortOrder
   address?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -236,6 +247,7 @@ export type SiteScalarWhereWithAggregatesInput = {
   NOT?: Prisma.SiteScalarWhereWithAggregatesInput | Prisma.SiteScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Site"> | string
   name?: Prisma.StringWithAggregatesFilter<"Site"> | string
+  client?: Prisma.StringWithAggregatesFilter<"Site"> | string
   region?: Prisma.StringWithAggregatesFilter<"Site"> | string
   address?: Prisma.StringWithAggregatesFilter<"Site"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Site"> | Date | string
@@ -245,6 +257,7 @@ export type SiteScalarWhereWithAggregatesInput = {
 export type SiteCreateInput = {
   id: string
   name: string
+  client?: string
   region: string
   address: string
   createdAt?: Date | string
@@ -255,6 +268,7 @@ export type SiteCreateInput = {
 export type SiteUncheckedCreateInput = {
   id: string
   name: string
+  client?: string
   region: string
   address: string
   createdAt?: Date | string
@@ -265,6 +279,7 @@ export type SiteUncheckedCreateInput = {
 export type SiteUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  client?: Prisma.StringFieldUpdateOperationsInput | string
   region?: Prisma.StringFieldUpdateOperationsInput | string
   address?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -275,6 +290,7 @@ export type SiteUpdateInput = {
 export type SiteUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  client?: Prisma.StringFieldUpdateOperationsInput | string
   region?: Prisma.StringFieldUpdateOperationsInput | string
   address?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -285,6 +301,7 @@ export type SiteUncheckedUpdateInput = {
 export type SiteCreateManyInput = {
   id: string
   name: string
+  client?: string
   region: string
   address: string
   createdAt?: Date | string
@@ -294,6 +311,7 @@ export type SiteCreateManyInput = {
 export type SiteUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  client?: Prisma.StringFieldUpdateOperationsInput | string
   region?: Prisma.StringFieldUpdateOperationsInput | string
   address?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -303,6 +321,7 @@ export type SiteUpdateManyMutationInput = {
 export type SiteUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  client?: Prisma.StringFieldUpdateOperationsInput | string
   region?: Prisma.StringFieldUpdateOperationsInput | string
   address?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -312,6 +331,7 @@ export type SiteUncheckedUpdateManyInput = {
 export type SiteCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  client?: Prisma.SortOrder
   region?: Prisma.SortOrder
   address?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -321,6 +341,7 @@ export type SiteCountOrderByAggregateInput = {
 export type SiteMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  client?: Prisma.SortOrder
   region?: Prisma.SortOrder
   address?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -330,6 +351,7 @@ export type SiteMaxOrderByAggregateInput = {
 export type SiteMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  client?: Prisma.SortOrder
   region?: Prisma.SortOrder
   address?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -366,6 +388,7 @@ export type SiteUpdateOneRequiredWithoutInstallationsNestedInput = {
 export type SiteCreateWithoutInstallationsInput = {
   id: string
   name: string
+  client?: string
   region: string
   address: string
   createdAt?: Date | string
@@ -375,6 +398,7 @@ export type SiteCreateWithoutInstallationsInput = {
 export type SiteUncheckedCreateWithoutInstallationsInput = {
   id: string
   name: string
+  client?: string
   region: string
   address: string
   createdAt?: Date | string
@@ -400,6 +424,7 @@ export type SiteUpdateToOneWithWhereWithoutInstallationsInput = {
 export type SiteUpdateWithoutInstallationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  client?: Prisma.StringFieldUpdateOperationsInput | string
   region?: Prisma.StringFieldUpdateOperationsInput | string
   address?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -409,6 +434,7 @@ export type SiteUpdateWithoutInstallationsInput = {
 export type SiteUncheckedUpdateWithoutInstallationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  client?: Prisma.StringFieldUpdateOperationsInput | string
   region?: Prisma.StringFieldUpdateOperationsInput | string
   address?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -449,6 +475,7 @@ export type SiteCountOutputTypeCountInstallationsArgs<ExtArgs extends runtime.Ty
 export type SiteSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  client?: boolean
   region?: boolean
   address?: boolean
   createdAt?: boolean
@@ -460,6 +487,7 @@ export type SiteSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 export type SiteSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  client?: boolean
   region?: boolean
   address?: boolean
   createdAt?: boolean
@@ -469,6 +497,7 @@ export type SiteSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 export type SiteSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  client?: boolean
   region?: boolean
   address?: boolean
   createdAt?: boolean
@@ -478,13 +507,14 @@ export type SiteSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 export type SiteSelectScalar = {
   id?: boolean
   name?: boolean
+  client?: boolean
   region?: boolean
   address?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type SiteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "region" | "address" | "createdAt" | "updatedAt", ExtArgs["result"]["site"]>
+export type SiteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "client" | "region" | "address" | "createdAt" | "updatedAt", ExtArgs["result"]["site"]>
 export type SiteInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   installations?: boolean | Prisma.Site$installationsArgs<ExtArgs>
   _count?: boolean | Prisma.SiteCountOutputTypeDefaultArgs<ExtArgs>
@@ -500,6 +530,7 @@ export type $SitePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
+    client: string
     region: string
     address: string
     createdAt: Date
@@ -930,6 +961,7 @@ export interface Prisma__SiteClient<T, Null = never, ExtArgs extends runtime.Typ
 export interface SiteFieldRefs {
   readonly id: Prisma.FieldRef<"Site", 'String'>
   readonly name: Prisma.FieldRef<"Site", 'String'>
+  readonly client: Prisma.FieldRef<"Site", 'String'>
   readonly region: Prisma.FieldRef<"Site", 'String'>
   readonly address: Prisma.FieldRef<"Site", 'String'>
   readonly createdAt: Prisma.FieldRef<"Site", 'DateTime'>

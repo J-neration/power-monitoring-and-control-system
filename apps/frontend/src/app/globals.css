@@ -902,6 +902,150 @@ main.dashboard-full {
 .sidebar-link { font-size: 12px; opacity: 0.4; transition: opacity 0.15s; }
 .sidebar-link:hover { opacity: 0.8; }
 
+/* ── Region > Site > Installation accordion ─────────────────── */
+.region-group { border-bottom: 1px solid rgba(255,255,255,0.04); }
+.region-group summary { list-style: none; }
+.region-group summary::-webkit-details-marker { display: none; }
+
+.region-group-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+.region-group-summary:hover { background: rgba(255,255,255,0.03); }
+
+.region-group-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.02em;
+}
+.region-group-count {
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+  margin-left: auto;
+}
+.region-chevron {
+  font-size: 10px;
+  opacity: 0.3;
+  transition: transform 0.15s;
+}
+.region-group[open] > .region-group-summary .region-chevron {
+  transform: rotate(0deg);
+}
+.region-group:not([open]) > .region-group-summary .region-chevron {
+  transform: rotate(-90deg);
+}
+
+.region-group-content {
+  padding: 0 0 4px 0;
+}
+
+/* Site sub-group */
+.site-group summary { list-style: none; }
+.site-group summary::-webkit-details-marker { display: none; }
+
+.site-group-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px 7px 28px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+.site-group-summary:hover { background: rgba(255,255,255,0.03); }
+
+.site-group-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.site-group-dot.running  { background: #34C759; }
+.site-group-dot.standby,
+.site-group-dot.start    { background: #F59E0B; }
+.site-group-dot.fault    { background: #EF4444; }
+.site-group-dot.offline  { background: #4B5563; }
+
+.site-group-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.site-group-name {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.site-group-client {
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+}
+
+/* Installation cards inside site */
+.site-group-installations {
+  padding: 2px 0 6px 0;
+}
+
+.inst-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 16px 6px 44px;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+  border-left: 2px solid transparent;
+}
+.inst-card:hover { background: rgba(255,255,255,0.03); }
+.inst-card.selected {
+  background: rgba(59,130,246,0.08);
+  border-left-color: #3B82F6;
+}
+
+.inst-card-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.inst-card-dot.running  { background: #34C759; }
+.inst-card-dot.standby,
+.inst-card-dot.start    { background: #F59E0B; }
+.inst-card-dot.fault    { background: #EF4444; }
+.inst-card-dot.offline  { background: #4B5563; }
+
+.inst-card-info {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+.inst-card-label {
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.inst-card-cap {
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  flex-shrink: 0;
+}
+
 /* ── Center map ──────────────────────────────────────────────── */
 .dash-map-panel {
   display: flex;

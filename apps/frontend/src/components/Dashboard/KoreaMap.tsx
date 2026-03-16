@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   ComposableMap,
   Geographies,
@@ -62,6 +62,59 @@ const STATUS_LABEL: Record<DeviceStatus, string> = {
   offline: "오프라인",
 };
 
+const CITY_COORDS: Record<string, [number, number]> = {
+  // 광역시/특별시 구 단위
+  송파구: [127.11, 37.51], 강남구: [127.05, 37.50], 종로구: [126.98, 37.57],
+  마포구: [126.90, 37.55], 서초구: [127.01, 37.48], 영등포구: [126.90, 37.52],
+  해운대구: [129.16, 35.16], 사하구: [128.97, 35.10], 수영구: [129.11, 35.15],
+  연수구: [126.68, 37.41], 서구: [126.68, 37.53], 남동구: [126.73, 37.45],
+  유성구: [127.34, 36.36], 동구: [127.46, 36.31], 중구: [127.42, 36.33],
+  // 경기도 시 단위
+  안양시: [126.95, 37.39], 수원시: [127.00, 37.26], 성남시: [127.13, 37.42],
+  화성시: [127.07, 37.20], 용인시: [127.18, 37.24], 고양시: [126.83, 37.66],
+  평택시: [127.09, 36.99], 파주시: [126.78, 37.76], 김포시: [126.72, 37.62],
+  시흥시: [126.80, 37.38], 광명시: [126.87, 37.47], 하남시: [127.21, 37.54],
+  // 경상북도 시 단위
+  구미시: [128.34, 36.12], 포항시: [129.34, 36.02], 경주시: [129.23, 35.86],
+  안동시: [128.73, 36.57], 김천시: [128.11, 36.12], 영주시: [128.74, 36.81],
+  // 경상남도
+  창원시: [128.68, 35.23], 진주시: [128.08, 35.18], 김해시: [128.89, 35.23],
+  // 충청북도
+  청주시: [127.49, 36.64], 충주시: [127.93, 36.99], 제천시: [128.19, 37.13],
+  // 충청남도
+  천안시: [127.15, 36.82], 아산시: [127.00, 36.79], 서산시: [126.45, 36.78],
+  // 전북특별자치도
+  전주시: [127.15, 35.82], 익산시: [126.95, 35.95], 군산시: [126.74, 35.97],
+  // 전라남도
+  여수시: [127.66, 34.76], 순천시: [127.49, 34.95], 목포시: [126.39, 34.81],
+  // 강원도
+  춘천시: [127.73, 37.88], 원주시: [127.92, 37.34], 강릉시: [128.90, 37.75],
+  // 제주
+  제주시: [126.53, 33.51], 서귀포시: [126.56, 33.25],
+  // 광역시 폴백 (구 매칭 실패 시)
+  서울: [127.00, 37.56], 부산: [129.08, 35.18], 대구: [128.60, 35.87],
+  인천: [126.70, 37.46], 광주: [126.85, 35.16], 대전: [127.38, 36.35],
+  울산: [129.31, 35.54], 세종: [127.00, 36.48],
+  // 도 폴백
+  경기도: [127.05, 37.28], 강원도: [128.20, 37.75],
+  충청북도: [127.70, 36.64], 충청남도: [126.80, 36.52],
+  전북특별자치도: [127.10, 35.82], 전라남도: [126.95, 34.82],
+  경상북도: [128.73, 36.07], 경상남도: [128.25, 35.24],
+  제주특별자치도: [126.57, 33.38],
+};
+
+function resolveCoords(address: string, region: string): [number, number] | null {
+  const parts = address.replace(/특별시|광역시|특별자치시|특별자치도/g, "").split(/\s+/);
+  for (const part of parts) {
+    if (CITY_COORDS[part]) return CITY_COORDS[part];
+  }
+  for (const part of parts) {
+    const match = Object.keys(CITY_COORDS).find((k) => part.includes(k) || k.includes(part));
+    if (match) return CITY_COORDS[match];
+  }
+  return CITY_COORDS[region] ?? null;
+}
+
 const INITIAL_CENTER: [number, number] = [127.8, 36.0];
 const INITIAL_ZOOM = 1;
 const ZOOM_STEP = 1.6;
@@ -72,8 +125,9 @@ type Props = {
   regionToSite: Record<string, Site>;
   allSites: Site[];
   selectedSiteId: string;
+  selectedInstId?: string;
   deriveSiteStatus: (site: Site) => DeviceStatus;
-  onSelect: (siteId: string) => void;
+  onSelect: (installationId: string) => void;
 };
 
 type Tooltip = { lines: string[]; x: number; y: number };
@@ -82,6 +136,7 @@ export default function KoreaMap({
   regionToSite,
   allSites,
   selectedSiteId,
+  selectedInstId,
   deriveSiteStatus,
   onSelect,
 }: Props) {
@@ -89,18 +144,27 @@ export default function KoreaMap({
   const [center, setCenter] = useState<[number, number]>(INITIAL_CENTER);
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
 
-  const deviceMarkers = allSites.flatMap((site) =>
-    site.installations
-      .filter((inst) => inst.coordinates)
-      .map((inst) => ({
-        id: inst.id,
-        label: inst.label,
-        coordinates: inst.coordinates as [number, number],
-        status: (inst.device?.status ?? "offline") as DeviceStatus,
-        siteName: site.name,
-        siteId: site.id,
-      }))
-  );
+  const deviceMarkers = useMemo(() => {
+    return allSites.flatMap((site) => {
+      const base = resolveCoords(site.address, site.region);
+      if (!base) return [];
+
+      return site.installations.map((inst, instIdx) => {
+        const coords: [number, number] = inst.coordinates ?? [
+          base[0] + instIdx * 0.04,
+          base[1] + instIdx * -0.03,
+        ];
+        return {
+          id: inst.id,
+          label: inst.label,
+          coordinates: coords,
+          status: (inst.device?.status ?? "offline") as DeviceStatus,
+          siteName: site.name,
+          siteId: site.id,
+        };
+      });
+    });
+  }, [allSites]);
 
   const handleZoomIn  = () => setZoom((z) => Math.min(z * ZOOM_STEP, MAX_ZOOM));
   const handleZoomOut = () => setZoom((z) => Math.max(z / ZOOM_STEP, MIN_ZOOM));
@@ -209,7 +273,7 @@ export default function KoreaMap({
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
-                    onClick={() => site && onSelect(site.id)}
+                    onClick={() => site && onSelect(site.installations[0]?.id ?? site.id)}
                     onMouseEnter={handleMouseEnter}
                     onMouseMove={updateTooltipPos}
                     onMouseLeave={() => setTooltip(null)}
@@ -239,13 +303,15 @@ export default function KoreaMap({
           {/* Device markers — always visible */}
           {deviceMarkers.map((marker) => {
             const isFault = marker.status === "fault";
+            const isMarkerSelected = marker.id === selectedInstId;
             const color = STATUS_DOT[marker.status];
-            const innerR = 3 / zoom;
-            const outerR = 7 / zoom;
+            const innerR = (isMarkerSelected ? 4 : 3) / zoom;
+            const outerR = (isMarkerSelected ? 9 : 7) / zoom;
             return (
               <Marker
                 key={marker.id}
                 coordinates={marker.coordinates}
+                onClick={() => onSelect(marker.id)}
                 onMouseEnter={(evt) =>
                   setTooltip({
                     lines: [marker.siteName, marker.label, STATUS_LABEL[marker.status]],
@@ -254,6 +320,7 @@ export default function KoreaMap({
                   })
                 }
                 onMouseLeave={() => setTooltip(null)}
+                style={{ cursor: "pointer" }}
               >
                 {/* Pulse ring — fault only */}
                 {isFault && (

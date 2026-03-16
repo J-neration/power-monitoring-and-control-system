@@ -8,12 +8,13 @@ datasource db {
 }
 
 /* =========================
- * 1) Site (고객사/현장)
+ * 1) Site (현장 – 아파트 단지 등)
  * ========================= */
 model Site {
-  id            String          @id              // siteId (slug) e.g. "prime-solution"
-  name          String
-  region        String
+  id            String          @id              // e.g. "lotte-songdo-xi"
+  name          String                           // e.g. "송도 크리스탈자이"
+  client        String  @default("unknown")       // e.g. "lotte" (건설사)
+  region        String                           // e.g. "인천"
   address       String
 
   installations Installation[]

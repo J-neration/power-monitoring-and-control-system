@@ -75,6 +75,7 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const SiteScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  client: 'client',
   region: 'region',
   address: 'address',
   createdAt: 'createdAt',

@@ -62,9 +62,10 @@ export type Installation = {
 
 
 export type Site = {
-    id: string;       // siteId (ex. prime-solution)
-    name: string;     // 프라임솔루션
-    region: string;   // 경기도
+    id: string;       // e.g. "lotte-songdo-xi"
+    name: string;     // e.g. "송도 크리스탈자이"
+    client: string;   // e.g. "lotte" (건설사)
+    region: string;   // e.g. "인천"
     address: string;
     installations: Array<{
       id: string;         // installationId (device_id)
@@ -82,6 +83,7 @@ export type DeviceWithInstallation = Device & {
       site: {
         id: string;
         name: string;
+        client: string;
         region: string;
         address: string;
       };

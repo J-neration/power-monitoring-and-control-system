@@ -49,6 +49,7 @@ export const siteService = {
       return {
         siteId: site.id,
         name: site.name,
+        client: site.client,
         region: site.region,
         address: site.address,
         installationCount: site.installations.length,

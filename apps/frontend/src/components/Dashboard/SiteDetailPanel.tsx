@@ -78,17 +78,25 @@ const TOOLTIP_STYLE = {
   fontSize: 12,
 };
 
-export default function SiteDetailPanel({ site }: { site: Site | null }) {
+export default function SiteDetailPanel({
+  site,
+  installationId,
+}: {
+  site: Site | null;
+  installationId?: string;
+}) {
   if (!site) {
     return (
       <div className="dash-detail dash-detail-empty">
-        <p>지도 또는 목록에서 사이트를 선택하세요</p>
+        <p>지도 또는 목록에서 설치지점을 선택하세요</p>
       </div>
     );
   }
 
-  const status = deriveSiteStatus(site);
-  const device = site.installations[0]?.device;
+  const inst = site.installations.find((i) => i.id === installationId) ??
+    site.installations[0];
+  const status = (inst?.device?.status ?? "offline") as DeviceStatus;
+  const device = inst?.device;
 
   const voltageData = [
     { phase: "L1", 전압: Math.round((device?.vL1 ?? 0) * 10) / 10 },
@@ -134,12 +142,14 @@ export default function SiteDetailPanel({ site }: { site: Site | null }) {
 
   return (
     <div className="dash-detail">
-      {/* Site header */}
+      {/* Site + Installation header */}
       <div className="detail-site-top">
         <div className={`detail-status-dot ${status}`} />
         <div className="detail-site-info">
           <h2 className="detail-site-name">{site.name}</h2>
-          <span className="detail-site-addr">{site.address}</span>
+          <span className="detail-site-addr">
+            {inst?.label ?? ""} · {site.address}
+          </span>
         </div>
         <span className={`detail-status-badge ${status}`}>
           {status.toUpperCase()}

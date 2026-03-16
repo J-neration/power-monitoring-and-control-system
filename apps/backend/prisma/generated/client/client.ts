@@ -42,7 +42,7 @@ export { Prisma }
 /**
  * Model Site
  * =========================
- *  * 1) Site (고객사/현장)
+ *  * 1) Site (현장 – 아파트 단지 등)
  *  * =========================
  */
 export type Site = Prisma.SiteModel
