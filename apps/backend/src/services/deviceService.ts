@@ -117,10 +117,22 @@ const toStatus = (value?: number | string): DeviceStatus | undefined => {
 };
 
 const toStatusList = (value?: unknown): number[] | undefined => {
-  if (!Array.isArray(value)) {
+  let arr: unknown = value;
+
+  // HMI가 "[2,2,2,0]" 처럼 문자열로 보내는 경우 파싱
+  if (typeof arr === "string") {
+    try {
+      arr = JSON.parse(arr);
+    } catch {
+      return undefined;
+    }
+  }
+
+  if (!Array.isArray(arr)) {
     return undefined;
   }
-  const parsed = value
+
+  const parsed = (arr as unknown[])
     .map((entry) => {
       if (typeof entry === "number") {
         return Number.isFinite(entry) ? entry : undefined;
@@ -136,16 +148,29 @@ const toStatusList = (value?: unknown): number[] | undefined => {
 };
 
 /* =========================================================
- * Status logic (telemetry status)
- * - 현재는 moduleStatus[0] 기준을 유지 (네 기존 로직 유지)
- * - 원하면 "fault 하나라도 있으면 fault"로 바꿔줄 수 있음
+ * Status logic — 설치된 모듈(≠ MOD_OFFLINE:4) 중 최악 상태
+ *   fault(3) > start(1) > standby(0) > running(2) > offline(설치 없음)
  * ========================================================= */
+const MODULE_STATUS_PRIORITY: Record<number, number> = {
+  3: 4, // fault    — 최악
+  1: 3, // start
+  0: 2, // standby
+  2: 1, // running  — 최선
+};
 
-const deriveDeviceStatus = (moduleStatus?: number[]): DeviceStatus | undefined => {
-  if (!moduleStatus || moduleStatus.length === 0) {
-    return undefined;
-  }
-  return toStatus(moduleStatus[0]);
+export const deriveDeviceStatus = (moduleStatus?: number[]): DeviceStatus | undefined => {
+  if (!moduleStatus || moduleStatus.length === 0) return undefined;
+
+  const installed = moduleStatus.filter((m) => m !== 4);
+  if (installed.length === 0) return "offline";
+
+  const worst = installed.reduce((prev, cur) => {
+    const p = MODULE_STATUS_PRIORITY[prev] ?? 0;
+    const c = MODULE_STATUS_PRIORITY[cur] ?? 0;
+    return c > p ? cur : prev;
+  });
+
+  return toStatus(worst) ?? "offline";
 };
 
 export const deviceService = {
@@ -153,26 +178,24 @@ export const deviceService = {
    * Device(telemetry) list/get
    * - installation/site info는 include로 붙여서 반환
    * ===================================================== */
-  list: async (): Promise<(Device & { installation: { id: string; label: string; site: { id: string; name: string; region: string; address: string } } })[]> => {
-    return prisma.device.findMany({
+  list: async () => {
+    const rows = await prisma.device.findMany({
       orderBy: { installationId: "asc" },
-      include: {
-        installation: {
-          include: { site: true },
-        },
-      },
+      include: { installation: { include: { site: true } } },
     });
+    return rows.map((d) => ({
+      ...d,
+      status: deriveDeviceStatus(d.moduleStatus) ?? "offline",
+    }));
   },
 
   get: async ({ id }: { id: string }) => {
-    return prisma.device.findUnique({
+    const d = await prisma.device.findUnique({
       where: { installationId: id },
-      include: {
-        installation: {
-          include: { site: true },
-        },
-      },
+      include: { installation: { include: { site: true } } },
     });
+    if (!d) return null;
+    return { ...d, status: deriveDeviceStatus(d.moduleStatus) ?? "offline" };
   },
 
   /* =====================================================

@@ -49,21 +49,9 @@ export default function SiteSummaryPanel({ site }: { site: Site | null }) {
       else if (s === "fault") acc.fault++;
       else if (s === "standby" || s === "start") acc.standby++;
       else acc.offline++;
-
-      const mods = inst.device?.moduleStatus ?? [];
-      acc.totalMods += mods.length;
-      acc.okMods += mods.filter((m) => m === 2).length;
       return acc;
     },
-    {
-      total: 0,
-      running: 0,
-      fault: 0,
-      standby: 0,
-      offline: 0,
-      totalMods: 0,
-      okMods: 0,
-    },
+    { total: 0, running: 0, fault: 0, standby: 0, offline: 0 },
   );
 
   return (

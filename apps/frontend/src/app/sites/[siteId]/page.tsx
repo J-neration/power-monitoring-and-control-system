@@ -32,18 +32,6 @@ function deriveSiteStatus(installations: { device: Device }[]): DeviceStatus {
   return worst;
 }
 
-function countModules(installations: { device: Device }[]) {
-  let total = 0,
-    ok = 0,
-    fault = 0;
-  for (const inst of installations) {
-    const mods = inst.device?.moduleStatus ?? [];
-    total += mods.length;
-    ok += mods.filter((m) => m === 2).length;
-    fault += mods.filter((m) => m === 3).length;
-  }
-  return { total, ok, fault, check: total - ok - fault };
-}
 
 function countStatuses(installations: { device: Device }[]) {
   let running = 0,
@@ -93,9 +81,6 @@ export default async function SitePage({ params }: Props) {
 
   const siteStatus = deriveSiteStatus(site.installations);
   const stats = countStatuses(site.installations);
-  const mods = countModules(site.installations);
-  const modPct =
-    mods.total > 0 ? Math.round((mods.ok / mods.total) * 100) : null;
 
   return (
     <main className="site-page">
@@ -135,12 +120,6 @@ export default async function SitePage({ params }: Props) {
             <span className="site-stat-val">{stats.fault + stats.offline}</span>
             <span className="site-stat-lbl">이상</span>
           </div>
-          {modPct !== null && (
-            <div className="site-stat">
-              <span className="site-stat-val">{modPct}%</span>
-              <span className="site-stat-lbl">모듈 정상률</span>
-            </div>
-          )}
         </div>
       </header>
 
@@ -149,7 +128,14 @@ export default async function SitePage({ params }: Props) {
         {site.installations.map((inst) => {
           const d = inst.device;
           const instStatus = (d?.status as DeviceStatus) ?? "offline";
-          const modList = d?.moduleStatus ?? [];
+          const allModList = d?.moduleStatus ?? [];
+          const numOfMods = d?.numOfMods;
+          const slicedModList =
+            numOfMods != null && numOfMods > 0 && numOfMods <= allModList.length
+              ? allModList.slice(0, numOfMods)
+              : allModList;
+          // MOD_OFFLINE(4) = 미설치 슬롯 → 제외
+          const modList = slicedModList.filter((m) => m !== 4);
           const modOk = modList.filter((m) => m === 2).length;
 
           return (
