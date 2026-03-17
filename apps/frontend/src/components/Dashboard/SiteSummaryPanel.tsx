@@ -29,11 +29,6 @@ const STATUS_LABEL: Record<DeviceStatus, string> = {
   offline: "OFFLINE",
 };
 
-const fmt = (v: unknown, digits = 1) => {
-  if (v === null || v === undefined) return "-";
-  if (typeof v === "number") return Number.isFinite(v) ? v.toFixed(digits) : "-";
-  return "-";
-};
 
 export default function SiteSummaryPanel({ site }: { site: Site | null }) {
   if (!site) {
@@ -60,10 +55,16 @@ export default function SiteSummaryPanel({ site }: { site: Site | null }) {
       acc.okMods += mods.filter((m) => m === 2).length;
       return acc;
     },
-    { total: 0, running: 0, fault: 0, standby: 0, offline: 0, totalMods: 0, okMods: 0 },
+    {
+      total: 0,
+      running: 0,
+      fault: 0,
+      standby: 0,
+      offline: 0,
+      totalMods: 0,
+      okMods: 0,
+    },
   );
-
-  const modPct = stats.totalMods > 0 ? Math.round((stats.okMods / stats.totalMods) * 100) : null;
 
   return (
     <div className="dash-detail">
@@ -96,36 +97,18 @@ export default function SiteSummaryPanel({ site }: { site: Site | null }) {
           <span className="summary-stat-label">대기</span>
         </div>
         <div className="summary-stat summary-stat-fault">
-          <span className="summary-stat-value">{stats.fault + stats.offline}</span>
+          <span className="summary-stat-value">
+            {stats.fault + stats.offline}
+          </span>
           <span className="summary-stat-label">이상</span>
         </div>
       </div>
-
-      {/* Module health bar */}
-      {modPct !== null && (
-        <div className="mod-health-row">
-          <span className="mod-health-label">모듈 건강도</span>
-          <div className="mod-health-track">
-            <div
-              className={`mod-health-fill${modPct >= 80 ? " good" : modPct >= 50 ? " warn" : " bad"}`}
-              style={{ width: `${modPct}%` }}
-            />
-          </div>
-          <span className="mod-health-pct">
-            {stats.okMods}/{stats.totalMods} ({modPct}%)
-          </span>
-        </div>
-      )}
 
       {/* Installation cards */}
       <div className="summary-inst-grid">
         {site.installations.map((inst) => {
           const instStatus = (inst.device?.status as DeviceStatus) ?? "offline";
           const d = inst.device;
-          const avgThd =
-            d?.gridCurrentTHDL1 != null && d?.gridCurrentTHDL2 != null && d?.gridCurrentTHDL3 != null
-              ? (d.gridCurrentTHDL1 + d.gridCurrentTHDL2 + d.gridCurrentTHDL3) / 3
-              : null;
 
           return (
             <Link
@@ -140,28 +123,30 @@ export default function SiteSummaryPanel({ site }: { site: Site | null }) {
                   {STATUS_LABEL[instStatus]}
                 </span>
               </div>
-              <div className="summary-inst-metrics">
-                {inst.capacity && (
-                  <div className="summary-inst-metric">
-                    <span>용량</span>
-                    <strong>{inst.capacity} kW</strong>
-                  </div>
-                )}
-                <div className="summary-inst-metric">
-                  <span>TPF</span>
-                  <strong>
-                    {d?.tpf2 != null ? `${(d.tpf2 * 100).toFixed(1)}%` : "-"}
-                  </strong>
+              <div className="site-inst-table">
+                <div className="sit-row">
+                  <span className="sit-label">V (V)</span>
+                  <span>{d?.vL1 != null ? d.vL1.toFixed(1) : "-"}</span>
+                  <span>{d?.vL2 != null ? d.vL2.toFixed(1) : "-"}</span>
+                  <span>{d?.vL3 != null ? d.vL3.toFixed(1) : "-"}</span>
                 </div>
-                <div className="summary-inst-metric">
-                  <span>THD avg</span>
-                  <strong>{avgThd != null ? `${fmt(avgThd)}%` : "-"}</strong>
+                <div className="sit-row">
+                  <span className="sit-label">Grid I (A)</span>
+                  <span>{d?.gridCurrentL1 != null ? d.gridCurrentL1.toFixed(1) : "-"}</span>
+                  <span>{d?.gridCurrentL2 != null ? d.gridCurrentL2.toFixed(1) : "-"}</span>
+                  <span>{d?.gridCurrentL3 != null ? d.gridCurrentL3.toFixed(1) : "-"}</span>
                 </div>
-                <div className="summary-inst-metric">
-                  <span>P</span>
-                  <strong>
-                    {d?.compP != null ? `${fmt(d.compP)} kW` : "-"}
-                  </strong>
+                <div className="sit-row sit-row-pf">
+                  <span className="sit-label">TPF2 / DPF2</span>
+                  <span>{d?.tpf2 != null ? `${(d.tpf2 * 100).toFixed(1)}%` : "-"}</span>
+                  <span>{d?.dpf2 != null ? `${(d.dpf2 * 100).toFixed(1)}%` : "-"}</span>
+                  <span />
+                </div>
+                <div className="sit-row">
+                  <span className="sit-label">Grid THD (%)</span>
+                  <span>{d?.gridCurrentTHDL1 != null ? d.gridCurrentTHDL1.toFixed(1) : "-"}</span>
+                  <span>{d?.gridCurrentTHDL2 != null ? d.gridCurrentTHDL2.toFixed(1) : "-"}</span>
+                  <span>{d?.gridCurrentTHDL3 != null ? d.gridCurrentTHDL3.toFixed(1) : "-"}</span>
                 </div>
               </div>
             </Link>
@@ -170,7 +155,10 @@ export default function SiteSummaryPanel({ site }: { site: Site | null }) {
       </div>
 
       {/* Footer link */}
-      <Link href={`/sites/${encodeURIComponent(site.id)}`} className="summary-more-link">
+      <Link
+        href={`/sites/${encodeURIComponent(site.id)}`}
+        className="summary-more-link"
+      >
         현장 상세보기 →
       </Link>
     </div>

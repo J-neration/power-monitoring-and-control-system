@@ -58,7 +58,6 @@ export const StatusCard = ({ device }: StatusCardProps) => {
       {/* 기존 device.id -> installationId */}
       <p style={{ fontSize: 12, opacity: 0.6, marginTop: 6 }}>
         Installation ID: {device.installationId}
-        {device.installation?.capacity != null ? ` · ${device.installation.capacity} kVAR` : ""}
       </p>
 
       <div className="detail-metrics">

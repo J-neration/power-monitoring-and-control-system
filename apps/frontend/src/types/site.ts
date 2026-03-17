@@ -10,6 +10,8 @@ export type DeviceStatus =
 export type Device = {
   installationId: string;
   status: DeviceStatus;
+  model?: string;
+  capacity?: number;
   lastSeenAt: string;
   lastValue?: number | null;
   lastIp?: string | null;
@@ -56,7 +58,6 @@ export type Device = {
 export type Installation = {
   id: string;
   label: string;
-  capacity?: number | null;
   device: Device;
 };
 
@@ -70,7 +71,6 @@ export type Site = {
     installations: Array<{
       id: string;         // installationId (device_id)
       label: string;      // 변전실
-      capacity: number | null;
       device: Device;     // telemetry
       coordinates?: [number, number]; // [lng, lat] — optional, for map markers
     }>;
@@ -87,7 +87,6 @@ export type DeviceWithInstallation = Device & {
         region: string;
         address: string;
       };
-      capacity?: number | null;
     };
   };
   

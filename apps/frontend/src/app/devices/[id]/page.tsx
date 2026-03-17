@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchDevice } from "../../../lib/api";
 import { StatusCard } from "../../../components/StatusCard";
-import DeviceDetailCharts from "../../../components/DeviceDetailCharts";
+import DeviceDetailChartsLazy from "../../../components/DeviceDetailChartsLazy";
 import type { DeviceWithInstallation } from "../../../types/site";
 
 type Props = {
@@ -32,10 +32,13 @@ export default async function DeviceDetailPage({ params }: Props) {
 
   return (
     <main className="device-detail-page">
-      <section className="device-detail-header panel">
+      <section className="device-detail-header">
         <div className="device-detail-nav">
           {siteId ? (
-            <Link className="detail-back" href={`/sites/${encodeURIComponent(siteId)}`}>
+            <Link
+              className="detail-back"
+              href={`/sites/${encodeURIComponent(siteId)}`}
+            >
               ← {site?.name ?? "현장"}
             </Link>
           ) : (
@@ -56,14 +59,21 @@ export default async function DeviceDetailPage({ params }: Props) {
           {site?.region ?? "-"} {site?.address ?? ""}
         </p>
         <p className="detail-subtitle">
-          Installation ID: {device.installationId}
-          {device.installation?.capacity != null ? ` · ${device.installation.capacity} kVAR` : ""}
+          {device.model ? (
+            <span className="device-model-badge">
+              {device.model.toUpperCase()}
+            </span>
+          ) : null}
+          {device.capacity != null ? (
+            <span className="device-capacity-badge">{device.capacity} A</span>
+          ) : null}{" "}
+          ID: {device.installationId}
           {" · "}마지막 수신 {formatLastSeen(device.lastSeenAt)}
         </p>
       </section>
 
       <section className="device-detail-body">
-        <DeviceDetailCharts device={device} />
+        <DeviceDetailChartsLazy device={device} />
       </section>
 
       <section className="device-detail-body">

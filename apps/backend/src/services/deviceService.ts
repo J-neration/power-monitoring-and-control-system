@@ -31,8 +31,9 @@ type RegistryHit = {
   installation: {
     id: string;
     label: string;
-    capacity?: number;
     status?: DeviceStatus;
+    model?: string;
+    deviceCapacity?: number;
   };
 };
 
@@ -51,8 +52,9 @@ const findRegistryByDeviceId = (deviceId: string): RegistryHit | undefined => {
         installation: {
           id: inst.id,
           label: inst.label,
-          capacity: inst.capacity,
           status: inst.status,
+          model: inst.device?.model,
+          deviceCapacity: inst.device?.capacity,
         },
       };
     }
@@ -285,17 +287,11 @@ export const deviceService = {
           update: {
             siteId: reg.site.siteId,
             label: reg.installation.label,
-            ...(reg.installation.capacity !== undefined
-              ? { capacity: reg.installation.capacity }
-              : {}),
           },
           create: {
             id: installationId,
             siteId: reg.site.siteId,
             label: reg.installation.label,
-            ...(reg.installation.capacity !== undefined
-              ? { capacity: reg.installation.capacity }
-              : {}),
           },
         });
       } else {
@@ -304,10 +300,15 @@ export const deviceService = {
       }
 
       // 2) Upsert Device telemetry by installationId
+      const model = reg?.installation.model ?? "psvg";
+      const deviceCapacity = reg?.installation.deviceCapacity ?? 200;
+
       return tx.device.upsert({
         where: { installationId },
         update: {
           status,
+          model,
+          capacity: deviceCapacity,
           lastSeenAt: new Date(),
           ...(payload.ip ? { lastIp: payload.ip } : {}),
           ...(lastValue !== undefined ? { lastValue } : {}),
@@ -352,6 +353,8 @@ export const deviceService = {
         create: {
           installationId,
           status,
+          model,
+          capacity: deviceCapacity,
           lastSeenAt: new Date(),
           ...(payload.ip ? { lastIp: payload.ip } : {}),
           ...(lastValue !== undefined ? { lastValue } : {}),

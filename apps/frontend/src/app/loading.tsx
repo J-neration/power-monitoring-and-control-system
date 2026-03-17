@@ -2,22 +2,15 @@ export default function DashboardLoading() {
   return (
     <main className="dashboard-full">
       <div className="new-dashboard">
-        {/* Header skeleton */}
-        <header className="dash-header">
-          <div className="dash-logo">
-            <span className="dash-logo-mark">▣</span>
-            <span className="dash-logo-text">PRIMESOLUTION</span>
-          </div>
-          <div className="dash-kpis">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="kpi-badge">
-                <span className="skel skel-text" style={{ width: 20 }} />
-                <span className="skel skel-text" style={{ width: 32 }} />
-              </div>
-            ))}
-          </div>
-          <div className="skel skel-text" style={{ width: 100 }} />
-        </header>
+        {/* KPI strip skeleton */}
+        <div className="dash-kpi-strip">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="kpi-badge">
+              <span className="skel skel-text" style={{ width: 20 }} />
+              <span className="skel skel-text" style={{ width: 32 }} />
+            </div>
+          ))}
+        </div>
 
         {/* Body skeleton */}
         <div className="dash-body">

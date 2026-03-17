@@ -5,7 +5,6 @@ import type { Site } from "../../types/site";
 import type { DeviceStatus } from "../../types/site";
 import { CLIENT_LABELS } from "../../data/clients";
 import SiteSummaryPanel from "./SiteSummaryPanel";
-import LiveClock from "./LiveClock";
 import KoreaMap from "./KoreaMap";
 
 const statusPriority: Record<DeviceStatus, number> = {
@@ -97,21 +96,14 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
 
   return (
     <div className="new-dashboard">
-      {/* Header */}
-      <header className="dash-header">
-        <div className="dash-logo">
-          <span className="dash-logo-mark">▣</span>
-          <span className="dash-logo-text">PRIMESOLUTION</span>
-        </div>
-        <div className="dash-kpis">
-          <KpiBadge label="장비 전체" value={kpis.total} variant="default" />
-          <KpiBadge label="정상" value={kpis.running} variant="running" />
-          <KpiBadge label="대기" value={kpis.standby} variant="standby" />
-          <KpiBadge label="이상" value={kpis.fault} variant="fault" />
-          <KpiBadge label="오프라인" value={kpis.offline} variant="offline" />
-        </div>
-        <LiveClock />
-      </header>
+      {/* KPI strip */}
+      <div className="dash-kpi-strip">
+        <KpiBadge label="장비 전체" value={kpis.total} variant="default" />
+        <KpiBadge label="정상" value={kpis.running} variant="running" />
+        <KpiBadge label="대기" value={kpis.standby} variant="standby" />
+        <KpiBadge label="이상" value={kpis.fault} variant="fault" />
+        <KpiBadge label="오프라인" value={kpis.offline} variant="offline" />
+      </div>
 
       {/* Body: 3-column */}
       <div className="dash-body">
@@ -194,11 +186,6 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                     <span className="inst-card-label">
                                       {inst.label}
                                     </span>
-                                    {inst.capacity && (
-                                      <span className="inst-card-cap">
-                                        {inst.capacity}kW
-                                      </span>
-                                    )}
                                   </div>
                                   <span
                                     className={`site-card-badge ${instStatus}`}
