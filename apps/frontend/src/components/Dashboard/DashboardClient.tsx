@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import type { Site } from "../../types/site";
 import type { DeviceStatus } from "../../types/site";
 import { CLIENT_LABELS } from "../../data/clients";
-import SiteDetailPanel from "./SiteDetailPanel";
+import SiteSummaryPanel from "./SiteSummaryPanel";
 import LiveClock from "./LiveClock";
 import KoreaMap from "./KoreaMap";
 
@@ -51,18 +51,13 @@ function KpiBadge({
 }
 
 export default function DashboardClient({ sites }: { sites: Site[] }) {
-  const [selectedInstId, setSelectedInstId] = useState<string>(
-    sites[0]?.installations[0]?.id ?? ""
+  const [selectedSiteId, setSelectedSiteId] = useState<string>(
+    sites[0]?.id ?? "",
   );
 
   const selectedSite = useMemo(
-    () => sites.find((s) => s.installations.some((i) => i.id === selectedInstId)) ?? null,
-    [sites, selectedInstId]
-  );
-
-  const selectedInst = useMemo(
-    () => selectedSite?.installations.find((i) => i.id === selectedInstId) ?? null,
-    [selectedSite, selectedInstId]
+    () => sites.find((s) => s.id === selectedSiteId) ?? null,
+    [sites, selectedSiteId],
   );
 
   const regionGroups = useMemo(() => {
@@ -72,11 +67,17 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
       arr.push(site);
       map.set(site.region, arr);
     }
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b, "ko"));
+    return Array.from(map.entries()).sort(([a], [b]) =>
+      a.localeCompare(b, "ko"),
+    );
   }, [sites]);
 
   const kpis = useMemo(() => {
-    let total = 0, running = 0, fault = 0, standby = 0, offline = 0;
+    let total = 0,
+      running = 0,
+      fault = 0,
+      standby = 0,
+      offline = 0;
     for (const site of sites) {
       for (const inst of site.installations) {
         total++;
@@ -90,8 +91,8 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
     return { total, running, fault, standby, offline };
   }, [sites]);
 
-  const handleSelectInstallation = (instId: string) => {
-    setSelectedInstId(instId);
+  const handleSelectSite = (siteId: string) => {
+    setSelectedSiteId(siteId);
   };
 
   return (
@@ -100,7 +101,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
       <header className="dash-header">
         <div className="dash-logo">
           <span className="dash-logo-mark">▣</span>
-          <span className="dash-logo-text">PMCS</span>
+          <span className="dash-logo-text">PRIMESOLUTION</span>
         </div>
         <div className="dash-kpis">
           <KpiBadge label="장비 전체" value={kpis.total} variant="default" />
@@ -120,10 +121,11 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
           <div className="sidebar-list">
             {regionGroups.map(([region, regionSites]) => {
               const instCount = regionSites.reduce(
-                (sum, s) => sum + s.installations.length, 0
+                (sum, s) => sum + s.installations.length,
+                0,
               );
-              const hasSelected = regionSites.some((s) =>
-                s.installations.some((i) => i.id === selectedInstId)
+              const hasSelected = regionSites.some(
+                (s) => s.id === selectedSiteId,
               );
 
               return (
@@ -143,17 +145,21 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                   <div className="region-group-content">
                     {regionSites.map((site) => {
                       const siteStatus = deriveSiteStatus(site);
-                      const siteHasSelected = site.installations.some(
-                        (i) => i.id === selectedInstId
-                      );
+                      const isSiteSelected = site.id === selectedSiteId;
 
                       return (
                         <details
                           key={site.id}
                           className="site-group"
-                          open={siteHasSelected}
+                          open={isSiteSelected}
                         >
-                          <summary className="site-group-summary">
+                          <summary
+                            className="site-group-summary"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleSelectSite(site.id);
+                            }}
+                          >
                             <div className={`site-group-dot ${siteStatus}`} />
                             <div className="site-group-info">
                               <strong className="site-group-name">
@@ -171,17 +177,15 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                           <div className="site-group-installations">
                             {site.installations.map((inst) => {
                               const instStatus =
-                                (inst.device?.status as DeviceStatus) ?? "offline";
-                              const isSelected = inst.id === selectedInstId;
+                                (inst.device?.status as DeviceStatus) ??
+                                "offline";
 
                               return (
                                 <button
                                   key={inst.id}
                                   type="button"
-                                  className={`inst-card${isSelected ? " selected" : ""}`}
-                                  onClick={() =>
-                                    handleSelectInstallation(inst.id)
-                                  }
+                                  className="inst-card"
+                                  onClick={() => handleSelectSite(site.id)}
                                 >
                                   <div
                                     className={`inst-card-dot ${instStatus}`}
@@ -221,15 +225,12 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
             allSites={sites}
             selectedSiteId={selectedSite?.id ?? ""}
             deriveSiteStatus={deriveSiteStatus}
-            onSelect={handleSelectInstallation}
+            onSelect={handleSelectSite}
           />
         </div>
 
-        {/* Right: detail panel */}
-        <SiteDetailPanel
-          site={selectedSite}
-          installationId={selectedInstId}
-        />
+        {/* Right: site summary panel */}
+        <SiteSummaryPanel site={selectedSite} />
       </div>
     </div>
   );

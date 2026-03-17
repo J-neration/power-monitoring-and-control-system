@@ -167,7 +167,7 @@ type Props = {
   allSites: Site[];
   selectedSiteId: string;
   deriveSiteStatus: (site: Site) => DeviceStatus;
-  onSelect: (installationId: string) => void;
+  onSelect: (siteId: string) => void;
 };
 
 type Tooltip = { lines: string[]; x: number; y: number };
@@ -315,7 +315,7 @@ export default function KoreaMap({
                 const isSelected = stats.sites.some((s) => s.id === selectedSiteId);
                 const colors = regionHealthColors(stats);
                 const fill = isSelected ? colors.fillSelected : colors.fill;
-                const firstInst = stats.sites[0]?.installations[0];
+                const firstSite = stats.sites[0];
 
                 const makeTooltipLines = (): string[] => {
                   const okPct = stats.total > 0
@@ -335,7 +335,7 @@ export default function KoreaMap({
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
-                    onClick={() => firstInst && onSelect(firstInst.id)}
+                    onClick={() => firstSite && onSelect(firstSite.id)}
                     onMouseEnter={(evt) =>
                       setTooltip({ lines: makeTooltipLines(), x: evt.clientX, y: evt.clientY })
                     }
@@ -375,7 +375,7 @@ export default function KoreaMap({
               <Marker
                 key={marker.siteId}
                 coordinates={marker.coordinates}
-                onClick={() => onSelect(marker.firstInstId)}
+                onClick={() => onSelect(marker.siteId)}
                 onMouseEnter={(evt) =>
                   setTooltip({
                     lines: [

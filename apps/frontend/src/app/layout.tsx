@@ -2,7 +2,7 @@ import "./globals.css";
 import type { ReactNode } from "react";
 
 export const metadata = {
-  title: "PMCS Dashboard",
+  title: "PrimeSolution Dashboard",
   description: "HMI monitoring and control",
 };
 

@@ -1351,3 +1351,246 @@ main.dashboard-full {
   color: rgba(255,255,255,0.48);
   margin: 2px 0 0;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SITE SUMMARY PANEL (main dashboard right column)
+═══════════════════════════════════════════════════════════════ */
+
+.summary-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.summary-stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-stat-label {
+  font-size: 10px;
+  opacity: 0.45;
+  letter-spacing: 0.3px;
+}
+
+.summary-stat-ok .summary-stat-value   { color: #34C759; }
+.summary-stat-warn .summary-stat-value { color: #F59E0B; }
+.summary-stat-fault .summary-stat-value { color: #EF4444; }
+
+/* Module health bar */
+.mod-health-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+}
+
+.mod-health-label {
+  font-size: 10px;
+  opacity: 0.45;
+  flex-shrink: 0;
+  width: 56px;
+}
+
+.mod-health-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.mod-health-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.mod-health-fill.good { background: #34C759; }
+.mod-health-fill.warn { background: #F59E0B; }
+.mod-health-fill.bad  { background: #EF4444; }
+
+.mod-health-pct {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+/* Installation card grid in summary panel */
+.summary-inst-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.summary-inst-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.06);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+.summary-inst-card:hover {
+  background: rgba(59,130,246,0.06);
+  border-color: rgba(59,130,246,0.2);
+}
+
+.summary-inst-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.summary-inst-label {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.summary-inst-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 12px;
+}
+
+.summary-inst-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 11px;
+}
+
+.summary-inst-metric span {
+  opacity: 0.4;
+}
+
+.summary-inst-metric strong {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* "현장 상세보기" link */
+.summary-more-link {
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3B82F6;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(59,130,246,0.2);
+  transition: background 0.15s;
+}
+.summary-more-link:hover {
+  background: rgba(59,130,246,0.08);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DEVICE DETAIL PAGE
+═══════════════════════════════════════════════════════════════ */
+
+.device-detail-page {
+  padding: 24px 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.device-detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.device-detail-nav {
+  margin-bottom: 4px;
+}
+
+.device-detail-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.device-detail-title-row h1 {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.device-detail-body {
+  margin-top: 20px;
+}
+
+.device-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 720px) {
+  .device-charts-grid {
+    grid-template-columns: 1fr;
+  }
+  .device-detail-page {
+    padding: 16px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SKELETON LOADING
+═══════════════════════════════════════════════════════════════ */
+
+@keyframes skel-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skel {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: skel-shimmer 1.6s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+.skel-text {
+  display: inline-block;
+  height: 14px;
+  min-width: 40px;
+}
+
+.skel-circle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skel-box {
+  display: block;
+  width: 100%;
+  min-height: 40px;
+}
