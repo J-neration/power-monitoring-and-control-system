@@ -1,5 +1,6 @@
 import { PrismaClient } from "../../prisma/generated/client/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { deriveDeviceStatus } from "./deviceService.js";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({
@@ -46,6 +47,15 @@ export const siteService = {
         return inst.device;
       });
   
+      const enrichedInstallations = site.installations.map((inst) => ({
+        id: inst.id,
+        label: inst.label,
+        device: {
+          ...inst.device!,
+          status: deriveDeviceStatus(inst.device!.moduleStatus) ?? "offline",
+        },
+      }));
+
       return {
         siteId: site.id,
         name: site.name,
@@ -53,12 +63,8 @@ export const siteService = {
         region: site.region,
         address: site.address,
         installationCount: site.installations.length,
-        status: deriveSiteStatus(devices),
-        installations: site.installations.map((inst) => ({
-          id: inst.id,
-          label: inst.label,
-          device: inst.device!,
-        })),
+        status: deriveSiteStatus(enrichedInstallations.map((i) => i.device)),
+        installations: enrichedInstallations,
       };
     });
   },
@@ -67,16 +73,27 @@ export const siteService = {
    * 상세페이지용: Site + Installations + Device
    * ======================================================= */
   get: async (siteId: string) => {
-    return prisma.site.findUnique({
+    const site = await prisma.site.findUnique({
       where: { id: siteId },
       include: {
         installations: {
-          include: {
-            device: true,
-          },
+          include: { device: true },
           orderBy: { label: "asc" },
         },
       },
     });
+    if (!site) return null;
+    return {
+      ...site,
+      installations: site.installations.map((inst) => ({
+        ...inst,
+        device: inst.device
+          ? {
+              ...inst.device,
+              status: deriveDeviceStatus(inst.device.moduleStatus) ?? "offline",
+            }
+          : inst.device,
+      })),
+    };
   },
 };
