@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import type { Site } from "../../types/site";
 import type { DeviceStatus } from "../../types/site";
 import { CLIENT_LABELS } from "../../data/clients";
 import SiteSummaryPanel from "./SiteSummaryPanel";
 import KoreaMap from "./KoreaMap";
+
+const REFRESH_SEC = 30;
 
 const statusPriority: Record<DeviceStatus, number> = {
   fault: 4,
@@ -36,23 +39,69 @@ function KpiBadge({
   label,
   value,
   variant,
+  urgent,
 }: {
   label: string;
   value: number;
   variant: "default" | DeviceStatus;
+  urgent?: boolean;
 }) {
   return (
-    <div className={`kpi-badge kpi-${variant}`}>
+    <div className={`kpi-badge kpi-${variant}${urgent ? " kpi-urgent" : ""}`}>
       <span className="kpi-value">{value}</span>
       <span className="kpi-label">{label}</span>
     </div>
   );
 }
 
+function LiveIndicator({ countdown }: { countdown: number }) {
+  const pct = (countdown / REFRESH_SEC) * 100;
+  const r = 7;
+  const circ = 2 * Math.PI * r;
+  const dash = (pct / 100) * circ;
+
+  return (
+    <div className="live-indicator">
+      <span className="live-dot" />
+      <span className="live-label">LIVE</span>
+      <svg className="live-ring" width="22" height="22" viewBox="0 0 22 22">
+        <circle cx="11" cy="11" r={r} className="live-ring-track" />
+        <circle
+          cx="11"
+          cy="11"
+          r={r}
+          className="live-ring-fill"
+          strokeDasharray={`${dash} ${circ}`}
+          strokeDashoffset={circ / 4}
+        />
+      </svg>
+      <span className="live-countdown">{countdown}s</span>
+    </div>
+  );
+}
+
 export default function DashboardClient({ sites }: { sites: Site[] }) {
+  const router = useRouter();
   const [selectedSiteId, setSelectedSiteId] = useState<string>(
     sites[0]?.id ?? "",
   );
+  const [countdown, setCountdown] = useState(REFRESH_SEC);
+  const countdownRef = useRef(REFRESH_SEC);
+
+  useEffect(() => {
+    countdownRef.current = REFRESH_SEC;
+    setCountdown(REFRESH_SEC);
+    const tick = setInterval(() => {
+      countdownRef.current -= 1;
+      setCountdown(countdownRef.current);
+      if (countdownRef.current <= 0) {
+        countdownRef.current = REFRESH_SEC;
+        setCountdown(REFRESH_SEC);
+        router.refresh();
+      }
+    }, 1000);
+    return () => clearInterval(tick);
+  }, [router]);
 
   const selectedSite = useMemo(
     () => sites.find((s) => s.id === selectedSiteId) ?? null,
@@ -98,10 +147,12 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
     <div className="new-dashboard">
       {/* KPI strip */}
       <div className="dash-kpi-strip">
+        <LiveIndicator countdown={countdown} />
+        <div className="kpi-divider" />
         <KpiBadge label="장비 전체" value={kpis.total} variant="default" />
         <KpiBadge label="정상" value={kpis.running} variant="running" />
         <KpiBadge label="대기" value={kpis.standby} variant="standby" />
-        <KpiBadge label="이상" value={kpis.fault} variant="fault" />
+        <KpiBadge label="이상" value={kpis.fault} variant="fault" urgent={kpis.fault > 0} />
         <KpiBadge label="오프라인" value={kpis.offline} variant="offline" />
       </div>
 
@@ -208,6 +259,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
 
         {/* Center: map */}
         <div className="dash-map-panel">
+          <div className="map-scan-overlay" />
           <KoreaMap
             allSites={sites}
             selectedSiteId={selectedSite?.id ?? ""}
