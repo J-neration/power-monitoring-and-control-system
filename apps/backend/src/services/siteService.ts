@@ -57,8 +57,7 @@ export const siteService = {
         installations: site.installations.map((inst) => ({
           id: inst.id,
           label: inst.label,
-          capacity: inst.capacity,
-          device: inst.device!, 
+          device: inst.device!,
         })),
       };
     });

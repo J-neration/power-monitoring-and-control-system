@@ -684,7 +684,6 @@ export const InstallationScalarFieldEnum = {
   id: 'id',
   siteId: 'siteId',
   label: 'label',
-  capacity: 'capacity',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -695,6 +694,8 @@ export type InstallationScalarFieldEnum = (typeof InstallationScalarFieldEnum)[k
 export const DeviceScalarFieldEnum = {
   installationId: 'installationId',
   status: 'status',
+  model: 'model',
+  capacity: 'capacity',
   moduleStatus: 'moduleStatus',
   numOfMods: 'numOfMods',
   lastSeenAt: 'lastSeenAt',
@@ -712,21 +713,21 @@ export const DeviceScalarFieldEnum = {
   loadCurrentTHDL1: 'loadCurrentTHDL1',
   loadCurrentTHDL2: 'loadCurrentTHDL2',
   loadCurrentTHDL3: 'loadCurrentTHDL3',
+  gridCurrentTHDL1: 'gridCurrentTHDL1',
+  gridCurrentTHDL2: 'gridCurrentTHDL2',
+  gridCurrentTHDL3: 'gridCurrentTHDL3',
   uncompS: 'uncompS',
-  uncompP: 'uncompP',
-  uncompQ: 'uncompQ',
-  uncompH: 'uncompH',
   compS: 'compS',
+  uncompP: 'uncompP',
   compP: 'compP',
+  uncompQ: 'uncompQ',
   compQ: 'compQ',
+  uncompH: 'uncompH',
   compH: 'compH',
   tpf1: 'tpf1',
   tpf2: 'tpf2',
   dpf1: 'dpf1',
   dpf2: 'dpf2',
-  gridCurrentTHDL1: 'gridCurrentTHDL1',
-  gridCurrentTHDL2: 'gridCurrentTHDL2',
-  gridCurrentTHDL3: 'gridCurrentTHDL3',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -793,16 +794,9 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
- * Reference to a field of type 'Float'
+ * Reference to a field of type 'Int'
  */
-export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
-    
-
-
-/**
- * Reference to a field of type 'Float[]'
- */
-export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
     
 
 
@@ -814,9 +808,16 @@ export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
- * Reference to a field of type 'Int'
+ * Reference to a field of type 'Float'
  */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+/**
+ * Reference to a field of type 'Float[]'
+ */
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 /**

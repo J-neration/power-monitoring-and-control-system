@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Device" ADD COLUMN     "capacity" INTEGER NOT NULL DEFAULT 200,
+ADD COLUMN     "model" TEXT NOT NULL DEFAULT 'psvg';

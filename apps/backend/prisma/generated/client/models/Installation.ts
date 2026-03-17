@@ -22,25 +22,14 @@ export type InstallationModel = runtime.Types.Result.DefaultSelection<Prisma.$In
 
 export type AggregateInstallation = {
   _count: InstallationCountAggregateOutputType | null
-  _avg: InstallationAvgAggregateOutputType | null
-  _sum: InstallationSumAggregateOutputType | null
   _min: InstallationMinAggregateOutputType | null
   _max: InstallationMaxAggregateOutputType | null
-}
-
-export type InstallationAvgAggregateOutputType = {
-  capacity: number | null
-}
-
-export type InstallationSumAggregateOutputType = {
-  capacity: number | null
 }
 
 export type InstallationMinAggregateOutputType = {
   id: string | null
   siteId: string | null
   label: string | null
-  capacity: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -49,7 +38,6 @@ export type InstallationMaxAggregateOutputType = {
   id: string | null
   siteId: string | null
   label: string | null
-  capacity: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -58,26 +46,16 @@ export type InstallationCountAggregateOutputType = {
   id: number
   siteId: number
   label: number
-  capacity: number
   createdAt: number
   updatedAt: number
   _all: number
 }
 
 
-export type InstallationAvgAggregateInputType = {
-  capacity?: true
-}
-
-export type InstallationSumAggregateInputType = {
-  capacity?: true
-}
-
 export type InstallationMinAggregateInputType = {
   id?: true
   siteId?: true
   label?: true
-  capacity?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -86,7 +64,6 @@ export type InstallationMaxAggregateInputType = {
   id?: true
   siteId?: true
   label?: true
-  capacity?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -95,7 +72,6 @@ export type InstallationCountAggregateInputType = {
   id?: true
   siteId?: true
   label?: true
-  capacity?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -139,18 +115,6 @@ export type InstallationAggregateArgs<ExtArgs extends runtime.Types.Extensions.I
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
-   * Select which fields to average
-  **/
-  _avg?: InstallationAvgAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
-   * Select which fields to sum
-  **/
-  _sum?: InstallationSumAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
    * Select which fields to find the minimum value
   **/
   _min?: InstallationMinAggregateInputType
@@ -181,8 +145,6 @@ export type InstallationGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   _count?: InstallationCountAggregateInputType | true
-  _avg?: InstallationAvgAggregateInputType
-  _sum?: InstallationSumAggregateInputType
   _min?: InstallationMinAggregateInputType
   _max?: InstallationMaxAggregateInputType
 }
@@ -191,12 +153,9 @@ export type InstallationGroupByOutputType = {
   id: string
   siteId: string
   label: string
-  capacity: number | null
   createdAt: Date
   updatedAt: Date
   _count: InstallationCountAggregateOutputType | null
-  _avg: InstallationAvgAggregateOutputType | null
-  _sum: InstallationSumAggregateOutputType | null
   _min: InstallationMinAggregateOutputType | null
   _max: InstallationMaxAggregateOutputType | null
 }
@@ -223,7 +182,6 @@ export type InstallationWhereInput = {
   id?: Prisma.StringFilter<"Installation"> | string
   siteId?: Prisma.StringFilter<"Installation"> | string
   label?: Prisma.StringFilter<"Installation"> | string
-  capacity?: Prisma.FloatNullableFilter<"Installation"> | number | null
   createdAt?: Prisma.DateTimeFilter<"Installation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Installation"> | Date | string
   site?: Prisma.XOR<Prisma.SiteScalarRelationFilter, Prisma.SiteWhereInput>
@@ -234,7 +192,6 @@ export type InstallationOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   siteId?: Prisma.SortOrder
   label?: Prisma.SortOrder
-  capacity?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   site?: Prisma.SiteOrderByWithRelationInput
@@ -248,7 +205,6 @@ export type InstallationWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.InstallationWhereInput | Prisma.InstallationWhereInput[]
   siteId?: Prisma.StringFilter<"Installation"> | string
   label?: Prisma.StringFilter<"Installation"> | string
-  capacity?: Prisma.FloatNullableFilter<"Installation"> | number | null
   createdAt?: Prisma.DateTimeFilter<"Installation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Installation"> | Date | string
   site?: Prisma.XOR<Prisma.SiteScalarRelationFilter, Prisma.SiteWhereInput>
@@ -259,14 +215,11 @@ export type InstallationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   siteId?: Prisma.SortOrder
   label?: Prisma.SortOrder
-  capacity?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.InstallationCountOrderByAggregateInput
-  _avg?: Prisma.InstallationAvgOrderByAggregateInput
   _max?: Prisma.InstallationMaxOrderByAggregateInput
   _min?: Prisma.InstallationMinOrderByAggregateInput
-  _sum?: Prisma.InstallationSumOrderByAggregateInput
 }
 
 export type InstallationScalarWhereWithAggregatesInput = {
@@ -276,7 +229,6 @@ export type InstallationScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Installation"> | string
   siteId?: Prisma.StringWithAggregatesFilter<"Installation"> | string
   label?: Prisma.StringWithAggregatesFilter<"Installation"> | string
-  capacity?: Prisma.FloatNullableWithAggregatesFilter<"Installation"> | number | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Installation"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Installation"> | Date | string
 }
@@ -284,7 +236,6 @@ export type InstallationScalarWhereWithAggregatesInput = {
 export type InstallationCreateInput = {
   id: string
   label: string
-  capacity?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   site: Prisma.SiteCreateNestedOneWithoutInstallationsInput
@@ -295,7 +246,6 @@ export type InstallationUncheckedCreateInput = {
   id: string
   siteId: string
   label: string
-  capacity?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   device?: Prisma.DeviceUncheckedCreateNestedOneWithoutInstallationInput
@@ -304,7 +254,6 @@ export type InstallationUncheckedCreateInput = {
 export type InstallationUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   label?: Prisma.StringFieldUpdateOperationsInput | string
-  capacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   site?: Prisma.SiteUpdateOneRequiredWithoutInstallationsNestedInput
@@ -315,7 +264,6 @@ export type InstallationUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
   label?: Prisma.StringFieldUpdateOperationsInput | string
-  capacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   device?: Prisma.DeviceUncheckedUpdateOneWithoutInstallationNestedInput
@@ -325,7 +273,6 @@ export type InstallationCreateManyInput = {
   id: string
   siteId: string
   label: string
-  capacity?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -333,7 +280,6 @@ export type InstallationCreateManyInput = {
 export type InstallationUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   label?: Prisma.StringFieldUpdateOperationsInput | string
-  capacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -342,7 +288,6 @@ export type InstallationUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
   label?: Prisma.StringFieldUpdateOperationsInput | string
-  capacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -361,20 +306,14 @@ export type InstallationCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   siteId?: Prisma.SortOrder
   label?: Prisma.SortOrder
-  capacity?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-}
-
-export type InstallationAvgOrderByAggregateInput = {
-  capacity?: Prisma.SortOrder
 }
 
 export type InstallationMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   siteId?: Prisma.SortOrder
   label?: Prisma.SortOrder
-  capacity?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -383,13 +322,8 @@ export type InstallationMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   siteId?: Prisma.SortOrder
   label?: Prisma.SortOrder
-  capacity?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-}
-
-export type InstallationSumOrderByAggregateInput = {
-  capacity?: Prisma.SortOrder
 }
 
 export type InstallationScalarRelationFilter = {
@@ -439,14 +373,6 @@ export type InstallationUncheckedUpdateManyWithoutSiteNestedInput = {
   deleteMany?: Prisma.InstallationScalarWhereInput | Prisma.InstallationScalarWhereInput[]
 }
 
-export type NullableFloatFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type InstallationCreateNestedOneWithoutDeviceInput = {
   create?: Prisma.XOR<Prisma.InstallationCreateWithoutDeviceInput, Prisma.InstallationUncheckedCreateWithoutDeviceInput>
   connectOrCreate?: Prisma.InstallationCreateOrConnectWithoutDeviceInput
@@ -464,7 +390,6 @@ export type InstallationUpdateOneRequiredWithoutDeviceNestedInput = {
 export type InstallationCreateWithoutSiteInput = {
   id: string
   label: string
-  capacity?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   device?: Prisma.DeviceCreateNestedOneWithoutInstallationInput
@@ -473,7 +398,6 @@ export type InstallationCreateWithoutSiteInput = {
 export type InstallationUncheckedCreateWithoutSiteInput = {
   id: string
   label: string
-  capacity?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   device?: Prisma.DeviceUncheckedCreateNestedOneWithoutInstallationInput
@@ -512,7 +436,6 @@ export type InstallationScalarWhereInput = {
   id?: Prisma.StringFilter<"Installation"> | string
   siteId?: Prisma.StringFilter<"Installation"> | string
   label?: Prisma.StringFilter<"Installation"> | string
-  capacity?: Prisma.FloatNullableFilter<"Installation"> | number | null
   createdAt?: Prisma.DateTimeFilter<"Installation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Installation"> | Date | string
 }
@@ -520,7 +443,6 @@ export type InstallationScalarWhereInput = {
 export type InstallationCreateWithoutDeviceInput = {
   id: string
   label: string
-  capacity?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   site: Prisma.SiteCreateNestedOneWithoutInstallationsInput
@@ -530,7 +452,6 @@ export type InstallationUncheckedCreateWithoutDeviceInput = {
   id: string
   siteId: string
   label: string
-  capacity?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -554,7 +475,6 @@ export type InstallationUpdateToOneWithWhereWithoutDeviceInput = {
 export type InstallationUpdateWithoutDeviceInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   label?: Prisma.StringFieldUpdateOperationsInput | string
-  capacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   site?: Prisma.SiteUpdateOneRequiredWithoutInstallationsNestedInput
@@ -564,7 +484,6 @@ export type InstallationUncheckedUpdateWithoutDeviceInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
   label?: Prisma.StringFieldUpdateOperationsInput | string
-  capacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -572,7 +491,6 @@ export type InstallationUncheckedUpdateWithoutDeviceInput = {
 export type InstallationCreateManySiteInput = {
   id: string
   label: string
-  capacity?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -580,7 +498,6 @@ export type InstallationCreateManySiteInput = {
 export type InstallationUpdateWithoutSiteInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   label?: Prisma.StringFieldUpdateOperationsInput | string
-  capacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   device?: Prisma.DeviceUpdateOneWithoutInstallationNestedInput
@@ -589,7 +506,6 @@ export type InstallationUpdateWithoutSiteInput = {
 export type InstallationUncheckedUpdateWithoutSiteInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   label?: Prisma.StringFieldUpdateOperationsInput | string
-  capacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   device?: Prisma.DeviceUncheckedUpdateOneWithoutInstallationNestedInput
@@ -598,7 +514,6 @@ export type InstallationUncheckedUpdateWithoutSiteInput = {
 export type InstallationUncheckedUpdateManyWithoutSiteInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   label?: Prisma.StringFieldUpdateOperationsInput | string
-  capacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -609,7 +524,6 @@ export type InstallationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   id?: boolean
   siteId?: boolean
   label?: boolean
-  capacity?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
@@ -620,7 +534,6 @@ export type InstallationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   siteId?: boolean
   label?: boolean
-  capacity?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
@@ -630,7 +543,6 @@ export type InstallationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   siteId?: boolean
   label?: boolean
-  capacity?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
@@ -640,12 +552,11 @@ export type InstallationSelectScalar = {
   id?: boolean
   siteId?: boolean
   label?: boolean
-  capacity?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type InstallationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "siteId" | "label" | "capacity" | "createdAt" | "updatedAt", ExtArgs["result"]["installation"]>
+export type InstallationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "siteId" | "label" | "createdAt" | "updatedAt", ExtArgs["result"]["installation"]>
 export type InstallationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
   device?: boolean | Prisma.Installation$deviceArgs<ExtArgs>
@@ -667,7 +578,6 @@ export type $InstallationPayload<ExtArgs extends runtime.Types.Extensions.Intern
     id: string
     siteId: string
     label: string
-    capacity: number | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["installation"]>
@@ -1098,7 +1008,6 @@ export interface InstallationFieldRefs {
   readonly id: Prisma.FieldRef<"Installation", 'String'>
   readonly siteId: Prisma.FieldRef<"Installation", 'String'>
   readonly label: Prisma.FieldRef<"Installation", 'String'>
-  readonly capacity: Prisma.FieldRef<"Installation", 'Float'>
   readonly createdAt: Prisma.FieldRef<"Installation", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Installation", 'DateTime'>
 }

@@ -2,31 +2,47 @@ import Link from "next/link";
 
 export default function SiteLoading() {
   return (
-    <main>
-      {/* Top bar skeleton */}
-      <section className="panel" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <Link className="detail-back" href="/">← 대시보드</Link>
-          <div className="skel skel-text" style={{ width: 180, height: 22 }} />
-          <div className="skel skel-text" style={{ width: 240 }} />
-          <div className="skel skel-text" style={{ width: 140 }} />
+    <main className="site-page">
+      {/* Header skeleton */}
+      <header className="site-header">
+        <div className="site-header-left">
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div
+              className="skel skel-circle"
+              style={{ width: 10, height: 10 }}
+            />
+            <div
+              className="skel skel-text"
+              style={{ width: 180, height: 22 }}
+            />
+            <div
+              className="skel skel-box"
+              style={{ width: 72, height: 22, borderRadius: 4 }}
+            />
+          </div>
+          <div className="skel skel-text" style={{ width: 280 }} />
+          <div className="skel skel-text" style={{ width: 120 }} />
         </div>
-        <div style={{ display: "flex", gap: 12 }}>
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="skel skel-box" style={{ width: 80, height: 60, borderRadius: 12 }} />
+        <div className="site-stats-row">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="skel skel-box"
+              style={{ width: 72, height: 56, borderRadius: 8 }}
+            />
           ))}
         </div>
-      </section>
+      </header>
 
       {/* Card grid skeleton */}
-      <section className="dashboard" style={{ marginTop: 24 }}>
-        <div className="panel location-panel">
-          <div className="device-grid">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="skel skel-box" style={{ height: 220, borderRadius: 16 }} />
-            ))}
-          </div>
-        </div>
+      <section className="site-card-grid">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={i}
+            className="skel skel-box"
+            style={{ height: 180, borderRadius: 12 }}
+          />
+        ))}
       </section>
     </main>
   );

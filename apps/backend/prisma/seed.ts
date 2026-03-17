@@ -39,14 +39,12 @@ const seed = async () => {
         update: {
           siteId: site.siteId,
           label: inst.label,
-          ...(inst.capacity !== undefined ? { capacity: inst.capacity } : {}),
           updatedAt: now,
         },
         create: {
           id: inst.id,
           siteId: site.siteId,
           label: inst.label,
-          ...(inst.capacity !== undefined ? { capacity: inst.capacity } : {}),
           createdAt: now,
           updatedAt: now,
         },
@@ -55,6 +53,8 @@ const seed = async () => {
       const d = inst.device;
       const deviceData = {
         status: d?.status ?? inst.status ?? "offline",
+        model: d?.model ?? "psvg",
+        capacity: d?.capacity ?? 150,
         lastSeenAt: d?.lastSeenAt ? new Date(d.lastSeenAt) : now,
         lastValue: 0,
         lastIp: "unknown",

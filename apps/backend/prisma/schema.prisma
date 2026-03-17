@@ -30,7 +30,6 @@ model Installation {
   id        String   @id                         // device_id (PSVG-RNDTESTx)
   siteId    String
   label     String                               // 변전실 / 102동 / 전기실
-  capacity  Float?                               // 설치지점 용량 (필요 없으면 빼도 됨)
 
   site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   device Device?                               // 최신 텔레메트리 (1:1)
@@ -47,6 +46,9 @@ model Installation {
 model Device {
   installationId String   @id                    // = device_id, Installation.id와 동일
   status         String   @default("offline")
+
+  model          String   @default("psvg")       // psta | paf | psvg
+  capacity       Int      @default(200)           // HMI 정격용량 (kVAR): 200 | 150
 
   moduleStatus   Int[]    @default([])
   numOfMods      Int      @default(0)

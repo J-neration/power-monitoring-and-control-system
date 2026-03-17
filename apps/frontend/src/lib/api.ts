@@ -35,7 +35,6 @@ export const fetchSites = async (): Promise<Site[]> => {
     current.installations.push({
       id: d.installation.id,
       label: d.installation.label,
-      capacity: d.installation.capacity ?? null,
       device: d, // OK: DeviceWithInstallation extends Device
     });
 
