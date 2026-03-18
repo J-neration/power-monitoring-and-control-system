@@ -1866,18 +1866,6 @@ main.dashboard-full {
   font-weight: 700;
 }
 
-@media (max-width: 720px) {
-  .device-charts-grid {
-    grid-template-columns: 1fr;
-  }
-  .device-detail-page {
-    padding: 16px;
-  }
-  .pf-gauge-row {
-    flex-direction: column;
-    align-items: center;
-  }
-}
 
 /* ═══════════════════════════════════════════════════════════════
    SKELETON LOADING
@@ -2188,17 +2176,6 @@ main.dashboard-full {
   transition: width 0.4s ease;
 }
 
-@media (max-width: 720px) {
-  .site-page {
-    padding: 16px;
-  }
-  .site-header {
-    flex-direction: column;
-  }
-  .site-card-grid {
-    grid-template-columns: 1fr;
-  }
-}
 
 /* ═══════════════════════════════════════════════
  * LIVE indicator
@@ -2314,4 +2291,217 @@ main.dashboard-full {
 @keyframes map-scan {
   0%   { top: -2px; }
   100% { top: 100%; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE — TABLET (≤ 1024px)
+═══════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  /* 3-column → 2-column: sidebar + map, hide right panel */
+  .dash-body {
+    grid-template-columns: 200px 1fr;
+  }
+  .dash-body > :last-child {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE — MOBILE (≤ 768px)
+═══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Global header ── */
+  .global-header {
+    padding: 0 14px;
+    height: 44px;
+    gap: 10px;
+  }
+  .global-logo-text {
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+  .live-clock {
+    font-size: 11px;
+  }
+
+  /* ── global-content: allow vertical scroll ── */
+  .global-content {
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+  }
+
+  /* ── Dashboard layout: stack vertically ── */
+  .new-dashboard {
+    height: auto;
+    min-height: calc(100dvh - 44px);
+    overflow: visible;
+    grid-template-rows: auto 1fr;
+  }
+
+  .dash-kpi-strip {
+    padding: 6px 12px;
+    gap: 6px;
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .dash-kpi-strip::-webkit-scrollbar { display: none; }
+
+  .kpi-badge {
+    padding: 4px 10px;
+    flex-shrink: 0;
+  }
+  .kpi-value { font-size: 13px; }
+  .kpi-label { font-size: 10px; }
+  .kpi-divider { display: none; }
+  .live-indicator { flex-shrink: 0; }
+  .live-label { font-size: 9px; }
+  .live-countdown { font-size: 9px; min-width: 16px; }
+
+  /* Stack: sidebar → map → detail panel */
+  .dash-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    overflow: visible;
+  }
+
+  /* Show detail panel again (was hidden at 1024px) */
+  .dash-body > :last-child {
+    display: flex;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .dash-sidebar {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    max-height: 280px;
+    overflow: hidden;
+  }
+  .sidebar-list {
+    max-height: 240px;
+  }
+
+  .dash-map-panel {
+    padding: 8px;
+    height: 320px;
+    overflow: hidden;
+  }
+
+  /* Detail panel: compact on mobile */
+  .dash-detail {
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    max-height: none;
+    overflow: visible;
+    padding-bottom: 24px;
+  }
+  .summary-inst-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* ── Site page ── */
+  .site-page {
+    padding: 14px 16px;
+    gap: 14px;
+  }
+  .site-header {
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+  }
+  .site-header-title h1 {
+    font-size: 18px;
+  }
+  .site-stats-row {
+    gap: 6px;
+  }
+  .site-stat {
+    padding: 8px 12px;
+    min-width: 52px;
+  }
+  .site-stat-val {
+    font-size: 17px;
+  }
+  .site-card-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .sit-row {
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  /* ── Device detail page ── */
+  .device-detail-page {
+    padding: 14px 16px;
+    gap: 16px;
+  }
+  .device-detail-title-row h1 {
+    font-size: 17px;
+  }
+  .device-charts-grid {
+    grid-template-columns: 1fr;
+  }
+  .pf-gauge-row {
+    flex-direction: column;
+    align-items: center;
+  }
+  .chart-card-wide {
+    grid-column: 1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE — SMALL MOBILE (≤ 480px)
+═══════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .global-logo-text {
+    display: none;
+  }
+  .global-header {
+    padding: 0 12px;
+  }
+
+  .dash-map-panel {
+    padding: 6px;
+    height: 260px;
+  }
+
+  .site-page {
+    padding: 10px 12px;
+  }
+  .site-header {
+    padding: 14px;
+  }
+  .site-header-title h1 {
+    font-size: 16px;
+  }
+  .site-stat {
+    padding: 6px 10px;
+    min-width: 46px;
+  }
+  .site-stat-val {
+    font-size: 15px;
+  }
+
+  .device-detail-page {
+    padding: 10px 12px;
+  }
+  .device-detail-title-row h1 {
+    font-size: 15px;
+  }
+  .device-detail-title-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .kpi-badge {
+    padding: 3px 8px;
+  }
+  .kpi-value { font-size: 12px; }
 }
