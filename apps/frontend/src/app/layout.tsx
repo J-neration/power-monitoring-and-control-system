@@ -17,7 +17,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <header className="global-header">
           <Link href="/" className="global-logo">
-            <Image src="/logo.png" alt="PrimeSolution" width={32} height={20} priority />
+            <Image
+              src="/logo.png"
+              alt="PrimeSolution"
+              width={32}
+              height={15}
+              priority
+            />
             <span className="global-logo-text">PRIMESOLUTION</span>
           </Link>
           <LiveClock />

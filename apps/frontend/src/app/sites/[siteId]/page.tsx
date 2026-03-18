@@ -32,7 +32,6 @@ function deriveSiteStatus(installations: { device: Device }[]): DeviceStatus {
   return worst;
 }
 
-
 function countStatuses(installations: { device: Device }[]) {
   let running = 0,
     standby = 0,
@@ -160,7 +159,7 @@ export default async function SitePage({ params }: Props) {
                 )}
                 {d?.capacity != null && (
                   <span className="device-capacity-badge">
-                    {d.capacity} kVAR
+                    {d.capacity} {d.model === "paf" ? "A" : "kVAR"}
                   </span>
                 )}
               </div>
@@ -192,16 +191,6 @@ export default async function SitePage({ params }: Props) {
                       : "-"}
                   </span>
                 </div>
-                <div className="sit-row sit-row-pf">
-                  <span className="sit-label">Grid TPF / DPF</span>
-                  <span>
-                    {d?.tpf2 != null ? `${(d.tpf2 * 100).toFixed(1)}%` : "-"}
-                  </span>
-                  <span>
-                    {d?.dpf2 != null ? `${(d.dpf2 * 100).toFixed(1)}%` : "-"}
-                  </span>
-                  <span />
-                </div>
                 <div className="sit-row">
                   <span className="sit-label">Grid THD (%)</span>
                   <span>
@@ -220,12 +209,22 @@ export default async function SitePage({ params }: Props) {
                       : "-"}
                   </span>
                 </div>
+                <div className="sit-row sit-row-pf">
+                  <span className="sit-label">Grid TPF / DPF</span>
+                  <span>
+                    {d?.tpf2 != null ? `${(d.tpf2 * 100).toFixed(1)}%` : "-"}
+                  </span>
+                  <span>
+                    {d?.dpf2 != null ? `${(d.dpf2 * 100).toFixed(1)}%` : "-"}
+                  </span>
+                  <span />
+                </div>
               </div>
 
               {modList.length > 0 && (
                 <div className="site-inst-mods">
                   <span className="site-inst-mods-label">
-                    모듈 {modOk}/{modList.length}
+                    보상중인 모듈 {modOk}/{modList.length}
                   </span>
                   <div className="site-inst-mods-bar">
                     <div
