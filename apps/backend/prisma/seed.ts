@@ -1,4 +1,5 @@
 import "dotenv/config";
+import bcrypt from "bcryptjs";
 import { PrismaClient } from "./generated/client/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { siteRegistry } from "../src/data/deviceRegistry.js";
@@ -98,6 +99,19 @@ const seed = async () => {
   }
 
   console.log(`Seeded ${siteRegistry.length} sites successfully.`);
+
+  // ── 초기 ADMIN 계정 ──────────────────────────────
+  const adminUsername = "admin";
+  const existing = await prisma.user.findUnique({ where: { username: adminUsername } });
+  if (!existing) {
+    const passwordHash = await bcrypt.hash("abc123", 12);
+    await prisma.user.create({
+      data: { username: adminUsername, passwordHash, role: "ADMIN" },
+    });
+    console.log(`ADMIN 계정 생성: ${adminUsername} / abc123  ← 변경 필요`);
+  } else {
+    console.log(`ADMIN 계정 이미 존재: ${adminUsername} — 스킵`);
+  }
 };
 
 seed()

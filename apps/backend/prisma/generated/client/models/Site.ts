@@ -201,6 +201,7 @@ export type SiteWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Site"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Site"> | Date | string
   installations?: Prisma.InstallationListRelationFilter
+  users?: Prisma.UserListRelationFilter
 }
 
 export type SiteOrderByWithRelationInput = {
@@ -212,6 +213,7 @@ export type SiteOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   installations?: Prisma.InstallationOrderByRelationAggregateInput
+  users?: Prisma.UserOrderByRelationAggregateInput
 }
 
 export type SiteWhereUniqueInput = Prisma.AtLeast<{
@@ -226,6 +228,7 @@ export type SiteWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Site"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Site"> | Date | string
   installations?: Prisma.InstallationListRelationFilter
+  users?: Prisma.UserListRelationFilter
 }, "id">
 
 export type SiteOrderByWithAggregationInput = {
@@ -263,6 +266,7 @@ export type SiteCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   installations?: Prisma.InstallationCreateNestedManyWithoutSiteInput
+  users?: Prisma.UserCreateNestedManyWithoutSiteInput
 }
 
 export type SiteUncheckedCreateInput = {
@@ -274,6 +278,7 @@ export type SiteUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   installations?: Prisma.InstallationUncheckedCreateNestedManyWithoutSiteInput
+  users?: Prisma.UserUncheckedCreateNestedManyWithoutSiteInput
 }
 
 export type SiteUpdateInput = {
@@ -285,6 +290,7 @@ export type SiteUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   installations?: Prisma.InstallationUpdateManyWithoutSiteNestedInput
+  users?: Prisma.UserUpdateManyWithoutSiteNestedInput
 }
 
 export type SiteUncheckedUpdateInput = {
@@ -296,6 +302,7 @@ export type SiteUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   installations?: Prisma.InstallationUncheckedUpdateManyWithoutSiteNestedInput
+  users?: Prisma.UserUncheckedUpdateManyWithoutSiteNestedInput
 }
 
 export type SiteCreateManyInput = {
@@ -326,6 +333,11 @@ export type SiteUncheckedUpdateManyInput = {
   address?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type SiteNullableScalarRelationFilter = {
+  is?: Prisma.SiteWhereInput | null
+  isNot?: Prisma.SiteWhereInput | null
 }
 
 export type SiteCountOrderByAggregateInput = {
@@ -363,12 +375,20 @@ export type SiteScalarRelationFilter = {
   isNot?: Prisma.SiteWhereInput
 }
 
-export type StringFieldUpdateOperationsInput = {
-  set?: string
+export type SiteCreateNestedOneWithoutUsersInput = {
+  create?: Prisma.XOR<Prisma.SiteCreateWithoutUsersInput, Prisma.SiteUncheckedCreateWithoutUsersInput>
+  connectOrCreate?: Prisma.SiteCreateOrConnectWithoutUsersInput
+  connect?: Prisma.SiteWhereUniqueInput
 }
 
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string
+export type SiteUpdateOneWithoutUsersNestedInput = {
+  create?: Prisma.XOR<Prisma.SiteCreateWithoutUsersInput, Prisma.SiteUncheckedCreateWithoutUsersInput>
+  connectOrCreate?: Prisma.SiteCreateOrConnectWithoutUsersInput
+  upsert?: Prisma.SiteUpsertWithoutUsersInput
+  disconnect?: Prisma.SiteWhereInput | boolean
+  delete?: Prisma.SiteWhereInput | boolean
+  connect?: Prisma.SiteWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SiteUpdateToOneWithWhereWithoutUsersInput, Prisma.SiteUpdateWithoutUsersInput>, Prisma.SiteUncheckedUpdateWithoutUsersInput>
 }
 
 export type SiteCreateNestedOneWithoutInstallationsInput = {
@@ -385,6 +405,66 @@ export type SiteUpdateOneRequiredWithoutInstallationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.SiteUpdateToOneWithWhereWithoutInstallationsInput, Prisma.SiteUpdateWithoutInstallationsInput>, Prisma.SiteUncheckedUpdateWithoutInstallationsInput>
 }
 
+export type SiteCreateWithoutUsersInput = {
+  id: string
+  name: string
+  client?: string
+  region: string
+  address: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  installations?: Prisma.InstallationCreateNestedManyWithoutSiteInput
+}
+
+export type SiteUncheckedCreateWithoutUsersInput = {
+  id: string
+  name: string
+  client?: string
+  region: string
+  address: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  installations?: Prisma.InstallationUncheckedCreateNestedManyWithoutSiteInput
+}
+
+export type SiteCreateOrConnectWithoutUsersInput = {
+  where: Prisma.SiteWhereUniqueInput
+  create: Prisma.XOR<Prisma.SiteCreateWithoutUsersInput, Prisma.SiteUncheckedCreateWithoutUsersInput>
+}
+
+export type SiteUpsertWithoutUsersInput = {
+  update: Prisma.XOR<Prisma.SiteUpdateWithoutUsersInput, Prisma.SiteUncheckedUpdateWithoutUsersInput>
+  create: Prisma.XOR<Prisma.SiteCreateWithoutUsersInput, Prisma.SiteUncheckedCreateWithoutUsersInput>
+  where?: Prisma.SiteWhereInput
+}
+
+export type SiteUpdateToOneWithWhereWithoutUsersInput = {
+  where?: Prisma.SiteWhereInput
+  data: Prisma.XOR<Prisma.SiteUpdateWithoutUsersInput, Prisma.SiteUncheckedUpdateWithoutUsersInput>
+}
+
+export type SiteUpdateWithoutUsersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  client?: Prisma.StringFieldUpdateOperationsInput | string
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  address?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  installations?: Prisma.InstallationUpdateManyWithoutSiteNestedInput
+}
+
+export type SiteUncheckedUpdateWithoutUsersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  client?: Prisma.StringFieldUpdateOperationsInput | string
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  address?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  installations?: Prisma.InstallationUncheckedUpdateManyWithoutSiteNestedInput
+}
+
 export type SiteCreateWithoutInstallationsInput = {
   id: string
   name: string
@@ -393,6 +473,7 @@ export type SiteCreateWithoutInstallationsInput = {
   address: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  users?: Prisma.UserCreateNestedManyWithoutSiteInput
 }
 
 export type SiteUncheckedCreateWithoutInstallationsInput = {
@@ -403,6 +484,7 @@ export type SiteUncheckedCreateWithoutInstallationsInput = {
   address: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  users?: Prisma.UserUncheckedCreateNestedManyWithoutSiteInput
 }
 
 export type SiteCreateOrConnectWithoutInstallationsInput = {
@@ -429,6 +511,7 @@ export type SiteUpdateWithoutInstallationsInput = {
   address?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUpdateManyWithoutSiteNestedInput
 }
 
 export type SiteUncheckedUpdateWithoutInstallationsInput = {
@@ -439,6 +522,7 @@ export type SiteUncheckedUpdateWithoutInstallationsInput = {
   address?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUncheckedUpdateManyWithoutSiteNestedInput
 }
 
 
@@ -448,10 +532,12 @@ export type SiteUncheckedUpdateWithoutInstallationsInput = {
 
 export type SiteCountOutputType = {
   installations: number
+  users: number
 }
 
 export type SiteCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   installations?: boolean | SiteCountOutputTypeCountInstallationsArgs
+  users?: boolean | SiteCountOutputTypeCountUsersArgs
 }
 
 /**
@@ -471,6 +557,13 @@ export type SiteCountOutputTypeCountInstallationsArgs<ExtArgs extends runtime.Ty
   where?: Prisma.InstallationWhereInput
 }
 
+/**
+ * SiteCountOutputType without action
+ */
+export type SiteCountOutputTypeCountUsersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserWhereInput
+}
+
 
 export type SiteSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -481,6 +574,7 @@ export type SiteSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   createdAt?: boolean
   updatedAt?: boolean
   installations?: boolean | Prisma.Site$installationsArgs<ExtArgs>
+  users?: boolean | Prisma.Site$usersArgs<ExtArgs>
   _count?: boolean | Prisma.SiteCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["site"]>
 
@@ -517,6 +611,7 @@ export type SiteSelectScalar = {
 export type SiteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "client" | "region" | "address" | "createdAt" | "updatedAt", ExtArgs["result"]["site"]>
 export type SiteInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   installations?: boolean | Prisma.Site$installationsArgs<ExtArgs>
+  users?: boolean | Prisma.Site$usersArgs<ExtArgs>
   _count?: boolean | Prisma.SiteCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type SiteIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -526,6 +621,7 @@ export type $SitePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name: "Site"
   objects: {
     installations: Prisma.$InstallationPayload<ExtArgs>[]
+    users: Prisma.$UserPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -930,6 +1026,7 @@ readonly fields: SiteFieldRefs;
 export interface Prisma__SiteClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   installations<T extends Prisma.Site$installationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Site$installationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InstallationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  users<T extends Prisma.Site$usersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Site$usersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1375,6 +1472,30 @@ export type Site$installationsArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.InstallationScalarFieldEnum | Prisma.InstallationScalarFieldEnum[]
+}
+
+/**
+ * Site.users
+ */
+export type Site$usersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+  orderBy?: Prisma.UserOrderByWithRelationInput | Prisma.UserOrderByWithRelationInput[]
+  cursor?: Prisma.UserWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserScalarFieldEnum | Prisma.UserScalarFieldEnum[]
 }
 
 /**

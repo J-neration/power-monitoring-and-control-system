@@ -8,6 +8,39 @@ datasource db {
 }
 
 /* =========================
+ * 0) Auth – User & Role
+ * ========================= */
+
+enum UserRole {
+  ADMIN
+  CLIENT
+  SITE
+}
+
+model User {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  passwordHash String
+
+  role         UserRole
+
+  /// CLIENT 전용: Site.client 값 (e.g. "lotte", "hillstate")
+  clientKey    String?
+
+  /// SITE 전용: 접근 허용된 Site.id
+  siteId       String?
+  site         Site?     @relation(fields: [siteId], references: [id])
+
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([username])
+}
+
+/* =========================
  * 1) Site (현장 – 아파트 단지 등)
  * ========================= */
 model Site {
@@ -18,6 +51,7 @@ model Site {
   address       String
 
   installations Installation[]
+  users         User[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

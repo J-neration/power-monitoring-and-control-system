@@ -1521,10 +1521,6 @@ export type NullableFloatFieldUpdateOperationsInput = {
   divide?: number
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
 export type DeviceUpdateareaTempInput = {
   set?: number[]
   push?: number | number[]

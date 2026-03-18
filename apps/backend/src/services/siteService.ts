@@ -1,6 +1,7 @@
 import { PrismaClient } from "../../prisma/generated/client/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { deriveDeviceStatus } from "./deviceService.js";
+import type { UserContext } from "../modules/auth/auth.types.js";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({
@@ -8,9 +9,19 @@ const prisma = new PrismaClient({
   }),
 });
 
-/* =========================================================
- * 상태 요약 로직
- * ========================================================= */
+/* ─── 권한별 Site WHERE 필터 ──────────────────────── */
+const siteWhereFilter = (ctx: UserContext) => {
+  if (ctx.role === "ADMIN") return {};
+  if (ctx.role === "CLIENT") return { client: ctx.clientKey };
+  return { id: ctx.siteId }; // SITE
+};
+
+/* ─── 권한 검사: 특정 siteId에 접근 가능한지 ─────── */
+const canAccessSite = (ctx: UserContext, siteClient: string, siteId: string) => {
+  if (ctx.role === "ADMIN") return true;
+  if (ctx.role === "CLIENT") return siteClient === ctx.clientKey;
+  return siteId === ctx.siteId;
+};
 
 const deriveSiteStatus = (devices: { status: string }[]) => {
   if (devices.some((d) => d.status === "fault")) return "fault";
@@ -21,32 +32,19 @@ const deriveSiteStatus = (devices: { status: string }[]) => {
 };
 
 export const siteService = {
-  /* =======================================================
-   * 메인페이지용: Site 요약
-   * ======================================================= */
-  list: async () => {
+  /* ─── 메인페이지용: Site 요약 목록 ─────────────── */
+  list: async (ctx: UserContext) => {
     const sites = await prisma.site.findMany({
+      where: siteWhereFilter(ctx),
       include: {
         installations: {
-          include: {
-            device: true,
-          },
+          include: { device: true },
         },
       },
       orderBy: { name: "asc" },
     });
-  
+
     return sites.map((site) => {
-      // 🔐 명시적 assert: "우리 시스템에서는 device는 반드시 존재"
-      const devices = site.installations.map((inst) => {
-        if (!inst.device) {
-          throw new Error(
-            `Invariant violation: Installation ${inst.id} has no device`
-          );
-        }
-        return inst.device;
-      });
-  
       const enrichedInstallations = site.installations.map((inst) => ({
         id: inst.id,
         label: inst.label,
@@ -68,11 +66,9 @@ export const siteService = {
       };
     });
   },
-  
-  /* =======================================================
-   * 상세페이지용: Site + Installations + Device
-   * ======================================================= */
-  get: async (siteId: string) => {
+
+  /* ─── 상세페이지용: Site + Installations + Device ─ */
+  get: async (siteId: string, ctx: UserContext) => {
     const site = await prisma.site.findUnique({
       where: { id: siteId },
       include: {
@@ -83,6 +79,8 @@ export const siteService = {
       },
     });
     if (!site) return null;
+    if (!canAccessSite(ctx, site.client, site.id)) return null; // 권한 없음 → null(404)
+
     return {
       ...site,
       installations: site.installations.map((inst) => ({
