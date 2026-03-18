@@ -1948,6 +1948,49 @@ main.dashboard-full {
   font-weight: 700;
 }
 
+/* ── New chart helpers ───────────────────────────────────────── */
+.chart-title-mock {
+  font-weight: 400;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #F59E0B;
+  opacity: 0.8;
+}
+
+.capacity-legend-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 0 4px;
+}
+
+.cap-badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  opacity: 0.75;
+}
+
+.cap-reactive {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.cap-idle {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3B82F6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.cap-margin {
+  background: rgba(71, 85, 105, 0.25);
+  color: #94A3B8;
+  border: 1px solid rgba(71, 85, 105, 0.4);
+}
+
 /* ═══════════════════════════════════════════════════════════════
    SKELETON LOADING
 ═══════════════════════════════════════════════════════════════ */

@@ -33,6 +33,13 @@ type ReceiverBody = {
   gridCurrentTHDL1?: number | string;
   gridCurrentTHDL2?: number | string;
   gridCurrentTHDL3?: number | string;
+  areaTemp?: unknown;
+  moduleTemp?: unknown;
+  fanSpeed?: unknown;
+  totalCapacity?: number | string;
+  operatingCapacity?: number | string;
+  reactivePowerCapacity?: number | string;
+  availableMargin?: number | string;
   [key: string]: unknown;
 };
 
@@ -93,6 +100,13 @@ export const receiverRoutes: FastifyPluginAsync = async (server) => {
       gridCurrentTHDL1: body.gridCurrentTHDL1,
       gridCurrentTHDL2: body.gridCurrentTHDL2,
       gridCurrentTHDL3: body.gridCurrentTHDL3,
+      areaTemp: body.areaTemp,
+      moduleTemp: body.moduleTemp,
+      fanSpeed: body.fanSpeed,
+      totalCapacity: body.totalCapacity,
+      operatingCapacity: body.operatingCapacity,
+      reactivePowerCapacity: body.reactivePowerCapacity,
+      availableMargin: body.availableMargin,
     });
 
     return reply.send({

@@ -99,6 +99,19 @@ model Device {
   dpf1             Float?
   dpf2             Float?
 
+  // 온도 (°C)
+  areaTemp              Float[]  @default([])   // 구역 온도 (max 4)
+  moduleTemp            Float[]  @default([])   // 모듈 온도 (max 6)
+
+  // 팬 속도 (RPM)
+  fanSpeed              Float[]  @default([])   // 팬 속도 (max 2)
+
+  // 용량 (kVAR)
+  totalCapacity         Float?   // HMI 연결 총 모듈 합 용량
+  operatingCapacity     Float?   // 운전 중인 모듈 용량
+  reactivePowerCapacity Float?   // 무효전력 발생 용량
+  availableMargin       Float?   // 여유 마진 (= totalCapacity - operatingCapacity)
+
   installation   Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
 
   createdAt      DateTime @default(now())
@@ -158,6 +171,19 @@ model TelemetryRecord {
   tpf2             Float?
   dpf1             Float?
   dpf2             Float?
+
+  // 온도 (°C)
+  areaTemp              Float[]  @default([])
+  moduleTemp            Float[]  @default([])
+
+  // 팬 속도 (RPM)
+  fanSpeed              Float[]  @default([])
+
+  // 용량 (kVAR)
+  totalCapacity         Float?
+  operatingCapacity     Float?
+  reactivePowerCapacity Float?
+  availableMargin       Float?
 
   @@index([installationId, recordedAt])
 }
