@@ -1,4 +1,4 @@
-import type { DeviceWithInstallation, Site } from "../types/site";
+import type { DeviceWithInstallation, Site, TelemetryReading } from "../types/site";
 
 const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
 
@@ -42,6 +42,19 @@ export const fetchSites = async (): Promise<Site[]> => {
   }
 
   return Array.from(siteMap.values());
+};
+
+export const fetchReadings = async (
+  installationId: string,
+  hours = 24
+): Promise<TelemetryReading[]> => {
+  const response = await fetch(
+    `${apiBase}/devices/${encodeURIComponent(installationId)}/readings?hours=${hours}`,
+    { cache: "no-store" }
+  );
+  if (!response.ok) return [];
+  const data = (await response.json()) as { readings: TelemetryReading[] };
+  return data.readings ?? [];
 };
 
 export const fetchDevice = async (installationId: string) => {

@@ -186,6 +186,7 @@ export type InstallationWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Installation"> | Date | string
   site?: Prisma.XOR<Prisma.SiteScalarRelationFilter, Prisma.SiteWhereInput>
   device?: Prisma.XOR<Prisma.DeviceNullableScalarRelationFilter, Prisma.DeviceWhereInput> | null
+  telemetryRecords?: Prisma.TelemetryRecordListRelationFilter
 }
 
 export type InstallationOrderByWithRelationInput = {
@@ -196,6 +197,7 @@ export type InstallationOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   site?: Prisma.SiteOrderByWithRelationInput
   device?: Prisma.DeviceOrderByWithRelationInput
+  telemetryRecords?: Prisma.TelemetryRecordOrderByRelationAggregateInput
 }
 
 export type InstallationWhereUniqueInput = Prisma.AtLeast<{
@@ -209,6 +211,7 @@ export type InstallationWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Installation"> | Date | string
   site?: Prisma.XOR<Prisma.SiteScalarRelationFilter, Prisma.SiteWhereInput>
   device?: Prisma.XOR<Prisma.DeviceNullableScalarRelationFilter, Prisma.DeviceWhereInput> | null
+  telemetryRecords?: Prisma.TelemetryRecordListRelationFilter
 }, "id">
 
 export type InstallationOrderByWithAggregationInput = {
@@ -240,6 +243,7 @@ export type InstallationCreateInput = {
   updatedAt?: Date | string
   site: Prisma.SiteCreateNestedOneWithoutInstallationsInput
   device?: Prisma.DeviceCreateNestedOneWithoutInstallationInput
+  telemetryRecords?: Prisma.TelemetryRecordCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateInput = {
@@ -249,6 +253,7 @@ export type InstallationUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   device?: Prisma.DeviceUncheckedCreateNestedOneWithoutInstallationInput
+  telemetryRecords?: Prisma.TelemetryRecordUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUpdateInput = {
@@ -258,6 +263,7 @@ export type InstallationUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   site?: Prisma.SiteUpdateOneRequiredWithoutInstallationsNestedInput
   device?: Prisma.DeviceUpdateOneWithoutInstallationNestedInput
+  telemetryRecords?: Prisma.TelemetryRecordUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateInput = {
@@ -267,6 +273,7 @@ export type InstallationUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   device?: Prisma.DeviceUncheckedUpdateOneWithoutInstallationNestedInput
+  telemetryRecords?: Prisma.TelemetryRecordUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateManyInput = {
@@ -387,12 +394,27 @@ export type InstallationUpdateOneRequiredWithoutDeviceNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.InstallationUpdateToOneWithWhereWithoutDeviceInput, Prisma.InstallationUpdateWithoutDeviceInput>, Prisma.InstallationUncheckedUpdateWithoutDeviceInput>
 }
 
+export type InstallationCreateNestedOneWithoutTelemetryRecordsInput = {
+  create?: Prisma.XOR<Prisma.InstallationCreateWithoutTelemetryRecordsInput, Prisma.InstallationUncheckedCreateWithoutTelemetryRecordsInput>
+  connectOrCreate?: Prisma.InstallationCreateOrConnectWithoutTelemetryRecordsInput
+  connect?: Prisma.InstallationWhereUniqueInput
+}
+
+export type InstallationUpdateOneRequiredWithoutTelemetryRecordsNestedInput = {
+  create?: Prisma.XOR<Prisma.InstallationCreateWithoutTelemetryRecordsInput, Prisma.InstallationUncheckedCreateWithoutTelemetryRecordsInput>
+  connectOrCreate?: Prisma.InstallationCreateOrConnectWithoutTelemetryRecordsInput
+  upsert?: Prisma.InstallationUpsertWithoutTelemetryRecordsInput
+  connect?: Prisma.InstallationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.InstallationUpdateToOneWithWhereWithoutTelemetryRecordsInput, Prisma.InstallationUpdateWithoutTelemetryRecordsInput>, Prisma.InstallationUncheckedUpdateWithoutTelemetryRecordsInput>
+}
+
 export type InstallationCreateWithoutSiteInput = {
   id: string
   label: string
   createdAt?: Date | string
   updatedAt?: Date | string
   device?: Prisma.DeviceCreateNestedOneWithoutInstallationInput
+  telemetryRecords?: Prisma.TelemetryRecordCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutSiteInput = {
@@ -401,6 +423,7 @@ export type InstallationUncheckedCreateWithoutSiteInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   device?: Prisma.DeviceUncheckedCreateNestedOneWithoutInstallationInput
+  telemetryRecords?: Prisma.TelemetryRecordUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutSiteInput = {
@@ -446,6 +469,7 @@ export type InstallationCreateWithoutDeviceInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   site: Prisma.SiteCreateNestedOneWithoutInstallationsInput
+  telemetryRecords?: Prisma.TelemetryRecordCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutDeviceInput = {
@@ -454,6 +478,7 @@ export type InstallationUncheckedCreateWithoutDeviceInput = {
   label: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  telemetryRecords?: Prisma.TelemetryRecordUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutDeviceInput = {
@@ -478,6 +503,7 @@ export type InstallationUpdateWithoutDeviceInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   site?: Prisma.SiteUpdateOneRequiredWithoutInstallationsNestedInput
+  telemetryRecords?: Prisma.TelemetryRecordUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutDeviceInput = {
@@ -486,6 +512,59 @@ export type InstallationUncheckedUpdateWithoutDeviceInput = {
   label?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  telemetryRecords?: Prisma.TelemetryRecordUncheckedUpdateManyWithoutInstallationNestedInput
+}
+
+export type InstallationCreateWithoutTelemetryRecordsInput = {
+  id: string
+  label: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  site: Prisma.SiteCreateNestedOneWithoutInstallationsInput
+  device?: Prisma.DeviceCreateNestedOneWithoutInstallationInput
+}
+
+export type InstallationUncheckedCreateWithoutTelemetryRecordsInput = {
+  id: string
+  siteId: string
+  label: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  device?: Prisma.DeviceUncheckedCreateNestedOneWithoutInstallationInput
+}
+
+export type InstallationCreateOrConnectWithoutTelemetryRecordsInput = {
+  where: Prisma.InstallationWhereUniqueInput
+  create: Prisma.XOR<Prisma.InstallationCreateWithoutTelemetryRecordsInput, Prisma.InstallationUncheckedCreateWithoutTelemetryRecordsInput>
+}
+
+export type InstallationUpsertWithoutTelemetryRecordsInput = {
+  update: Prisma.XOR<Prisma.InstallationUpdateWithoutTelemetryRecordsInput, Prisma.InstallationUncheckedUpdateWithoutTelemetryRecordsInput>
+  create: Prisma.XOR<Prisma.InstallationCreateWithoutTelemetryRecordsInput, Prisma.InstallationUncheckedCreateWithoutTelemetryRecordsInput>
+  where?: Prisma.InstallationWhereInput
+}
+
+export type InstallationUpdateToOneWithWhereWithoutTelemetryRecordsInput = {
+  where?: Prisma.InstallationWhereInput
+  data: Prisma.XOR<Prisma.InstallationUpdateWithoutTelemetryRecordsInput, Prisma.InstallationUncheckedUpdateWithoutTelemetryRecordsInput>
+}
+
+export type InstallationUpdateWithoutTelemetryRecordsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  label?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  site?: Prisma.SiteUpdateOneRequiredWithoutInstallationsNestedInput
+  device?: Prisma.DeviceUpdateOneWithoutInstallationNestedInput
+}
+
+export type InstallationUncheckedUpdateWithoutTelemetryRecordsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  label?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  device?: Prisma.DeviceUncheckedUpdateOneWithoutInstallationNestedInput
 }
 
 export type InstallationCreateManySiteInput = {
@@ -501,6 +580,7 @@ export type InstallationUpdateWithoutSiteInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   device?: Prisma.DeviceUpdateOneWithoutInstallationNestedInput
+  telemetryRecords?: Prisma.TelemetryRecordUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutSiteInput = {
@@ -509,6 +589,7 @@ export type InstallationUncheckedUpdateWithoutSiteInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   device?: Prisma.DeviceUncheckedUpdateOneWithoutInstallationNestedInput
+  telemetryRecords?: Prisma.TelemetryRecordUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateManyWithoutSiteInput = {
@@ -519,6 +600,35 @@ export type InstallationUncheckedUpdateManyWithoutSiteInput = {
 }
 
 
+/**
+ * Count Type InstallationCountOutputType
+ */
+
+export type InstallationCountOutputType = {
+  telemetryRecords: number
+}
+
+export type InstallationCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  telemetryRecords?: boolean | InstallationCountOutputTypeCountTelemetryRecordsArgs
+}
+
+/**
+ * InstallationCountOutputType without action
+ */
+export type InstallationCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the InstallationCountOutputType
+   */
+  select?: Prisma.InstallationCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * InstallationCountOutputType without action
+ */
+export type InstallationCountOutputTypeCountTelemetryRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TelemetryRecordWhereInput
+}
+
 
 export type InstallationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -528,6 +638,8 @@ export type InstallationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   updatedAt?: boolean
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
   device?: boolean | Prisma.Installation$deviceArgs<ExtArgs>
+  telemetryRecords?: boolean | Prisma.Installation$telemetryRecordsArgs<ExtArgs>
+  _count?: boolean | Prisma.InstallationCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["installation"]>
 
 export type InstallationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -560,6 +672,8 @@ export type InstallationOmit<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type InstallationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
   device?: boolean | Prisma.Installation$deviceArgs<ExtArgs>
+  telemetryRecords?: boolean | Prisma.Installation$telemetryRecordsArgs<ExtArgs>
+  _count?: boolean | Prisma.InstallationCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type InstallationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
@@ -573,6 +687,7 @@ export type $InstallationPayload<ExtArgs extends runtime.Types.Extensions.Intern
   objects: {
     site: Prisma.$SitePayload<ExtArgs>
     device: Prisma.$DevicePayload<ExtArgs> | null
+    telemetryRecords: Prisma.$TelemetryRecordPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -976,6 +1091,7 @@ export interface Prisma__InstallationClient<T, Null = never, ExtArgs extends run
   readonly [Symbol.toStringTag]: "PrismaPromise"
   site<T extends Prisma.SiteDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SiteDefaultArgs<ExtArgs>>): Prisma.Prisma__SiteClient<runtime.Types.Result.GetResult<Prisma.$SitePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   device<T extends Prisma.Installation$deviceArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Installation$deviceArgs<ExtArgs>>): Prisma.Prisma__DeviceClient<runtime.Types.Result.GetResult<Prisma.$DevicePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  telemetryRecords<T extends Prisma.Installation$telemetryRecordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Installation$telemetryRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TelemetryRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1422,6 +1538,30 @@ export type Installation$deviceArgs<ExtArgs extends runtime.Types.Extensions.Int
    */
   include?: Prisma.DeviceInclude<ExtArgs> | null
   where?: Prisma.DeviceWhereInput
+}
+
+/**
+ * Installation.telemetryRecords
+ */
+export type Installation$telemetryRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TelemetryRecord
+   */
+  select?: Prisma.TelemetryRecordSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TelemetryRecord
+   */
+  omit?: Prisma.TelemetryRecordOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TelemetryRecordInclude<ExtArgs> | null
+  where?: Prisma.TelemetryRecordWhereInput
+  orderBy?: Prisma.TelemetryRecordOrderByWithRelationInput | Prisma.TelemetryRecordOrderByWithRelationInput[]
+  cursor?: Prisma.TelemetryRecordWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TelemetryRecordScalarFieldEnum | Prisma.TelemetryRecordScalarFieldEnum[]
 }
 
 /**

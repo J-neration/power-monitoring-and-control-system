@@ -89,4 +89,45 @@ export type DeviceWithInstallation = Device & {
       };
     };
   };
+
+export type TelemetryReading = {
+  id: string;
+  installationId: string;
+  recordedAt: string;
+
+  moduleStatus?: number[];
+  numOfMods?: number | null;
+
+  vL1?: number | null;
+  vL2?: number | null;
+  vL3?: number | null;
+
+  gridCurrentL1?: number | null;
+  gridCurrentL2?: number | null;
+  gridCurrentL3?: number | null;
+  loadCurrentL1?: number | null;
+  loadCurrentL2?: number | null;
+  loadCurrentL3?: number | null;
+
+  loadCurrentTHDL1?: number | null;
+  loadCurrentTHDL2?: number | null;
+  loadCurrentTHDL3?: number | null;
+  gridCurrentTHDL1?: number | null;
+  gridCurrentTHDL2?: number | null;
+  gridCurrentTHDL3?: number | null;
+
+  uncompS?: number | null;
+  compS?: number | null;
+  uncompP?: number | null;
+  compP?: number | null;
+  uncompQ?: number | null;
+  compQ?: number | null;
+  uncompH?: number | null;
+  compH?: number | null;
+
+  tpf1?: number | null;
+  tpf2?: number | null;
+  dpf1?: number | null;
+  dpf2?: number | null;
+};
   

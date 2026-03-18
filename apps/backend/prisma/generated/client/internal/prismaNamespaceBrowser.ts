@@ -53,7 +53,8 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   Site: 'Site',
   Installation: 'Installation',
-  Device: 'Device'
+  Device: 'Device',
+  TelemetryRecord: 'TelemetryRecord'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -138,6 +139,44 @@ export const DeviceScalarFieldEnum = {
 } as const
 
 export type DeviceScalarFieldEnum = (typeof DeviceScalarFieldEnum)[keyof typeof DeviceScalarFieldEnum]
+
+
+export const TelemetryRecordScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  recordedAt: 'recordedAt',
+  moduleStatus: 'moduleStatus',
+  numOfMods: 'numOfMods',
+  vL1: 'vL1',
+  vL2: 'vL2',
+  vL3: 'vL3',
+  gridCurrentL1: 'gridCurrentL1',
+  gridCurrentL2: 'gridCurrentL2',
+  gridCurrentL3: 'gridCurrentL3',
+  loadCurrentL1: 'loadCurrentL1',
+  loadCurrentL2: 'loadCurrentL2',
+  loadCurrentL3: 'loadCurrentL3',
+  loadCurrentTHDL1: 'loadCurrentTHDL1',
+  loadCurrentTHDL2: 'loadCurrentTHDL2',
+  loadCurrentTHDL3: 'loadCurrentTHDL3',
+  gridCurrentTHDL1: 'gridCurrentTHDL1',
+  gridCurrentTHDL2: 'gridCurrentTHDL2',
+  gridCurrentTHDL3: 'gridCurrentTHDL3',
+  uncompS: 'uncompS',
+  compS: 'compS',
+  uncompP: 'uncompP',
+  compP: 'compP',
+  uncompQ: 'uncompQ',
+  compQ: 'compQ',
+  uncompH: 'uncompH',
+  compH: 'compH',
+  tpf1: 'tpf1',
+  tpf2: 'tpf2',
+  dpf1: 'dpf1',
+  dpf2: 'dpf2'
+} as const
+
+export type TelemetryRecordScalarFieldEnum = (typeof TelemetryRecordScalarFieldEnum)[keyof typeof TelemetryRecordScalarFieldEnum]
 
 
 export const SortOrder = {

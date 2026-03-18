@@ -60,3 +60,10 @@ export type Installation = Prisma.InstallationModel
  *  * =========================
  */
 export type Device = Prisma.DeviceModel
+/**
+ * Model TelemetryRecord
+ * =========================
+ *  * 4) TelemetryRecord (시계열 이력)
+ *  * =========================
+ */
+export type TelemetryRecord = Prisma.TelemetryRecordModel

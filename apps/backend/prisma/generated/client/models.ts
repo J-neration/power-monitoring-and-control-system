@@ -11,4 +11,5 @@
 export type * from './models/Site.js'
 export type * from './models/Installation.js'
 export type * from './models/Device.js'
+export type * from './models/TelemetryRecord.js'
 export type * from './commonInputTypes.js'
