@@ -58,6 +58,13 @@ export type TelemetryRecordAvgAggregateOutputType = {
   tpf2: number | null
   dpf1: number | null
   dpf2: number | null
+  areaTemp: number | null
+  moduleTemp: number | null
+  fanSpeed: number | null
+  totalCapacity: number | null
+  operatingCapacity: number | null
+  reactivePowerCapacity: number | null
+  availableMargin: number | null
 }
 
 export type TelemetryRecordSumAggregateOutputType = {
@@ -90,6 +97,13 @@ export type TelemetryRecordSumAggregateOutputType = {
   tpf2: number | null
   dpf1: number | null
   dpf2: number | null
+  areaTemp: number[]
+  moduleTemp: number[]
+  fanSpeed: number[]
+  totalCapacity: number | null
+  operatingCapacity: number | null
+  reactivePowerCapacity: number | null
+  availableMargin: number | null
 }
 
 export type TelemetryRecordMinAggregateOutputType = {
@@ -124,6 +138,10 @@ export type TelemetryRecordMinAggregateOutputType = {
   tpf2: number | null
   dpf1: number | null
   dpf2: number | null
+  totalCapacity: number | null
+  operatingCapacity: number | null
+  reactivePowerCapacity: number | null
+  availableMargin: number | null
 }
 
 export type TelemetryRecordMaxAggregateOutputType = {
@@ -158,6 +176,10 @@ export type TelemetryRecordMaxAggregateOutputType = {
   tpf2: number | null
   dpf1: number | null
   dpf2: number | null
+  totalCapacity: number | null
+  operatingCapacity: number | null
+  reactivePowerCapacity: number | null
+  availableMargin: number | null
 }
 
 export type TelemetryRecordCountAggregateOutputType = {
@@ -193,6 +215,13 @@ export type TelemetryRecordCountAggregateOutputType = {
   tpf2: number
   dpf1: number
   dpf2: number
+  areaTemp: number
+  moduleTemp: number
+  fanSpeed: number
+  totalCapacity: number
+  operatingCapacity: number
+  reactivePowerCapacity: number
+  availableMargin: number
   _all: number
 }
 
@@ -227,6 +256,13 @@ export type TelemetryRecordAvgAggregateInputType = {
   tpf2?: true
   dpf1?: true
   dpf2?: true
+  areaTemp?: true
+  moduleTemp?: true
+  fanSpeed?: true
+  totalCapacity?: true
+  operatingCapacity?: true
+  reactivePowerCapacity?: true
+  availableMargin?: true
 }
 
 export type TelemetryRecordSumAggregateInputType = {
@@ -259,6 +295,13 @@ export type TelemetryRecordSumAggregateInputType = {
   tpf2?: true
   dpf1?: true
   dpf2?: true
+  areaTemp?: true
+  moduleTemp?: true
+  fanSpeed?: true
+  totalCapacity?: true
+  operatingCapacity?: true
+  reactivePowerCapacity?: true
+  availableMargin?: true
 }
 
 export type TelemetryRecordMinAggregateInputType = {
@@ -293,6 +336,10 @@ export type TelemetryRecordMinAggregateInputType = {
   tpf2?: true
   dpf1?: true
   dpf2?: true
+  totalCapacity?: true
+  operatingCapacity?: true
+  reactivePowerCapacity?: true
+  availableMargin?: true
 }
 
 export type TelemetryRecordMaxAggregateInputType = {
@@ -327,6 +374,10 @@ export type TelemetryRecordMaxAggregateInputType = {
   tpf2?: true
   dpf1?: true
   dpf2?: true
+  totalCapacity?: true
+  operatingCapacity?: true
+  reactivePowerCapacity?: true
+  availableMargin?: true
 }
 
 export type TelemetryRecordCountAggregateInputType = {
@@ -362,6 +413,13 @@ export type TelemetryRecordCountAggregateInputType = {
   tpf2?: true
   dpf1?: true
   dpf2?: true
+  areaTemp?: true
+  moduleTemp?: true
+  fanSpeed?: true
+  totalCapacity?: true
+  operatingCapacity?: true
+  reactivePowerCapacity?: true
+  availableMargin?: true
   _all?: true
 }
 
@@ -484,6 +542,13 @@ export type TelemetryRecordGroupByOutputType = {
   tpf2: number | null
   dpf1: number | null
   dpf2: number | null
+  areaTemp: number[]
+  moduleTemp: number[]
+  fanSpeed: number[]
+  totalCapacity: number | null
+  operatingCapacity: number | null
+  reactivePowerCapacity: number | null
+  availableMargin: number | null
   _count: TelemetryRecordCountAggregateOutputType | null
   _avg: TelemetryRecordAvgAggregateOutputType | null
   _sum: TelemetryRecordSumAggregateOutputType | null
@@ -542,6 +607,13 @@ export type TelemetryRecordWhereInput = {
   tpf2?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   dpf1?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   dpf2?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  areaTemp?: Prisma.FloatNullableListFilter<"TelemetryRecord">
+  moduleTemp?: Prisma.FloatNullableListFilter<"TelemetryRecord">
+  fanSpeed?: Prisma.FloatNullableListFilter<"TelemetryRecord">
+  totalCapacity?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  operatingCapacity?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  reactivePowerCapacity?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  availableMargin?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   installation?: Prisma.XOR<Prisma.InstallationScalarRelationFilter, Prisma.InstallationWhereInput>
 }
 
@@ -578,6 +650,13 @@ export type TelemetryRecordOrderByWithRelationInput = {
   tpf2?: Prisma.SortOrderInput | Prisma.SortOrder
   dpf1?: Prisma.SortOrderInput | Prisma.SortOrder
   dpf2?: Prisma.SortOrderInput | Prisma.SortOrder
+  areaTemp?: Prisma.SortOrder
+  moduleTemp?: Prisma.SortOrder
+  fanSpeed?: Prisma.SortOrder
+  totalCapacity?: Prisma.SortOrderInput | Prisma.SortOrder
+  operatingCapacity?: Prisma.SortOrderInput | Prisma.SortOrder
+  reactivePowerCapacity?: Prisma.SortOrderInput | Prisma.SortOrder
+  availableMargin?: Prisma.SortOrderInput | Prisma.SortOrder
   installation?: Prisma.InstallationOrderByWithRelationInput
 }
 
@@ -617,6 +696,13 @@ export type TelemetryRecordWhereUniqueInput = Prisma.AtLeast<{
   tpf2?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   dpf1?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   dpf2?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  areaTemp?: Prisma.FloatNullableListFilter<"TelemetryRecord">
+  moduleTemp?: Prisma.FloatNullableListFilter<"TelemetryRecord">
+  fanSpeed?: Prisma.FloatNullableListFilter<"TelemetryRecord">
+  totalCapacity?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  operatingCapacity?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  reactivePowerCapacity?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  availableMargin?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   installation?: Prisma.XOR<Prisma.InstallationScalarRelationFilter, Prisma.InstallationWhereInput>
 }, "id">
 
@@ -653,6 +739,13 @@ export type TelemetryRecordOrderByWithAggregationInput = {
   tpf2?: Prisma.SortOrderInput | Prisma.SortOrder
   dpf1?: Prisma.SortOrderInput | Prisma.SortOrder
   dpf2?: Prisma.SortOrderInput | Prisma.SortOrder
+  areaTemp?: Prisma.SortOrder
+  moduleTemp?: Prisma.SortOrder
+  fanSpeed?: Prisma.SortOrder
+  totalCapacity?: Prisma.SortOrderInput | Prisma.SortOrder
+  operatingCapacity?: Prisma.SortOrderInput | Prisma.SortOrder
+  reactivePowerCapacity?: Prisma.SortOrderInput | Prisma.SortOrder
+  availableMargin?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.TelemetryRecordCountOrderByAggregateInput
   _avg?: Prisma.TelemetryRecordAvgOrderByAggregateInput
   _max?: Prisma.TelemetryRecordMaxOrderByAggregateInput
@@ -696,6 +789,13 @@ export type TelemetryRecordScalarWhereWithAggregatesInput = {
   tpf2?: Prisma.FloatNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
   dpf1?: Prisma.FloatNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
   dpf2?: Prisma.FloatNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
+  areaTemp?: Prisma.FloatNullableListFilter<"TelemetryRecord">
+  moduleTemp?: Prisma.FloatNullableListFilter<"TelemetryRecord">
+  fanSpeed?: Prisma.FloatNullableListFilter<"TelemetryRecord">
+  totalCapacity?: Prisma.FloatNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
+  operatingCapacity?: Prisma.FloatNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
+  reactivePowerCapacity?: Prisma.FloatNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
+  availableMargin?: Prisma.FloatNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
 }
 
 export type TelemetryRecordCreateInput = {
@@ -730,6 +830,13 @@ export type TelemetryRecordCreateInput = {
   tpf2?: number | null
   dpf1?: number | null
   dpf2?: number | null
+  areaTemp?: Prisma.TelemetryRecordCreateareaTempInput | number[]
+  moduleTemp?: Prisma.TelemetryRecordCreatemoduleTempInput | number[]
+  fanSpeed?: Prisma.TelemetryRecordCreatefanSpeedInput | number[]
+  totalCapacity?: number | null
+  operatingCapacity?: number | null
+  reactivePowerCapacity?: number | null
+  availableMargin?: number | null
   installation: Prisma.InstallationCreateNestedOneWithoutTelemetryRecordsInput
 }
 
@@ -766,6 +873,13 @@ export type TelemetryRecordUncheckedCreateInput = {
   tpf2?: number | null
   dpf1?: number | null
   dpf2?: number | null
+  areaTemp?: Prisma.TelemetryRecordCreateareaTempInput | number[]
+  moduleTemp?: Prisma.TelemetryRecordCreatemoduleTempInput | number[]
+  fanSpeed?: Prisma.TelemetryRecordCreatefanSpeedInput | number[]
+  totalCapacity?: number | null
+  operatingCapacity?: number | null
+  reactivePowerCapacity?: number | null
+  availableMargin?: number | null
 }
 
 export type TelemetryRecordUpdateInput = {
@@ -800,6 +914,13 @@ export type TelemetryRecordUpdateInput = {
   tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  areaTemp?: Prisma.TelemetryRecordUpdateareaTempInput | number[]
+  moduleTemp?: Prisma.TelemetryRecordUpdatemoduleTempInput | number[]
+  fanSpeed?: Prisma.TelemetryRecordUpdatefanSpeedInput | number[]
+  totalCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  operatingCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  reactivePowerCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  availableMargin?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   installation?: Prisma.InstallationUpdateOneRequiredWithoutTelemetryRecordsNestedInput
 }
 
@@ -836,6 +957,13 @@ export type TelemetryRecordUncheckedUpdateInput = {
   tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  areaTemp?: Prisma.TelemetryRecordUpdateareaTempInput | number[]
+  moduleTemp?: Prisma.TelemetryRecordUpdatemoduleTempInput | number[]
+  fanSpeed?: Prisma.TelemetryRecordUpdatefanSpeedInput | number[]
+  totalCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  operatingCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  reactivePowerCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  availableMargin?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
 }
 
 export type TelemetryRecordCreateManyInput = {
@@ -871,6 +999,13 @@ export type TelemetryRecordCreateManyInput = {
   tpf2?: number | null
   dpf1?: number | null
   dpf2?: number | null
+  areaTemp?: Prisma.TelemetryRecordCreateareaTempInput | number[]
+  moduleTemp?: Prisma.TelemetryRecordCreatemoduleTempInput | number[]
+  fanSpeed?: Prisma.TelemetryRecordCreatefanSpeedInput | number[]
+  totalCapacity?: number | null
+  operatingCapacity?: number | null
+  reactivePowerCapacity?: number | null
+  availableMargin?: number | null
 }
 
 export type TelemetryRecordUpdateManyMutationInput = {
@@ -905,6 +1040,13 @@ export type TelemetryRecordUpdateManyMutationInput = {
   tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  areaTemp?: Prisma.TelemetryRecordUpdateareaTempInput | number[]
+  moduleTemp?: Prisma.TelemetryRecordUpdatemoduleTempInput | number[]
+  fanSpeed?: Prisma.TelemetryRecordUpdatefanSpeedInput | number[]
+  totalCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  operatingCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  reactivePowerCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  availableMargin?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
 }
 
 export type TelemetryRecordUncheckedUpdateManyInput = {
@@ -940,6 +1082,13 @@ export type TelemetryRecordUncheckedUpdateManyInput = {
   tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  areaTemp?: Prisma.TelemetryRecordUpdateareaTempInput | number[]
+  moduleTemp?: Prisma.TelemetryRecordUpdatemoduleTempInput | number[]
+  fanSpeed?: Prisma.TelemetryRecordUpdatefanSpeedInput | number[]
+  totalCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  operatingCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  reactivePowerCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  availableMargin?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
 }
 
 export type TelemetryRecordListRelationFilter = {
@@ -985,6 +1134,13 @@ export type TelemetryRecordCountOrderByAggregateInput = {
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
   dpf2?: Prisma.SortOrder
+  areaTemp?: Prisma.SortOrder
+  moduleTemp?: Prisma.SortOrder
+  fanSpeed?: Prisma.SortOrder
+  totalCapacity?: Prisma.SortOrder
+  operatingCapacity?: Prisma.SortOrder
+  reactivePowerCapacity?: Prisma.SortOrder
+  availableMargin?: Prisma.SortOrder
 }
 
 export type TelemetryRecordAvgOrderByAggregateInput = {
@@ -1017,6 +1173,13 @@ export type TelemetryRecordAvgOrderByAggregateInput = {
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
   dpf2?: Prisma.SortOrder
+  areaTemp?: Prisma.SortOrder
+  moduleTemp?: Prisma.SortOrder
+  fanSpeed?: Prisma.SortOrder
+  totalCapacity?: Prisma.SortOrder
+  operatingCapacity?: Prisma.SortOrder
+  reactivePowerCapacity?: Prisma.SortOrder
+  availableMargin?: Prisma.SortOrder
 }
 
 export type TelemetryRecordMaxOrderByAggregateInput = {
@@ -1051,6 +1214,10 @@ export type TelemetryRecordMaxOrderByAggregateInput = {
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
   dpf2?: Prisma.SortOrder
+  totalCapacity?: Prisma.SortOrder
+  operatingCapacity?: Prisma.SortOrder
+  reactivePowerCapacity?: Prisma.SortOrder
+  availableMargin?: Prisma.SortOrder
 }
 
 export type TelemetryRecordMinOrderByAggregateInput = {
@@ -1085,6 +1252,10 @@ export type TelemetryRecordMinOrderByAggregateInput = {
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
   dpf2?: Prisma.SortOrder
+  totalCapacity?: Prisma.SortOrder
+  operatingCapacity?: Prisma.SortOrder
+  reactivePowerCapacity?: Prisma.SortOrder
+  availableMargin?: Prisma.SortOrder
 }
 
 export type TelemetryRecordSumOrderByAggregateInput = {
@@ -1117,6 +1288,13 @@ export type TelemetryRecordSumOrderByAggregateInput = {
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
   dpf2?: Prisma.SortOrder
+  areaTemp?: Prisma.SortOrder
+  moduleTemp?: Prisma.SortOrder
+  fanSpeed?: Prisma.SortOrder
+  totalCapacity?: Prisma.SortOrder
+  operatingCapacity?: Prisma.SortOrder
+  reactivePowerCapacity?: Prisma.SortOrder
+  availableMargin?: Prisma.SortOrder
 }
 
 export type TelemetryRecordCreateNestedManyWithoutInstallationInput = {
@@ -1165,6 +1343,18 @@ export type TelemetryRecordCreatemoduleStatusInput = {
   set: number[]
 }
 
+export type TelemetryRecordCreateareaTempInput = {
+  set: number[]
+}
+
+export type TelemetryRecordCreatemoduleTempInput = {
+  set: number[]
+}
+
+export type TelemetryRecordCreatefanSpeedInput = {
+  set: number[]
+}
+
 export type TelemetryRecordUpdatemoduleStatusInput = {
   set?: number[]
   push?: number | number[]
@@ -1176,6 +1366,21 @@ export type NullableIntFieldUpdateOperationsInput = {
   decrement?: number
   multiply?: number
   divide?: number
+}
+
+export type TelemetryRecordUpdateareaTempInput = {
+  set?: number[]
+  push?: number | number[]
+}
+
+export type TelemetryRecordUpdatemoduleTempInput = {
+  set?: number[]
+  push?: number | number[]
+}
+
+export type TelemetryRecordUpdatefanSpeedInput = {
+  set?: number[]
+  push?: number | number[]
 }
 
 export type TelemetryRecordCreateWithoutInstallationInput = {
@@ -1210,6 +1415,13 @@ export type TelemetryRecordCreateWithoutInstallationInput = {
   tpf2?: number | null
   dpf1?: number | null
   dpf2?: number | null
+  areaTemp?: Prisma.TelemetryRecordCreateareaTempInput | number[]
+  moduleTemp?: Prisma.TelemetryRecordCreatemoduleTempInput | number[]
+  fanSpeed?: Prisma.TelemetryRecordCreatefanSpeedInput | number[]
+  totalCapacity?: number | null
+  operatingCapacity?: number | null
+  reactivePowerCapacity?: number | null
+  availableMargin?: number | null
 }
 
 export type TelemetryRecordUncheckedCreateWithoutInstallationInput = {
@@ -1244,6 +1456,13 @@ export type TelemetryRecordUncheckedCreateWithoutInstallationInput = {
   tpf2?: number | null
   dpf1?: number | null
   dpf2?: number | null
+  areaTemp?: Prisma.TelemetryRecordCreateareaTempInput | number[]
+  moduleTemp?: Prisma.TelemetryRecordCreatemoduleTempInput | number[]
+  fanSpeed?: Prisma.TelemetryRecordCreatefanSpeedInput | number[]
+  totalCapacity?: number | null
+  operatingCapacity?: number | null
+  reactivePowerCapacity?: number | null
+  availableMargin?: number | null
 }
 
 export type TelemetryRecordCreateOrConnectWithoutInstallationInput = {
@@ -1308,6 +1527,13 @@ export type TelemetryRecordScalarWhereInput = {
   tpf2?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   dpf1?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   dpf2?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  areaTemp?: Prisma.FloatNullableListFilter<"TelemetryRecord">
+  moduleTemp?: Prisma.FloatNullableListFilter<"TelemetryRecord">
+  fanSpeed?: Prisma.FloatNullableListFilter<"TelemetryRecord">
+  totalCapacity?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  operatingCapacity?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  reactivePowerCapacity?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  availableMargin?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
 }
 
 export type TelemetryRecordCreateManyInstallationInput = {
@@ -1342,6 +1568,13 @@ export type TelemetryRecordCreateManyInstallationInput = {
   tpf2?: number | null
   dpf1?: number | null
   dpf2?: number | null
+  areaTemp?: Prisma.TelemetryRecordCreateareaTempInput | number[]
+  moduleTemp?: Prisma.TelemetryRecordCreatemoduleTempInput | number[]
+  fanSpeed?: Prisma.TelemetryRecordCreatefanSpeedInput | number[]
+  totalCapacity?: number | null
+  operatingCapacity?: number | null
+  reactivePowerCapacity?: number | null
+  availableMargin?: number | null
 }
 
 export type TelemetryRecordUpdateWithoutInstallationInput = {
@@ -1376,6 +1609,13 @@ export type TelemetryRecordUpdateWithoutInstallationInput = {
   tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  areaTemp?: Prisma.TelemetryRecordUpdateareaTempInput | number[]
+  moduleTemp?: Prisma.TelemetryRecordUpdatemoduleTempInput | number[]
+  fanSpeed?: Prisma.TelemetryRecordUpdatefanSpeedInput | number[]
+  totalCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  operatingCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  reactivePowerCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  availableMargin?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
 }
 
 export type TelemetryRecordUncheckedUpdateWithoutInstallationInput = {
@@ -1410,6 +1650,13 @@ export type TelemetryRecordUncheckedUpdateWithoutInstallationInput = {
   tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  areaTemp?: Prisma.TelemetryRecordUpdateareaTempInput | number[]
+  moduleTemp?: Prisma.TelemetryRecordUpdatemoduleTempInput | number[]
+  fanSpeed?: Prisma.TelemetryRecordUpdatefanSpeedInput | number[]
+  totalCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  operatingCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  reactivePowerCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  availableMargin?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
 }
 
 export type TelemetryRecordUncheckedUpdateManyWithoutInstallationInput = {
@@ -1444,6 +1691,13 @@ export type TelemetryRecordUncheckedUpdateManyWithoutInstallationInput = {
   tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  areaTemp?: Prisma.TelemetryRecordUpdateareaTempInput | number[]
+  moduleTemp?: Prisma.TelemetryRecordUpdatemoduleTempInput | number[]
+  fanSpeed?: Prisma.TelemetryRecordUpdatefanSpeedInput | number[]
+  totalCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  operatingCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  reactivePowerCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  availableMargin?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
 }
 
 
@@ -1481,6 +1735,13 @@ export type TelemetryRecordSelect<ExtArgs extends runtime.Types.Extensions.Inter
   tpf2?: boolean
   dpf1?: boolean
   dpf2?: boolean
+  areaTemp?: boolean
+  moduleTemp?: boolean
+  fanSpeed?: boolean
+  totalCapacity?: boolean
+  operatingCapacity?: boolean
+  reactivePowerCapacity?: boolean
+  availableMargin?: boolean
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["telemetryRecord"]>
 
@@ -1517,6 +1778,13 @@ export type TelemetryRecordSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   tpf2?: boolean
   dpf1?: boolean
   dpf2?: boolean
+  areaTemp?: boolean
+  moduleTemp?: boolean
+  fanSpeed?: boolean
+  totalCapacity?: boolean
+  operatingCapacity?: boolean
+  reactivePowerCapacity?: boolean
+  availableMargin?: boolean
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["telemetryRecord"]>
 
@@ -1553,6 +1821,13 @@ export type TelemetryRecordSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   tpf2?: boolean
   dpf1?: boolean
   dpf2?: boolean
+  areaTemp?: boolean
+  moduleTemp?: boolean
+  fanSpeed?: boolean
+  totalCapacity?: boolean
+  operatingCapacity?: boolean
+  reactivePowerCapacity?: boolean
+  availableMargin?: boolean
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["telemetryRecord"]>
 
@@ -1589,9 +1864,16 @@ export type TelemetryRecordSelectScalar = {
   tpf2?: boolean
   dpf1?: boolean
   dpf2?: boolean
+  areaTemp?: boolean
+  moduleTemp?: boolean
+  fanSpeed?: boolean
+  totalCapacity?: boolean
+  operatingCapacity?: boolean
+  reactivePowerCapacity?: boolean
+  availableMargin?: boolean
 }
 
-export type TelemetryRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "installationId" | "recordedAt" | "moduleStatus" | "numOfMods" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "uncompS" | "compS" | "uncompP" | "compP" | "uncompQ" | "compQ" | "uncompH" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2", ExtArgs["result"]["telemetryRecord"]>
+export type TelemetryRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "installationId" | "recordedAt" | "moduleStatus" | "numOfMods" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "uncompS" | "compS" | "uncompP" | "compP" | "uncompQ" | "compQ" | "uncompH" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "areaTemp" | "moduleTemp" | "fanSpeed" | "totalCapacity" | "operatingCapacity" | "reactivePowerCapacity" | "availableMargin", ExtArgs["result"]["telemetryRecord"]>
 export type TelemetryRecordInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }
@@ -1640,6 +1922,13 @@ export type $TelemetryRecordPayload<ExtArgs extends runtime.Types.Extensions.Int
     tpf2: number | null
     dpf1: number | null
     dpf2: number | null
+    areaTemp: number[]
+    moduleTemp: number[]
+    fanSpeed: number[]
+    totalCapacity: number | null
+    operatingCapacity: number | null
+    reactivePowerCapacity: number | null
+    availableMargin: number | null
   }, ExtArgs["result"]["telemetryRecord"]>
   composites: {}
 }
@@ -2096,6 +2385,13 @@ export interface TelemetryRecordFieldRefs {
   readonly tpf2: Prisma.FieldRef<"TelemetryRecord", 'Float'>
   readonly dpf1: Prisma.FieldRef<"TelemetryRecord", 'Float'>
   readonly dpf2: Prisma.FieldRef<"TelemetryRecord", 'Float'>
+  readonly areaTemp: Prisma.FieldRef<"TelemetryRecord", 'Float[]'>
+  readonly moduleTemp: Prisma.FieldRef<"TelemetryRecord", 'Float[]'>
+  readonly fanSpeed: Prisma.FieldRef<"TelemetryRecord", 'Float[]'>
+  readonly totalCapacity: Prisma.FieldRef<"TelemetryRecord", 'Float'>
+  readonly operatingCapacity: Prisma.FieldRef<"TelemetryRecord", 'Float'>
+  readonly reactivePowerCapacity: Prisma.FieldRef<"TelemetryRecord", 'Float'>
+  readonly availableMargin: Prisma.FieldRef<"TelemetryRecord", 'Float'>
 }
     
 

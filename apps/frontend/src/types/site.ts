@@ -53,6 +53,15 @@ export type Device = {
   gridCurrentTHDL1?: number;
   gridCurrentTHDL2?: number;
   gridCurrentTHDL3?: number;
+
+  areaTemp?: number[];
+  moduleTemp?: number[];
+  fanSpeed?: number[];
+
+  totalCapacity?: number | null;
+  operatingCapacity?: number | null;
+  reactivePowerCapacity?: number | null;
+  availableMargin?: number | null;
 };
 
 export type Installation = {
@@ -129,5 +138,14 @@ export type TelemetryReading = {
   tpf2?: number | null;
   dpf1?: number | null;
   dpf2?: number | null;
+
+  areaTemp?: number[] | null;
+  moduleTemp?: number[] | null;
+  fanSpeed?: number[] | null;
+
+  totalCapacity?: number | null;
+  operatingCapacity?: number | null;
+  reactivePowerCapacity?: number | null;
+  availableMargin?: number | null;
 };
   

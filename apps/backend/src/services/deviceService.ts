@@ -116,6 +116,29 @@ const toStatus = (value?: number | string): DeviceStatus | undefined => {
   }
 };
 
+const toFloatArray = (value?: unknown): number[] | undefined => {
+  let arr: unknown = value;
+  if (typeof arr === "string") {
+    try {
+      arr = JSON.parse(arr);
+    } catch {
+      return undefined;
+    }
+  }
+  if (!Array.isArray(arr)) return undefined;
+  const parsed = (arr as unknown[])
+    .map((entry) => {
+      if (typeof entry === "number") return Number.isFinite(entry) ? entry : undefined;
+      if (typeof entry === "string") {
+        const n = Number.parseFloat(entry);
+        return Number.isFinite(n) ? n : undefined;
+      }
+      return undefined;
+    })
+    .filter((e): e is number => e !== undefined);
+  return parsed.length > 0 ? parsed : undefined;
+};
+
 const toStatusList = (value?: unknown): number[] | undefined => {
   let arr: unknown = value;
 
@@ -236,6 +259,13 @@ export const deviceService = {
     gridCurrentTHDL1?: number | string;
     gridCurrentTHDL2?: number | string;
     gridCurrentTHDL3?: number | string;
+    areaTemp?: unknown;
+    moduleTemp?: unknown;
+    fanSpeed?: unknown;
+    totalCapacity?: number | string;
+    operatingCapacity?: number | string;
+    reactivePowerCapacity?: number | string;
+    availableMargin?: number | string;
   }) => {
     const installationId = payload.device_id?.trim();
     if (!installationId) {
@@ -284,6 +314,14 @@ export const deviceService = {
     const gridCurrentTHDL1 = toNumber(payload.gridCurrentTHDL1);
     const gridCurrentTHDL2 = toNumber(payload.gridCurrentTHDL2);
     const gridCurrentTHDL3 = toNumber(payload.gridCurrentTHDL3);
+
+    const areaTemp = toFloatArray(payload.areaTemp);
+    const moduleTemp = toFloatArray(payload.moduleTemp);
+    const fanSpeed = toFloatArray(payload.fanSpeed);
+    const totalCapacity = toNumber(payload.totalCapacity);
+    const operatingCapacity = toNumber(payload.operatingCapacity);
+    const reactivePowerCapacity = toNumber(payload.reactivePowerCapacity);
+    const availableMargin = toNumber(payload.availableMargin);
 
     return prisma.$transaction(async (tx) => {
       // 1) Ensure Site + Installation exist
@@ -357,6 +395,13 @@ export const deviceService = {
         ...(tpf2 !== undefined ? { tpf2 } : {}),
         ...(dpf1 !== undefined ? { dpf1 } : {}),
         ...(dpf2 !== undefined ? { dpf2 } : {}),
+        ...(areaTemp !== undefined ? { areaTemp } : {}),
+        ...(moduleTemp !== undefined ? { moduleTemp } : {}),
+        ...(fanSpeed !== undefined ? { fanSpeed } : {}),
+        ...(totalCapacity !== undefined ? { totalCapacity } : {}),
+        ...(operatingCapacity !== undefined ? { operatingCapacity } : {}),
+        ...(reactivePowerCapacity !== undefined ? { reactivePowerCapacity } : {}),
+        ...(availableMargin !== undefined ? { availableMargin } : {}),
       };
 
       // 2) Device 최신 스냅샷 upsert

@@ -12,6 +12,9 @@ import {
   RadialBarChart,
   RadialBar,
   Cell,
+  AreaChart,
+  Area,
+  ReferenceLine,
 } from "recharts";
 import type { Device } from "../types/site";
 
@@ -88,6 +91,25 @@ function PfGauge({
   );
 }
 
+const AREA_TEMP_MOCK = [35.2, 38.1, 36.7, 34.5];
+const MODULE_TEMP_MOCK = [42.1, 45.3, 43.8, 41.2, 44.6, 43.0];
+const FAN_SPEED_MOCK = [8.5, 9.2];
+
+function generateCapacityMock(baseCap: number) {
+  const now = Date.now();
+  return Array.from({ length: 24 }, (_, i) => {
+    const t = new Date(now - (23 - i) * 3600 * 1000);
+    const time = `${String(t.getHours()).padStart(2, "0")}:00`;
+    const opRatio = 0.55 + 0.3 * Math.abs(Math.sin(i * 0.45 + 1.2));
+    const operating = Math.round(baseCap * opRatio * 10) / 10;
+    const rpRatio = 0.68 + 0.2 * Math.abs(Math.sin(i * 0.6 + 2.1));
+    const reactive = Math.round(operating * rpRatio * 10) / 10;
+    const idle = Math.round((operating - reactive) * 10) / 10;
+    const margin = Math.round((baseCap - operating) * 10) / 10;
+    return { time, reactive, idle, margin };
+  });
+}
+
 export default function DeviceDetailCharts({ device }: { device: Device }) {
   const voltageData = [
     { phase: "L1", 전압: Math.round((device.vL1 ?? 0) * 10) / 10 },
@@ -145,6 +167,41 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
       보상후: device.compH ?? 0,
     },
   ];
+
+  const areaTempValues =
+    device.areaTemp && device.areaTemp.length > 0
+      ? device.areaTemp
+      : AREA_TEMP_MOCK;
+  const areaTempData = areaTempValues.map((v, i) => ({
+    sensor: `구역 ${i + 1}`,
+    온도: Math.round(v * 10) / 10,
+  }));
+
+  const moduleTempValues =
+    device.moduleTemp && device.moduleTemp.length > 0
+      ? device.moduleTemp
+      : MODULE_TEMP_MOCK;
+  const moduleTempData = moduleTempValues.map((v, i) => ({
+    sensor: `모듈 ${i + 1}`,
+    온도: Math.round(v * 10) / 10,
+  }));
+
+  const fanSpeedValues =
+    device.fanSpeed && device.fanSpeed.length > 0
+      ? device.fanSpeed
+      : FAN_SPEED_MOCK;
+  const fanSpeedData = fanSpeedValues.map((v, i) => ({
+    fan: `팬 ${i + 1}`,
+    RPM: Math.round(v),
+  }));
+
+  const baseCap = device.totalCapacity ?? device.capacity ?? 200;
+  const capacityMock = generateCapacityMock(baseCap);
+
+  const isCapacityMock =
+    device.totalCapacity == null &&
+    device.operatingCapacity == null &&
+    device.reactivePowerCapacity == null;
 
   return (
     <div className="device-charts-grid">
@@ -346,6 +403,239 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
         <div className="pf-gauge-row">
           <PfGauge label="TPF" before={device.tpf1} after={device.tpf2} />
           <PfGauge label="DPF" before={device.dpf1} after={device.dpf2} />
+        </div>
+      </div>
+
+      {/* Area Temperature */}
+      <div className="chart-card chart-card-lg">
+        <h3 className="chart-title">
+          구역 온도 (°C)
+          {device.areaTemp == null || device.areaTemp.length === 0 ? (
+            <span className="chart-title-mock"> — 샘플 데이터</span>
+          ) : null}
+        </h3>
+        <ResponsiveContainer width="100%" height={CHART_H}>
+          <BarChart
+            data={areaTempData}
+            margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="rgba(255,255,255,0.06)"
+            />
+            <XAxis
+              dataKey="sensor"
+              stroke="rgba(255,255,255,0.35)"
+              fontSize={12}
+              tickLine={false}
+            />
+            <YAxis
+              stroke="rgba(255,255,255,0.35)"
+              fontSize={11}
+              tickLine={false}
+              domain={[20, 50]}
+              unit="°C"
+            />
+            <Tooltip
+              contentStyle={TOOLTIP_STYLE}
+              formatter={(v) => [`${v} °C`]}
+            />
+            <ReferenceLine
+              y={38}
+              stroke="#EF4444"
+              strokeDasharray="4 3"
+              label={{ value: "경보", fill: "#EF4444", fontSize: 11 }}
+            />
+            <Bar
+              dataKey="온도"
+              fill="#F97316"
+              radius={[4, 4, 0, 0]}
+              barSize={36}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Module Temperature */}
+      <div className="chart-card chart-card-lg">
+        <h3 className="chart-title">
+          모듈 온도 (°C)
+          {device.moduleTemp == null || device.moduleTemp.length === 0 ? (
+            <span className="chart-title-mock"> — 샘플 데이터</span>
+          ) : null}
+        </h3>
+        <ResponsiveContainer width="100%" height={CHART_H}>
+          <BarChart
+            data={moduleTempData}
+            margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="rgba(255,255,255,0.06)"
+            />
+            <XAxis
+              dataKey="sensor"
+              stroke="rgba(255,255,255,0.35)"
+              fontSize={11}
+              tickLine={false}
+            />
+            <YAxis
+              stroke="rgba(255,255,255,0.35)"
+              fontSize={11}
+              tickLine={false}
+              domain={[20, 110]}
+              unit="°C"
+            />
+            <Tooltip
+              contentStyle={TOOLTIP_STYLE}
+              formatter={(v) => [`${v} °C`]}
+            />
+            <ReferenceLine
+              y={100}
+              stroke="#EF4444"
+              strokeDasharray="4 3"
+              label={{ value: "경보", fill: "#EF4444", fontSize: 11 }}
+            />
+            <Bar
+              dataKey="온도"
+              fill="#EC4899"
+              radius={[4, 4, 0, 0]}
+              barSize={30}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Fan Speed */}
+      <div className="chart-card chart-card-lg">
+        <h3 className="chart-title">
+          팬 속도 (m/s)
+          {device.fanSpeed == null || device.fanSpeed.length === 0 ? (
+            <span className="chart-title-mock"> — 샘플 데이터</span>
+          ) : null}
+        </h3>
+        <ResponsiveContainer width="100%" height={CHART_H}>
+          <BarChart
+            data={fanSpeedData}
+            margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="rgba(255,255,255,0.06)"
+            />
+            <XAxis
+              dataKey="fan"
+              stroke="rgba(255,255,255,0.35)"
+              fontSize={12}
+              tickLine={false}
+            />
+            <YAxis
+              stroke="rgba(255,255,255,0.35)"
+              fontSize={11}
+              tickLine={false}
+              domain={[0, 20]}
+              unit=" m/s"
+            />
+            <Tooltip
+              contentStyle={TOOLTIP_STYLE}
+              formatter={(v) => [`${v} m/s`]}
+            />
+            <Bar
+              dataKey="RPM"
+              fill="#6366F1"
+              radius={[4, 4, 0, 0]}
+              barSize={48}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Capacity Stacked Area Chart */}
+      <div className="chart-card chart-card-wide">
+        <h3 className="chart-title">
+          용량 현황 (kVAR) — 총용량 {baseCap} kVAR
+          {isCapacityMock ? (
+            <span className="chart-title-mock"> — 샘플 데이터</span>
+          ) : null}
+        </h3>
+        <ResponsiveContainer width="100%" height={260}>
+          <AreaChart
+            data={capacityMock}
+            margin={{ top: 8, right: 16, left: -4, bottom: 0 }}
+          >
+            <defs>
+              <linearGradient id="gReactive" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10B981" stopOpacity={0.55} />
+                <stop offset="95%" stopColor="#10B981" stopOpacity={0.1} />
+              </linearGradient>
+              <linearGradient id="gIdle" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.45} />
+                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.05} />
+              </linearGradient>
+              <linearGradient id="gMargin" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#475569" stopOpacity={0.4} />
+                <stop offset="95%" stopColor="#475569" stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="rgba(255,255,255,0.06)"
+            />
+            <XAxis
+              dataKey="time"
+              stroke="rgba(255,255,255,0.35)"
+              fontSize={11}
+              tickLine={false}
+              interval="preserveStartEnd"
+            />
+            <YAxis
+              stroke="rgba(255,255,255,0.35)"
+              fontSize={11}
+              tickLine={false}
+              unit=" kVAR"
+            />
+            <Tooltip
+              contentStyle={TOOLTIP_STYLE}
+              formatter={(v, name) => [`${v} kVAR`, name]}
+            />
+            <Legend
+              wrapperStyle={{ fontSize: 12, paddingTop: 4 }}
+              iconType="circle"
+              iconSize={8}
+            />
+            <Area
+              type="monotone"
+              dataKey="reactive"
+              name="무효전력 발생"
+              stackId="cap"
+              stroke="#10B981"
+              fill="url(#gReactive)"
+              dot={false}
+            />
+            <Area
+              type="monotone"
+              dataKey="idle"
+              name="운전 여유"
+              stackId="cap"
+              stroke="#3B82F6"
+              fill="url(#gIdle)"
+              dot={false}
+            />
+            <Area
+              type="monotone"
+              dataKey="margin"
+              name="여유 마진"
+              stackId="cap"
+              stroke="#64748B"
+              fill="url(#gMargin)"
+              dot={false}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+        <div className="capacity-legend-row">
+          <span className="cap-badge cap-reactive">무효전력 발생용량 (operatingCapacity × 가동률)</span>
+          <span className="cap-badge cap-idle">운전 여유 (operatingCapacity − 무효전력)</span>
+          <span className="cap-badge cap-margin">여유 마진 (totalCapacity − operatingCapacity)</span>
         </div>
       </div>
     </div>

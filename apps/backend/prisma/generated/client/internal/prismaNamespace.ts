@@ -803,6 +803,13 @@ export const DeviceScalarFieldEnum = {
   tpf2: 'tpf2',
   dpf1: 'dpf1',
   dpf2: 'dpf2',
+  areaTemp: 'areaTemp',
+  moduleTemp: 'moduleTemp',
+  fanSpeed: 'fanSpeed',
+  totalCapacity: 'totalCapacity',
+  operatingCapacity: 'operatingCapacity',
+  reactivePowerCapacity: 'reactivePowerCapacity',
+  availableMargin: 'availableMargin',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -842,7 +849,14 @@ export const TelemetryRecordScalarFieldEnum = {
   tpf1: 'tpf1',
   tpf2: 'tpf2',
   dpf1: 'dpf1',
-  dpf2: 'dpf2'
+  dpf2: 'dpf2',
+  areaTemp: 'areaTemp',
+  moduleTemp: 'moduleTemp',
+  fanSpeed: 'fanSpeed',
+  totalCapacity: 'totalCapacity',
+  operatingCapacity: 'operatingCapacity',
+  reactivePowerCapacity: 'reactivePowerCapacity',
+  availableMargin: 'availableMargin'
 } as const
 
 export type TelemetryRecordScalarFieldEnum = (typeof TelemetryRecordScalarFieldEnum)[keyof typeof TelemetryRecordScalarFieldEnum]

@@ -60,6 +60,13 @@ export type DeviceAvgAggregateOutputType = {
   tpf2: number | null
   dpf1: number | null
   dpf2: number | null
+  areaTemp: number | null
+  moduleTemp: number | null
+  fanSpeed: number | null
+  totalCapacity: number | null
+  operatingCapacity: number | null
+  reactivePowerCapacity: number | null
+  availableMargin: number | null
 }
 
 export type DeviceSumAggregateOutputType = {
@@ -94,6 +101,13 @@ export type DeviceSumAggregateOutputType = {
   tpf2: number | null
   dpf1: number | null
   dpf2: number | null
+  areaTemp: number[]
+  moduleTemp: number[]
+  fanSpeed: number[]
+  totalCapacity: number | null
+  operatingCapacity: number | null
+  reactivePowerCapacity: number | null
+  availableMargin: number | null
 }
 
 export type DeviceMinAggregateOutputType = {
@@ -132,6 +146,10 @@ export type DeviceMinAggregateOutputType = {
   tpf2: number | null
   dpf1: number | null
   dpf2: number | null
+  totalCapacity: number | null
+  operatingCapacity: number | null
+  reactivePowerCapacity: number | null
+  availableMargin: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -172,6 +190,10 @@ export type DeviceMaxAggregateOutputType = {
   tpf2: number | null
   dpf1: number | null
   dpf2: number | null
+  totalCapacity: number | null
+  operatingCapacity: number | null
+  reactivePowerCapacity: number | null
+  availableMargin: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -213,6 +235,13 @@ export type DeviceCountAggregateOutputType = {
   tpf2: number
   dpf1: number
   dpf2: number
+  areaTemp: number
+  moduleTemp: number
+  fanSpeed: number
+  totalCapacity: number
+  operatingCapacity: number
+  reactivePowerCapacity: number
+  availableMargin: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -251,6 +280,13 @@ export type DeviceAvgAggregateInputType = {
   tpf2?: true
   dpf1?: true
   dpf2?: true
+  areaTemp?: true
+  moduleTemp?: true
+  fanSpeed?: true
+  totalCapacity?: true
+  operatingCapacity?: true
+  reactivePowerCapacity?: true
+  availableMargin?: true
 }
 
 export type DeviceSumAggregateInputType = {
@@ -285,6 +321,13 @@ export type DeviceSumAggregateInputType = {
   tpf2?: true
   dpf1?: true
   dpf2?: true
+  areaTemp?: true
+  moduleTemp?: true
+  fanSpeed?: true
+  totalCapacity?: true
+  operatingCapacity?: true
+  reactivePowerCapacity?: true
+  availableMargin?: true
 }
 
 export type DeviceMinAggregateInputType = {
@@ -323,6 +366,10 @@ export type DeviceMinAggregateInputType = {
   tpf2?: true
   dpf1?: true
   dpf2?: true
+  totalCapacity?: true
+  operatingCapacity?: true
+  reactivePowerCapacity?: true
+  availableMargin?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -363,6 +410,10 @@ export type DeviceMaxAggregateInputType = {
   tpf2?: true
   dpf1?: true
   dpf2?: true
+  totalCapacity?: true
+  operatingCapacity?: true
+  reactivePowerCapacity?: true
+  availableMargin?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -404,6 +455,13 @@ export type DeviceCountAggregateInputType = {
   tpf2?: true
   dpf1?: true
   dpf2?: true
+  areaTemp?: true
+  moduleTemp?: true
+  fanSpeed?: true
+  totalCapacity?: true
+  operatingCapacity?: true
+  reactivePowerCapacity?: true
+  availableMargin?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -532,6 +590,13 @@ export type DeviceGroupByOutputType = {
   tpf2: number | null
   dpf1: number | null
   dpf2: number | null
+  areaTemp: number[]
+  moduleTemp: number[]
+  fanSpeed: number[]
+  totalCapacity: number | null
+  operatingCapacity: number | null
+  reactivePowerCapacity: number | null
+  availableMargin: number | null
   createdAt: Date
   updatedAt: Date
   _count: DeviceCountAggregateOutputType | null
@@ -596,6 +661,13 @@ export type DeviceWhereInput = {
   tpf2?: Prisma.FloatNullableFilter<"Device"> | number | null
   dpf1?: Prisma.FloatNullableFilter<"Device"> | number | null
   dpf2?: Prisma.FloatNullableFilter<"Device"> | number | null
+  areaTemp?: Prisma.FloatNullableListFilter<"Device">
+  moduleTemp?: Prisma.FloatNullableListFilter<"Device">
+  fanSpeed?: Prisma.FloatNullableListFilter<"Device">
+  totalCapacity?: Prisma.FloatNullableFilter<"Device"> | number | null
+  operatingCapacity?: Prisma.FloatNullableFilter<"Device"> | number | null
+  reactivePowerCapacity?: Prisma.FloatNullableFilter<"Device"> | number | null
+  availableMargin?: Prisma.FloatNullableFilter<"Device"> | number | null
   createdAt?: Prisma.DateTimeFilter<"Device"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Device"> | Date | string
   installation?: Prisma.XOR<Prisma.InstallationScalarRelationFilter, Prisma.InstallationWhereInput>
@@ -638,6 +710,13 @@ export type DeviceOrderByWithRelationInput = {
   tpf2?: Prisma.SortOrderInput | Prisma.SortOrder
   dpf1?: Prisma.SortOrderInput | Prisma.SortOrder
   dpf2?: Prisma.SortOrderInput | Prisma.SortOrder
+  areaTemp?: Prisma.SortOrder
+  moduleTemp?: Prisma.SortOrder
+  fanSpeed?: Prisma.SortOrder
+  totalCapacity?: Prisma.SortOrderInput | Prisma.SortOrder
+  operatingCapacity?: Prisma.SortOrderInput | Prisma.SortOrder
+  reactivePowerCapacity?: Prisma.SortOrderInput | Prisma.SortOrder
+  availableMargin?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   installation?: Prisma.InstallationOrderByWithRelationInput
@@ -683,6 +762,13 @@ export type DeviceWhereUniqueInput = Prisma.AtLeast<{
   tpf2?: Prisma.FloatNullableFilter<"Device"> | number | null
   dpf1?: Prisma.FloatNullableFilter<"Device"> | number | null
   dpf2?: Prisma.FloatNullableFilter<"Device"> | number | null
+  areaTemp?: Prisma.FloatNullableListFilter<"Device">
+  moduleTemp?: Prisma.FloatNullableListFilter<"Device">
+  fanSpeed?: Prisma.FloatNullableListFilter<"Device">
+  totalCapacity?: Prisma.FloatNullableFilter<"Device"> | number | null
+  operatingCapacity?: Prisma.FloatNullableFilter<"Device"> | number | null
+  reactivePowerCapacity?: Prisma.FloatNullableFilter<"Device"> | number | null
+  availableMargin?: Prisma.FloatNullableFilter<"Device"> | number | null
   createdAt?: Prisma.DateTimeFilter<"Device"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Device"> | Date | string
   installation?: Prisma.XOR<Prisma.InstallationScalarRelationFilter, Prisma.InstallationWhereInput>
@@ -725,6 +811,13 @@ export type DeviceOrderByWithAggregationInput = {
   tpf2?: Prisma.SortOrderInput | Prisma.SortOrder
   dpf1?: Prisma.SortOrderInput | Prisma.SortOrder
   dpf2?: Prisma.SortOrderInput | Prisma.SortOrder
+  areaTemp?: Prisma.SortOrder
+  moduleTemp?: Prisma.SortOrder
+  fanSpeed?: Prisma.SortOrder
+  totalCapacity?: Prisma.SortOrderInput | Prisma.SortOrder
+  operatingCapacity?: Prisma.SortOrderInput | Prisma.SortOrder
+  reactivePowerCapacity?: Prisma.SortOrderInput | Prisma.SortOrder
+  availableMargin?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.DeviceCountOrderByAggregateInput
@@ -774,6 +867,13 @@ export type DeviceScalarWhereWithAggregatesInput = {
   tpf2?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
   dpf1?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
   dpf2?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  areaTemp?: Prisma.FloatNullableListFilter<"Device">
+  moduleTemp?: Prisma.FloatNullableListFilter<"Device">
+  fanSpeed?: Prisma.FloatNullableListFilter<"Device">
+  totalCapacity?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  operatingCapacity?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  reactivePowerCapacity?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  availableMargin?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Device"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Device"> | Date | string
 }
@@ -814,6 +914,13 @@ export type DeviceCreateInput = {
   tpf2?: number | null
   dpf1?: number | null
   dpf2?: number | null
+  areaTemp?: Prisma.DeviceCreateareaTempInput | number[]
+  moduleTemp?: Prisma.DeviceCreatemoduleTempInput | number[]
+  fanSpeed?: Prisma.DeviceCreatefanSpeedInput | number[]
+  totalCapacity?: number | null
+  operatingCapacity?: number | null
+  reactivePowerCapacity?: number | null
+  availableMargin?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   installation: Prisma.InstallationCreateNestedOneWithoutDeviceInput
@@ -856,6 +963,13 @@ export type DeviceUncheckedCreateInput = {
   tpf2?: number | null
   dpf1?: number | null
   dpf2?: number | null
+  areaTemp?: Prisma.DeviceCreateareaTempInput | number[]
+  moduleTemp?: Prisma.DeviceCreatemoduleTempInput | number[]
+  fanSpeed?: Prisma.DeviceCreatefanSpeedInput | number[]
+  totalCapacity?: number | null
+  operatingCapacity?: number | null
+  reactivePowerCapacity?: number | null
+  availableMargin?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -896,6 +1010,13 @@ export type DeviceUpdateInput = {
   tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  areaTemp?: Prisma.DeviceUpdateareaTempInput | number[]
+  moduleTemp?: Prisma.DeviceUpdatemoduleTempInput | number[]
+  fanSpeed?: Prisma.DeviceUpdatefanSpeedInput | number[]
+  totalCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  operatingCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  reactivePowerCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  availableMargin?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   installation?: Prisma.InstallationUpdateOneRequiredWithoutDeviceNestedInput
@@ -938,6 +1059,13 @@ export type DeviceUncheckedUpdateInput = {
   tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  areaTemp?: Prisma.DeviceUpdateareaTempInput | number[]
+  moduleTemp?: Prisma.DeviceUpdatemoduleTempInput | number[]
+  fanSpeed?: Prisma.DeviceUpdatefanSpeedInput | number[]
+  totalCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  operatingCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  reactivePowerCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  availableMargin?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -979,6 +1107,13 @@ export type DeviceCreateManyInput = {
   tpf2?: number | null
   dpf1?: number | null
   dpf2?: number | null
+  areaTemp?: Prisma.DeviceCreateareaTempInput | number[]
+  moduleTemp?: Prisma.DeviceCreatemoduleTempInput | number[]
+  fanSpeed?: Prisma.DeviceCreatefanSpeedInput | number[]
+  totalCapacity?: number | null
+  operatingCapacity?: number | null
+  reactivePowerCapacity?: number | null
+  availableMargin?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1019,6 +1154,13 @@ export type DeviceUpdateManyMutationInput = {
   tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  areaTemp?: Prisma.DeviceUpdateareaTempInput | number[]
+  moduleTemp?: Prisma.DeviceUpdatemoduleTempInput | number[]
+  fanSpeed?: Prisma.DeviceUpdatefanSpeedInput | number[]
+  totalCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  operatingCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  reactivePowerCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  availableMargin?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1060,6 +1202,13 @@ export type DeviceUncheckedUpdateManyInput = {
   tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  areaTemp?: Prisma.DeviceUpdateareaTempInput | number[]
+  moduleTemp?: Prisma.DeviceUpdatemoduleTempInput | number[]
+  fanSpeed?: Prisma.DeviceUpdatefanSpeedInput | number[]
+  totalCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  operatingCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  reactivePowerCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  availableMargin?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1074,6 +1223,14 @@ export type IntNullableListFilter<$PrismaModel = never> = {
   has?: number | Prisma.IntFieldRefInput<$PrismaModel> | null
   hasEvery?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
   hasSome?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
+  isEmpty?: boolean
+}
+
+export type FloatNullableListFilter<$PrismaModel = never> = {
+  equals?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel> | null
+  has?: number | Prisma.FloatFieldRefInput<$PrismaModel> | null
+  hasEvery?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel>
+  hasSome?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel>
   isEmpty?: boolean
 }
 
@@ -1114,6 +1271,13 @@ export type DeviceCountOrderByAggregateInput = {
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
   dpf2?: Prisma.SortOrder
+  areaTemp?: Prisma.SortOrder
+  moduleTemp?: Prisma.SortOrder
+  fanSpeed?: Prisma.SortOrder
+  totalCapacity?: Prisma.SortOrder
+  operatingCapacity?: Prisma.SortOrder
+  reactivePowerCapacity?: Prisma.SortOrder
+  availableMargin?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -1150,6 +1314,13 @@ export type DeviceAvgOrderByAggregateInput = {
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
   dpf2?: Prisma.SortOrder
+  areaTemp?: Prisma.SortOrder
+  moduleTemp?: Prisma.SortOrder
+  fanSpeed?: Prisma.SortOrder
+  totalCapacity?: Prisma.SortOrder
+  operatingCapacity?: Prisma.SortOrder
+  reactivePowerCapacity?: Prisma.SortOrder
+  availableMargin?: Prisma.SortOrder
 }
 
 export type DeviceMaxOrderByAggregateInput = {
@@ -1188,6 +1359,10 @@ export type DeviceMaxOrderByAggregateInput = {
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
   dpf2?: Prisma.SortOrder
+  totalCapacity?: Prisma.SortOrder
+  operatingCapacity?: Prisma.SortOrder
+  reactivePowerCapacity?: Prisma.SortOrder
+  availableMargin?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -1228,6 +1403,10 @@ export type DeviceMinOrderByAggregateInput = {
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
   dpf2?: Prisma.SortOrder
+  totalCapacity?: Prisma.SortOrder
+  operatingCapacity?: Prisma.SortOrder
+  reactivePowerCapacity?: Prisma.SortOrder
+  availableMargin?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -1264,6 +1443,13 @@ export type DeviceSumOrderByAggregateInput = {
   tpf2?: Prisma.SortOrder
   dpf1?: Prisma.SortOrder
   dpf2?: Prisma.SortOrder
+  areaTemp?: Prisma.SortOrder
+  moduleTemp?: Prisma.SortOrder
+  fanSpeed?: Prisma.SortOrder
+  totalCapacity?: Prisma.SortOrder
+  operatingCapacity?: Prisma.SortOrder
+  reactivePowerCapacity?: Prisma.SortOrder
+  availableMargin?: Prisma.SortOrder
 }
 
 export type DeviceCreateNestedOneWithoutInstallationInput = {
@@ -1302,6 +1488,18 @@ export type DeviceCreatemoduleStatusInput = {
   set: number[]
 }
 
+export type DeviceCreateareaTempInput = {
+  set: number[]
+}
+
+export type DeviceCreatemoduleTempInput = {
+  set: number[]
+}
+
+export type DeviceCreatefanSpeedInput = {
+  set: number[]
+}
+
 export type IntFieldUpdateOperationsInput = {
   set?: number
   increment?: number
@@ -1325,6 +1523,21 @@ export type NullableFloatFieldUpdateOperationsInput = {
 
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
+}
+
+export type DeviceUpdateareaTempInput = {
+  set?: number[]
+  push?: number | number[]
+}
+
+export type DeviceUpdatemoduleTempInput = {
+  set?: number[]
+  push?: number | number[]
+}
+
+export type DeviceUpdatefanSpeedInput = {
+  set?: number[]
+  push?: number | number[]
 }
 
 export type DeviceCreateWithoutInstallationInput = {
@@ -1363,6 +1576,13 @@ export type DeviceCreateWithoutInstallationInput = {
   tpf2?: number | null
   dpf1?: number | null
   dpf2?: number | null
+  areaTemp?: Prisma.DeviceCreateareaTempInput | number[]
+  moduleTemp?: Prisma.DeviceCreatemoduleTempInput | number[]
+  fanSpeed?: Prisma.DeviceCreatefanSpeedInput | number[]
+  totalCapacity?: number | null
+  operatingCapacity?: number | null
+  reactivePowerCapacity?: number | null
+  availableMargin?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1403,6 +1623,13 @@ export type DeviceUncheckedCreateWithoutInstallationInput = {
   tpf2?: number | null
   dpf1?: number | null
   dpf2?: number | null
+  areaTemp?: Prisma.DeviceCreateareaTempInput | number[]
+  moduleTemp?: Prisma.DeviceCreatemoduleTempInput | number[]
+  fanSpeed?: Prisma.DeviceCreatefanSpeedInput | number[]
+  totalCapacity?: number | null
+  operatingCapacity?: number | null
+  reactivePowerCapacity?: number | null
+  availableMargin?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1459,6 +1686,13 @@ export type DeviceUpdateWithoutInstallationInput = {
   tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  areaTemp?: Prisma.DeviceUpdateareaTempInput | number[]
+  moduleTemp?: Prisma.DeviceUpdatemoduleTempInput | number[]
+  fanSpeed?: Prisma.DeviceUpdatefanSpeedInput | number[]
+  totalCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  operatingCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  reactivePowerCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  availableMargin?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1499,6 +1733,13 @@ export type DeviceUncheckedUpdateWithoutInstallationInput = {
   tpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   dpf2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  areaTemp?: Prisma.DeviceUpdateareaTempInput | number[]
+  moduleTemp?: Prisma.DeviceUpdatemoduleTempInput | number[]
+  fanSpeed?: Prisma.DeviceUpdatefanSpeedInput | number[]
+  totalCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  operatingCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  reactivePowerCapacity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  availableMargin?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1542,6 +1783,13 @@ export type DeviceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   tpf2?: boolean
   dpf1?: boolean
   dpf2?: boolean
+  areaTemp?: boolean
+  moduleTemp?: boolean
+  fanSpeed?: boolean
+  totalCapacity?: boolean
+  operatingCapacity?: boolean
+  reactivePowerCapacity?: boolean
+  availableMargin?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
@@ -1584,6 +1832,13 @@ export type DeviceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   tpf2?: boolean
   dpf1?: boolean
   dpf2?: boolean
+  areaTemp?: boolean
+  moduleTemp?: boolean
+  fanSpeed?: boolean
+  totalCapacity?: boolean
+  operatingCapacity?: boolean
+  reactivePowerCapacity?: boolean
+  availableMargin?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
@@ -1626,6 +1881,13 @@ export type DeviceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   tpf2?: boolean
   dpf1?: boolean
   dpf2?: boolean
+  areaTemp?: boolean
+  moduleTemp?: boolean
+  fanSpeed?: boolean
+  totalCapacity?: boolean
+  operatingCapacity?: boolean
+  reactivePowerCapacity?: boolean
+  availableMargin?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
@@ -1668,11 +1930,18 @@ export type DeviceSelectScalar = {
   tpf2?: boolean
   dpf1?: boolean
   dpf2?: boolean
+  areaTemp?: boolean
+  moduleTemp?: boolean
+  fanSpeed?: boolean
+  totalCapacity?: boolean
+  operatingCapacity?: boolean
+  reactivePowerCapacity?: boolean
+  availableMargin?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type DeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"installationId" | "status" | "model" | "capacity" | "moduleStatus" | "numOfMods" | "lastSeenAt" | "lastValue" | "lastIp" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "uncompS" | "compS" | "uncompP" | "compP" | "uncompQ" | "compQ" | "uncompH" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "createdAt" | "updatedAt", ExtArgs["result"]["device"]>
+export type DeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"installationId" | "status" | "model" | "capacity" | "moduleStatus" | "numOfMods" | "lastSeenAt" | "lastValue" | "lastIp" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "uncompS" | "compS" | "uncompP" | "compP" | "uncompQ" | "compQ" | "uncompH" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "areaTemp" | "moduleTemp" | "fanSpeed" | "totalCapacity" | "operatingCapacity" | "reactivePowerCapacity" | "availableMargin" | "createdAt" | "updatedAt", ExtArgs["result"]["device"]>
 export type DeviceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }
@@ -1725,6 +1994,13 @@ export type $DevicePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     tpf2: number | null
     dpf1: number | null
     dpf2: number | null
+    areaTemp: number[]
+    moduleTemp: number[]
+    fanSpeed: number[]
+    totalCapacity: number | null
+    operatingCapacity: number | null
+    reactivePowerCapacity: number | null
+    availableMargin: number | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["device"]>
@@ -2187,6 +2463,13 @@ export interface DeviceFieldRefs {
   readonly tpf2: Prisma.FieldRef<"Device", 'Float'>
   readonly dpf1: Prisma.FieldRef<"Device", 'Float'>
   readonly dpf2: Prisma.FieldRef<"Device", 'Float'>
+  readonly areaTemp: Prisma.FieldRef<"Device", 'Float[]'>
+  readonly moduleTemp: Prisma.FieldRef<"Device", 'Float[]'>
+  readonly fanSpeed: Prisma.FieldRef<"Device", 'Float[]'>
+  readonly totalCapacity: Prisma.FieldRef<"Device", 'Float'>
+  readonly operatingCapacity: Prisma.FieldRef<"Device", 'Float'>
+  readonly reactivePowerCapacity: Prisma.FieldRef<"Device", 'Float'>
+  readonly availableMargin: Prisma.FieldRef<"Device", 'Float'>
   readonly createdAt: Prisma.FieldRef<"Device", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Device", 'DateTime'>
 }
