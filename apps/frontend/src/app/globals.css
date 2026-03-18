@@ -89,6 +89,96 @@ body {
   height: 16px;
 }
 
+.header-user-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.header-user-role {
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(99, 179, 237, 0.15);
+  color: #63b3ed;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.header-username {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ── 로그아웃 확인 팝오버 ──────────────────────── */
+.logout-wrapper {
+  position: relative;
+}
+
+.logout-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: #1a1f2e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 14px 16px;
+  width: 180px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  animation: popover-in 0.12s ease;
+}
+
+@keyframes popover-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.logout-popover-msg {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.logout-popover-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.logout-popover-cancel,
+.logout-popover-confirm {
+  flex: 1;
+  padding: 6px 0;
+  border-radius: 6px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.logout-popover-cancel {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.logout-popover-cancel:hover {
+  opacity: 0.75;
+}
+
+.logout-popover-confirm {
+  background: #e53e3e;
+  color: #fff;
+}
+
+.logout-popover-confirm:hover {
+  opacity: 0.85;
+}
+
 .global-content {
   flex: 1;
   min-height: 0;

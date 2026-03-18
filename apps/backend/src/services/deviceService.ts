@@ -1,6 +1,7 @@
 import { siteRegistry } from "../data/deviceRegistry.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, type Device } from "../../prisma/generated/client/client.js";
+import type { UserContext } from "../modules/auth/auth.types.js";
 
 export type DeviceStatus =
   | "standby"
@@ -196,13 +197,32 @@ export const deriveDeviceStatus = (moduleStatus?: number[]): DeviceStatus | unde
   return toStatus(worst) ?? "offline";
 };
 
+/* ─── 권한별 Device WHERE 필터 (site 경로로) ─────── */
+const deviceWhereFilter = (ctx: UserContext) => {
+  if (ctx.role === "ADMIN") return {};
+  if (ctx.role === "CLIENT")
+    return { installation: { site: { client: ctx.clientKey } } };
+  return { installation: { site: { id: ctx.siteId } } }; // SITE
+};
+
+const canAccessDevice = (
+  ctx: UserContext,
+  siteClient: string,
+  siteId: string
+) => {
+  if (ctx.role === "ADMIN") return true;
+  if (ctx.role === "CLIENT") return siteClient === ctx.clientKey;
+  return siteId === ctx.siteId;
+};
+
 export const deviceService = {
   /* =====================================================
    * Device(telemetry) list/get
    * - installation/site info는 include로 붙여서 반환
    * ===================================================== */
-  list: async () => {
+  list: async (ctx: UserContext) => {
     const rows = await prisma.device.findMany({
+      where: deviceWhereFilter(ctx),
       orderBy: { installationId: "asc" },
       include: { installation: { include: { site: true } } },
     });
@@ -212,12 +232,14 @@ export const deviceService = {
     }));
   },
 
-  get: async ({ id }: { id: string }) => {
+  get: async ({ id }: { id: string }, ctx: UserContext) => {
     const d = await prisma.device.findUnique({
       where: { installationId: id },
       include: { installation: { include: { site: true } } },
     });
     if (!d) return null;
+    if (!canAccessDevice(ctx, d.installation.site.client, d.installation.siteId))
+      return null;
     return { ...d, status: deriveDeviceStatus(d.moduleStatus) ?? "offline" };
   },
 
@@ -444,7 +466,19 @@ export const deviceService = {
   /* =====================================================
    * 시계열 이력 조회: 최근 N시간 readings
    * ===================================================== */
-  getReadings: async ({ id, hours = 24 }: { id: string; hours?: number }) => {
+  getReadings: async (
+    { id, hours = 24 }: { id: string; hours?: number },
+    ctx: UserContext
+  ) => {
+    // 장비에 대한 접근 권한 먼저 확인
+    const d = await prisma.device.findUnique({
+      where: { installationId: id },
+      include: { installation: { include: { site: true } } },
+    });
+    if (!d) return null;
+    if (!canAccessDevice(ctx, d.installation.site.client, d.installation.siteId))
+      return null;
+
     const clampedHours = Math.min(Math.max(hours, 1), 168); // 1h ~ 7일
     const since = new Date(Date.now() - clampedHours * 60 * 60 * 1000);
     return prisma.telemetryRecord.findMany({

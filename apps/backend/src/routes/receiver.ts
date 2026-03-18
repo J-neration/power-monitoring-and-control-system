@@ -1,6 +1,8 @@
 import { FastifyPluginAsync } from "fastify";
 import { deviceService } from "../services/deviceService.js";
 
+type ReceiverOptions = { receiverApiKey: string };
+
 type ReceiverBody = {
   device_id?: string;
   value?: number | string;
@@ -43,8 +45,20 @@ type ReceiverBody = {
   [key: string]: unknown;
 };
 
-export const receiverRoutes: FastifyPluginAsync = async (server) => {
+export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
+  server,
+  opts
+) => {
+  const apiKey = opts.receiverApiKey;
+
   server.post("/", async (request, reply) => {
+    // API Key 검증
+    const providedKey =
+      (request.headers["x-api-key"] as string | undefined) ?? "";
+    if (providedKey !== apiKey) {
+      return reply.status(401).send({ message: "Unauthorized" });
+    }
+
     const rawBody = request.body;
     let body: ReceiverBody = {};
 
