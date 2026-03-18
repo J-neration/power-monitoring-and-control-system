@@ -32,7 +32,8 @@ model Installation {
   label     String                               // 변전실 / 102동 / 전기실
 
   site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  device Device?                               // 최신 텔레메트리 (1:1)
+  device           Device?                     // 최신 텔레메트리 (1:1)
+  telemetryRecords TelemetryRecord[]           // 시계열 이력
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -102,4 +103,61 @@ model Device {
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+/* =========================
+ * 4) TelemetryRecord (시계열 이력)
+ * ========================= */
+model TelemetryRecord {
+  id             String       @id @default(cuid())
+  installationId String
+  installation   Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  recordedAt     DateTime     @default(now())  // 수신 시각 (나중에 HMI timestamp로 교체 가능)
+
+  moduleStatus     Int[]   @default([])
+  numOfMods        Int?
+
+  // 전압 (V)
+  vL1              Float?
+  vL2              Float?
+  vL3              Float?
+
+  // 전류 (A)
+  gridCurrentL1    Float?
+  gridCurrentL2    Float?
+  gridCurrentL3    Float?
+  loadCurrentL1    Float?
+  loadCurrentL2    Float?
+  loadCurrentL3    Float?
+
+  // 전류 THD (%)
+  loadCurrentTHDL1 Float?
+  loadCurrentTHDL2 Float?
+  loadCurrentTHDL3 Float?
+  gridCurrentTHDL1 Float?
+  gridCurrentTHDL2 Float?
+  gridCurrentTHDL3 Float?
+
+  // 피상전력 (kVA)
+  uncompS          Float?
+  compS            Float?
+
+  // 유효전력 (kW)
+  uncompP          Float?
+  compP            Float?
+
+  // 무효전력 (kvar)
+  uncompQ          Float?
+  compQ            Float?
+  uncompH          Float?
+  compH            Float?
+
+  // 역률 (%)
+  tpf1             Float?
+  tpf2             Float?
+  dpf1             Float?
+  dpf2             Float?
+
+  @@index([installationId, recordedAt])
 }

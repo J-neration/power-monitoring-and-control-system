@@ -386,7 +386,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   Site: 'Site',
   Installation: 'Installation',
-  Device: 'Device'
+  Device: 'Device',
+  TelemetryRecord: 'TelemetryRecord'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -402,7 +403,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "site" | "installation" | "device"
+    modelProps: "site" | "installation" | "device" | "telemetryRecord"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -628,6 +629,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    TelemetryRecord: {
+      payload: Prisma.$TelemetryRecordPayload<ExtArgs>
+      fields: Prisma.TelemetryRecordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TelemetryRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryRecordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TelemetryRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryRecordPayload>
+        }
+        findFirst: {
+          args: Prisma.TelemetryRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryRecordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TelemetryRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryRecordPayload>
+        }
+        findMany: {
+          args: Prisma.TelemetryRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryRecordPayload>[]
+        }
+        create: {
+          args: Prisma.TelemetryRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryRecordPayload>
+        }
+        createMany: {
+          args: Prisma.TelemetryRecordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TelemetryRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryRecordPayload>[]
+        }
+        delete: {
+          args: Prisma.TelemetryRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryRecordPayload>
+        }
+        update: {
+          args: Prisma.TelemetryRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryRecordPayload>
+        }
+        deleteMany: {
+          args: Prisma.TelemetryRecordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TelemetryRecordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TelemetryRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryRecordPayload>[]
+        }
+        upsert: {
+          args: Prisma.TelemetryRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryRecordPayload>
+        }
+        aggregate: {
+          args: Prisma.TelemetryRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTelemetryRecord>
+        }
+        groupBy: {
+          args: Prisma.TelemetryRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TelemetryRecordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TelemetryRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TelemetryRecordCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -733,6 +808,44 @@ export const DeviceScalarFieldEnum = {
 } as const
 
 export type DeviceScalarFieldEnum = (typeof DeviceScalarFieldEnum)[keyof typeof DeviceScalarFieldEnum]
+
+
+export const TelemetryRecordScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  recordedAt: 'recordedAt',
+  moduleStatus: 'moduleStatus',
+  numOfMods: 'numOfMods',
+  vL1: 'vL1',
+  vL2: 'vL2',
+  vL3: 'vL3',
+  gridCurrentL1: 'gridCurrentL1',
+  gridCurrentL2: 'gridCurrentL2',
+  gridCurrentL3: 'gridCurrentL3',
+  loadCurrentL1: 'loadCurrentL1',
+  loadCurrentL2: 'loadCurrentL2',
+  loadCurrentL3: 'loadCurrentL3',
+  loadCurrentTHDL1: 'loadCurrentTHDL1',
+  loadCurrentTHDL2: 'loadCurrentTHDL2',
+  loadCurrentTHDL3: 'loadCurrentTHDL3',
+  gridCurrentTHDL1: 'gridCurrentTHDL1',
+  gridCurrentTHDL2: 'gridCurrentTHDL2',
+  gridCurrentTHDL3: 'gridCurrentTHDL3',
+  uncompS: 'uncompS',
+  compS: 'compS',
+  uncompP: 'uncompP',
+  compP: 'compP',
+  uncompQ: 'uncompQ',
+  compQ: 'compQ',
+  uncompH: 'uncompH',
+  compH: 'compH',
+  tpf1: 'tpf1',
+  tpf2: 'tpf2',
+  dpf1: 'dpf1',
+  dpf2: 'dpf2'
+} as const
+
+export type TelemetryRecordScalarFieldEnum = (typeof TelemetryRecordScalarFieldEnum)[keyof typeof TelemetryRecordScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -918,6 +1031,7 @@ export type GlobalOmitConfig = {
   site?: Prisma.SiteOmit
   installation?: Prisma.InstallationOmit
   device?: Prisma.DeviceOmit
+  telemetryRecord?: Prisma.TelemetryRecordOmit
 }
 
 /* Types for Logging */

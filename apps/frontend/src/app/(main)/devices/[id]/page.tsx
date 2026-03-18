@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { fetchDevice } from "../../../lib/api";
-import { StatusCard } from "../../../components/StatusCard";
-import DeviceDetailChartsLazy from "../../../components/DeviceDetailChartsLazy";
-import type { DeviceWithInstallation } from "../../../types/site";
+import { fetchDevice, fetchReadings } from "../../../../lib/api";
+import DeviceDetailTabs from "../../../../components/DeviceDetailTabs";
+import type { DeviceWithInstallation } from "../../../../types/site";
 
 type Props = {
   params: { id: string };
@@ -20,36 +19,40 @@ function formatLastSeen(iso?: string | null) {
   return `${Math.floor(hrs / 24)}일 전`;
 }
 
+const HISTORY_HOURS = 24;
+
 export default async function DeviceDetailPage({ params }: Props) {
   const id = decodeURIComponent(params.id);
-  const device = (await fetchDevice(id)) as DeviceWithInstallation | null;
+  const [device, readings] = await Promise.all([
+    fetchDevice(id) as Promise<DeviceWithInstallation | null>,
+    fetchReadings(id, HISTORY_HOURS),
+  ]);
 
   if (!device) notFound();
 
   const site = device.installation?.site;
   const siteId = site?.id;
-  const title = `${site?.name ?? "Site"} / ${device.installation?.label ?? "Installation"}`;
+  const deviceLabel = device.installation?.label ?? "Installation";
 
   return (
     <main className="device-detail-page">
       <section className="device-detail-header">
-        <div className="device-detail-nav">
+        <nav className="device-breadcrumb">
+          <Link href="/" className="breadcrumb-item">대시보드</Link>
+          <span className="breadcrumb-sep">/</span>
           {siteId ? (
-            <Link
-              className="detail-back"
-              href={`/sites/${encodeURIComponent(siteId)}`}
-            >
-              ← {site?.name ?? "현장"}
+            <Link href={`/sites/${encodeURIComponent(siteId)}`} className="breadcrumb-item">
+              {site?.name ?? "현장"}
             </Link>
           ) : (
-            <Link className="detail-back" href="/">
-              ← 대시보드
-            </Link>
+            <span className="breadcrumb-item breadcrumb-current">현장</span>
           )}
-        </div>
+          <span className="breadcrumb-sep">/</span>
+          <span className="breadcrumb-item breadcrumb-current">{deviceLabel}</span>
+        </nav>
 
         <div className="device-detail-title-row">
-          <h1>{title}</h1>
+          <h1>{deviceLabel}</h1>
           <span className={`detail-status-badge ${device.status}`}>
             {device.status.toUpperCase()}
           </span>
@@ -72,13 +75,7 @@ export default async function DeviceDetailPage({ params }: Props) {
         </p>
       </section>
 
-      <section className="device-detail-body">
-        <DeviceDetailChartsLazy device={device} />
-      </section>
-
-      <section className="device-detail-body">
-        <StatusCard device={device} />
-      </section>
+      <DeviceDetailTabs device={device} readings={readings} hours={HISTORY_HOURS} />
     </main>
   );
 }

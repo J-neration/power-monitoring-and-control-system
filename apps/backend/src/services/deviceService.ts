@@ -326,7 +326,41 @@ export const deviceService = {
       const model = reg?.installation.model ?? "psvg";
       const deviceCapacity = reg?.installation.deviceCapacity ?? 200;
 
-      return tx.device.upsert({
+      // 공통 측정값 객체 (Device upsert + TelemetryRecord insert 양쪽에서 사용)
+      const telemetryFields = {
+        ...(moduleStatus !== undefined ? { moduleStatus } : {}),
+        ...(numOfMods !== undefined ? { numOfMods: Math.trunc(numOfMods) } : {}),
+        ...(vL1 !== undefined ? { vL1 } : {}),
+        ...(vL2 !== undefined ? { vL2 } : {}),
+        ...(vL3 !== undefined ? { vL3 } : {}),
+        ...(gridCurrentL1 !== undefined ? { gridCurrentL1 } : {}),
+        ...(gridCurrentL2 !== undefined ? { gridCurrentL2 } : {}),
+        ...(gridCurrentL3 !== undefined ? { gridCurrentL3 } : {}),
+        ...(loadCurrentL1 !== undefined ? { loadCurrentL1 } : {}),
+        ...(loadCurrentL2 !== undefined ? { loadCurrentL2 } : {}),
+        ...(loadCurrentL3 !== undefined ? { loadCurrentL3 } : {}),
+        ...(loadCurrentTHDL1 !== undefined ? { loadCurrentTHDL1 } : {}),
+        ...(loadCurrentTHDL2 !== undefined ? { loadCurrentTHDL2 } : {}),
+        ...(loadCurrentTHDL3 !== undefined ? { loadCurrentTHDL3 } : {}),
+        ...(gridCurrentTHDL1 !== undefined ? { gridCurrentTHDL1 } : {}),
+        ...(gridCurrentTHDL2 !== undefined ? { gridCurrentTHDL2 } : {}),
+        ...(gridCurrentTHDL3 !== undefined ? { gridCurrentTHDL3 } : {}),
+        ...(uncompS !== undefined ? { uncompS } : {}),
+        ...(uncompP !== undefined ? { uncompP } : {}),
+        ...(uncompQ !== undefined ? { uncompQ } : {}),
+        ...(uncompH !== undefined ? { uncompH } : {}),
+        ...(compS !== undefined ? { compS } : {}),
+        ...(compP !== undefined ? { compP } : {}),
+        ...(compQ !== undefined ? { compQ } : {}),
+        ...(compH !== undefined ? { compH } : {}),
+        ...(tpf1 !== undefined ? { tpf1 } : {}),
+        ...(tpf2 !== undefined ? { tpf2 } : {}),
+        ...(dpf1 !== undefined ? { dpf1 } : {}),
+        ...(dpf2 !== undefined ? { dpf2 } : {}),
+      };
+
+      // 2) Device 최신 스냅샷 upsert
+      const device = await tx.device.upsert({
         where: { installationId },
         update: {
           status,
@@ -335,43 +369,7 @@ export const deviceService = {
           lastSeenAt: new Date(),
           ...(payload.ip ? { lastIp: payload.ip } : {}),
           ...(lastValue !== undefined ? { lastValue } : {}),
-          ...(moduleStatus !== undefined ? { moduleStatus } : {}),
-          ...(numOfMods !== undefined ? { numOfMods: Math.trunc(numOfMods) } : {}),
-
-          ...(vL1 !== undefined ? { vL1 } : {}),
-          ...(vL2 !== undefined ? { vL2 } : {}),
-          ...(vL3 !== undefined ? { vL3 } : {}),
-
-          ...(gridCurrentL1 !== undefined ? { gridCurrentL1 } : {}),
-          ...(gridCurrentL2 !== undefined ? { gridCurrentL2 } : {}),
-          ...(gridCurrentL3 !== undefined ? { gridCurrentL3 } : {}),
-
-          ...(loadCurrentL1 !== undefined ? { loadCurrentL1 } : {}),
-          ...(loadCurrentL2 !== undefined ? { loadCurrentL2 } : {}),
-          ...(loadCurrentL3 !== undefined ? { loadCurrentL3 } : {}),
-
-          ...(loadCurrentTHDL1 !== undefined ? { loadCurrentTHDL1 } : {}),
-          ...(loadCurrentTHDL2 !== undefined ? { loadCurrentTHDL2 } : {}),
-          ...(loadCurrentTHDL3 !== undefined ? { loadCurrentTHDL3 } : {}),
-
-          ...(uncompS !== undefined ? { uncompS } : {}),
-          ...(uncompP !== undefined ? { uncompP } : {}),
-          ...(uncompQ !== undefined ? { uncompQ } : {}),
-          ...(uncompH !== undefined ? { uncompH } : {}),
-
-          ...(compS !== undefined ? { compS } : {}),
-          ...(compP !== undefined ? { compP } : {}),
-          ...(compQ !== undefined ? { compQ } : {}),
-          ...(compH !== undefined ? { compH } : {}),
-
-          ...(tpf1 !== undefined ? { tpf1 } : {}),
-          ...(tpf2 !== undefined ? { tpf2 } : {}),
-          ...(dpf1 !== undefined ? { dpf1 } : {}),
-          ...(dpf2 !== undefined ? { dpf2 } : {}),
-
-          ...(gridCurrentTHDL1 !== undefined ? { gridCurrentTHDL1 } : {}),
-          ...(gridCurrentTHDL2 !== undefined ? { gridCurrentTHDL2 } : {}),
-          ...(gridCurrentTHDL3 !== undefined ? { gridCurrentTHDL3 } : {}),
+          ...telemetryFields,
         },
         create: {
           installationId,
@@ -381,46 +379,35 @@ export const deviceService = {
           lastSeenAt: new Date(),
           ...(payload.ip ? { lastIp: payload.ip } : {}),
           ...(lastValue !== undefined ? { lastValue } : {}),
-          ...(moduleStatus !== undefined ? { moduleStatus } : {}),
-          ...(numOfMods !== undefined ? { numOfMods: Math.trunc(numOfMods) } : {}),
-
-          ...(vL1 !== undefined ? { vL1 } : {}),
-          ...(vL2 !== undefined ? { vL2 } : {}),
-          ...(vL3 !== undefined ? { vL3 } : {}),
-
-          ...(gridCurrentL1 !== undefined ? { gridCurrentL1 } : {}),
-          ...(gridCurrentL2 !== undefined ? { gridCurrentL2 } : {}),
-          ...(gridCurrentL3 !== undefined ? { gridCurrentL3 } : {}),
-
-          ...(loadCurrentL1 !== undefined ? { loadCurrentL1 } : {}),
-          ...(loadCurrentL2 !== undefined ? { loadCurrentL2 } : {}),
-          ...(loadCurrentL3 !== undefined ? { loadCurrentL3 } : {}),
-
-          ...(loadCurrentTHDL1 !== undefined ? { loadCurrentTHDL1 } : {}),
-          ...(loadCurrentTHDL2 !== undefined ? { loadCurrentTHDL2 } : {}),
-          ...(loadCurrentTHDL3 !== undefined ? { loadCurrentTHDL3 } : {}),
-
-          ...(uncompS !== undefined ? { uncompS } : {}),
-          ...(uncompP !== undefined ? { uncompP } : {}),
-          ...(uncompQ !== undefined ? { uncompQ } : {}),
-          ...(uncompH !== undefined ? { uncompH } : {}),
-
-          ...(compS !== undefined ? { compS } : {}),
-          ...(compP !== undefined ? { compP } : {}),
-          ...(compQ !== undefined ? { compQ } : {}),
-          ...(compH !== undefined ? { compH } : {}),
-
-          ...(tpf1 !== undefined ? { tpf1 } : {}),
-          ...(tpf2 !== undefined ? { tpf2 } : {}),
-          ...(dpf1 !== undefined ? { dpf1 } : {}),
-          ...(dpf2 !== undefined ? { dpf2 } : {}),
-
-          ...(gridCurrentTHDL1 !== undefined ? { gridCurrentTHDL1 } : {}),
-          ...(gridCurrentTHDL2 !== undefined ? { gridCurrentTHDL2 } : {}),
-          ...(gridCurrentTHDL3 !== undefined ? { gridCurrentTHDL3 } : {}),
-
+          ...telemetryFields,
         },
       });
+
+      // 3) TelemetryRecord 이력 INSERT
+      await tx.telemetryRecord.create({
+        data: {
+          installationId,
+          recordedAt: new Date(),
+          ...telemetryFields,
+        },
+      });
+
+      return device;
+    });
+  },
+
+  /* =====================================================
+   * 시계열 이력 조회: 최근 N시간 readings
+   * ===================================================== */
+  getReadings: async ({ id, hours = 24 }: { id: string; hours?: number }) => {
+    const clampedHours = Math.min(Math.max(hours, 1), 168); // 1h ~ 7일
+    const since = new Date(Date.now() - clampedHours * 60 * 60 * 1000);
+    return prisma.telemetryRecord.findMany({
+      where: {
+        installationId: id,
+        recordedAt: { gte: since },
+      },
+      orderBy: { recordedAt: "asc" },
     });
   },
 };

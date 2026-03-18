@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { fetchSites } from "../../../lib/api";
-import type { Device, DeviceStatus } from "../../../types/site";
-import { CLIENT_LABELS } from "../../../data/clients";
+import { fetchSites } from "../../../../lib/api";
+import type { Device, DeviceStatus } from "../../../../types/site";
+import { CLIENT_LABELS } from "../../../../data/clients";
 
 type Props = {
   params: { siteId: string };

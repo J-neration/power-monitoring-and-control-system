@@ -152,7 +152,12 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
         <KpiBadge label="장비 전체" value={kpis.total} variant="default" />
         <KpiBadge label="정상" value={kpis.running} variant="running" />
         <KpiBadge label="대기" value={kpis.standby} variant="standby" />
-        <KpiBadge label="이상" value={kpis.fault} variant="fault" urgent={kpis.fault > 0} />
+        <KpiBadge
+          label="이상"
+          value={kpis.fault}
+          variant="fault"
+          urgent={kpis.fault > 0}
+        />
         <KpiBadge label="오프라인" value={kpis.offline} variant="offline" />
       </div>
 
