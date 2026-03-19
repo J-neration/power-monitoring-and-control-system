@@ -71,7 +71,7 @@ export default function DeviceDetailTabs({ device, readings, hours }: Props) {
               <span className="history-section-sub"> — 최근 {hours}시간</span>
             </h2>
           </div>
-          <DeviceHistoryCharts readings={readings} hours={hours} />
+          <DeviceHistoryCharts readings={readings} hours={hours} model={device.model} />
         </section>
       )}
     </>

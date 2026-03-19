@@ -29,9 +29,10 @@ function fmt(iso: string) {
 type Props = {
   readings: TelemetryReading[];
   hours: number;
+  model?: string;
 };
 
-export default function DeviceHistoryCharts({ readings, hours }: Props) {
+export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
   if (readings.length === 0) {
     return (
       <div className="chart-card chart-card-wide history-empty">
@@ -41,28 +42,43 @@ export default function DeviceHistoryCharts({ readings, hours }: Props) {
     );
   }
 
-  const data = readings.map((r) => ({
-    time: fmt(r.recordedAt),
-    vL1: r.vL1 ?? null,
-    vL2: r.vL2 ?? null,
-    vL3: r.vL3 ?? null,
-    loadCurrentL1: r.loadCurrentL1 ?? null,
-    loadCurrentL2: r.loadCurrentL2 ?? null,
-    loadCurrentL3: r.loadCurrentL3 ?? null,
-    gridCurrentL1: r.gridCurrentL1 ?? null,
-    gridCurrentL2: r.gridCurrentL2 ?? null,
-    gridCurrentL3: r.gridCurrentL3 ?? null,
-    thdLoad1: r.loadCurrentTHDL1 ?? null,
-    thdLoad2: r.loadCurrentTHDL2 ?? null,
-    thdLoad3: r.loadCurrentTHDL3 ?? null,
-    thdGrid1: r.gridCurrentTHDL1 ?? null,
-    thdGrid2: r.gridCurrentTHDL2 ?? null,
-    thdGrid3: r.gridCurrentTHDL3 ?? null,
-    tpf1: r.tpf1 != null ? Math.round(r.tpf1 * 1000) / 10 : null,
-    tpf2: r.tpf2 != null ? Math.round(r.tpf2 * 1000) / 10 : null,
-    uncompQ: r.uncompQ ?? null,
-    compQ: r.compQ ?? null,
-  }));
+  const capUnit = model === "paf" ? "A" : "kvar";
+
+  const data = readings.map((r) => {
+    const totalCap = r.totalCapacity ?? null;
+    const opCap = r.operatingCapacity ?? null;
+    const rpCap = r.reactivePowerCapacity ?? null;
+    const margin = r.availableMargin ?? (totalCap != null && opCap != null ? totalCap - opCap : null);
+    const idleCap = opCap != null && rpCap != null ? Math.max(0, opCap - rpCap) : null;
+
+    return {
+      time: fmt(r.recordedAt),
+      vL1: r.vL1 ?? null,
+      vL2: r.vL2 ?? null,
+      vL3: r.vL3 ?? null,
+      loadCurrentL1: r.loadCurrentL1 ?? null,
+      loadCurrentL2: r.loadCurrentL2 ?? null,
+      loadCurrentL3: r.loadCurrentL3 ?? null,
+      gridCurrentL1: r.gridCurrentL1 ?? null,
+      gridCurrentL2: r.gridCurrentL2 ?? null,
+      gridCurrentL3: r.gridCurrentL3 ?? null,
+      thdLoad1: r.loadCurrentTHDL1 ?? null,
+      thdLoad2: r.loadCurrentTHDL2 ?? null,
+      thdLoad3: r.loadCurrentTHDL3 ?? null,
+      thdGrid1: r.gridCurrentTHDL1 ?? null,
+      thdGrid2: r.gridCurrentTHDL2 ?? null,
+      thdGrid3: r.gridCurrentTHDL3 ?? null,
+      tpf1: r.tpf1 != null ? Math.round(r.tpf1 * 1000) / 10 : null,
+      tpf2: r.tpf2 != null ? Math.round(r.tpf2 * 1000) / 10 : null,
+      uncompQ: r.uncompQ ?? null,
+      compQ: r.compQ ?? null,
+      reactive: rpCap,
+      idle: idleCap,
+      margin: margin,
+    };
+  });
+
+  const hasCapData = data.some((d) => d.reactive != null || d.idle != null);
 
   return (
     <div className="device-charts-grid">
@@ -213,6 +229,50 @@ export default function DeviceHistoryCharts({ readings, hours }: Props) {
           </AreaChart>
         </ResponsiveContainer>
       </div>
+
+      {/* 용량 현황 트렌드 */}
+      {hasCapData && (
+        <div className="chart-card chart-card-wide">
+          <h3 className="chart-title">
+            용량 현황 트렌드 ({capUnit})
+            <span className="chart-title-sub"> — 최근 {hours}시간</span>
+          </h3>
+          <ResponsiveContainer width="100%" height={CHART_H + 20}>
+            <AreaChart data={data} margin={{ top: 8, right: 16, left: -4, bottom: 0 }}>
+              <defs>
+                <linearGradient id="hgReactive" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.55} />
+                  <stop offset="95%" stopColor="#10B981" stopOpacity={0.05} />
+                </linearGradient>
+                <linearGradient id="hgIdle" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.45} />
+                  <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.03} />
+                </linearGradient>
+                <linearGradient id="hgMargin" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#475569" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#475569" stopOpacity={0.03} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+              <XAxis dataKey="time" stroke="rgba(255,255,255,0.35)" fontSize={11} tickLine={false} interval="preserveStartEnd" />
+              <YAxis stroke="rgba(255,255,255,0.35)" fontSize={11} tickLine={false} unit={` ${capUnit}`} />
+              <Tooltip
+                contentStyle={TOOLTIP_STYLE}
+                formatter={(v: number, name: string) => [`${v} ${capUnit}`, name]}
+              />
+              <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
+              <Area type="monotone" dataKey="reactive" name="무효전력 발생" stackId="cap" stroke="#10B981" fill="url(#hgReactive)" dot={false} connectNulls />
+              <Area type="monotone" dataKey="idle"     name="운전 여유"    stackId="cap" stroke="#3B82F6" fill="url(#hgIdle)"     dot={false} connectNulls />
+              <Area type="monotone" dataKey="margin"   name="여유 마진"    stackId="cap" stroke="#64748B" fill="url(#hgMargin)"   dot={false} connectNulls />
+            </AreaChart>
+          </ResponsiveContainer>
+          <div className="capacity-legend-row">
+            <span className="cap-badge cap-reactive">무효전력 발생용량</span>
+            <span className="cap-badge cap-idle">운전 여유 (운전 − 무효전력)</span>
+            <span className="cap-badge cap-margin">여유 마진 (총용량 − 운전)</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

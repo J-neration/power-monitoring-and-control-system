@@ -2095,6 +2095,71 @@ main.dashboard-full {
   border: 1px solid rgba(71, 85, 105, 0.4);
 }
 
+/* Capacity snapshot bar */
+.cap-snapshot-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 10px;
+}
+
+.cap-snapshot-bar {
+  flex: 1;
+  height: 18px;
+  border-radius: 9px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.06);
+  display: flex;
+}
+
+.cap-seg-bar {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.cap-seg-bar.cap-reactive { background: #10B981; }
+.cap-seg-bar.cap-idle     { background: #3B82F6; }
+.cap-seg-bar.cap-margin   { background: #334155; }
+
+.cap-snapshot-pct {
+  font-size: 12px;
+  font-weight: 600;
+  color: #10B981;
+  white-space: nowrap;
+  min-width: 68px;
+  text-align: right;
+}
+
+.cap-snapshot-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  padding: 6px 0 2px;
+}
+
+.cap-stat {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+}
+
+.cap-stat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cap-stat-label {
+  opacity: 0.55;
+}
+
+.cap-stat-val {
+  font-weight: 600;
+  color: #f5f6f7;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    SKELETON LOADING
 ═══════════════════════════════════════════════════════════════ */

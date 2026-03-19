@@ -12,8 +12,6 @@ import {
   RadialBarChart,
   RadialBar,
   Cell,
-  AreaChart,
-  Area,
   ReferenceLine,
 } from "recharts";
 import type { Device } from "../types/site";
@@ -94,21 +92,6 @@ function PfGauge({
 const AREA_TEMP_MOCK = [35.2, 38.1, 36.7, 34.5];
 const MODULE_TEMP_MOCK = [42.1, 45.3, 43.8, 41.2, 44.6, 43.0];
 const FAN_SPEED_MOCK = [8.5, 9.2];
-
-function generateCapacityMock(baseCap: number) {
-  const now = Date.now();
-  return Array.from({ length: 24 }, (_, i) => {
-    const t = new Date(now - (23 - i) * 3600 * 1000);
-    const time = `${String(t.getHours()).padStart(2, "0")}:00`;
-    const opRatio = 0.55 + 0.3 * Math.abs(Math.sin(i * 0.45 + 1.2));
-    const operating = Math.round(baseCap * opRatio * 10) / 10;
-    const rpRatio = 0.68 + 0.2 * Math.abs(Math.sin(i * 0.6 + 2.1));
-    const reactive = Math.round(operating * rpRatio * 10) / 10;
-    const idle = Math.round((operating - reactive) * 10) / 10;
-    const margin = Math.round((baseCap - operating) * 10) / 10;
-    return { time, reactive, idle, margin };
-  });
-}
 
 export default function DeviceDetailCharts({ device }: { device: Device }) {
   const voltageData = [
@@ -195,13 +178,15 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
     RPM: Math.round(v),
   }));
 
-  const baseCap = device.totalCapacity ?? device.capacity ?? 200;
-  const capacityMock = generateCapacityMock(baseCap);
-
-  const isCapacityMock =
-    device.totalCapacity == null &&
-    device.operatingCapacity == null &&
-    device.reactivePowerCapacity == null;
+  const capUnit = device.model === "paf" ? "A" : "kvar";
+  const totalCap = device.totalCapacity ?? device.capacity ?? 0;
+  const opCap = device.operatingCapacity ?? 0;
+  const rpCap = device.reactivePowerCapacity ?? 0;
+  const margin = device.availableMargin ?? (totalCap - opCap);
+  const idleCap = Math.max(0, opCap - rpCap);
+  const rpPct = totalCap > 0 ? (rpCap / totalCap) * 100 : 0;
+  const idlePct = totalCap > 0 ? (idleCap / totalCap) * 100 : 0;
+  const marginPct = totalCap > 0 ? (margin / totalCap) * 100 : 0;
 
   return (
     <div className="device-charts-grid">
@@ -550,92 +535,59 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
         </ResponsiveContainer>
       </div>
 
-      {/* Capacity Stacked Area Chart */}
+      {/* Capacity Snapshot */}
       <div className="chart-card chart-card-wide">
         <h3 className="chart-title">
-          용량 현황 (kVAR) — 총용량 {baseCap} kVAR
-          {isCapacityMock ? (
-            <span className="chart-title-mock"> — 샘플 데이터</span>
-          ) : null}
+          용량 현황 ({capUnit})
+          <span className="chart-title-sub"> — 총용량 {totalCap} {capUnit}</span>
         </h3>
-        <ResponsiveContainer width="100%" height={260}>
-          <AreaChart
-            data={capacityMock}
-            margin={{ top: 8, right: 16, left: -4, bottom: 0 }}
-          >
-            <defs>
-              <linearGradient id="gReactive" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10B981" stopOpacity={0.55} />
-                <stop offset="95%" stopColor="#10B981" stopOpacity={0.1} />
-              </linearGradient>
-              <linearGradient id="gIdle" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.45} />
-                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.05} />
-              </linearGradient>
-              <linearGradient id="gMargin" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#475569" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#475569" stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="rgba(255,255,255,0.06)"
-            />
-            <XAxis
-              dataKey="time"
-              stroke="rgba(255,255,255,0.35)"
-              fontSize={11}
-              tickLine={false}
-              interval="preserveStartEnd"
-            />
-            <YAxis
-              stroke="rgba(255,255,255,0.35)"
-              fontSize={11}
-              tickLine={false}
-              unit=" kVAR"
-            />
-            <Tooltip
-              contentStyle={TOOLTIP_STYLE}
-              formatter={(v, name) => [`${v} kVAR`, name]}
-            />
-            <Legend
-              wrapperStyle={{ fontSize: 12, paddingTop: 4 }}
-              iconType="circle"
-              iconSize={8}
-            />
-            <Area
-              type="monotone"
-              dataKey="reactive"
-              name="무효전력 발생"
-              stackId="cap"
-              stroke="#10B981"
-              fill="url(#gReactive)"
-              dot={false}
-            />
-            <Area
-              type="monotone"
-              dataKey="idle"
-              name="운전 여유"
-              stackId="cap"
-              stroke="#3B82F6"
-              fill="url(#gIdle)"
-              dot={false}
-            />
-            <Area
-              type="monotone"
-              dataKey="margin"
-              name="여유 마진"
-              stackId="cap"
-              stroke="#64748B"
-              fill="url(#gMargin)"
-              dot={false}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-        <div className="capacity-legend-row">
-          <span className="cap-badge cap-reactive">무효전력 발생용량 (operatingCapacity × 가동률)</span>
-          <span className="cap-badge cap-idle">운전 여유 (operatingCapacity − 무효전력)</span>
-          <span className="cap-badge cap-margin">여유 마진 (totalCapacity − operatingCapacity)</span>
+        <div className="cap-snapshot-bar-wrap">
+          <div className="cap-snapshot-bar">
+            {rpPct > 0 && (
+              <div
+                className="cap-seg-bar cap-reactive"
+                style={{ width: `${rpPct}%` }}
+                title={`무효전력 발생: ${rpCap} ${capUnit}`}
+              />
+            )}
+            {idlePct > 0 && (
+              <div
+                className="cap-seg-bar cap-idle"
+                style={{ width: `${idlePct}%` }}
+                title={`운전 여유: ${idleCap.toFixed(1)} ${capUnit}`}
+              />
+            )}
+            {marginPct > 0 && (
+              <div
+                className="cap-seg-bar cap-margin"
+                style={{ width: `${marginPct}%` }}
+                title={`여유 마진: ${margin} ${capUnit}`}
+              />
+            )}
+          </div>
+          <div className="cap-snapshot-pct">{(rpPct + idlePct).toFixed(1)}% 가동</div>
+        </div>
+        <div className="cap-snapshot-stats">
+          <div className="cap-stat">
+            <span className="cap-stat-dot" style={{ background: "#10B981" }} />
+            <span className="cap-stat-label">무효전력 발생</span>
+            <span className="cap-stat-val">{rpCap} {capUnit}</span>
+          </div>
+          <div className="cap-stat">
+            <span className="cap-stat-dot" style={{ background: "#3B82F6" }} />
+            <span className="cap-stat-label">운전 용량</span>
+            <span className="cap-stat-val">{opCap} {capUnit}</span>
+          </div>
+          <div className="cap-stat">
+            <span className="cap-stat-dot" style={{ background: "#64748B" }} />
+            <span className="cap-stat-label">여유 마진</span>
+            <span className="cap-stat-val">{margin.toFixed ? margin.toFixed(1) : margin} {capUnit}</span>
+          </div>
+          <div className="cap-stat">
+            <span className="cap-stat-dot" style={{ background: "rgba(255,255,255,0.2)" }} />
+            <span className="cap-stat-label">총 용량</span>
+            <span className="cap-stat-val">{totalCap} {capUnit}</span>
+          </div>
         </div>
       </div>
     </div>
