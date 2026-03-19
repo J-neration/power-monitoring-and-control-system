@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "PrimeSolution PMCS",
   description: "Power Monitoring and Control System",
-  icons: { icon: "/logo.png" },
+  icons: { icon: "/favicon.png" },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

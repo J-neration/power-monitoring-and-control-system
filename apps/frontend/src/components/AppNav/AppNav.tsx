@@ -10,7 +10,14 @@ const NAV_ITEMS = [
     href: "/",
     label: "Dashboard",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" />
         <path d="M9 21V12h6v9" />
       </svg>
@@ -23,7 +30,14 @@ const ACCOUNT_ITEMS = [
     href: "/profile",
     label: "Profile",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <circle cx="12" cy="8" r="4" />
         <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
       </svg>
@@ -44,9 +58,18 @@ export default function AppNav() {
       {/* Logo */}
       <Link href="/" className="app-nav-logo">
         <div className="app-nav-logo-icon">
-          <Image src="/logo.png" alt="PrimeSolution" width={28} height={13} priority />
+          <Image
+            src="/logo.png"
+            alt="PrimeSolution"
+            width={28}
+            height={13}
+            priority
+          />
         </div>
-        <span className="app-nav-logo-text">PrimeSolution</span>
+        <span className="app-nav-logo-text">
+          PrimeSolution
+          <span className="app-nav-beta-badge">BETA</span>
+        </span>
       </Link>
 
       {/* Main nav items */}
@@ -81,7 +104,14 @@ export default function AppNav() {
       {/* Clock at bottom */}
       <div className="app-nav-footer">
         <span className="app-nav-footer-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <circle cx="12" cy="12" r="10" />
             <path d="M12 6v6l4 2" />
           </svg>

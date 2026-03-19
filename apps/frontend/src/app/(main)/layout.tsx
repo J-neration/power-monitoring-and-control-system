@@ -37,7 +37,10 @@ async function getCurrentUser(): Promise<AuthUser | null> {
   }
 }
 
-async function getSiteName(siteId: string, token: string): Promise<string | null> {
+async function getSiteName(
+  siteId: string,
+  token: string,
+): Promise<string | null> {
   const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
   try {
     const res = await fetch(`${apiBase}/sites/${encodeURIComponent(siteId)}`, {
@@ -63,7 +66,11 @@ function resolveDisplayName(user: AuthUser, siteName: string | null): string {
   return user.username;
 }
 
-export default async function MainLayout({ children }: { children: ReactNode }) {
+export default async function MainLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const token = cookies().get("pmcs_token")?.value;
   const user = await getCurrentUser();
 
@@ -86,6 +93,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
             priority
           />
           <span className="global-logo-text">PRIMESOLUTION</span>
+          <span className="global-logo-text-beta">BETA</span>
         </Link>
 
         <div className="global-header-right">
