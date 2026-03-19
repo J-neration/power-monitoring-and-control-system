@@ -147,6 +147,11 @@ const seed = async () => {
         const rpCap = r(opCap * rpRatio, 1);
         const margin = r(totalCap - opCap, 1);
 
+        const wTemp = wave(h, phase + 3.0, 0.04);
+        const areaBase = [34, 36, 35, 33];
+        const modBase  = [40, 44, 42, 39, 43, 41];
+        const fanBase  = [7.5, 8.8];
+
         return {
           installationId: inst.id,
           recordedAt: t,
@@ -179,6 +184,9 @@ const seed = async () => {
           compS: d.compS != null ? r(d.compS * wI, 0) : null,
           uncompH: d.uncompH != null ? r(d.uncompH * wI, 0) : null,
           compH: d.compH != null ? r(d.compH * wI, 0) : null,
+          areaTemp:   areaBase.map((b) => r(b * wTemp, 1)),
+          moduleTemp: modBase.map((b) => r(b * wTemp, 1)),
+          fanSpeed:   fanBase.map((b) => r(b * wTemp, 1)),
           totalCapacity: totalCap,
           operatingCapacity: opCap,
           reactivePowerCapacity: rpCap,

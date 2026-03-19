@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   AreaChart,
   Area,
@@ -9,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  ReferenceLine,
 } from "recharts";
 import type { TelemetryReading } from "../types/site";
 
@@ -20,11 +22,42 @@ const TOOLTIP_STYLE = {
 };
 
 const CHART_H = 220;
+const AXIS = { stroke: "rgba(255,255,255,0.35)", fontSize: 11, tickLine: false } as const;
+const GRID = { strokeDasharray: "3 3", stroke: "rgba(255,255,255,0.06)" } as const;
+const LEG  = { wrapperStyle: { fontSize: 12 }, iconType: "circle" as const, iconSize: 8 };
 
-function fmt(iso: string) {
+const fmtUnit = (unit: string) => (v: unknown) => [`${v} ${unit}`] as [string];
+const fmtUnitNamed = (unit: string) => (v: unknown, name: unknown) =>
+  [`${v} ${unit}`, String(name)] as [string, string];
+
+function fmtTime(iso: string) {
   const d = new Date(iso);
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
+
+function Grads({ defs }: { defs: { id: string; color: string; opacity?: number }[] }) {
+  return (
+    <defs>
+      {defs.map(({ id, color, opacity = 0.3 }) => (
+        <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%"  stopColor={color} stopOpacity={opacity} />
+          <stop offset="95%" stopColor={color} stopOpacity={0} />
+        </linearGradient>
+      ))}
+    </defs>
+  );
+}
+
+const TEMP_COLORS = ["#F97316", "#EC4899", "#8B5CF6", "#3B82F6", "#10B981", "#F59E0B"];
+
+type SubTab = "pf" | "thd" | "capacity" | "temp";
+
+const SUB_TABS: { key: SubTab; label: string; color: string }[] = [
+  { key: "pf",       label: "PF",       color: "#10B981" },
+  { key: "thd",      label: "THD",      color: "#F59E0B" },
+  { key: "capacity", label: "Capacity", color: "#8B5CF6" },
+  { key: "temp",     label: "Temp",     color: "#F97316" },
+];
 
 type Props = {
   readings: TelemetryReading[];
@@ -33,6 +66,8 @@ type Props = {
 };
 
 export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
+  const [subTab, setSubTab] = useState<SubTab>("pf");
+
   if (readings.length === 0) {
     return (
       <div className="chart-card chart-card-wide history-empty">
@@ -43,236 +78,341 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
   }
 
   const capUnit = model === "paf" ? "A" : "kvar";
+  const maxAreaSensors  = Math.max(...readings.map((r) => r.areaTemp?.length ?? 0), 0);
+  const maxModSensors   = Math.max(...readings.map((r) => r.moduleTemp?.length ?? 0), 0);
+  const maxFans         = Math.max(...readings.map((r) => r.fanSpeed?.length ?? 0), 0);
 
   const data = readings.map((r) => {
     const totalCap = r.totalCapacity ?? null;
-    const opCap = r.operatingCapacity ?? null;
-    const rpCap = r.reactivePowerCapacity ?? null;
-    const margin = r.availableMargin ?? (totalCap != null && opCap != null ? totalCap - opCap : null);
-    const idleCap = opCap != null && rpCap != null ? Math.max(0, opCap - rpCap) : null;
+    const opCap    = r.operatingCapacity ?? null;
+    const rpCap    = r.reactivePowerCapacity ?? null;
+    const margin   = r.availableMargin ?? (totalCap != null && opCap != null ? totalCap - opCap : null);
+    const idleCap  = opCap != null && rpCap != null ? Math.max(0, opCap - rpCap) : null;
+    const pct = (v: number | null | undefined) => v != null ? Math.round(v * 1000) / 10 : null;
 
-    return {
-      time: fmt(r.recordedAt),
-      vL1: r.vL1 ?? null,
-      vL2: r.vL2 ?? null,
-      vL3: r.vL3 ?? null,
+    const row: Record<string, unknown> = {
+      time: fmtTime(r.recordedAt),
+      vL1: r.vL1 ?? null, vL2: r.vL2 ?? null, vL3: r.vL3 ?? null,
       loadCurrentL1: r.loadCurrentL1 ?? null,
       loadCurrentL2: r.loadCurrentL2 ?? null,
       loadCurrentL3: r.loadCurrentL3 ?? null,
-      gridCurrentL1: r.gridCurrentL1 ?? null,
-      gridCurrentL2: r.gridCurrentL2 ?? null,
-      gridCurrentL3: r.gridCurrentL3 ?? null,
-      thdLoad1: r.loadCurrentTHDL1 ?? null,
-      thdLoad2: r.loadCurrentTHDL2 ?? null,
-      thdLoad3: r.loadCurrentTHDL3 ?? null,
-      thdGrid1: r.gridCurrentTHDL1 ?? null,
-      thdGrid2: r.gridCurrentTHDL2 ?? null,
-      thdGrid3: r.gridCurrentTHDL3 ?? null,
-      tpf1: r.tpf1 != null ? Math.round(r.tpf1 * 1000) / 10 : null,
-      tpf2: r.tpf2 != null ? Math.round(r.tpf2 * 1000) / 10 : null,
-      uncompQ: r.uncompQ ?? null,
-      compQ: r.compQ ?? null,
-      reactive: rpCap,
-      idle: idleCap,
-      margin: margin,
+      thdBeforeL1: r.loadCurrentTHDL1 ?? null, thdAfterL1: r.gridCurrentTHDL1 ?? null,
+      thdBeforeL2: r.loadCurrentTHDL2 ?? null, thdAfterL2: r.gridCurrentTHDL2 ?? null,
+      thdBeforeL3: r.loadCurrentTHDL3 ?? null, thdAfterL3: r.gridCurrentTHDL3 ?? null,
+      tpfBefore: pct(r.tpf1), tpfAfter: pct(r.tpf2),
+      dpfBefore: pct(r.dpf1), dpfAfter: pct(r.dpf2),
+      sBefore: r.uncompS ?? null, sAfter: r.compS ?? null,
+      pBefore: r.uncompP ?? null, pAfter: r.compP ?? null,
+      qBefore: r.uncompQ ?? null, qAfter: r.compQ ?? null,
+      hBefore: r.uncompH ?? null, hAfter: r.compH ?? null,
+      reactive: rpCap, idle: idleCap, margin,
     };
+
+    for (let i = 0; i < maxAreaSensors; i++) {
+      row[`area${i}`] = r.areaTemp?.[i] ?? null;
+    }
+    for (let i = 0; i < maxModSensors; i++) {
+      row[`mod${i}`] = r.moduleTemp?.[i] ?? null;
+    }
+    for (let i = 0; i < maxFans; i++) {
+      row[`fan${i}`] = r.fanSpeed?.[i] ?? null;
+    }
+
+    return row;
   });
 
   const hasCapData = data.some((d) => d.reactive != null || d.idle != null);
 
   return (
-    <div className="device-charts-grid">
-      {/* 전압 트렌드 */}
-      <div className="chart-card chart-card-wide">
-        <h3 className="chart-title">
-          전압 트렌드 (V)
-          <span className="chart-title-sub"> — 최근 {hours}시간 · {readings.length}개 수신</span>
-        </h3>
-        <ResponsiveContainer width="100%" height={CHART_H}>
-          <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
-            <defs>
-              <linearGradient id="gVL1" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="gVL2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="gVL3" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-            <XAxis dataKey="time" stroke="rgba(255,255,255,0.35)" fontSize={11} tickLine={false} interval="preserveStartEnd" />
-            <YAxis stroke="rgba(255,255,255,0.35)" fontSize={11} tickLine={false} domain={["auto", "auto"]} unit="V" />
-            <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => [`${v} V`]} />
-            <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-            <Area type="monotone" dataKey="vL1" name="L1" stroke="#3B82F6" fill="url(#gVL1)" dot={false} connectNulls />
-            <Area type="monotone" dataKey="vL2" name="L2" stroke="#F59E0B" fill="url(#gVL2)" dot={false} connectNulls />
-            <Area type="monotone" dataKey="vL3" name="L3" stroke="#10B981" fill="url(#gVL3)" dot={false} connectNulls />
-          </AreaChart>
-        </ResponsiveContainer>
+    <>
+      {/* ── Sub-tab bar ─────────────────────────────────── */}
+      <div className="analytics-subtab-bar">
+        {SUB_TABS.map(({ key, label, color }) => (
+          <button
+            key={key}
+            type="button"
+            className={`analytics-subtab${subTab === key ? " active" : ""}`}
+            style={{ "--tab-accent": color } as React.CSSProperties}
+            onClick={() => setSubTab(key)}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
-      {/* 부하 전류 트렌드 */}
-      <div className="chart-card chart-card-wide">
-        <h3 className="chart-title">부하 전류 트렌드 (A)</h3>
-        <ResponsiveContainer width="100%" height={CHART_H}>
-          <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
-            <defs>
-              <linearGradient id="gIL1" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="gIL2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="gIL3" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-            <XAxis dataKey="time" stroke="rgba(255,255,255,0.35)" fontSize={11} tickLine={false} interval="preserveStartEnd" />
-            <YAxis stroke="rgba(255,255,255,0.35)" fontSize={11} tickLine={false} domain={["auto", "auto"]} unit="A" />
-            <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => [`${v} A`]} />
-            <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-            <Area type="monotone" dataKey="loadCurrentL1" name="L1" stroke="#3B82F6" fill="url(#gIL1)" dot={false} connectNulls />
-            <Area type="monotone" dataKey="loadCurrentL2" name="L2" stroke="#F59E0B" fill="url(#gIL2)" dot={false} connectNulls />
-            <Area type="monotone" dataKey="loadCurrentL3" name="L3" stroke="#10B981" fill="url(#gIL3)" dot={false} connectNulls />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      <div className="device-charts-grid">
 
-      {/* THD 트렌드 */}
-      <div className="chart-card chart-card-wide">
-        <h3 className="chart-title">부하 전류 THD 트렌드 (%)</h3>
-        <ResponsiveContainer width="100%" height={CHART_H}>
-          <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
-            <defs>
-              <linearGradient id="gT1" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="gT2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="gT3" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#EC4899" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#EC4899" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-            <XAxis dataKey="time" stroke="rgba(255,255,255,0.35)" fontSize={11} tickLine={false} interval="preserveStartEnd" />
-            <YAxis stroke="rgba(255,255,255,0.35)" fontSize={11} tickLine={false} domain={["auto", "auto"]} unit="%" />
-            <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => [`${v}%`]} />
-            <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-            <Area type="monotone" dataKey="thdLoad1" name="L1" stroke="#F59E0B" fill="url(#gT1)" dot={false} connectNulls />
-            <Area type="monotone" dataKey="thdLoad2" name="L2" stroke="#6366F1" fill="url(#gT2)" dot={false} connectNulls />
-            <Area type="monotone" dataKey="thdLoad3" name="L3" stroke="#EC4899" fill="url(#gT3)" dot={false} connectNulls />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+        {/* ══════════════════════════════════════════════════
+            PF — S, P, Q, H, TPF, DPF
+           ══════════════════════════════════════════════════ */}
+        {subTab === "pf" && (
+          <>
+            {/* S */}
+            <div className="chart-card chart-card-wide">
+              <h3 className="chart-title">S (kVA) — Before / After</h3>
+              <ResponsiveContainer width="100%" height={CHART_H}>
+                <AreaChart data={data} margin={{ top: 8, right: 16, left: -4, bottom: 0 }}>
+                  <Grads defs={[{ id: "sB", color: "#64748B" }, { id: "sA", color: "#8B5CF6" }]} />
+                  <CartesianGrid {...GRID} />
+                  <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
+                  <YAxis {...AXIS} domain={["auto", "auto"]} unit=" kVA" />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("kVA")} />
+                  <Legend {...LEG} />
+                  <Area type="monotone" dataKey="sBefore" name="Before" stroke="#64748B" strokeDasharray="4 3" fill="url(#sB)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="sAfter"  name="After"  stroke="#8B5CF6" fill="url(#sA)" dot={false} connectNulls />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
 
-      {/* 역률 트렌드 */}
-      <div className="chart-card chart-card-wide">
-        <h3 className="chart-title">역률 트렌드 (%) — TPF 보상 전후</h3>
-        <ResponsiveContainer width="100%" height={CHART_H}>
-          <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
-            <defs>
-              <linearGradient id="gPF1" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#64748B" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#64748B" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="gPF2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-            <XAxis dataKey="time" stroke="rgba(255,255,255,0.35)" fontSize={11} tickLine={false} interval="preserveStartEnd" />
-            <YAxis stroke="rgba(255,255,255,0.35)" fontSize={11} tickLine={false} domain={[0, 100]} unit="%" />
-            <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => [`${v}%`]} />
-            <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-            <Area type="monotone" dataKey="tpf1" name="보상 전" stroke="#64748B" fill="url(#gPF1)" dot={false} connectNulls />
-            <Area type="monotone" dataKey="tpf2" name="보상 후" stroke="#10B981" fill="url(#gPF2)" dot={false} connectNulls />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+            {/* P */}
+            <div className="chart-card chart-card-wide">
+              <h3 className="chart-title">P (kW) — Before / After</h3>
+              <ResponsiveContainer width="100%" height={CHART_H}>
+                <AreaChart data={data} margin={{ top: 8, right: 16, left: -4, bottom: 0 }}>
+                  <Grads defs={[{ id: "pB", color: "#64748B" }, { id: "pA", color: "#3B82F6" }]} />
+                  <CartesianGrid {...GRID} />
+                  <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
+                  <YAxis {...AXIS} domain={["auto", "auto"]} unit=" kW" />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("kW")} />
+                  <Legend {...LEG} />
+                  <Area type="monotone" dataKey="pBefore" name="Before" stroke="#64748B" strokeDasharray="4 3" fill="url(#pB)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="pAfter"  name="After"  stroke="#3B82F6" fill="url(#pA)" dot={false} connectNulls />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
 
-      {/* 무효전력 트렌드 */}
-      <div className="chart-card chart-card-wide">
-        <h3 className="chart-title">무효전력 트렌드 (kvar) — 보상 전후</h3>
-        <ResponsiveContainer width="100%" height={CHART_H}>
-          <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
-            <defs>
-              <linearGradient id="gQ1" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#64748B" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#64748B" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="gQ2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-            <XAxis dataKey="time" stroke="rgba(255,255,255,0.35)" fontSize={11} tickLine={false} interval="preserveStartEnd" />
-            <YAxis stroke="rgba(255,255,255,0.35)" fontSize={11} tickLine={false} domain={["auto", "auto"]} unit=" kvar" />
-            <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => [`${v} kvar`]} />
-            <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-            <Area type="monotone" dataKey="uncompQ" name="보상 전" stroke="#64748B" fill="url(#gQ1)" dot={false} connectNulls />
-            <Area type="monotone" dataKey="compQ" name="보상 후" stroke="#10B981" fill="url(#gQ2)" dot={false} connectNulls />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+            {/* Q */}
+            <div className="chart-card chart-card-wide">
+              <h3 className="chart-title">Q (kvar) — Before / After</h3>
+              <ResponsiveContainer width="100%" height={CHART_H}>
+                <AreaChart data={data} margin={{ top: 8, right: 16, left: -4, bottom: 0 }}>
+                  <Grads defs={[{ id: "qB", color: "#64748B" }, { id: "qA", color: "#10B981" }]} />
+                  <CartesianGrid {...GRID} />
+                  <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
+                  <YAxis {...AXIS} domain={["auto", "auto"]} unit=" kvar" />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("kvar")} />
+                  <Legend {...LEG} />
+                  <Area type="monotone" dataKey="qBefore" name="Before" stroke="#64748B" strokeDasharray="4 3" fill="url(#qB)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="qAfter"  name="After"  stroke="#10B981" fill="url(#qA)" dot={false} connectNulls />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
 
-      {/* 용량 현황 트렌드 */}
-      {hasCapData && (
-        <div className="chart-card chart-card-wide">
-          <h3 className="chart-title">
-            용량 현황 트렌드 ({capUnit})
-            <span className="chart-title-sub"> — 최근 {hours}시간</span>
-          </h3>
-          <ResponsiveContainer width="100%" height={CHART_H + 20}>
-            <AreaChart data={data} margin={{ top: 8, right: 16, left: -4, bottom: 0 }}>
-              <defs>
-                <linearGradient id="hgReactive" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.55} />
-                  <stop offset="95%" stopColor="#10B981" stopOpacity={0.05} />
-                </linearGradient>
-                <linearGradient id="hgIdle" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.45} />
-                  <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.03} />
-                </linearGradient>
-                <linearGradient id="hgMargin" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#475569" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#475569" stopOpacity={0.03} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-              <XAxis dataKey="time" stroke="rgba(255,255,255,0.35)" fontSize={11} tickLine={false} interval="preserveStartEnd" />
-              <YAxis stroke="rgba(255,255,255,0.35)" fontSize={11} tickLine={false} unit={` ${capUnit}`} />
-              <Tooltip
-                contentStyle={TOOLTIP_STYLE}
-                formatter={(v: number, name: string) => [`${v} ${capUnit}`, name]}
-              />
-              <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-              <Area type="monotone" dataKey="reactive" name="무효전력 발생" stackId="cap" stroke="#10B981" fill="url(#hgReactive)" dot={false} connectNulls />
-              <Area type="monotone" dataKey="idle"     name="운전 여유"    stackId="cap" stroke="#3B82F6" fill="url(#hgIdle)"     dot={false} connectNulls />
-              <Area type="monotone" dataKey="margin"   name="여유 마진"    stackId="cap" stroke="#64748B" fill="url(#hgMargin)"   dot={false} connectNulls />
-            </AreaChart>
-          </ResponsiveContainer>
-          <div className="capacity-legend-row">
-            <span className="cap-badge cap-reactive">무효전력 발생용량</span>
-            <span className="cap-badge cap-idle">운전 여유 (운전 − 무효전력)</span>
-            <span className="cap-badge cap-margin">여유 마진 (총용량 − 운전)</span>
+            {/* H */}
+            <div className="chart-card chart-card-wide">
+              <h3 className="chart-title">H (kvar) — Before / After</h3>
+              <ResponsiveContainer width="100%" height={CHART_H}>
+                <AreaChart data={data} margin={{ top: 8, right: 16, left: -4, bottom: 0 }}>
+                  <Grads defs={[{ id: "hB", color: "#64748B" }, { id: "hA", color: "#F59E0B" }]} />
+                  <CartesianGrid {...GRID} />
+                  <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
+                  <YAxis {...AXIS} domain={["auto", "auto"]} unit=" kvar" />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("kvar")} />
+                  <Legend {...LEG} />
+                  <Area type="monotone" dataKey="hBefore" name="Before" stroke="#64748B" strokeDasharray="4 3" fill="url(#hB)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="hAfter"  name="After"  stroke="#F59E0B" fill="url(#hA)" dot={false} connectNulls />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* TPF */}
+            <div className="chart-card chart-card-wide">
+              <h3 className="chart-title">TPF (%) — Before / After</h3>
+              <ResponsiveContainer width="100%" height={CHART_H}>
+                <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
+                  <Grads defs={[{ id: "tpfB", color: "#64748B" }, { id: "tpfA", color: "#10B981" }]} />
+                  <CartesianGrid {...GRID} />
+                  <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
+                  <YAxis {...AXIS} domain={[0, 100]} unit="%" />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("%")} />
+                  <Legend {...LEG} />
+                  <Area type="monotone" dataKey="tpfBefore" name="Before" stroke="#64748B" strokeDasharray="4 3" fill="url(#tpfB)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="tpfAfter"  name="After"  stroke="#10B981" fill="url(#tpfA)" dot={false} connectNulls />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* DPF */}
+            <div className="chart-card chart-card-wide">
+              <h3 className="chart-title">DPF (%) — Before / After</h3>
+              <ResponsiveContainer width="100%" height={CHART_H}>
+                <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
+                  <Grads defs={[{ id: "dpfB", color: "#64748B" }, { id: "dpfA", color: "#6366F1" }]} />
+                  <CartesianGrid {...GRID} />
+                  <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
+                  <YAxis {...AXIS} domain={[0, 100]} unit="%" />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("%")} />
+                  <Legend {...LEG} />
+                  <Area type="monotone" dataKey="dpfBefore" name="Before" stroke="#64748B" strokeDasharray="4 3" fill="url(#dpfB)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="dpfAfter"  name="After"  stroke="#6366F1" fill="url(#dpfA)" dot={false} connectNulls />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            THD
+           ══════════════════════════════════════════════════ */}
+        {subTab === "thd" && (
+          <div className="chart-card chart-card-wide">
+            <h3 className="chart-title">
+              Current THD (%) — Before / After
+              <span className="chart-title-sub">last {hours}h</span>
+            </h3>
+            <ResponsiveContainer width="100%" height={CHART_H + 40}>
+              <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
+                <Grads defs={[
+                  { id: "tB1", color: "#3B82F6", opacity: 0.18 },
+                  { id: "tA1", color: "#3B82F6", opacity: 0.35 },
+                  { id: "tB2", color: "#F59E0B", opacity: 0.18 },
+                  { id: "tA2", color: "#F59E0B", opacity: 0.35 },
+                  { id: "tB3", color: "#EC4899", opacity: 0.18 },
+                  { id: "tA3", color: "#EC4899", opacity: 0.35 },
+                ]} />
+                <CartesianGrid {...GRID} />
+                <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
+                <YAxis {...AXIS} domain={["auto", "auto"]} unit="%" />
+                <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("%")} />
+                <Legend {...LEG} />
+                <Area type="monotone" dataKey="thdBeforeL1" name="L1 Before" stroke="#3B82F6" strokeDasharray="4 3" strokeOpacity={0.6} fill="url(#tB1)" dot={false} connectNulls />
+                <Area type="monotone" dataKey="thdAfterL1"  name="L1 After"  stroke="#3B82F6" fill="url(#tA1)" dot={false} connectNulls />
+                <Area type="monotone" dataKey="thdBeforeL2" name="L2 Before" stroke="#F59E0B" strokeDasharray="4 3" strokeOpacity={0.6} fill="url(#tB2)" dot={false} connectNulls />
+                <Area type="monotone" dataKey="thdAfterL2"  name="L2 After"  stroke="#F59E0B" fill="url(#tA2)" dot={false} connectNulls />
+                <Area type="monotone" dataKey="thdBeforeL3" name="L3 Before" stroke="#EC4899" strokeDasharray="4 3" strokeOpacity={0.6} fill="url(#tB3)" dot={false} connectNulls />
+                <Area type="monotone" dataKey="thdAfterL3"  name="L3 After"  stroke="#EC4899" fill="url(#tA3)" dot={false} connectNulls />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            Capacity
+           ══════════════════════════════════════════════════ */}
+        {subTab === "capacity" && (
+          <>
+            {hasCapData ? (
+              <div className="chart-card chart-card-wide">
+                <h3 className="chart-title">
+                  Capacity Trend ({capUnit})
+                  <span className="chart-title-sub">last {hours}h</span>
+                </h3>
+                <ResponsiveContainer width="100%" height={CHART_H + 20}>
+                  <AreaChart data={data} margin={{ top: 8, right: 16, left: -4, bottom: 0 }}>
+                    <Grads defs={[
+                      { id: "capR", color: "#10B981", opacity: 0.5 },
+                      { id: "capI", color: "#3B82F6", opacity: 0.4 },
+                      { id: "capM", color: "#475569", opacity: 0.35 },
+                    ]} />
+                    <CartesianGrid {...GRID} />
+                    <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
+                    <YAxis {...AXIS} unit={` ${capUnit}`} />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnitNamed(capUnit)} />
+                    <Legend {...LEG} />
+                    <Area type="monotone" dataKey="reactive" name="Reactive Power Output" stackId="cap" stroke="#10B981" fill="url(#capR)" dot={false} connectNulls />
+                    <Area type="monotone" dataKey="idle"     name="Operating Reserve"     stackId="cap" stroke="#3B82F6" fill="url(#capI)" dot={false} connectNulls />
+                    <Area type="monotone" dataKey="margin"   name="Available Margin"      stackId="cap" stroke="#64748B" fill="url(#capM)" dot={false} connectNulls />
+                  </AreaChart>
+                </ResponsiveContainer>
+                <div className="capacity-legend-row">
+                  <span className="cap-badge cap-reactive">Reactive Power Output</span>
+                  <span className="cap-badge cap-idle">Operating Reserve</span>
+                  <span className="cap-badge cap-margin">Available Margin</span>
+                </div>
+              </div>
+            ) : (
+              <div className="chart-card chart-card-wide history-empty">
+                <p>용량 데이터가 없습니다.</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            Temp — Area Temp / Module Temp / Fan Speed
+           ══════════════════════════════════════════════════ */}
+        {subTab === "temp" && (
+          <>
+            {/* Area Temperature */}
+            <div className="chart-card chart-card-wide">
+              <h3 className="chart-title">
+                Area Temperature (°C)
+                <span className="chart-title-sub">last {hours}h</span>
+              </h3>
+              <ResponsiveContainer width="100%" height={CHART_H}>
+                <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
+                  <Grads defs={Array.from({ length: maxAreaSensors }, (_, i) => ({
+                    id: `ga${i}`, color: TEMP_COLORS[i % TEMP_COLORS.length],
+                  }))} />
+                  <CartesianGrid {...GRID} />
+                  <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
+                  <YAxis {...AXIS} domain={["auto", "auto"]} unit="°C" />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("°C")} />
+                  <Legend {...LEG} />
+                  <ReferenceLine y={38} stroke="#EF4444" strokeDasharray="4 3" label={{ value: "38°C", fill: "#EF4444", fontSize: 10 }} />
+                  {Array.from({ length: maxAreaSensors }, (_, i) => (
+                    <Area key={i} type="monotone" dataKey={`area${i}`} name={`Zone ${i + 1}`}
+                      stroke={TEMP_COLORS[i % TEMP_COLORS.length]}
+                      fill={`url(#ga${i})`} dot={false} connectNulls />
+                  ))}
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Module Temperature */}
+            <div className="chart-card chart-card-wide">
+              <h3 className="chart-title">
+                Module Temperature (°C)
+                <span className="chart-title-sub">last {hours}h</span>
+              </h3>
+              <ResponsiveContainer width="100%" height={CHART_H}>
+                <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
+                  <Grads defs={Array.from({ length: maxModSensors }, (_, i) => ({
+                    id: `gm${i}`, color: TEMP_COLORS[i % TEMP_COLORS.length],
+                  }))} />
+                  <CartesianGrid {...GRID} />
+                  <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
+                  <YAxis {...AXIS} domain={["auto", "auto"]} unit="°C" />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("°C")} />
+                  <Legend {...LEG} />
+                  <ReferenceLine y={100} stroke="#EF4444" strokeDasharray="4 3" label={{ value: "100°C", fill: "#EF4444", fontSize: 10 }} />
+                  {Array.from({ length: maxModSensors }, (_, i) => (
+                    <Area key={i} type="monotone" dataKey={`mod${i}`} name={`Mod ${i + 1}`}
+                      stroke={TEMP_COLORS[i % TEMP_COLORS.length]}
+                      fill={`url(#gm${i})`} dot={false} connectNulls />
+                  ))}
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Fan Speed */}
+            <div className="chart-card chart-card-wide">
+              <h3 className="chart-title">
+                Fan Speed (m/s)
+                <span className="chart-title-sub">last {hours}h</span>
+              </h3>
+              <ResponsiveContainer width="100%" height={CHART_H}>
+                <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
+                  <Grads defs={Array.from({ length: maxFans }, (_, i) => ({
+                    id: `gf${i}`, color: TEMP_COLORS[i % TEMP_COLORS.length],
+                  }))} />
+                  <CartesianGrid {...GRID} />
+                  <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
+                  <YAxis {...AXIS} domain={["auto", "auto"]} unit=" m/s" />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("m/s")} />
+                  <Legend {...LEG} />
+                  {Array.from({ length: maxFans }, (_, i) => (
+                    <Area key={i} type="monotone" dataKey={`fan${i}`} name={`Fan ${i + 1}`}
+                      stroke={TEMP_COLORS[i % TEMP_COLORS.length]}
+                      fill={`url(#gf${i})`} dot={false} connectNulls />
+                  ))}
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </>
+        )}
+
+      </div>
+    </>
   );
 }
