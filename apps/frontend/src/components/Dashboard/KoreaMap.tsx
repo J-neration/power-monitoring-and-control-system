@@ -381,7 +381,7 @@ export default function KoreaMap({
           center={center}
           minZoom={MIN_ZOOM}
           maxZoom={MAX_ZOOM}
-          filterZoomEvent={(evt) => evt.type !== "wheel"}
+          {...{ filterZoomEvent: (evt: { type: string }) => evt.type !== "wheel" } as Record<string, unknown>}
           onMoveEnd={({ zoom: z, coordinates }) => {
             setZoom(z);
             setCenter(coordinates);
