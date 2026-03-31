@@ -10,8 +10,8 @@ RUN yarn install --frozen-lockfile
 
 COPY apps/backend/ apps/backend/
 
-# prisma generate needs DATABASE_URL at build time (does not actually connect)
-ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+# prisma generate reads .env file for DATABASE_URL (does not actually connect)
+RUN echo "DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder" > apps/backend/.env
 RUN yarn workspace @pmcs/backend build
 
 CMD ["yarn", "workspace", "@pmcs/backend", "start"]
