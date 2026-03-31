@@ -81,6 +81,17 @@ const ensureUnknownSiteAndInstallation = async (deviceId: string) => {
  * Parsing helpers
  * ========================================================= */
 
+const KNOWN_DEVICE_MODELS = new Set(["psta", "paf", "psvg"]);
+
+/** HMI가 보낸 model 문자열 정규화. 알려진 값만 허용, 나머지는 undefined (레지스트리/기본값 사용) */
+const modelFromPayload = (value: unknown): string | undefined => {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  const s = value.trim().toLowerCase();
+  return KNOWN_DEVICE_MODELS.has(s) ? s : undefined;
+};
+
 const toNumber = (value?: number | string) => {
   if (value === undefined || value === null) {
     return undefined;
@@ -288,6 +299,8 @@ export const deviceService = {
     operatingCapacity?: number | string;
     reactivePowerCapacity?: number | string;
     availableMargin?: number | string;
+    /** HMI 펌웨어가 보내는 장치 유형 (psta | paf | psvg). 있으면 레지스트리보다 우선 */
+    model?: string;
   }) => {
     const installationId = payload.device_id?.trim();
     if (!installationId) {
@@ -383,7 +396,10 @@ export const deviceService = {
       }
 
       // 2) Upsert Device telemetry by installationId
-      const model = reg?.installation.model ?? "psvg";
+      const model =
+        modelFromPayload(payload.model) ??
+        reg?.installation.model ??
+        "psvg";
       const deviceCapacity = reg?.installation.deviceCapacity ?? 200;
 
       // 공통 측정값 객체 (Device upsert + TelemetryRecord insert 양쪽에서 사용)

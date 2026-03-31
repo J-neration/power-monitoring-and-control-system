@@ -35,6 +35,23 @@ function fmtTime(iso: string) {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+/** 그래프 하단 1줄용: 2026.03.31 (범위가 나뉘면 2026.03.31 – 2026.04.01) */
+function formatDataDateRangeLabel(readings: TelemetryReading[]): string {
+  let minT = Infinity;
+  let maxT = -Infinity;
+  for (const r of readings) {
+    const t = new Date(r.recordedAt).getTime();
+    if (t < minT) minT = t;
+    if (t > maxT) maxT = t;
+  }
+  if (!Number.isFinite(minT)) return "";
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+  const a = fmt(new Date(minT));
+  const b = fmt(new Date(maxT));
+  return a === b ? a : `${a} – ${b}`;
+}
+
 function Grads({ defs }: { defs: { id: string; color: string; opacity?: number }[] }) {
   return (
     <defs>
@@ -88,10 +105,13 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
     const rpCap    = r.reactivePowerCapacity ?? null;
     const margin   = r.availableMargin ?? (totalCap != null && opCap != null ? totalCap - opCap : null);
     const idleCap  = opCap != null && rpCap != null ? Math.max(0, opCap - rpCap) : null;
-    const pct = (v: number | null | undefined) => v != null ? Math.round(v * 1000) / 10 : null;
+    /** TPF/DPF: API·DB는 퍼센트(0–100) 스케일 */
+    const pfPct = (v: number | null | undefined) =>
+      v != null ? Math.round(v * 10) / 10 : null;
 
     const row: Record<string, unknown> = {
       time: fmtTime(r.recordedAt),
+      recordedAt: r.recordedAt,
       vL1: r.vL1 ?? null, vL2: r.vL2 ?? null, vL3: r.vL3 ?? null,
       loadCurrentL1: r.loadCurrentL1 ?? null,
       loadCurrentL2: r.loadCurrentL2 ?? null,
@@ -99,8 +119,8 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
       thdBeforeL1: r.loadCurrentTHDL1 ?? null, thdAfterL1: r.gridCurrentTHDL1 ?? null,
       thdBeforeL2: r.loadCurrentTHDL2 ?? null, thdAfterL2: r.gridCurrentTHDL2 ?? null,
       thdBeforeL3: r.loadCurrentTHDL3 ?? null, thdAfterL3: r.gridCurrentTHDL3 ?? null,
-      tpfBefore: pct(r.tpf1), tpfAfter: pct(r.tpf2),
-      dpfBefore: pct(r.dpf1), dpfAfter: pct(r.dpf2),
+      tpfBefore: pfPct(r.tpf1), tpfAfter: pfPct(r.tpf2),
+      dpfBefore: pfPct(r.dpf1), dpfAfter: pfPct(r.dpf2),
       sBefore: r.uncompS ?? null, sAfter: r.compS ?? null,
       pBefore: r.uncompP ?? null, pAfter: r.compP ?? null,
       qBefore: r.uncompQ ?? null, qAfter: r.compQ ?? null,
@@ -122,6 +142,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
   });
 
   const hasCapData = data.some((d) => d.reactive != null || d.idle != null);
+  const dataDateLabel = formatDataDateRangeLabel(readings);
 
   return (
     <>
@@ -271,7 +292,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                   { id: "tA3", color: "#EC4899", opacity: 0.35 },
                 ]} />
                 <CartesianGrid {...GRID} />
-                <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
+                    <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
                 <YAxis {...AXIS} domain={["auto", "auto"]} unit="%" />
                 <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("%")} />
                 <Legend {...LEG} />
@@ -413,6 +434,12 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
         )}
 
       </div>
+
+      {dataDateLabel ? (
+        <p className="history-data-date-line" aria-label="데이터 기준 날짜">
+          {dataDateLabel}
+        </p>
+      ) : null}
     </>
   );
 }

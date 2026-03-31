@@ -22,7 +22,8 @@ const moduleStatusMeta: Record<number, { label: string; className: string }> = {
 
 const fmt = (v: unknown, digits = 2) => {
   if (v === null || v === undefined) return "-";
-  if (typeof v === "number") return Number.isFinite(v) ? v.toFixed(digits) : "-";
+  if (typeof v === "number")
+    return Number.isFinite(v) ? v.toFixed(digits) : "-";
   const s = String(v).trim();
   return s.length ? s : "-";
 };
@@ -75,15 +76,27 @@ export const StatusCard = ({ device }: StatusCardProps) => {
           <tbody>
             <tr>
               <td className="detail-metrics-label">Current (A)</td>
-              <td className="detail-metrics-value">{fmt(device.loadCurrentL1, 1)}</td>
-              <td className="detail-metrics-value">{fmt(device.loadCurrentL2, 1)}</td>
-              <td className="detail-metrics-value">{fmt(device.loadCurrentL3, 1)}</td>
+              <td className="detail-metrics-value">
+                {fmt(device.loadCurrentL1, 1)}
+              </td>
+              <td className="detail-metrics-value">
+                {fmt(device.loadCurrentL2, 1)}
+              </td>
+              <td className="detail-metrics-value">
+                {fmt(device.loadCurrentL3, 1)}
+              </td>
             </tr>
             <tr>
               <td className="detail-metrics-label">Current THD (%)</td>
-              <td className="detail-metrics-value">{fmt(device.loadCurrentTHDL1, 1)}</td>
-              <td className="detail-metrics-value">{fmt(device.loadCurrentTHDL2, 1)}</td>
-              <td className="detail-metrics-value">{fmt(device.loadCurrentTHDL3, 1)}</td>
+              <td className="detail-metrics-value">
+                {fmt(device.loadCurrentTHDL1, 1)}
+              </td>
+              <td className="detail-metrics-value">
+                {fmt(device.loadCurrentTHDL2, 1)}
+              </td>
+              <td className="detail-metrics-value">
+                {fmt(device.loadCurrentTHDL3, 1)}
+              </td>
             </tr>
             <tr>
               <td className="detail-metrics-label">TPF (%)</td>
@@ -138,15 +151,27 @@ export const StatusCard = ({ device }: StatusCardProps) => {
           <tbody>
             <tr>
               <td className="detail-metrics-label">Current (A)</td>
-              <td className="detail-metrics-value">{fmt(device.gridCurrentL1, 1)}</td>
-              <td className="detail-metrics-value">{fmt(device.gridCurrentL2, 1)}</td>
-              <td className="detail-metrics-value">{fmt(device.gridCurrentL3, 1)}</td>
+              <td className="detail-metrics-value">
+                {fmt(device.gridCurrentL1, 1)}
+              </td>
+              <td className="detail-metrics-value">
+                {fmt(device.gridCurrentL2, 1)}
+              </td>
+              <td className="detail-metrics-value">
+                {fmt(device.gridCurrentL3, 1)}
+              </td>
             </tr>
             <tr>
               <td className="detail-metrics-label">Current THD (%)</td>
-              <td className="detail-metrics-value">{fmt(device.gridCurrentTHDL1, 1)}</td>
-              <td className="detail-metrics-value">{fmt(device.gridCurrentTHDL2, 1)}</td>
-              <td className="detail-metrics-value">{fmt(device.gridCurrentTHDL3, 1)}</td>
+              <td className="detail-metrics-value">
+                {fmt(device.gridCurrentTHDL1, 1)}
+              </td>
+              <td className="detail-metrics-value">
+                {fmt(device.gridCurrentTHDL2, 1)}
+              </td>
+              <td className="detail-metrics-value">
+                {fmt(device.gridCurrentTHDL3, 1)}
+              </td>
             </tr>
             <tr>
               <td className="detail-metrics-label">TPF (Grid)</td>
@@ -192,12 +217,16 @@ export const StatusCard = ({ device }: StatusCardProps) => {
         <div className="detail-voltage">
           <span>Voltage</span>
           <strong>
-            L1 {fmt(device.vL1, 1)} / L2 {fmt(device.vL2, 1)} / L3 {fmt(device.vL3, 1)}
+            L1 {fmt(device.vL1, 1)} / L2 {fmt(device.vL2, 1)} / L3{" "}
+            {fmt(device.vL3, 1)}
           </strong>
         </div>
         <div>
           <p style={{ fontSize: 12, opacity: 0.6 }}>
-            Received {device.lastSeenAt ? new Date(device.lastSeenAt).toLocaleString() : "-"}
+            Received{" "}
+            {device.lastSeenAt
+              ? new Date(device.lastSeenAt).toLocaleString()
+              : "-"}
           </p>
           {device.lastIp && (
             <p style={{ fontSize: 12, opacity: 0.6 }}>IP {device.lastIp}</p>
@@ -210,11 +239,10 @@ export const StatusCard = ({ device }: StatusCardProps) => {
           <p className="module-status-title">Module Status</p>
           <div className="module-status-list">
             {device.moduleStatus.map((code, index) => {
-              const meta =
-                moduleStatusMeta[code] ?? {
-                  label: "UNKNOWN",
-                  className: "module-chip-unknown",
-                };
+              const meta = moduleStatusMeta[code] ?? {
+                label: "UNKNOWN",
+                className: "module-chip-unknown",
+              };
               return (
                 <span
                   key={`module-${index}`}

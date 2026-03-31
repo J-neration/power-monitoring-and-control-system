@@ -126,8 +126,8 @@ export default function SiteSummaryPanel({ site }: { site: Site | null }) {
                 </div>
                 <div className="sit-row sit-row-pf">
                   <span className="sit-label">TPF2 / DPF2</span>
-                  <span>{d?.tpf2 != null ? `${(d.tpf2 * 100).toFixed(1)}%` : "-"}</span>
-                  <span>{d?.dpf2 != null ? `${(d.dpf2 * 100).toFixed(1)}%` : "-"}</span>
+                  <span>{d?.tpf2 != null ? `${d.tpf2.toFixed(1)}%` : "-"}</span>
+                  <span>{d?.dpf2 != null ? `${d.dpf2.toFixed(1)}%` : "-"}</span>
                   <span />
                 </div>
                 <div className="sit-row">
