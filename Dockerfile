@@ -13,4 +13,4 @@ COPY apps/backend/ apps/backend/
 # prisma generate does not need DATABASE_URL (Prisma 7.2.0+ tolerates undefined datasource URL)
 RUN yarn workspace @pmcs/backend build
 
-CMD ["node", "apps/backend/dist/index.js"]
+CMD ["node", "apps/backend/dist/src/index.js"]
