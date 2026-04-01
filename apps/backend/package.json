@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "migrate:deploy": "prisma migrate deploy",
     "build": "prisma generate && tsc -p tsconfig.json",
     "start": "node dist/src/index.js",
     "lint": "echo \"No linter configured\"",
