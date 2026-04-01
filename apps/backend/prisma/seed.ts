@@ -2,7 +2,7 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "./generated/client/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { siteRegistry } from "../src/data/deviceRegistry.js";
+import { siteRegistry, type DeviceTelemetry } from "../src/data/deviceRegistry.js";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({
@@ -22,6 +22,34 @@ function devicePhase(id: string): number {
 
 const r = (v: number, decimals = 2) =>
   Math.round(v * Math.pow(10, decimals)) / Math.pow(10, decimals);
+
+/** 온도·팬·용량 필드 — TelemetryRecord 시드와 동일한 공식 (h = 시뮬레이션 시각 0~24) */
+function capacityAndThermalAtHour(
+  installationId: string,
+  d: DeviceTelemetry,
+  h: number,
+) {
+  const phase = devicePhase(installationId);
+  const totalCap = d.capacity ?? 200;
+  const wTemp = wave(h, phase + 3.0, 0.04);
+  const areaBase = [34, 36, 35, 33];
+  const modBase = [40, 44, 42, 39, 43, 41];
+  const fanBase = [7.5, 8.8];
+  const opRatio = 0.6 + 0.3 * Math.abs(Math.sin((h / 24) * 2 * Math.PI + phase));
+  const opCap = r(totalCap * opRatio, 1);
+  const rpRatio = 0.65 + 0.2 * Math.abs(Math.sin((h / 24) * 2 * Math.PI + phase + 1));
+  const rpCap = r(opCap * rpRatio, 1);
+  const margin = r(totalCap - opCap, 1);
+  return {
+    areaTemp: areaBase.map((b) => r(b * wTemp, 1)),
+    moduleTemp: modBase.map((b) => r(b * wTemp, 1)),
+    fanSpeed: fanBase.map((b) => r(b * wTemp, 1)),
+    totalCapacity: totalCap,
+    operatingCapacity: opCap,
+    reactivePowerCapacity: rpCap,
+    availableMargin: margin,
+  };
+}
 
 const seed = async () => {
   const now = new Date();
@@ -101,15 +129,17 @@ const seed = async () => {
         compS: d?.compS ?? null,
         uncompH: d?.uncompH ?? null,
         compH: d?.compH ?? null,
-        // 온도 / 팬 속도 (기본 샘플값)
-        areaTemp:   [35.2, 38.1, 36.7, 34.5],
-        moduleTemp: [42.1, 45.3, 43.8, 41.2, 44.6, 43.0],
-        fanSpeed:   [8.5, 9.2],
-        // 용량 (capacity 기반 초기값)
-        totalCapacity:         d?.capacity ?? 200,
-        operatingCapacity:     r((d?.capacity ?? 200) * 0.75, 1),
-        reactivePowerCapacity: r((d?.capacity ?? 200) * 0.75 * 0.78, 1),
-        availableMargin:       r((d?.capacity ?? 200) * 0.25, 1),
+        ...(d
+          ? capacityAndThermalAtHour(inst.id, d, 24)
+          : {
+              areaTemp: [] as number[],
+              moduleTemp: [] as number[],
+              fanSpeed: [] as number[],
+              totalCapacity: 200,
+              operatingCapacity: null as number | null,
+              reactivePowerCapacity: null as number | null,
+              availableMargin: null as number | null,
+            }),
       };
 
       await prisma.device.upsert({
@@ -128,7 +158,6 @@ const seed = async () => {
       if (existingCount > 0) continue;
 
       const phase = devicePhase(inst.id);
-      const totalCap = d.capacity ?? 200;
 
       const records = Array.from({ length: 24 }, (_, i) => {
         const hoursAgo = 23 - i;
@@ -140,17 +169,7 @@ const seed = async () => {
         const wTHD = wave(h, phase + 2.0, 0.08);
         const wPF = wave(h, phase + 0.5, 0.015);
 
-        // 용량 (capacity) 계산
-        const opRatio = 0.60 + 0.30 * Math.abs(Math.sin((h / 24) * 2 * Math.PI + phase));
-        const opCap = r(totalCap * opRatio, 1);
-        const rpRatio = 0.65 + 0.20 * Math.abs(Math.sin((h / 24) * 2 * Math.PI + phase + 1));
-        const rpCap = r(opCap * rpRatio, 1);
-        const margin = r(totalCap - opCap, 1);
-
-        const wTemp = wave(h, phase + 3.0, 0.04);
-        const areaBase = [34, 36, 35, 33];
-        const modBase  = [40, 44, 42, 39, 43, 41];
-        const fanBase  = [7.5, 8.8];
+        const thermalCap = capacityAndThermalAtHour(inst.id, d, h);
 
         return {
           installationId: inst.id,
@@ -172,10 +191,10 @@ const seed = async () => {
           gridCurrentTHDL1: d.gridCurrentTHDL1 != null ? r(d.gridCurrentTHDL1 * wTHD) : null,
           gridCurrentTHDL2: d.gridCurrentTHDL2 != null ? r(d.gridCurrentTHDL2 * wTHD) : null,
           gridCurrentTHDL3: d.gridCurrentTHDL3 != null ? r(d.gridCurrentTHDL3 * wTHD) : null,
-          tpf1: d.tpf1 != null ? Math.min(1, r(d.tpf1 * wPF, 4)) : null,
-          tpf2: d.tpf2 != null ? Math.min(1, r(d.tpf2 * wPF, 4)) : null,
-          dpf1: d.dpf1 != null ? Math.min(1, r(d.dpf1 * wPF, 4)) : null,
-          dpf2: d.dpf2 != null ? Math.min(1, r(d.dpf2 * wPF, 4)) : null,
+          tpf1: d.tpf1 != null ? Math.min(100, r(d.tpf1 * wPF, 4)) : null,
+          tpf2: d.tpf2 != null ? Math.min(100, r(d.tpf2 * wPF, 4)) : null,
+          dpf1: d.dpf1 != null ? Math.min(100, r(d.dpf1 * wPF, 4)) : null,
+          dpf2: d.dpf2 != null ? Math.min(100, r(d.dpf2 * wPF, 4)) : null,
           uncompP: d.uncompP != null ? r(d.uncompP * wI, 0) : null,
           compP: d.compP != null ? r(d.compP * wI, 0) : null,
           uncompQ: d.uncompQ != null ? r(d.uncompQ * wI, 0) : null,
@@ -184,13 +203,7 @@ const seed = async () => {
           compS: d.compS != null ? r(d.compS * wI, 0) : null,
           uncompH: d.uncompH != null ? r(d.uncompH * wI, 0) : null,
           compH: d.compH != null ? r(d.compH * wI, 0) : null,
-          areaTemp:   areaBase.map((b) => r(b * wTemp, 1)),
-          moduleTemp: modBase.map((b) => r(b * wTemp, 1)),
-          fanSpeed:   fanBase.map((b) => r(b * wTemp, 1)),
-          totalCapacity: totalCap,
-          operatingCapacity: opCap,
-          reactivePowerCapacity: rpCap,
-          availableMargin: margin,
+          ...thermalCap,
         };
       });
 

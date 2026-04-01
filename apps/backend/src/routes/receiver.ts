@@ -5,6 +5,8 @@ type ReceiverOptions = { receiverApiKey: string };
 
 type ReceiverBody = {
   device_id?: string;
+  /** HMI/LTE 펌웨어가 설치 ID 로 보내는 경우 (`device_id`와 동일 의미) */
+  installationId?: string;
   value?: number | string;
   moduleStatus?: number[];
   numOfMods?: number | string;
@@ -42,6 +44,8 @@ type ReceiverBody = {
   operatingCapacity?: number | string;
   reactivePowerCapacity?: number | string;
   availableMargin?: number | string;
+  /** 장치 모델: psta | paf | psvg (소문자 권장) */
+  model?: string;
   [key: string]: unknown;
 };
 
@@ -81,8 +85,13 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
     }
 
     server.log.info({ body }, "Received LTE payload");
+    const deviceId =
+      body.device_id?.trim() ||
+      (typeof body.installationId === "string"
+        ? body.installationId.trim()
+        : undefined);
     const device = await deviceService.upsertFromPayload({
-      device_id: body.device_id,
+      device_id: deviceId,
       value: body.value,
       moduleStatus: body.moduleStatus,
       numOfMods: body.numOfMods,
@@ -121,6 +130,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       operatingCapacity: body.operatingCapacity,
       reactivePowerCapacity: body.reactivePowerCapacity,
       availableMargin: body.availableMargin,
+      model: typeof body.model === "string" ? body.model : undefined,
     });
 
     return reply.send({

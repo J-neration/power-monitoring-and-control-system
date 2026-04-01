@@ -212,10 +212,10 @@ export default async function SitePage({ params }: Props) {
                 <div className="sit-row sit-row-pf">
                   <span className="sit-label">Grid TPF / DPF</span>
                   <span>
-                    {d?.tpf2 != null ? `${(d.tpf2 * 100).toFixed(1)}%` : "-"}
+                    {d?.tpf2 != null ? `${d.tpf2.toFixed(1)}%` : "-"}
                   </span>
                   <span>
-                    {d?.dpf2 != null ? `${(d.dpf2 * 100).toFixed(1)}%` : "-"}
+                    {d?.dpf2 != null ? `${d.dpf2.toFixed(1)}%` : "-"}
                   </span>
                   <span />
                 </div>
