@@ -49,7 +49,7 @@ export default function DeviceModulePowerPanel({
     }
   });
 
-  const send = async (module: number, power: "on" | "off") => {
+  const send = async (module: number, power: "on" | "off" | "refresh") => {
     const key = `${module}-${power}`;
     setBusy(key);
     setMessage(null);
@@ -82,7 +82,14 @@ export default function DeviceModulePowerPanel({
       setPendingCommandId(id || null);
       setMessage({
         type: "ok",
-        text: id ? `명령 등록됨: ${id} — HMI 응답 대기 중…` : "명령이 등록되었습니다.",
+        text:
+          power === "refresh"
+            ? id
+              ? `데이터 갱신 명령 등록됨: ${id} — HMI 응답 대기 중…`
+              : "데이터 갱신 명령이 등록되었습니다."
+            : id
+              ? `명령 등록됨: ${id} — HMI 응답 대기 중…`
+              : "명령이 등록되었습니다.",
       });
     } catch {
       setMessage({ type: "err", text: "네트워크 오류" });
@@ -119,6 +126,21 @@ export default function DeviceModulePowerPanel({
             {message.text}
           </p>
         ) : null}
+        <div className="device-refresh-row">
+          <button
+            type="button"
+            className="device-refresh-btn"
+            disabled={busy !== null}
+            aria-busy={busy === "0-refresh"}
+            onClick={() => void send(0, "refresh")}
+          >
+            {busy === "0-refresh" ? "…" : "↻ 데이터 갱신"}
+          </button>
+          <span className="device-refresh-hint">
+            HMI에 갱신 명령을 전송합니다 (module 0 · power: refresh)
+          </span>
+        </div>
+
         <div className="device-module-power-grid">
           {Array.from({ length: MODULE_SLOT_COUNT }, (_, i) => {
             const code = moduleStatus?.[i];
