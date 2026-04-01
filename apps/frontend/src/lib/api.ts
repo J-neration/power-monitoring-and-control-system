@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import type { DeviceWithInstallation, Site, TelemetryReading } from "../types/site";
+import type { Device, DeviceWithInstallation, Site, TelemetryReading } from "../types/site";
 import type { SiteListFromApi } from "../types/admin";
 
 const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";

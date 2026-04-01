@@ -23,7 +23,7 @@ const STATUS_LABEL: Record<DeviceStatus, string> = {
   offline: "OFFLINE",
 };
 
-function deriveSiteStatus(installations: { device: Device }[]): DeviceStatus {
+function deriveSiteStatus(installations: { device: Device | null }[]): DeviceStatus {
   let worst: DeviceStatus = "running";
   for (const inst of installations) {
     const s = inst.device?.status ?? "offline";
@@ -32,7 +32,7 @@ function deriveSiteStatus(installations: { device: Device }[]): DeviceStatus {
   return worst;
 }
 
-function countStatuses(installations: { device: Device }[]) {
+function countStatuses(installations: { device: Device | null }[]) {
   let running = 0,
     standby = 0,
     fault = 0,
@@ -47,9 +47,9 @@ function countStatuses(installations: { device: Device }[]) {
   return { total: installations.length, running, standby, fault, offline };
 }
 
-function formatLastSeen(installations: { device: { lastSeenAt: string } }[]) {
+function formatLastSeen(installations: { device: { lastSeenAt: string } | null }[]) {
   const latest = installations
-    .map((x) => Date.parse(x.device.lastSeenAt))
+    .map((x) => (x.device ? Date.parse(x.device.lastSeenAt) : NaN))
     .filter((v) => Number.isFinite(v))
     .reduce((max, v) => (v > max ? v : max), 0);
   if (!latest) return "-";
