@@ -6,6 +6,7 @@ import {
   moduleStatusLabel,
   moduleTelemetrySuggestsOn,
 } from "../lib/moduleStatus";
+import { useWsEvents } from "../hooks/useWsEvents";
 
 const MODULE_SLOT_COUNT = 6;
 
@@ -29,11 +30,30 @@ export default function DeviceModulePowerPanel({
     type: "ok" | "err";
     text: string;
   } | null>(null);
+  const [pendingCommandId, setPendingCommandId] = useState<string | null>(null);
+
+  // Update message when HMI ACKs the pending command
+  useWsEvents((msg) => {
+    if (
+      msg.type === "command_acked" &&
+      msg.installationId === installationId &&
+      pendingCommandId &&
+      msg.commandId === pendingCommandId
+    ) {
+      setPendingCommandId(null);
+      setMessage(
+        msg.status === "acked"
+          ? { type: "ok", text: "명령 실행 완료" }
+          : { type: "err", text: "명령 실행 실패" },
+      );
+    }
+  });
 
   const send = async (module: number, power: "on" | "off") => {
     const key = `${module}-${power}`;
     setBusy(key);
     setMessage(null);
+    setPendingCommandId(null);
     try {
       const res = await fetch("/api/receiver/commands/create", {
         method: "POST",
@@ -59,9 +79,10 @@ export default function DeviceModulePowerPanel({
         return;
       }
       const id = data.command?.id ?? "";
+      setPendingCommandId(id || null);
       setMessage({
         type: "ok",
-        text: id ? `명령 등록됨: ${id}` : "명령이 등록되었습니다.",
+        text: id ? `명령 등록됨: ${id} — HMI 응답 대기 중…` : "명령이 등록되었습니다.",
       });
     } catch {
       setMessage({ type: "err", text: "네트워크 오류" });

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { Site } from "../../types/site";
 import type { DeviceStatus } from "../../types/site";
 import { CLIENT_LABELS } from "../../data/clients";
 import SiteSummaryPanel from "./SiteSummaryPanel";
 import KoreaMap from "./KoreaMap";
+import { useWsEvents } from "../../hooks/useWsEvents";
 
 const REFRESH_SEC = 30;
 
@@ -88,6 +89,13 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
   const [countdown, setCountdown] = useState(REFRESH_SEC);
   const countdownRef = useRef(REFRESH_SEC);
 
+  const triggerRefresh = useCallback(() => {
+    countdownRef.current = REFRESH_SEC;
+    setCountdown(REFRESH_SEC);
+    router.refresh();
+  }, [router]);
+
+  // Periodic fallback refresh (30 s)
   useEffect(() => {
     countdownRef.current = REFRESH_SEC;
     setCountdown(REFRESH_SEC);
@@ -95,13 +103,18 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
       countdownRef.current -= 1;
       setCountdown(countdownRef.current);
       if (countdownRef.current <= 0) {
-        countdownRef.current = REFRESH_SEC;
-        setCountdown(REFRESH_SEC);
-        router.refresh();
+        triggerRefresh();
       }
     }, 1000);
     return () => clearInterval(tick);
-  }, [router]);
+  }, [triggerRefresh]);
+
+  // Immediate refresh on WebSocket push
+  useWsEvents((msg) => {
+    if (msg.type === "device_updated") {
+      triggerRefresh();
+    }
+  });
 
   const selectedSite = useMemo(
     () => sites.find((s) => s.id === selectedSiteId) ?? null,

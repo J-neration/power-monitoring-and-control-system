@@ -12,6 +12,7 @@ import { siteRoutes } from "./routes/sites.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { adminRoutes } from "./routes/admin.js";
 import type { UserContext } from "./modules/auth/auth.types.js";
+import { wsHub } from "./lib/wsHub.js";
 
 /* -----------------------------------------------
  * @fastify/jwt type augmentation: request.user
@@ -90,9 +91,14 @@ export const buildServer = async (env: Env) => {
   });
 
   server.get("/ws", { websocket: true }, (connection) => {
-    connection.socket.send(
-      JSON.stringify({ type: "welcome", timestamp: Date.now() }),
-    );
+    const socket = (connection as unknown as { socket: { readyState: number; send(d: string): void; on(e: string, cb: () => void): void } }).socket ?? connection;
+    wsHub.add(socket);
+    socket.send(JSON.stringify({ type: "welcome", timestamp: Date.now() }));
+    socket.on("close", () => {
+      wsHub.remove(socket);
+      server.log.debug({ clients: wsHub.size }, "WS client disconnected");
+    });
+    server.log.debug({ clients: wsHub.size }, "WS client connected");
   });
 
   return server;
