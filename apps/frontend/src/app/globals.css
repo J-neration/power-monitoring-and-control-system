@@ -2046,8 +2046,8 @@ main.dashboard-full {
 
 .device-detail-page {
   padding: 24px 32px;
-  max-width: 1200px;
-  margin: 0 auto;
+  min-width: 0;
+  margin-inline: clamp(16px, 2.5vw, 40px);
 }
 
 .device-detail-header {
@@ -2155,9 +2155,11 @@ main.dashboard-full {
   opacity: 0.5;
 }
 
-.device-module-power-cell--no-module .module-power-switch--telemetry-on
+.device-module-power-cell--no-module
+  .module-power-switch--telemetry-on
   .module-power-switch-seg-on,
-.device-module-power-cell--no-module .module-power-switch--telemetry-off
+.device-module-power-cell--no-module
+  .module-power-switch--telemetry-off
   .module-power-switch-seg-off {
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.35);
@@ -2202,7 +2204,9 @@ main.dashboard-full {
   cursor: pointer;
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.42);
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .module-power-switch-seg:disabled {
@@ -4054,7 +4058,9 @@ main.dashboard-full {
   font-weight: 500;
   color: rgba(255, 255, 255, 0.5);
   text-decoration: none;
-  transition: background 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s;
 }
 
 .admin-nav-item:hover {
@@ -4167,7 +4173,9 @@ main.dashboard-full {
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.55);
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s;
   white-space: nowrap;
 }
 
