@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import type { DeviceWithInstallation, Site, TelemetryReading } from "../types/site";
+import type { SiteListFromApi } from "../types/admin";
 
 const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
 
@@ -26,33 +27,38 @@ export const fetchDevicesRaw = async (): Promise<DeviceWithInstallation[]> => {
 };
 
 export const fetchSites = async (): Promise<Site[]> => {
-  const devices = await fetchDevicesRaw();
-
-  const siteMap = new Map<string, Site>();
-
-  for (const d of devices) {
-    const site = d.installation.site;
-    const siteId = site.id;
-
-    const current = siteMap.get(siteId) ?? {
-      id: site.id,
-      name: site.name,
-      client: site.client ?? "unknown",
-      region: site.region,
-      address: site.address,
-      installations: [],
-    };
-
-    current.installations.push({
-      id: d.installation.id,
-      label: d.installation.label,
-      device: d,
-    });
-
-    siteMap.set(siteId, current);
-  }
-
-  return Array.from(siteMap.values());
+  const response = await fetch(`${apiBase}/sites`, {
+    cache: "no-store",
+    headers: authHeaders(),
+  });
+  if (response.status === 401) return [];
+  if (!response.ok) throw new Error("Failed to fetch sites");
+  const data = (await response.json()) as {
+    sites: Array<{
+      siteId: string;
+      name: string;
+      client: string;
+      region: string;
+      address: string;
+      installations: Array<{
+        id: string;
+        label: string;
+        device: (Device & { status: string }) | null;
+      }>;
+    }>;
+  };
+  return (data.sites ?? []).map((s) => ({
+    id: s.siteId,
+    name: s.name,
+    client: s.client,
+    region: s.region,
+    address: s.address,
+    installations: s.installations.map((inst) => ({
+      id: inst.id,
+      label: inst.label,
+      device: inst.device ?? null,
+    })),
+  }));
 };
 
 export const fetchReadings = async (
@@ -77,4 +83,16 @@ export const fetchDevice = async (installationId: string) => {
   if (!response.ok) throw new Error("Failed to fetch device");
   const data = (await response.json()) as { device: DeviceWithInstallation };
   return data.device ?? null;
+};
+
+/** GET /sites — ADMIN 응답에 installations[].iccid 포함 */
+export const fetchSitesListFromApi = async (): Promise<SiteListFromApi[]> => {
+  const response = await fetch(`${apiBase}/sites`, {
+    cache: "no-store",
+    headers: authHeaders(),
+  });
+  if (response.status === 401) return [];
+  if (!response.ok) throw new Error("Failed to fetch sites");
+  const data = (await response.json()) as { sites: SiteListFromApi[] };
+  return data.sites ?? [];
 };

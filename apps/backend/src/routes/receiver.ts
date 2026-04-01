@@ -1,5 +1,8 @@
 import { FastifyPluginAsync } from "fastify";
-import { deviceService } from "../services/deviceService.js";
+import {
+  deviceService,
+  resolveInstallationIdForReceiver,
+} from "../services/deviceService.js";
 import { z } from "zod";
 import { authenticate, requireAdmin } from "../middleware/authenticate.js";
 import { commandService, CommandError } from "../services/commandService.js";
@@ -10,6 +13,8 @@ type ReceiverBody = {
   device_id?: string;
   /** HMI/LTE 펌웨어가 설치 ID 로 보내는 경우 (`device_id`와 동일 의미) */
   installationId?: string;
+  /** USIM ICCID — DB `Installation.iccid`와 매칭되면 해당 설치지점으로 처리 */
+  iccid?: string;
   value?: number | string;
   moduleStatus?: number[];
   numOfMods?: number | string;
@@ -65,6 +70,11 @@ const ackSchema = z.object({
   message: z.string().optional(),
 });
 
+/** HMI는 iccid만 보내고, DB에 등록된 매핑으로만 식별 (설치 전환 시 Railway 등에 1 로 설정) */
+const receiverRequireIccidOnly = () =>
+  process.env.RECEIVER_REQUIRE_ICCID === "1" ||
+  process.env.RECEIVER_REQUIRE_ICCID === "true";
+
 export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
   server,
   opts
@@ -110,13 +120,34 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
     }
 
     server.log.info({ body }, "Received LTE payload");
-    const deviceId =
-      body.device_id?.trim() ||
-      (typeof body.installationId === "string"
-        ? body.installationId.trim()
-        : undefined);
+    const identity = await resolveInstallationIdForReceiver({
+      iccid: body.iccid,
+      device_id: body.device_id,
+      installationId: body.installationId,
+    });
+    if (identity.installationId) {
+      server.log.info(
+        { installationId: identity.installationId, resolvedVia: identity.resolvedVia },
+        "Receiver identity resolved",
+      );
+    }
+
+    if (receiverRequireIccidOnly()) {
+      if (identity.resolvedVia !== "iccid" || !identity.installationId) {
+        return reply.status(422).send({
+          ok: false,
+          message:
+            "ICCID가 미등록이거나, 이 환경에서는 등록된 ICCID로만 수신할 수 있습니다(RECEIVER_REQUIRE_ICCID).",
+          identity: {
+            installationId: identity.installationId,
+            resolvedVia: identity.resolvedVia,
+          },
+        });
+      }
+    }
+
     const device = await deviceService.upsertFromPayload({
-      device_id: deviceId,
+      device_id: identity.installationId ?? undefined,
       value: body.value,
       moduleStatus: body.moduleStatus,
       numOfMods: body.numOfMods,
@@ -162,6 +193,10 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       ok: true,
       received_at: new Date().toISOString(),
       echo: body,
+      identity: {
+        installationId: identity.installationId,
+        resolvedVia: identity.resolvedVia,
+      },
       device,
     });
   });
@@ -201,12 +236,35 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
     if (!authByApiKey(request, reply)) {
       return reply.status(401).send({ message: "Unauthorized" });
     }
-    const { installationId } = request.query as { installationId?: string };
+    const q = request.query as { installationId?: string; iccid?: string };
+    const identity = await resolveInstallationIdForReceiver({
+      iccid: q.iccid,
+      installationId: q.installationId,
+    });
+    if (receiverRequireIccidOnly()) {
+      if (identity.resolvedVia !== "iccid" || !identity.installationId) {
+        return reply.status(422).send({
+          ok: false,
+          message:
+            "명령 폴링은 등록된 ICCID 쿼리만 허용됩니다(RECEIVER_REQUIRE_ICCID). ?iccid= 사용.",
+          identity: {
+            installationId: identity.installationId,
+            resolvedVia: identity.resolvedVia,
+          },
+        });
+      }
+    }
+    const installationId = identity.installationId ?? "";
     try {
-      const command = await commandService.poll(installationId ?? "");
+      const command = await commandService.poll(installationId);
       if (command.id) {
         server.log.info(
-          { commandId: command.id, installationId, module: command.module },
+          {
+            commandId: command.id,
+            installationId,
+            resolvedVia: identity.resolvedVia,
+            module: command.module,
+          },
           "Command polled by device",
         );
       }
@@ -215,7 +273,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       if (error instanceof CommandError) {
         return reply.status(error.httpStatus).send({ code: error.code, message: error.message });
       }
-      server.log.error({ error, installationId }, "Failed to poll command");
+      server.log.error({ error, installationId, iccid: q.iccid }, "Failed to poll command");
       return reply.status(500).send({ message: "Failed to poll command" });
     }
   });

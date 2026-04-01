@@ -79,6 +79,9 @@ model Installation {
   siteId    String
   label     String                               // 변전실 / 102동 / 전기실
 
+  /// USIM ICCID (HMI가 보내는 값과 동일하게 정규화해 저장). 출하 전/현장에서 백엔드에 등록.
+  iccid     String?  @unique
+
   site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   device           Device?                     // 최신 텔레메트리 (1:1)
   telemetryRecords TelemetryRecord[]           // 시계열 이력

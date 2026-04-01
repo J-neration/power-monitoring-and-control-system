@@ -84,17 +84,24 @@ export default async function MainLayout({
   return (
     <>
       <header className="global-header">
-        <Link href="/" className="global-logo">
-          <Image
-            src="/logo.png"
-            alt="PrimeSolution"
-            width={32}
-            height={15}
-            priority
-          />
-          <span className="global-logo-text">PRIMESOLUTION</span>
-          <span className="global-logo-text-beta">BETA</span>
-        </Link>
+        <div className="global-header-left">
+          <Link href="/" className="global-logo">
+            <Image
+              src="/logo.png"
+              alt="PrimeSolution"
+              width={32}
+              height={15}
+              priority
+            />
+            <span className="global-logo-text">PRIMESOLUTION</span>
+            <span className="global-logo-text-beta">BETA</span>
+          </Link>
+          {user?.role === "ADMIN" ? (
+            <Link href="/admin/sites" className="global-header-admin-link">
+              현장 관리
+            </Link>
+          ) : null}
+        </div>
 
         <div className="global-header-right">
           <LiveClock />
