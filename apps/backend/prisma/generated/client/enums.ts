@@ -16,3 +16,23 @@ export const UserRole = {
 } as const
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
+
+
+export const DeviceCommandPower = {
+  on: 'on',
+  off: 'off'
+} as const
+
+export type DeviceCommandPower = (typeof DeviceCommandPower)[keyof typeof DeviceCommandPower]
+
+
+export const DeviceCommandStatus = {
+  pending: 'pending',
+  sent: 'sent',
+  acked: 'acked',
+  failed: 'failed',
+  expired: 'expired',
+  cancelled: 'cancelled'
+} as const
+
+export type DeviceCommandStatus = (typeof DeviceCommandStatus)[keyof typeof DeviceCommandStatus]

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchDevice, fetchReadings } from "../../../../lib/api";
+import { getSessionUser } from "../../../../lib/auth-server";
 import DeviceDetailTabs from "../../../../components/DeviceDetailTabs";
 import type { DeviceWithInstallation } from "../../../../types/site";
 
@@ -18,6 +19,9 @@ export default async function DeviceDetailPage({ params }: Props) {
   ]);
 
   if (!device) notFound();
+
+  const sessionUser = await getSessionUser();
+  const isAdmin = sessionUser?.role === "ADMIN";
 
   const site = device.installation?.site;
   const siteId = site?.id;
@@ -88,6 +92,8 @@ export default async function DeviceDetailPage({ params }: Props) {
         device={device}
         readings={readings}
         hours={HISTORY_HOURS}
+        isAdmin={isAdmin}
+        adminUsername={sessionUser?.username}
       />
     </main>
   );

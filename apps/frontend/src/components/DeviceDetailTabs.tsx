@@ -3,6 +3,7 @@
 import { useState } from "react";
 import DeviceDetailChartsLazy from "./DeviceDetailChartsLazy";
 import DeviceHistoryCharts from "./DeviceHistoryCharts";
+import DeviceModulePowerPanel from "./DeviceModulePowerPanel";
 import { StatusCard } from "./StatusCard";
 import type { DeviceWithInstallation } from "../types/site";
 import type { TelemetryReading } from "../types/site";
@@ -26,9 +27,19 @@ type Props = {
   device: DeviceWithInstallation;
   readings: TelemetryReading[];
   hours: number;
+  /** ADMIN만 모듈 전원 제어 패널 표시 */
+  isAdmin?: boolean;
+  /** 명령 audit용 (로그인 사용자명) */
+  adminUsername?: string;
 };
 
-export default function DeviceDetailTabs({ device, readings, hours }: Props) {
+export default function DeviceDetailTabs({
+  device,
+  readings,
+  hours,
+  isAdmin = false,
+  adminUsername,
+}: Props) {
   const [tab, setTab] = useState<Tab>("monitor");
 
   return (
@@ -54,6 +65,14 @@ export default function DeviceDetailTabs({ device, readings, hours }: Props) {
 
       {tab === "monitor" && (
         <>
+          {isAdmin ? (
+            <DeviceModulePowerPanel
+              installationId={device.installationId}
+              moduleStatus={device.moduleStatus}
+              numOfMods={device.numOfMods}
+              requestedBy={adminUsername}
+            />
+          ) : null}
           <section className="device-detail-body">
             <DeviceDetailChartsLazy device={device} />
           </section>

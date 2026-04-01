@@ -246,6 +246,40 @@ export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedIntNullableFilter<$PrismaModel>
 }
 
+export type EnumDeviceCommandPowerFilter<$PrismaModel = never> = {
+  equals?: $Enums.DeviceCommandPower | Prisma.EnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  in?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDeviceCommandPowerFilter<$PrismaModel> | $Enums.DeviceCommandPower
+}
+
+export type EnumDeviceCommandStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.DeviceCommandStatus | Prisma.EnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.DeviceCommandStatus[] | Prisma.ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DeviceCommandStatus[] | Prisma.ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDeviceCommandStatusFilter<$PrismaModel> | $Enums.DeviceCommandStatus
+}
+
+export type EnumDeviceCommandPowerWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DeviceCommandPower | Prisma.EnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  in?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDeviceCommandPowerWithAggregatesFilter<$PrismaModel> | $Enums.DeviceCommandPower
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDeviceCommandPowerFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDeviceCommandPowerFilter<$PrismaModel>
+}
+
+export type EnumDeviceCommandStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DeviceCommandStatus | Prisma.EnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.DeviceCommandStatus[] | Prisma.ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DeviceCommandStatus[] | Prisma.ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDeviceCommandStatusWithAggregatesFilter<$PrismaModel> | $Enums.DeviceCommandStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDeviceCommandStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDeviceCommandStatusFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -478,6 +512,40 @@ export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
   _sum?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _max?: Prisma.NestedIntNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumDeviceCommandPowerFilter<$PrismaModel = never> = {
+  equals?: $Enums.DeviceCommandPower | Prisma.EnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  in?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDeviceCommandPowerFilter<$PrismaModel> | $Enums.DeviceCommandPower
+}
+
+export type NestedEnumDeviceCommandStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.DeviceCommandStatus | Prisma.EnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.DeviceCommandStatus[] | Prisma.ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DeviceCommandStatus[] | Prisma.ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDeviceCommandStatusFilter<$PrismaModel> | $Enums.DeviceCommandStatus
+}
+
+export type NestedEnumDeviceCommandPowerWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DeviceCommandPower | Prisma.EnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  in?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDeviceCommandPowerWithAggregatesFilter<$PrismaModel> | $Enums.DeviceCommandPower
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDeviceCommandPowerFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDeviceCommandPowerFilter<$PrismaModel>
+}
+
+export type NestedEnumDeviceCommandStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DeviceCommandStatus | Prisma.EnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.DeviceCommandStatus[] | Prisma.ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DeviceCommandStatus[] | Prisma.ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDeviceCommandStatusWithAggregatesFilter<$PrismaModel> | $Enums.DeviceCommandStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDeviceCommandStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDeviceCommandStatusFilter<$PrismaModel>
 }
 
 

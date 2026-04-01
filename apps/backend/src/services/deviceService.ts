@@ -32,7 +32,6 @@ type RegistryHit = {
   installation: {
     id: string;
     label: string;
-    status?: DeviceStatus;
     model?: string;
     deviceCapacity?: number;
   };
@@ -53,7 +52,6 @@ const findRegistryByDeviceId = (deviceId: string): RegistryHit | undefined => {
         installation: {
           id: inst.id,
           label: inst.label,
-          status: inst.status,
           model: inst.device?.model,
           deviceCapacity: inst.device?.capacity,
         },
@@ -313,8 +311,6 @@ export const deviceService = {
     const moduleStatus = toStatusList(payload.moduleStatus);
     const numOfMods = toNumber(payload.numOfMods);
 
-    const status = deriveDeviceStatus(moduleStatus) ?? "running";
-
     const vL1 = toNumber(payload.vL1);
     const vL2 = toNumber(payload.vL2);
     const vL3 = toNumber(payload.vL3);
@@ -446,7 +442,6 @@ export const deviceService = {
       const device = await tx.device.upsert({
         where: { installationId },
         update: {
-          status,
           model,
           capacity: deviceCapacity,
           lastSeenAt: new Date(),
@@ -456,7 +451,6 @@ export const deviceService = {
         },
         create: {
           installationId,
-          status,
           model,
           capacity: deviceCapacity,
           lastSeenAt: new Date(),

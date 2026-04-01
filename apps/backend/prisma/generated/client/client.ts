@@ -72,3 +72,8 @@ export type Device = Prisma.DeviceModel
  *  * =========================
  */
 export type TelemetryRecord = Prisma.TelemetryRecordModel
+/**
+ * Model DeviceCommand
+ * 
+ */
+export type DeviceCommand = Prisma.DeviceCommandModel

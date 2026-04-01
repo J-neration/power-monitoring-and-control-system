@@ -2,7 +2,10 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "./generated/client/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { siteRegistry, type DeviceTelemetry } from "../src/data/deviceRegistry.js";
+import {
+  siteRegistry,
+  type DeviceTelemetry,
+} from "../src/data/deviceRegistry.js";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({
@@ -35,9 +38,11 @@ function capacityAndThermalAtHour(
   const areaBase = [34, 36, 35, 33];
   const modBase = [40, 44, 42, 39, 43, 41];
   const fanBase = [7.5, 8.8];
-  const opRatio = 0.6 + 0.3 * Math.abs(Math.sin((h / 24) * 2 * Math.PI + phase));
+  const opRatio =
+    0.6 + 0.3 * Math.abs(Math.sin((h / 24) * 2 * Math.PI + phase));
   const opCap = r(totalCap * opRatio, 1);
-  const rpRatio = 0.65 + 0.2 * Math.abs(Math.sin((h / 24) * 2 * Math.PI + phase + 1));
+  const rpRatio =
+    0.65 + 0.2 * Math.abs(Math.sin((h / 24) * 2 * Math.PI + phase + 1));
   const rpCap = r(opCap * rpRatio, 1);
   const margin = r(totalCap - opCap, 1);
   return {
@@ -94,8 +99,7 @@ const seed = async () => {
 
       const d = inst.device;
       const deviceData = {
-        status: d?.status ?? inst.status ?? "offline",
-        model: d?.model ?? "psvg",
+        model: d?.model ?? "paf",
         capacity: d?.capacity ?? 150,
         lastSeenAt: d?.lastSeenAt ? new Date(d.lastSeenAt) : now,
         lastValue: 0,
@@ -179,18 +183,30 @@ const seed = async () => {
           vL1: d.vL1 != null ? r(d.vL1 * wV) : null,
           vL2: d.vL2 != null ? r(d.vL2 * wV) : null,
           vL3: d.vL3 != null ? r(d.vL3 * wV) : null,
-          gridCurrentL1: d.gridCurrentL1 != null ? r(d.gridCurrentL1 * wI) : null,
-          gridCurrentL2: d.gridCurrentL2 != null ? r(d.gridCurrentL2 * wI) : null,
-          gridCurrentL3: d.gridCurrentL3 != null ? r(d.gridCurrentL3 * wI) : null,
-          loadCurrentL1: d.loadCurrentL1 != null ? r(d.loadCurrentL1 * wI) : null,
-          loadCurrentL2: d.loadCurrentL2 != null ? r(d.loadCurrentL2 * wI) : null,
-          loadCurrentL3: d.loadCurrentL3 != null ? r(d.loadCurrentL3 * wI) : null,
-          loadCurrentTHDL1: d.loadCurrentTHDL1 != null ? r(d.loadCurrentTHDL1 * wTHD) : null,
-          loadCurrentTHDL2: d.loadCurrentTHDL2 != null ? r(d.loadCurrentTHDL2 * wTHD) : null,
-          loadCurrentTHDL3: d.loadCurrentTHDL3 != null ? r(d.loadCurrentTHDL3 * wTHD) : null,
-          gridCurrentTHDL1: d.gridCurrentTHDL1 != null ? r(d.gridCurrentTHDL1 * wTHD) : null,
-          gridCurrentTHDL2: d.gridCurrentTHDL2 != null ? r(d.gridCurrentTHDL2 * wTHD) : null,
-          gridCurrentTHDL3: d.gridCurrentTHDL3 != null ? r(d.gridCurrentTHDL3 * wTHD) : null,
+          gridCurrentL1:
+            d.gridCurrentL1 != null ? r(d.gridCurrentL1 * wI) : null,
+          gridCurrentL2:
+            d.gridCurrentL2 != null ? r(d.gridCurrentL2 * wI) : null,
+          gridCurrentL3:
+            d.gridCurrentL3 != null ? r(d.gridCurrentL3 * wI) : null,
+          loadCurrentL1:
+            d.loadCurrentL1 != null ? r(d.loadCurrentL1 * wI) : null,
+          loadCurrentL2:
+            d.loadCurrentL2 != null ? r(d.loadCurrentL2 * wI) : null,
+          loadCurrentL3:
+            d.loadCurrentL3 != null ? r(d.loadCurrentL3 * wI) : null,
+          loadCurrentTHDL1:
+            d.loadCurrentTHDL1 != null ? r(d.loadCurrentTHDL1 * wTHD) : null,
+          loadCurrentTHDL2:
+            d.loadCurrentTHDL2 != null ? r(d.loadCurrentTHDL2 * wTHD) : null,
+          loadCurrentTHDL3:
+            d.loadCurrentTHDL3 != null ? r(d.loadCurrentTHDL3 * wTHD) : null,
+          gridCurrentTHDL1:
+            d.gridCurrentTHDL1 != null ? r(d.gridCurrentTHDL1 * wTHD) : null,
+          gridCurrentTHDL2:
+            d.gridCurrentTHDL2 != null ? r(d.gridCurrentTHDL2 * wTHD) : null,
+          gridCurrentTHDL3:
+            d.gridCurrentTHDL3 != null ? r(d.gridCurrentTHDL3 * wTHD) : null,
           tpf1: d.tpf1 != null ? Math.min(100, r(d.tpf1 * wPF, 4)) : null,
           tpf2: d.tpf2 != null ? Math.min(100, r(d.tpf2 * wPF, 4)) : null,
           dpf1: d.dpf1 != null ? Math.min(100, r(d.dpf1 * wPF, 4)) : null,
@@ -216,7 +232,9 @@ const seed = async () => {
 
   // ── 초기 ADMIN 계정 ──────────────────────────────
   const adminUsername = "admin";
-  const existing = await prisma.user.findUnique({ where: { username: adminUsername } });
+  const existing = await prisma.user.findUnique({
+    where: { username: adminUsername },
+  });
   if (!existing) {
     const passwordHash = await bcrypt.hash("abc123", 12);
     await prisma.user.create({

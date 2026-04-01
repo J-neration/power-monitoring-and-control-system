@@ -112,7 +112,6 @@ export type DeviceSumAggregateOutputType = {
 
 export type DeviceMinAggregateOutputType = {
   installationId: string | null
-  status: string | null
   model: string | null
   capacity: number | null
   numOfMods: number | null
@@ -156,7 +155,6 @@ export type DeviceMinAggregateOutputType = {
 
 export type DeviceMaxAggregateOutputType = {
   installationId: string | null
-  status: string | null
   model: string | null
   capacity: number | null
   numOfMods: number | null
@@ -200,7 +198,6 @@ export type DeviceMaxAggregateOutputType = {
 
 export type DeviceCountAggregateOutputType = {
   installationId: number
-  status: number
   model: number
   capacity: number
   moduleStatus: number
@@ -332,7 +329,6 @@ export type DeviceSumAggregateInputType = {
 
 export type DeviceMinAggregateInputType = {
   installationId?: true
-  status?: true
   model?: true
   capacity?: true
   numOfMods?: true
@@ -376,7 +372,6 @@ export type DeviceMinAggregateInputType = {
 
 export type DeviceMaxAggregateInputType = {
   installationId?: true
-  status?: true
   model?: true
   capacity?: true
   numOfMods?: true
@@ -420,7 +415,6 @@ export type DeviceMaxAggregateInputType = {
 
 export type DeviceCountAggregateInputType = {
   installationId?: true
-  status?: true
   model?: true
   capacity?: true
   moduleStatus?: true
@@ -555,7 +549,6 @@ export type DeviceGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalA
 
 export type DeviceGroupByOutputType = {
   installationId: string
-  status: string
   model: string
   capacity: number
   moduleStatus: number[]
@@ -626,7 +619,6 @@ export type DeviceWhereInput = {
   OR?: Prisma.DeviceWhereInput[]
   NOT?: Prisma.DeviceWhereInput | Prisma.DeviceWhereInput[]
   installationId?: Prisma.StringFilter<"Device"> | string
-  status?: Prisma.StringFilter<"Device"> | string
   model?: Prisma.StringFilter<"Device"> | string
   capacity?: Prisma.IntFilter<"Device"> | number
   moduleStatus?: Prisma.IntNullableListFilter<"Device">
@@ -675,7 +667,6 @@ export type DeviceWhereInput = {
 
 export type DeviceOrderByWithRelationInput = {
   installationId?: Prisma.SortOrder
-  status?: Prisma.SortOrder
   model?: Prisma.SortOrder
   capacity?: Prisma.SortOrder
   moduleStatus?: Prisma.SortOrder
@@ -727,7 +718,6 @@ export type DeviceWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.DeviceWhereInput | Prisma.DeviceWhereInput[]
   OR?: Prisma.DeviceWhereInput[]
   NOT?: Prisma.DeviceWhereInput | Prisma.DeviceWhereInput[]
-  status?: Prisma.StringFilter<"Device"> | string
   model?: Prisma.StringFilter<"Device"> | string
   capacity?: Prisma.IntFilter<"Device"> | number
   moduleStatus?: Prisma.IntNullableListFilter<"Device">
@@ -776,7 +766,6 @@ export type DeviceWhereUniqueInput = Prisma.AtLeast<{
 
 export type DeviceOrderByWithAggregationInput = {
   installationId?: Prisma.SortOrder
-  status?: Prisma.SortOrder
   model?: Prisma.SortOrder
   capacity?: Prisma.SortOrder
   moduleStatus?: Prisma.SortOrder
@@ -832,7 +821,6 @@ export type DeviceScalarWhereWithAggregatesInput = {
   OR?: Prisma.DeviceScalarWhereWithAggregatesInput[]
   NOT?: Prisma.DeviceScalarWhereWithAggregatesInput | Prisma.DeviceScalarWhereWithAggregatesInput[]
   installationId?: Prisma.StringWithAggregatesFilter<"Device"> | string
-  status?: Prisma.StringWithAggregatesFilter<"Device"> | string
   model?: Prisma.StringWithAggregatesFilter<"Device"> | string
   capacity?: Prisma.IntWithAggregatesFilter<"Device"> | number
   moduleStatus?: Prisma.IntNullableListFilter<"Device">
@@ -879,7 +867,6 @@ export type DeviceScalarWhereWithAggregatesInput = {
 }
 
 export type DeviceCreateInput = {
-  status?: string
   model?: string
   capacity?: number
   moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
@@ -928,7 +915,6 @@ export type DeviceCreateInput = {
 
 export type DeviceUncheckedCreateInput = {
   installationId: string
-  status?: string
   model?: string
   capacity?: number
   moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
@@ -975,7 +961,6 @@ export type DeviceUncheckedCreateInput = {
 }
 
 export type DeviceUpdateInput = {
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   model?: Prisma.StringFieldUpdateOperationsInput | string
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
   moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
@@ -1024,7 +1009,6 @@ export type DeviceUpdateInput = {
 
 export type DeviceUncheckedUpdateInput = {
   installationId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   model?: Prisma.StringFieldUpdateOperationsInput | string
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
   moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
@@ -1072,7 +1056,6 @@ export type DeviceUncheckedUpdateInput = {
 
 export type DeviceCreateManyInput = {
   installationId: string
-  status?: string
   model?: string
   capacity?: number
   moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
@@ -1119,7 +1102,6 @@ export type DeviceCreateManyInput = {
 }
 
 export type DeviceUpdateManyMutationInput = {
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   model?: Prisma.StringFieldUpdateOperationsInput | string
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
   moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
@@ -1167,7 +1149,6 @@ export type DeviceUpdateManyMutationInput = {
 
 export type DeviceUncheckedUpdateManyInput = {
   installationId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   model?: Prisma.StringFieldUpdateOperationsInput | string
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
   moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
@@ -1236,7 +1217,6 @@ export type FloatNullableListFilter<$PrismaModel = never> = {
 
 export type DeviceCountOrderByAggregateInput = {
   installationId?: Prisma.SortOrder
-  status?: Prisma.SortOrder
   model?: Prisma.SortOrder
   capacity?: Prisma.SortOrder
   moduleStatus?: Prisma.SortOrder
@@ -1325,7 +1305,6 @@ export type DeviceAvgOrderByAggregateInput = {
 
 export type DeviceMaxOrderByAggregateInput = {
   installationId?: Prisma.SortOrder
-  status?: Prisma.SortOrder
   model?: Prisma.SortOrder
   capacity?: Prisma.SortOrder
   numOfMods?: Prisma.SortOrder
@@ -1369,7 +1348,6 @@ export type DeviceMaxOrderByAggregateInput = {
 
 export type DeviceMinOrderByAggregateInput = {
   installationId?: Prisma.SortOrder
-  status?: Prisma.SortOrder
   model?: Prisma.SortOrder
   capacity?: Prisma.SortOrder
   numOfMods?: Prisma.SortOrder
@@ -1537,7 +1515,6 @@ export type DeviceUpdatefanSpeedInput = {
 }
 
 export type DeviceCreateWithoutInstallationInput = {
-  status?: string
   model?: string
   capacity?: number
   moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
@@ -1584,7 +1561,6 @@ export type DeviceCreateWithoutInstallationInput = {
 }
 
 export type DeviceUncheckedCreateWithoutInstallationInput = {
-  status?: string
   model?: string
   capacity?: number
   moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
@@ -1647,7 +1623,6 @@ export type DeviceUpdateToOneWithWhereWithoutInstallationInput = {
 }
 
 export type DeviceUpdateWithoutInstallationInput = {
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   model?: Prisma.StringFieldUpdateOperationsInput | string
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
   moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
@@ -1694,7 +1669,6 @@ export type DeviceUpdateWithoutInstallationInput = {
 }
 
 export type DeviceUncheckedUpdateWithoutInstallationInput = {
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   model?: Prisma.StringFieldUpdateOperationsInput | string
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
   moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
@@ -1744,7 +1718,6 @@ export type DeviceUncheckedUpdateWithoutInstallationInput = {
 
 export type DeviceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   installationId?: boolean
-  status?: boolean
   model?: boolean
   capacity?: boolean
   moduleStatus?: boolean
@@ -1793,7 +1766,6 @@ export type DeviceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
 
 export type DeviceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   installationId?: boolean
-  status?: boolean
   model?: boolean
   capacity?: boolean
   moduleStatus?: boolean
@@ -1842,7 +1814,6 @@ export type DeviceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
 
 export type DeviceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   installationId?: boolean
-  status?: boolean
   model?: boolean
   capacity?: boolean
   moduleStatus?: boolean
@@ -1891,7 +1862,6 @@ export type DeviceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
 
 export type DeviceSelectScalar = {
   installationId?: boolean
-  status?: boolean
   model?: boolean
   capacity?: boolean
   moduleStatus?: boolean
@@ -1937,7 +1907,7 @@ export type DeviceSelectScalar = {
   updatedAt?: boolean
 }
 
-export type DeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"installationId" | "status" | "model" | "capacity" | "moduleStatus" | "numOfMods" | "lastSeenAt" | "lastValue" | "lastIp" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "uncompS" | "compS" | "uncompP" | "compP" | "uncompQ" | "compQ" | "uncompH" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "areaTemp" | "moduleTemp" | "fanSpeed" | "totalCapacity" | "operatingCapacity" | "reactivePowerCapacity" | "availableMargin" | "createdAt" | "updatedAt", ExtArgs["result"]["device"]>
+export type DeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"installationId" | "model" | "capacity" | "moduleStatus" | "numOfMods" | "lastSeenAt" | "lastValue" | "lastIp" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "uncompS" | "compS" | "uncompP" | "compP" | "uncompQ" | "compQ" | "uncompH" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "areaTemp" | "moduleTemp" | "fanSpeed" | "totalCapacity" | "operatingCapacity" | "reactivePowerCapacity" | "availableMargin" | "createdAt" | "updatedAt", ExtArgs["result"]["device"]>
 export type DeviceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }
@@ -1955,7 +1925,6 @@ export type $DevicePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     installationId: string
-    status: string
     model: string
     capacity: number
     moduleStatus: number[]
@@ -2424,7 +2393,6 @@ export interface Prisma__DeviceClient<T, Null = never, ExtArgs extends runtime.T
  */
 export interface DeviceFieldRefs {
   readonly installationId: Prisma.FieldRef<"Device", 'String'>
-  readonly status: Prisma.FieldRef<"Device", 'String'>
   readonly model: Prisma.FieldRef<"Device", 'String'>
   readonly capacity: Prisma.FieldRef<"Device", 'Int'>
   readonly moduleStatus: Prisma.FieldRef<"Device", 'Int[]'>

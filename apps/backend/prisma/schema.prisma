@@ -17,6 +17,20 @@ enum UserRole {
   SITE
 }
 
+enum DeviceCommandPower {
+  on
+  off
+}
+
+enum DeviceCommandStatus {
+  pending
+  sent
+  acked
+  failed
+  expired
+  cancelled
+}
+
 model User {
   id           String    @id @default(cuid())
   username     String    @unique
@@ -68,6 +82,7 @@ model Installation {
   site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   device           Device?                     // 최신 텔레메트리 (1:1)
   telemetryRecords TelemetryRecord[]           // 시계열 이력
+  commands         DeviceCommand[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -80,7 +95,6 @@ model Installation {
  * ========================= */
 model Device {
   installationId String   @id                    // = device_id, Installation.id와 동일
-  status         String   @default("offline")
 
   model          String   @default("psvg")       // psta | paf | psvg
   capacity       Int      @default(200)           // HMI 정격용량 (kVAR): 200 | 150
@@ -220,4 +234,25 @@ model TelemetryRecord {
   availableMargin       Float?
 
   @@index([installationId, recordedAt])
+}
+
+model DeviceCommand {
+  id             String              @id
+  installationId String
+  installation   Installation        @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  module         Int
+  power          DeviceCommandPower
+  status         DeviceCommandStatus @default(pending)
+  requestedBy    String?
+
+  createdAt      DateTime            @default(now())
+  sentAt         DateTime?
+  ackedAt        DateTime?
+  ackMessage     String?
+  expiresAt      DateTime?
+  retryCount     Int                 @default(0)
+
+  @@index([installationId, status, createdAt])
+  @@index([installationId, module, status, createdAt])
 }

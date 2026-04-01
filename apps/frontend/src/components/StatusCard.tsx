@@ -1,4 +1,5 @@
 import type { DeviceStatus, DeviceWithInstallation } from "../types/site";
+import { moduleChipClassName, moduleStatusLabel } from "../lib/moduleStatus";
 
 type StatusCardProps = {
   device: DeviceWithInstallation;
@@ -10,14 +11,6 @@ const statusColors: Record<DeviceStatus, string> = {
   running: "#2ecc71",
   fault: "#f24141",
   offline: "#6b7280",
-};
-
-const moduleStatusMeta: Record<number, { label: string; className: string }> = {
-  0: { label: "STANDBY", className: "module-chip-standby" },
-  1: { label: "START", className: "module-chip-start" },
-  2: { label: "RUNNING", className: "module-chip-running" },
-  3: { label: "FAULT", className: "module-chip-fault" },
-  4: { label: "OFFLINE", className: "module-chip-offline" },
 };
 
 const fmt = (v: unknown, digits = 2) => {
@@ -238,20 +231,14 @@ export const StatusCard = ({ device }: StatusCardProps) => {
         <div className="module-status">
           <p className="module-status-title">Module Status</p>
           <div className="module-status-list">
-            {device.moduleStatus.map((code, index) => {
-              const meta = moduleStatusMeta[code] ?? {
-                label: "UNKNOWN",
-                className: "module-chip-unknown",
-              };
-              return (
-                <span
-                  key={`module-${index}`}
-                  className={`module-chip ${meta.className}`}
-                >
-                  M{index + 1} {meta.label}
-                </span>
-              );
-            })}
+            {device.moduleStatus.map((code, index) => (
+              <span
+                key={`module-${index}`}
+                className={moduleChipClassName(code)}
+              >
+                M{index + 1} {moduleStatusLabel(code)}
+              </span>
+            ))}
           </div>
         </div>
       )}

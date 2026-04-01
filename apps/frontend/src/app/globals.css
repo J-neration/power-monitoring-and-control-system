@@ -2105,6 +2105,132 @@ main.dashboard-full {
   margin-top: 20px;
 }
 
+.device-module-power-panel .device-module-power-hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.device-module-power-panel .device-module-power-hint code {
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.device-module-power-msg {
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+
+.device-module-power-msg-ok {
+  color: #6ee7b7;
+}
+
+.device-module-power-msg-err {
+  color: #fca5a5;
+}
+
+.device-module-power-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  align-items: stretch;
+}
+
+.device-module-power-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 10px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  min-width: 0;
+}
+
+.device-module-power-cell--no-module {
+  opacity: 0.5;
+}
+
+.device-module-power-cell--no-module .module-power-switch--telemetry-on
+  .module-power-switch-seg-on,
+.device-module-power-cell--no-module .module-power-switch--telemetry-off
+  .module-power-switch-seg-off {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.device-module-power-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.65);
+  text-align: center;
+}
+
+/* 상태 칩: 셀 안에서 한 줄로 */
+.device-module-power-cell .device-module-power-chip.module-chip {
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 10px;
+  padding: 4px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.module-power-switch {
+  display: flex;
+  width: 100%;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.module-power-switch-seg {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  border: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.42);
+  transition: background 0.15s, color 0.15s;
+}
+
+.module-power-switch-seg:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.module-power-switch-seg-off:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+}
+
+.module-power-switch-seg-on:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+}
+
+/* 텔레메트리 힌트: 어느 쪽이 ‘켜짐’에 가까운지 */
+.module-power-switch--telemetry-off .module-power-switch-seg-off {
+  background: rgba(239, 68, 68, 0.22);
+  color: #f87171;
+}
+
+.module-power-switch--telemetry-on .module-power-switch-seg-on {
+  background: rgba(16, 185, 129, 0.28);
+  color: #34d399;
+}
+
 .device-charts-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -2906,6 +3032,10 @@ main.dashboard-full {
   .chart-card-wide {
     grid-column: 1;
   }
+
+  .device-module-power-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2950,6 +3080,10 @@ main.dashboard-full {
   .device-detail-title-row {
     flex-wrap: wrap;
     gap: 6px;
+  }
+
+  .device-module-power-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .kpi-badge {
