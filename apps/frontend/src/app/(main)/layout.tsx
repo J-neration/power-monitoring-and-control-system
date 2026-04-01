@@ -96,20 +96,21 @@ export default async function MainLayout({
             <span className="global-logo-text">PRIMESOLUTION</span>
             <span className="global-logo-text-beta">BETA</span>
           </Link>
-          {user?.role === "ADMIN" ? (
-            <Link href="/admin/sites" className="global-header-admin-link">
-              현장 관리
-            </Link>
-          ) : null}
         </div>
 
         <div className="global-header-right">
           <LiveClock />
           {user && (
             <div className="header-user-info">
-              <span className="header-user-role">
-                {ROLE_LABEL[user.role] ?? user.role}
-              </span>
+              {user.role === "ADMIN" ? (
+                <Link href="/admin" className="global-header-admin-link">
+                  관리자 패널
+                </Link>
+              ) : (
+                <span className="header-user-role">
+                  {ROLE_LABEL[user.role] ?? user.role}
+                </span>
+              )}
               <span className="header-username">{displayName}</span>
             </div>
           )}
