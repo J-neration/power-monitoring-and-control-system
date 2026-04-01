@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import DeviceDetailChartsLazy from "./DeviceDetailChartsLazy";
 import DeviceHistoryCharts from "./DeviceHistoryCharts";
 import DeviceModulePowerPanel from "./DeviceModulePowerPanel";
 import { StatusCard } from "./StatusCard";
 import type { DeviceWithInstallation } from "../types/site";
 import type { TelemetryReading } from "../types/site";
+import { useWsEvents } from "../hooks/useWsEvents";
 
 type Tab = "monitor" | "analytics";
 
@@ -41,6 +43,17 @@ export default function DeviceDetailTabs({
   adminUsername,
 }: Props) {
   const [tab, setTab] = useState<Tab>("monitor");
+  const router = useRouter();
+
+  // Refresh server component data when this installation's device reports in
+  useWsEvents((msg) => {
+    if (
+      msg.type === "device_updated" &&
+      msg.installationId === device.installationId
+    ) {
+      router.refresh();
+    }
+  });
 
   return (
     <>

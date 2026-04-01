@@ -2046,8 +2046,8 @@ main.dashboard-full {
 
 .device-detail-page {
   padding: 24px 32px;
+  margin-inline: clamp(24px, 8vw, 160px);
   min-width: 0;
-  margin-inline: clamp(16px, 2.5vw, 40px);
 }
 
 .device-detail-header {
@@ -2467,8 +2467,7 @@ main.dashboard-full {
 
 .site-page {
   padding: 24px 32px;
-  max-width: 1400px;
-  margin: 0 auto;
+  margin-inline: clamp(24px, 8vw, 160px);
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -3021,7 +3020,6 @@ main.dashboard-full {
   /* ── Device detail page ── */
   .device-detail-page {
     padding: 14px 16px;
-    gap: 16px;
   }
   .device-detail-title-row h1 {
     font-size: 17px;
@@ -3635,9 +3633,7 @@ main.dashboard-full {
 }
 
 .admin-iccid-page {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 28px 24px 48px;
+  padding: 24px 32px 48px;
 }
 
 .admin-iccid-header {

@@ -6,6 +6,7 @@ import {
 import { z } from "zod";
 import { authenticate, requireAdmin } from "../middleware/authenticate.js";
 import { commandService, CommandError } from "../services/commandService.js";
+import { wsHub } from "../lib/wsHub.js";
 
 type ReceiverOptions = { receiverApiKey: string };
 
@@ -189,6 +190,13 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       model: typeof body.model === "string" ? body.model : undefined,
     });
 
+    if (identity.installationId) {
+      wsHub.broadcast({
+        type: "device_updated",
+        installationId: identity.installationId,
+      });
+    }
+
     return reply.send({
       ok: true,
       received_at: new Date().toISOString(),
@@ -301,6 +309,12 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
         },
         "ACK processed",
       );
+      wsHub.broadcast({
+        type: "command_acked",
+        commandId: updated.id,
+        status: updated.status,
+        installationId: updated.installationId,
+      });
       return reply.send({ command: updated });
     } catch (error) {
       if (error instanceof CommandError) {
