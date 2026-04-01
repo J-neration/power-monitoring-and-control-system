@@ -103,9 +103,10 @@ export const siteService = {
     siteId: string;
     label: string;
   }) => {
-    const id = data.id?.trim() || undefined;
+    const id = data.id?.trim();
+    if (!id) throw new Error("Installation id is required");
     return prisma.installation.create({
-      data: { id: id ?? undefined, siteId: data.siteId, label: data.label },
+      data: { id, siteId: data.siteId, label: data.label },
     });
   },
 
