@@ -5,6 +5,7 @@
     "apps/*"
   ],
   "scripts": {
+    "db:migrate:deploy": "npx prisma migrate deploy --config=apps/backend/prisma.config.ts",
     "dev": "concurrently --names \"frontend,backend\" --prefix-colors \"cyan,green\" --prefix \"[{name}]\" \"yarn workspace @pmcs/frontend dev\" \"yarn workspace @pmcs/backend dev\"",
     "dev:frontend": "yarn workspace @pmcs/frontend dev",
     "dev:backend": "yarn workspace @pmcs/backend dev",
