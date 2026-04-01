@@ -1,7 +1,4 @@
-import { DeviceStatus } from "../services/deviceService.js";
-
 export type DeviceTelemetry = {
-  status: DeviceStatus;
   lastSeenAt?: string;
   moduleStatus: number[];
   numOfMods: number;
@@ -39,7 +36,6 @@ export type DeviceTelemetry = {
 export type InstallationEntry = {
   id: string;
   label: string;
-  status?: DeviceStatus;
   device?: DeviceTelemetry;
 };
 
@@ -69,8 +65,8 @@ export const siteRegistry: SiteEntry[] = [
     region: "경기도",
     address: "경기도 안양시 동안구 시민대로 361",
     installations: [
-      { id: "PSVG-RNDTEST5", label: "변전실", device: { status: "offline", moduleStatus: [], numOfMods: 0, model: "psvg", capacity: 200 } },
-      { id: "PSVG-RNDTEST6", label: "전기실", device: { status: "offline", moduleStatus: [], numOfMods: 0, model: "psvg", capacity: 150 } },
+      { id: "PSVG-RNDTEST5", label: "변전실", device: { moduleStatus: [], numOfMods: 0, model: "psvg", capacity: 200 } },
+      { id: "PSVG-RNDTEST6", label: "전기실", device: { moduleStatus: [], numOfMods: 0, model: "psvg", capacity: 150 } },
     ],
   },
 
@@ -86,7 +82,6 @@ export const siteRegistry: SiteEntry[] = [
         id: "PSVG-SONGDO01",
         label: "101동 변전실",
         device: {
-          status: "running",
           model: "psvg", capacity: 200,
           moduleStatus: [2, 2, 2, 2, 2, 2],
           numOfMods: 6,
@@ -104,7 +99,6 @@ export const siteRegistry: SiteEntry[] = [
         id: "PSVG-SONGDO02",
         label: "102동 전기실",
         device: {
-          status: "running",
           model: "psvg", capacity: 150,
           moduleStatus: [2, 2, 2, 2, 2, 2],
           numOfMods: 6,
@@ -122,7 +116,6 @@ export const siteRegistry: SiteEntry[] = [
         id: "PSVG-SONGDO03",
         label: "지하주차장 전력실",
         device: {
-          status: "standby",
           model: "paf", capacity: 200,
           moduleStatus: [2, 2, 1, 1, 2, 2],
           numOfMods: 6,
@@ -149,7 +142,6 @@ export const siteRegistry: SiteEntry[] = [
         id: "PSVG-BUSAN01",
         label: "A동 변전실",
         device: {
-          status: "running",
           model: "psvg", capacity: 200,
           moduleStatus: [2, 2, 2, 2, 2, 2],
           numOfMods: 6,
@@ -167,7 +159,6 @@ export const siteRegistry: SiteEntry[] = [
         id: "PSVG-BUSAN02",
         label: "B동 전기실",
         device: {
-          status: "fault",
           model: "paf", capacity: 200,
           moduleStatus: [2, 3, 3, 2, 3, 2],
           numOfMods: 6,
@@ -194,7 +185,6 @@ export const siteRegistry: SiteEntry[] = [
         id: "PSVG-SEOUL01",
         label: "101동 변전실",
         device: {
-          status: "running",
           model: "psvg", capacity: 200,
           moduleStatus: [2, 2, 2, 2, 2, 2],
           numOfMods: 6,
@@ -212,7 +202,6 @@ export const siteRegistry: SiteEntry[] = [
         id: "PSVG-SEOUL02",
         label: "102동 전기실",
         device: {
-          status: "standby",
           model: "psvg", capacity: 150,
           moduleStatus: [2, 2, 1, 1, 2, 2],
           numOfMods: 6,
@@ -241,7 +230,6 @@ export const siteRegistry: SiteEntry[] = [
         id: "PSVG-CHEONGNA01",
         label: "201동 변전실",
         device: {
-          status: "running",
           model: "psvg", capacity: 200,
           moduleStatus: [2, 2, 2, 2, 2, 2],
           numOfMods: 6,
@@ -259,7 +247,6 @@ export const siteRegistry: SiteEntry[] = [
         id: "PSVG-CHEONGNA02",
         label: "지하 전력실",
         device: {
-          status: "standby",
           model: "paf", capacity: 150,
           moduleStatus: [2, 1, 2, 1, 2, 2],
           numOfMods: 6,
@@ -288,7 +275,6 @@ export const siteRegistry: SiteEntry[] = [
         id: "PSVG-DAEJEON01",
         label: "1단지 변전실",
         device: {
-          status: "standby",
           model: "psta", capacity: 200,
           moduleStatus: [2, 2, 1, 1, 2, 2],
           numOfMods: 6,
@@ -306,7 +292,6 @@ export const siteRegistry: SiteEntry[] = [
         id: "PSVG-DAEJEON02",
         label: "2단지 전기실",
         device: {
-          status: "running",
           model: "psvg", capacity: 200,
           moduleStatus: [2, 2, 2, 2, 2, 2],
           numOfMods: 6,
@@ -333,7 +318,6 @@ export const siteRegistry: SiteEntry[] = [
         id: "PSVG-GUMI01",
         label: "A동 변전실",
         device: {
-          status: "fault",
           model: "psvg", capacity: 200,
           moduleStatus: [2, 3, 3, 2, 2, 3],
           numOfMods: 6,
@@ -351,7 +335,6 @@ export const siteRegistry: SiteEntry[] = [
         id: "PSVG-GUMI02",
         label: "B동 전기실",
         device: {
-          status: "running",
           model: "paf", capacity: 200,
           moduleStatus: [2, 2, 2, 2, 2, 2],
           numOfMods: 6,
@@ -369,7 +352,6 @@ export const siteRegistry: SiteEntry[] = [
         id: "PSVG-GUMI03",
         label: "지하주차장 전력실",
         device: {
-          status: "standby",
           model: "psvg", capacity: 150,
           moduleStatus: [2, 2, 1, 2, 1, 2],
           numOfMods: 6,
@@ -398,7 +380,6 @@ export const siteRegistry: SiteEntry[] = [
         id: "PSVG-DONGTAN01",
         label: "1단지 변전실",
         device: {
-          status: "running",
           model: "psvg", capacity: 200,
           moduleStatus: [2, 2, 2, 2, 2, 2],
           numOfMods: 6,
@@ -416,7 +397,6 @@ export const siteRegistry: SiteEntry[] = [
         id: "PSVG-DONGTAN02",
         label: "2단지 전기실",
         device: {
-          status: "fault",
           model: "psta", capacity: 150,
           moduleStatus: [2, 3, 3, 2, 3, 2],
           numOfMods: 6,

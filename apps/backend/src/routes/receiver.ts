@@ -1,5 +1,8 @@
 import { FastifyPluginAsync } from "fastify";
 import { deviceService } from "../services/deviceService.js";
+import { z } from "zod";
+import { authenticate, requireAdmin } from "../middleware/authenticate.js";
+import { commandService, CommandError } from "../services/commandService.js";
 
 type ReceiverOptions = { receiverApiKey: string };
 
@@ -49,17 +52,39 @@ type ReceiverBody = {
   [key: string]: unknown;
 };
 
+const createCommandSchema = z.object({
+  installationId: z.string().min(1),
+  module: z.number().int(),
+  power: z.string().min(1),
+  requestedBy: z.string().trim().optional().nullable(),
+});
+
+const ackSchema = z.object({
+  id: z.string().min(1),
+  ok: z.boolean(),
+  message: z.string().optional(),
+});
+
 export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
   server,
   opts
 ) => {
   const apiKey = opts.receiverApiKey;
+  const authByApiKey = (
+    request: { headers: Record<string, unknown> },
+    reply: { status: (code: number) => { send: (body: unknown) => unknown } },
+  ) => {
+    const providedKey = (request.headers["x-api-key"] as string | undefined) ?? "";
+    if (providedKey !== apiKey) {
+      reply.status(401).send({ message: "Unauthorized" });
+      return false;
+    }
+    return true;
+  };
 
   server.post("/", async (request, reply) => {
     // API Key 검증
-    const providedKey =
-      (request.headers["x-api-key"] as string | undefined) ?? "";
-    if (providedKey !== apiKey) {
+    if (!authByApiKey(request, reply)) {
       return reply.status(401).send({ message: "Unauthorized" });
     }
 
@@ -139,5 +164,114 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       echo: body,
       device,
     });
+  });
+
+  // Web/Admin -> create command
+  server.post("/commands/create", { preHandler: requireAdmin }, async (request, reply) => {
+    const parsed = createCommandSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        message: "Invalid request body",
+        errors: parsed.error.flatten(),
+      });
+    }
+    try {
+      const cmd = await commandService.create({
+        installationId: parsed.data.installationId,
+        module: parsed.data.module,
+        power: parsed.data.power,
+        requestedBy: parsed.data.requestedBy ?? request.user.username,
+      });
+      server.log.info(
+        { commandId: cmd.id, installationId: cmd.installationId, module: cmd.module, power: cmd.power },
+        "Command created",
+      );
+      return reply.status(201).send({ command: cmd });
+    } catch (error) {
+      if (error instanceof CommandError) {
+        return reply.status(error.httpStatus).send({ code: error.code, message: error.message });
+      }
+      server.log.error({ error }, "Failed to create command");
+      return reply.status(500).send({ message: "Failed to create command" });
+    }
+  });
+
+  // Device polling -> oldest pending command
+  server.get("/commands", async (request, reply) => {
+    if (!authByApiKey(request, reply)) {
+      return reply.status(401).send({ message: "Unauthorized" });
+    }
+    const { installationId } = request.query as { installationId?: string };
+    try {
+      const command = await commandService.poll(installationId ?? "");
+      if (command.id) {
+        server.log.info(
+          { commandId: command.id, installationId, module: command.module },
+          "Command polled by device",
+        );
+      }
+      return reply.send(command);
+    } catch (error) {
+      if (error instanceof CommandError) {
+        return reply.status(error.httpStatus).send({ code: error.code, message: error.message });
+      }
+      server.log.error({ error, installationId }, "Failed to poll command");
+      return reply.status(500).send({ message: "Failed to poll command" });
+    }
+  });
+
+  // Device ACK
+  server.post("/commands/ack", async (request, reply) => {
+    if (!authByApiKey(request, reply)) {
+      return reply.status(401).send({ message: "Unauthorized" });
+    }
+    const parsed = ackSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        message: "Invalid ACK body",
+        errors: parsed.error.flatten(),
+      });
+    }
+    try {
+      const updated = await commandService.ack(parsed.data);
+      server.log.info(
+        {
+          commandId: updated.id,
+          installationId: updated.installationId,
+          status: updated.status,
+          idempotent: updated.idempotent,
+        },
+        "ACK processed",
+      );
+      return reply.send({ command: updated });
+    } catch (error) {
+      if (error instanceof CommandError) {
+        return reply.status(error.httpStatus).send({ code: error.code, message: error.message });
+      }
+      server.log.error({ error }, "Failed to ack command");
+      return reply.status(500).send({ message: "Failed to ack command" });
+    }
+  });
+
+  // UI history
+  server.get("/commands/history", { preHandler: requireAdmin }, async (request, reply) => {
+    const { installationId, limit } = request.query as {
+      installationId?: string;
+      limit?: string;
+    };
+    const parsedLimit = limit ? Number.parseInt(limit, 10) : 50;
+    try {
+      const commands = await commandService.history({
+        installationId: installationId ?? "",
+        limit: Number.isFinite(parsedLimit) ? parsedLimit : 50,
+      });
+      return reply.send({ commands, policy: commandService.policy });
+    } catch (error) {
+      if (error instanceof CommandError) {
+        return reply.status(error.httpStatus).send({ code: error.code, message: error.message });
+      }
+      server.log.error({ error, installationId }, "Failed to load command history");
+      return reply.status(500).send({ message: "Failed to load command history" });
+    }
   });
 };

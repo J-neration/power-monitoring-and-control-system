@@ -55,7 +55,8 @@ export const ModelName = {
   Site: 'Site',
   Installation: 'Installation',
   Device: 'Device',
-  TelemetryRecord: 'TelemetryRecord'
+  TelemetryRecord: 'TelemetryRecord',
+  DeviceCommand: 'DeviceCommand'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -116,7 +117,6 @@ export type InstallationScalarFieldEnum = (typeof InstallationScalarFieldEnum)[k
 
 export const DeviceScalarFieldEnum = {
   installationId: 'installationId',
-  status: 'status',
   model: 'model',
   capacity: 'capacity',
   moduleStatus: 'moduleStatus',
@@ -208,6 +208,24 @@ export const TelemetryRecordScalarFieldEnum = {
 } as const
 
 export type TelemetryRecordScalarFieldEnum = (typeof TelemetryRecordScalarFieldEnum)[keyof typeof TelemetryRecordScalarFieldEnum]
+
+
+export const DeviceCommandScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  module: 'module',
+  power: 'power',
+  status: 'status',
+  requestedBy: 'requestedBy',
+  createdAt: 'createdAt',
+  sentAt: 'sentAt',
+  ackedAt: 'ackedAt',
+  ackMessage: 'ackMessage',
+  expiresAt: 'expiresAt',
+  retryCount: 'retryCount'
+} as const
+
+export type DeviceCommandScalarFieldEnum = (typeof DeviceCommandScalarFieldEnum)[keyof typeof DeviceCommandScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -129,3 +129,82 @@ Site (고객사/현장)
 |-----------------------------|-----------------------------------------------------|
 | `apps/backend/.env`         | `PORT`, `HOST`, `DATABASE_URL` (Neon), `LOG_LEVEL` |
 | `apps/frontend/.env.local`  | `NEXT_PUBLIC_API_BASE`                              |
+
+---
+
+## Receiver Command Downlink (Module ON/OFF)
+
+STM32 + Quectel LTE 장비의 다운링크 명령 제어는 아래 4개 API로 동작합니다.
+
+### Command Lifecycle
+
+1. 웹 UI/관리자가 `POST /receiver/commands/create`로 명령 생성 (`pending`)
+2. 장비가 5초 주기로 `GET /receiver/commands?installationId=...` 폴링
+3. 서버는 가장 오래된 `pending` 1건을 반환하고 `sent`로 전환
+4. 장비가 `POST /receiver/commands/ack` 전송
+   - `ok=true` -> `acked`
+   - `ok=false` -> `failed`
+5. 히스토리는 `GET /receiver/commands/history`로 조회
+
+정책:
+- 한 설치/모듈에 대해 `pending|sent` 활성 명령은 1개만 허용
+- TTL(기본 120초) 지난 `pending|sent`는 `expired`로 정리
+- ACK 중복 수신은 idempotent 처리 (기존 상태 그대로 응답)
+
+### Device Authentication
+
+아래 장비 엔드포인트는 `x-api-key: <RECEIVER_API_KEY>` 필수:
+- `POST /receiver`
+- `GET /receiver/commands`
+- `POST /receiver/commands/ack`
+
+### No-Command Contract
+
+장비 폴링 시 대기 명령이 없으면 아래 payload를 반환:
+
+```json
+{ "id": "", "module": -1, "power": "" }
+```
+
+### cURL Examples
+
+명령 생성 (관리자 전용, ADMIN JWT 필요):
+
+```bash
+curl -X POST "http://localhost:4000/receiver/commands/create" \
+  -H "Authorization: Bearer <JWT_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "installationId":"PSVG-RNDTEST5",
+    "module":2,
+    "power":"off",
+    "requestedBy":"admin@company.com"
+  }'
+```
+
+장비 폴링:
+
+```bash
+curl "http://localhost:4000/receiver/commands?installationId=PSVG-RNDTEST5" \
+  -H "x-api-key: receiver-dev-key"
+```
+
+장비 ACK:
+
+```bash
+curl -X POST "http://localhost:4000/receiver/commands/ack" \
+  -H "x-api-key: receiver-dev-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id":"cmd_20260331_0001",
+    "ok":true,
+    "message":"queued"
+  }'
+```
+
+히스토리 조회 (관리자 전용, ADMIN JWT 필요):
+
+```bash
+curl "http://localhost:4000/receiver/commands/history?installationId=PSVG-RNDTEST5&limit=50" \
+  -H "Authorization: Bearer <JWT_TOKEN>"
+```

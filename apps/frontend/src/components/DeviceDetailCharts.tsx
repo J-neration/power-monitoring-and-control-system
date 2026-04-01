@@ -32,6 +32,20 @@ const TOOLTIP_STYLE = {
 
 const CHART_H = 240;
 
+/** auto 축에서 최소값 막대가 바닥선에 붙어 안 보이는 현상 방지 */
+const yDomainWithPadding = [
+  (dataMin: number) => {
+    if (!Number.isFinite(dataMin)) return 0;
+    const pad = Math.max(Math.abs(dataMin) * 0.08, 1);
+    return dataMin - pad;
+  },
+  (dataMax: number) => {
+    if (!Number.isFinite(dataMax)) return 1;
+    const pad = Math.max(Math.abs(dataMax) * 0.08, 1);
+    return dataMax + pad;
+  },
+] as const;
+
 function ChartEmpty({ message = "데이터 없음" }: { message?: string }) {
   return (
     <div className="history-empty device-detail-chart-empty" style={{ minHeight: CHART_H - 32 }}>
@@ -378,7 +392,8 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 stroke="rgba(255,255,255,0.35)"
                 fontSize={11}
                 tickLine={false}
-                domain={["auto", "auto"]}
+                allowDecimals={false}
+                domain={yDomainWithPadding}
               />
               <Tooltip contentStyle={TOOLTIP_STYLE} />
               <Bar
@@ -417,6 +432,8 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 stroke="rgba(255,255,255,0.35)"
                 fontSize={11}
                 tickLine={false}
+                allowDecimals={false}
+                domain={yDomainWithPadding}
               />
               <Tooltip contentStyle={TOOLTIP_STYLE} />
               <Legend
@@ -465,6 +482,8 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
               stroke="rgba(255,255,255,0.35)"
               fontSize={11}
               tickLine={false}
+              allowDecimals={false}
+              domain={yDomainWithPadding}
             />
             <Tooltip contentStyle={TOOLTIP_STYLE} />
             <Legend
@@ -511,6 +530,8 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 stroke="rgba(255,255,255,0.35)"
                 fontSize={11}
                 tickLine={false}
+                allowDecimals={false}
+                domain={yDomainWithPadding}
               />
               <Tooltip contentStyle={TOOLTIP_STYLE} />
               <Legend
@@ -573,7 +594,8 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 stroke="rgba(255,255,255,0.35)"
                 fontSize={11}
                 tickLine={false}
-                domain={[20, 50]}
+                allowDecimals={false}
+                domain={[0, 50]}
                 unit="°C"
               />
               <Tooltip
@@ -622,7 +644,8 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 stroke="rgba(255,255,255,0.35)"
                 fontSize={11}
                 tickLine={false}
-                domain={[20, 110]}
+                allowDecimals={false}
+                domain={[0, 150]}
                 unit="°C"
               />
               <Tooltip
@@ -671,6 +694,7 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 stroke="rgba(255,255,255,0.35)"
                 fontSize={11}
                 tickLine={false}
+                allowDecimals={false}
                 domain={[0, 20]}
                 unit=" m/s"
               />

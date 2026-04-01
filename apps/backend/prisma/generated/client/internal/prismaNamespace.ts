@@ -388,7 +388,8 @@ export const ModelName = {
   Site: 'Site',
   Installation: 'Installation',
   Device: 'Device',
-  TelemetryRecord: 'TelemetryRecord'
+  TelemetryRecord: 'TelemetryRecord',
+  DeviceCommand: 'DeviceCommand'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -404,7 +405,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "site" | "installation" | "device" | "telemetryRecord"
+    modelProps: "user" | "site" | "installation" | "device" | "telemetryRecord" | "deviceCommand"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -778,6 +779,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    DeviceCommand: {
+      payload: Prisma.$DeviceCommandPayload<ExtArgs>
+      fields: Prisma.DeviceCommandFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DeviceCommandFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DeviceCommandFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>
+        }
+        findFirst: {
+          args: Prisma.DeviceCommandFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DeviceCommandFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>
+        }
+        findMany: {
+          args: Prisma.DeviceCommandFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>[]
+        }
+        create: {
+          args: Prisma.DeviceCommandCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>
+        }
+        createMany: {
+          args: Prisma.DeviceCommandCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DeviceCommandCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>[]
+        }
+        delete: {
+          args: Prisma.DeviceCommandDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>
+        }
+        update: {
+          args: Prisma.DeviceCommandUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>
+        }
+        deleteMany: {
+          args: Prisma.DeviceCommandDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DeviceCommandUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DeviceCommandUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>[]
+        }
+        upsert: {
+          args: Prisma.DeviceCommandUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>
+        }
+        aggregate: {
+          args: Prisma.DeviceCommandAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDeviceCommand>
+        }
+        groupBy: {
+          args: Prisma.DeviceCommandGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DeviceCommandGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DeviceCommandCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DeviceCommandCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -859,7 +934,6 @@ export type InstallationScalarFieldEnum = (typeof InstallationScalarFieldEnum)[k
 
 export const DeviceScalarFieldEnum = {
   installationId: 'installationId',
-  status: 'status',
   model: 'model',
   capacity: 'capacity',
   moduleStatus: 'moduleStatus',
@@ -951,6 +1025,24 @@ export const TelemetryRecordScalarFieldEnum = {
 } as const
 
 export type TelemetryRecordScalarFieldEnum = (typeof TelemetryRecordScalarFieldEnum)[keyof typeof TelemetryRecordScalarFieldEnum]
+
+
+export const DeviceCommandScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  module: 'module',
+  power: 'power',
+  status: 'status',
+  requestedBy: 'requestedBy',
+  createdAt: 'createdAt',
+  sentAt: 'sentAt',
+  ackedAt: 'ackedAt',
+  ackMessage: 'ackMessage',
+  expiresAt: 'expiresAt',
+  retryCount: 'retryCount'
+} as const
+
+export type DeviceCommandScalarFieldEnum = (typeof DeviceCommandScalarFieldEnum)[keyof typeof DeviceCommandScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1059,6 +1151,34 @@ export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, '
 export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
+
+/**
+ * Reference to a field of type 'DeviceCommandPower'
+ */
+export type EnumDeviceCommandPowerFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DeviceCommandPower'>
+    
+
+
+/**
+ * Reference to a field of type 'DeviceCommandPower[]'
+ */
+export type ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DeviceCommandPower[]'>
+    
+
+
+/**
+ * Reference to a field of type 'DeviceCommandStatus'
+ */
+export type EnumDeviceCommandStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DeviceCommandStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'DeviceCommandStatus[]'
+ */
+export type ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DeviceCommandStatus[]'>
+    
+
 /**
  * Batch Payload for updateMany & deleteMany & createMany
  */
@@ -1159,6 +1279,7 @@ export type GlobalOmitConfig = {
   installation?: Prisma.InstallationOmit
   device?: Prisma.DeviceOmit
   telemetryRecord?: Prisma.TelemetryRecordOmit
+  deviceCommand?: Prisma.DeviceCommandOmit
 }
 
 /* Types for Logging */
