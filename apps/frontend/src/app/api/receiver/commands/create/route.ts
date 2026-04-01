@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
+const API_BASE =
+  process.env.COMMAND_API_BASE ??
+  process.env.NEXT_PUBLIC_API_BASE ??
+  "http://localhost:4000";
 
 /**
  * 브라우저는 httpOnly 쿠키(pmcs_token)만 가지므로,
