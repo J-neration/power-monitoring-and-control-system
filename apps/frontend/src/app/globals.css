@@ -3605,3 +3605,381 @@ main.dashboard-full {
     display: none;
   }
 }
+
+/* ── Admin: ICCID ↔ Installation ─────────────────────────── */
+.global-header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+
+.global-header-admin-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: #a5b4fc;
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(165, 180, 252, 0.35);
+  white-space: nowrap;
+}
+
+.global-header-admin-link:hover {
+  background: rgba(165, 180, 252, 0.1);
+  color: #c7d2fe;
+}
+
+.admin-iccid-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 24px 48px;
+}
+
+.admin-iccid-header {
+  margin-bottom: 22px;
+}
+
+.admin-iccid-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+
+.admin-iccid-sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.admin-iccid-panel .admin-iccid-hint {
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.55);
+  margin-bottom: 16px;
+  max-width: 820px;
+}
+
+.admin-iccid-flash {
+  font-size: 13px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.admin-iccid-flash.ok {
+  background: rgba(34, 197, 94, 0.12);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.admin-iccid-flash.err {
+  background: rgba(248, 113, 113, 0.1);
+  color: #fca5a5;
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+.admin-iccid-empty {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.admin-iccid-table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.admin-iccid-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.admin-iccid-table th,
+.admin-iccid-table td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  vertical-align: middle;
+}
+
+.admin-iccid-table th {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.admin-iccid-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-iccid-site {
+  font-weight: 600;
+  color: #f5f6f7;
+}
+
+.admin-iccid-meta {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 2px;
+}
+
+.admin-iccid-code {
+  font-size: 11px;
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+.admin-iccid-input {
+  width: 100%;
+  min-width: 200px;
+  max-width: 280px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: ui-monospace, monospace;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.35);
+  color: #f5f6f7;
+}
+
+.admin-iccid-input:focus {
+  outline: none;
+  border-color: rgba(165, 180, 252, 0.5);
+}
+
+.admin-iccid-save {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(180deg, #6366f1, #4f46e5);
+  color: #fff;
+}
+
+.admin-iccid-save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── 현장 관리 (AdminSitesPanel) ───────────────────── */
+.admin-sites-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-sites-top {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.admin-sites-add-btn {
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 7px;
+  border: 1px solid rgba(99, 102, 241, 0.5);
+  background: rgba(99, 102, 241, 0.12);
+  color: #a5b4fc;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.admin-sites-add-btn:hover {
+  background: rgba(99, 102, 241, 0.22);
+}
+
+.admin-sites-form-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 20px 22px;
+}
+
+.admin-sites-form-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  color: #e5e7eb;
+}
+
+.admin-sites-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+}
+
+.admin-sites-form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.admin-sites-form-hint {
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.admin-sites-input {
+  padding: 8px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.35);
+  color: #f5f6f7;
+  font-family: inherit;
+}
+.admin-sites-input:focus {
+  outline: none;
+  border-color: rgba(165, 180, 252, 0.5);
+}
+.admin-sites-input option {
+  background: #1a1a2e;
+  color: #f5f6f7;
+}
+
+.admin-sites-form-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.admin-sites-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-sites-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+}
+
+.admin-sites-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+.admin-sites-card-header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-sites-card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-sites-chevron {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  width: 14px;
+}
+
+.admin-sites-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f5f6f7;
+  display: block;
+}
+
+.admin-sites-meta {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 2px;
+  display: block;
+}
+
+.admin-sites-card-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-sites-del-btn {
+  padding: 6px 11px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 5px;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  background: rgba(248, 113, 113, 0.08);
+  color: #fca5a5;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.admin-sites-del-btn:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.16);
+}
+.admin-sites-del-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-sites-inst-body {
+  padding: 0 18px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.admin-sites-no-inst {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.35);
+  padding: 12px 0 8px;
+}
+
+.admin-sites-inst-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.admin-sites-add-inst-btn {
+  margin-top: 12px;
+  padding: 7px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px dashed rgba(99, 102, 241, 0.4);
+  background: transparent;
+  color: #a5b4fc;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.admin-sites-add-inst-btn:hover {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.admin-sites-cancel-btn {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+}

@@ -45,14 +45,25 @@ export const siteService = {
     });
 
     return sites.map((site) => {
-      const enrichedInstallations = site.installations.map((inst) => ({
-        id: inst.id,
-        label: inst.label,
-        device: {
-          ...inst.device!,
-          status: deriveDeviceStatus(inst.device!.moduleStatus) ?? "offline",
-        },
-      }));
+      const enrichedInstallations = site.installations.map((inst) => {
+        const devicePayload =
+          inst.device != null
+            ? {
+                ...inst.device,
+                status: deriveDeviceStatus(inst.device.moduleStatus) ?? "offline",
+              }
+            : null;
+        return {
+          id: inst.id,
+          label: inst.label,
+          ...(ctx.role === "ADMIN" ? { iccid: inst.iccid ?? null } : {}),
+          device: devicePayload,
+        };
+      });
+
+      const statusInputs = enrichedInstallations
+        .map((i) => i.device)
+        .filter((d): d is NonNullable<typeof d> => d != null);
 
       return {
         siteId: site.id,
@@ -61,10 +72,49 @@ export const siteService = {
         region: site.region,
         address: site.address,
         installationCount: site.installations.length,
-        status: deriveSiteStatus(enrichedInstallations.map((i) => i.device)),
+        status: deriveSiteStatus(statusInputs),
         installations: enrichedInstallations,
       };
     });
+  },
+
+  /* ─── 현장 생성 ────────────────────────────────── */
+  create: async (data: {
+    id: string;
+    name: string;
+    client: string;
+    region: string;
+    address: string;
+  }) => {
+    return prisma.site.create({ data });
+  },
+
+  /* ─── 현장 삭제 (Installation/Device/Telemetry cascade) ─ */
+  delete: async (siteId: string) => {
+    const site = await prisma.site.findUnique({ where: { id: siteId } });
+    if (!site) return false;
+    await prisma.site.delete({ where: { id: siteId } });
+    return true;
+  },
+
+  /* ─── 설치지점 생성 ─────────────────────────────── */
+  createInstallation: async (data: {
+    id?: string;
+    siteId: string;
+    label: string;
+  }) => {
+    const id = data.id?.trim() || undefined;
+    return prisma.installation.create({
+      data: { id: id ?? undefined, siteId: data.siteId, label: data.label },
+    });
+  },
+
+  /* ─── 설치지점 삭제 (Device/Telemetry cascade) ─── */
+  deleteInstallation: async (installationId: string) => {
+    const inst = await prisma.installation.findUnique({ where: { id: installationId } });
+    if (!inst) return false;
+    await prisma.installation.delete({ where: { id: installationId } });
+    return true;
   },
 
   /* ─── 상세페이지용: Site + Installations + Device ─ */
@@ -83,15 +133,19 @@ export const siteService = {
 
     return {
       ...site,
-      installations: site.installations.map((inst) => ({
-        ...inst,
-        device: inst.device
-          ? {
-              ...inst.device,
-              status: deriveDeviceStatus(inst.device.moduleStatus) ?? "offline",
-            }
-          : inst.device,
-      })),
+      installations: site.installations.map((inst) => {
+        const { iccid, ...instWithoutIccid } = inst;
+        const base = ctx.role === "ADMIN" ? { ...inst } : { ...instWithoutIccid };
+        return {
+          ...base,
+          device: inst.device
+            ? {
+                ...inst.device,
+                status: deriveDeviceStatus(inst.device.moduleStatus) ?? "offline",
+              }
+            : inst.device,
+        };
+      }),
     };
   },
 };

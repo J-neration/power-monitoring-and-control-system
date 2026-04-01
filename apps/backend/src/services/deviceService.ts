@@ -224,6 +224,43 @@ const canAccessDevice = (
   return siteId === ctx.siteId;
 };
 
+/** USIM ICCID 정규화 (공백·하이픈 제거). HMI 페이로드와 DB 저장 시 동일 규칙 사용 */
+const normalizeIccid = (value: unknown): string => {
+  if (typeof value !== "string") return "";
+  return value.trim().replace(/[\s-]/g, "");
+};
+
+export type ReceiverIdentityResolution = {
+  installationId: string | null;
+  resolvedVia: "iccid" | "explicit" | null;
+};
+
+/**
+ * /receiver 텔레메트리·명령 폴링용: 최종 Installation.id 결정.
+ * 1) iccid → DB Installation.iccid 매핑
+ * 2) 없으면 device_id / installationId (기존 HMI 호환)
+ */
+export const resolveInstallationIdForReceiver = async (input: {
+  iccid?: string | null;
+  device_id?: string | null;
+  installationId?: string | null;
+}): Promise<ReceiverIdentityResolution> => {
+  const iccidNorm = normalizeIccid(input.iccid);
+  if (iccidNorm) {
+    const row = await prisma.installation.findUnique({
+      where: { iccid: iccidNorm },
+      select: { id: true },
+    });
+    if (row) return { installationId: row.id, resolvedVia: "iccid" };
+  }
+  const explicit =
+    (typeof input.device_id === "string" ? input.device_id.trim() : "") ||
+    (typeof input.installationId === "string" ? input.installationId.trim() : "") ||
+    "";
+  if (explicit) return { installationId: explicit, resolvedVia: "explicit" };
+  return { installationId: null, resolvedVia: null };
+};
+
 export const deviceService = {
   /* =====================================================
    * Device(telemetry) list/get
@@ -387,8 +424,15 @@ export const deviceService = {
           },
         });
       } else {
-        // Unknown mapping -> auto create "unknown" site + installation
-        await ensureUnknownSiteAndInstallation(installationId);
+        // siteRegistry에 없더라도 DB에 이미 등록된 설치지점이면 그대로 사용
+        const existingInst = await tx.installation.findUnique({
+          where: { id: installationId },
+          select: { id: true },
+        });
+        if (!existingInst) {
+          // 완전히 미등록 장치 → "unknown" 사이트로 자동 생성
+          await ensureUnknownSiteAndInstallation(installationId);
+        }
       }
 
       // 2) Upsert Device telemetry by installationId
@@ -471,6 +515,45 @@ export const deviceService = {
 
       return device;
     });
+  },
+
+  /** 관리자: Installation에 USIM ICCID 등록·해제 (HMI는 iccid만내도 됨) */
+  setInstallationIccid: async (
+    installationId: string,
+    iccid: string | null,
+  ): Promise<
+    | { ok: true }
+    | { ok: false; error: "NOT_FOUND" | "ICCID_IN_USE" }
+  > => {
+    const inst = await prisma.installation.findUnique({
+      where: { id: installationId },
+      select: { id: true },
+    });
+    if (!inst) return { ok: false, error: "NOT_FOUND" };
+
+    const norm =
+      iccid === null || iccid === undefined || String(iccid).trim() === ""
+        ? null
+        : normalizeIccid(iccid);
+    if (norm === "") {
+      await prisma.installation.update({
+        where: { id: installationId },
+        data: { iccid: null },
+      });
+      return { ok: true };
+    }
+
+    const conflict = await prisma.installation.findFirst({
+      where: { iccid: norm, NOT: { id: installationId } },
+      select: { id: true },
+    });
+    if (conflict) return { ok: false, error: "ICCID_IN_USE" };
+
+    await prisma.installation.update({
+      where: { id: installationId },
+      data: { iccid: norm },
+    });
+    return { ok: true };
   },
 
   /* =====================================================

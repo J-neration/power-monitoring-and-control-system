@@ -925,6 +925,7 @@ export const InstallationScalarFieldEnum = {
   id: 'id',
   siteId: 'siteId',
   label: 'label',
+  iccid: 'iccid',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

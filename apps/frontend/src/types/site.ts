@@ -67,7 +67,7 @@ export type Device = {
 export type Installation = {
   id: string;
   label: string;
-  device: Device;
+  device: Device | null;
 };
 
 
@@ -80,7 +80,7 @@ export type Site = {
     installations: Array<{
       id: string;         // installationId (device_id)
       label: string;      // 변전실
-      device: Device;     // telemetry
+      device: Device | null;
       coordinates?: [number, number]; // [lng, lat] — optional, for map markers
     }>;
 };
