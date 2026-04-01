@@ -172,7 +172,7 @@ class PrismaCommandRepository implements CommandRepository {
   }
 }
 
-const ALLOWED_POWER: DeviceCommandPower[] = ["on", "off"];
+const ALLOWED_POWER: DeviceCommandPower[] = ["on", "off", "refresh"];
 
 export const makeCommandId = () => {
   const d = new Date();
@@ -231,7 +231,7 @@ export const createCommandService = (
 
       const power = parsePower(input.power);
       if (!power) {
-        throw new CommandError(400, "INVALID_POWER", "power must be 'on' or 'off'");
+        throw new CommandError(400, "INVALID_POWER", "power must be 'on', 'off', or 'refresh'");
       }
 
       const exists = await repo.installationExists(installationId);

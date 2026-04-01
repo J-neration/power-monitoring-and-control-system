@@ -2132,6 +2132,46 @@ main.dashboard-full {
   color: #fca5a5;
 }
 
+.device-refresh-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.device-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 18px;
+  border-radius: 6px;
+  border: 1px solid rgba(99, 179, 237, 0.5);
+  background: rgba(99, 179, 237, 0.12);
+  color: #63b3ed;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+
+.device-refresh-btn:hover:not(:disabled) {
+  background: rgba(99, 179, 237, 0.24);
+  border-color: #63b3ed;
+}
+
+.device-refresh-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.device-refresh-hint {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.38);
+}
+
 .device-module-power-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
