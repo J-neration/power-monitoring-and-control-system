@@ -140,16 +140,22 @@ schema.prisma 수정
     ↓
 npx prisma migrate dev --name <이름>  (로컬)
     ↓
-git push origin main
+git push origin dev 또는 main
     ↓
-Railway 자동 빌드 & 배포  (prisma generate 포함)
+Railway 자동 빌드 & 배포
     ↓
-⚠️ 운영 DB migration은 자동 적용되지 않음
+prisma migrate deploy 자동 실행 (Dockerfile에서 서버 시작 전 실행)
+    ↓
+Neon DB에 migration 자동 적용 완료
 ```
 
-### 운영 DB에 Migration 적용
+> DB migration은 Railway 배포 시 자동으로 실행됩니다.
+> Dockerfile의 CMD에서 서버 시작 전 `prisma migrate deploy`가 실행되어,
+> 각 환경의 DATABASE_URL에 연결된 Neon 브랜치 (dev / main)에 migration이 적용됩니다.
 
-Railway 배포 후, 로컬에서 운영 DB에 migration을 적용해야 합니다:
+### 수동으로 Migration 적용이 필요한 경우
+
+자동 적용이 실패하거나, 배포 없이 DB만 업데이트해야 할 때:
 
 ```bash
 cd apps/backend
@@ -222,7 +228,8 @@ yarn start                  # node dist/src/index.js
 - [ ] 관련 코드 수정 (라우트, 서비스 등)
 - [ ] 로컬에서 테스트
 - [ ] `prisma/migrations/` 폴더 포함하여 커밋
-- [ ] PR 머지 후 운영 DB에 `npx prisma migrate deploy` 실행
+- [ ] PR → dev 머지 → Dev 환경 자동 배포 & migration 적용
+- [ ] Dev에서 확인 후 dev → main PR 머지 → Production 자동 배포 & migration 적용
 
 ### 코드만 변경 시 (schema 변경 없음)
 
