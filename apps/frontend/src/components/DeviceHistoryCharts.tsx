@@ -21,7 +21,10 @@ const TOOLTIP_STYLE = {
   border: "1px solid rgba(255,255,255,0.08)",
   borderRadius: 8,
   fontSize: 12,
+  color: "#e2e8f0",
 };
+const TOOLTIP_LABEL_STYLE = { color: "#e2e8f0" };
+const TOOLTIP_ITEM_STYLE = { color: "#e2e8f0" };
 
 const CHART_H = 220;
 const AXIS = {
@@ -39,7 +42,8 @@ const LEG = {
   iconSize: 8,
 };
 
-const fmtUnit = (unit: string) => (v: unknown) => [`${v} ${unit}`] as [string];
+const fmtUnit = (unit: string) => (v: unknown, name: unknown) =>
+  [`${v} ${unit}`, String(name)] as [string, string];
 const fmtUnitNamed = (unit: string) => (v: unknown, name: unknown) =>
   [`${typeof v === "number" ? v.toFixed(2) : v} ${unit}`, String(name)] as [
     string,
@@ -225,102 +229,102 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
           <>
             {/* S */}
             <div className="chart-card chart-card-wide">
-              <h3 className="chart-title">S (kVA) — Before / After</h3>
+              <h3 className="chart-title">S (kVA) — 보상 전 / 후</h3>
               <ResponsiveContainer width="100%" height={CHART_H}>
                 <AreaChart data={data} margin={{ top: 8, right: 16, left: -4, bottom: 0 }}>
                   <Grads defs={[{ id: "sB", color: "#64748B" }, { id: "sA", color: "#8B5CF6" }]} />
                   <CartesianGrid {...GRID} />
                   <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
                   <YAxis {...AXIS} domain={["auto", "auto"]} unit=" kVA" />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("kVA")} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} formatter={fmtUnit("kVA")} />
                   <Legend {...LEG} />
-                  <Area type="monotone" dataKey="sBefore" name="Before" stroke="#64748B" strokeDasharray="4 3" fill="url(#sB)" dot={false} connectNulls />
-                  <Area type="monotone" dataKey="sAfter"  name="After"  stroke="#8B5CF6" fill="url(#sA)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="sBefore" name="보상 전" stroke="#64748B" strokeDasharray="4 3" fill="url(#sB)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="sAfter"  name="보상 후" stroke="#8B5CF6" fill="url(#sA)" dot={false} connectNulls />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
 
             {/* P */}
             <div className="chart-card chart-card-wide">
-              <h3 className="chart-title">P (kW) — Before / After</h3>
+              <h3 className="chart-title">P (kW) — 보상 전 / 후</h3>
               <ResponsiveContainer width="100%" height={CHART_H}>
                 <AreaChart data={data} margin={{ top: 8, right: 16, left: -4, bottom: 0 }}>
                   <Grads defs={[{ id: "pB", color: "#64748B" }, { id: "pA", color: "#3B82F6" }]} />
                   <CartesianGrid {...GRID} />
                   <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
                   <YAxis {...AXIS} domain={["auto", "auto"]} unit=" kW" />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("kW")} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} formatter={fmtUnit("kW")} />
                   <Legend {...LEG} />
-                  <Area type="monotone" dataKey="pBefore" name="Before" stroke="#64748B" strokeDasharray="4 3" fill="url(#pB)" dot={false} connectNulls />
-                  <Area type="monotone" dataKey="pAfter"  name="After"  stroke="#3B82F6" fill="url(#pA)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="pBefore" name="보상 전" stroke="#64748B" strokeDasharray="4 3" fill="url(#pB)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="pAfter"  name="보상 후" stroke="#3B82F6" fill="url(#pA)" dot={false} connectNulls />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
 
             {/* Q */}
             <div className="chart-card chart-card-wide">
-              <h3 className="chart-title">Q (kvar) — Before / After</h3>
+              <h3 className="chart-title">Q (kvar) — 보상 전 / 후</h3>
               <ResponsiveContainer width="100%" height={CHART_H}>
                 <AreaChart data={data} margin={{ top: 8, right: 16, left: -4, bottom: 0 }}>
                   <Grads defs={[{ id: "qB", color: "#64748B" }, { id: "qA", color: "#10B981" }]} />
                   <CartesianGrid {...GRID} />
                   <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
                   <YAxis {...AXIS} domain={["auto", "auto"]} unit=" kvar" />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("kvar")} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} formatter={fmtUnit("kvar")} />
                   <Legend {...LEG} />
-                  <Area type="monotone" dataKey="qBefore" name="Before" stroke="#64748B" strokeDasharray="4 3" fill="url(#qB)" dot={false} connectNulls />
-                  <Area type="monotone" dataKey="qAfter"  name="After"  stroke="#10B981" fill="url(#qA)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="qBefore" name="보상 전" stroke="#64748B" strokeDasharray="4 3" fill="url(#qB)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="qAfter"  name="보상 후" stroke="#10B981" fill="url(#qA)" dot={false} connectNulls />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
 
             {/* H */}
             <div className="chart-card chart-card-wide">
-              <h3 className="chart-title">H (kvar) — Before / After</h3>
+              <h3 className="chart-title">H (kvar) — 보상 전 / 후</h3>
               <ResponsiveContainer width="100%" height={CHART_H}>
                 <AreaChart data={data} margin={{ top: 8, right: 16, left: -4, bottom: 0 }}>
                   <Grads defs={[{ id: "hB", color: "#64748B" }, { id: "hA", color: "#F59E0B" }]} />
                   <CartesianGrid {...GRID} />
                   <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
                   <YAxis {...AXIS} domain={["auto", "auto"]} unit=" kvar" />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("kvar")} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} formatter={fmtUnit("kvar")} />
                   <Legend {...LEG} />
-                  <Area type="monotone" dataKey="hBefore" name="Before" stroke="#64748B" strokeDasharray="4 3" fill="url(#hB)" dot={false} connectNulls />
-                  <Area type="monotone" dataKey="hAfter"  name="After"  stroke="#F59E0B" fill="url(#hA)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="hBefore" name="보상 전" stroke="#64748B" strokeDasharray="4 3" fill="url(#hB)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="hAfter"  name="보상 후" stroke="#F59E0B" fill="url(#hA)" dot={false} connectNulls />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
 
             {/* TPF */}
             <div className="chart-card chart-card-wide">
-              <h3 className="chart-title">TPF (%) — Before / After</h3>
+              <h3 className="chart-title">TPF (%) — 보상 전 / 후</h3>
               <ResponsiveContainer width="100%" height={CHART_H}>
                 <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
                   <Grads defs={[{ id: "tpfB", color: "#64748B" }, { id: "tpfA", color: "#10B981" }]} />
                   <CartesianGrid {...GRID} />
                   <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
                   <YAxis {...AXIS} domain={["auto", "auto"]} unit="%" />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("%")} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} formatter={fmtUnit("%")} />
                   <Legend {...LEG} />
-                  <Area type="monotone" dataKey="tpfBefore" name="Before" stroke="#64748B" strokeDasharray="4 3" fill="url(#tpfB)" dot={false} connectNulls />
-                  <Area type="monotone" dataKey="tpfAfter"  name="After"  stroke="#10B981" fill="url(#tpfA)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="tpfBefore" name="보상 전" stroke="#64748B" strokeDasharray="4 3" fill="url(#tpfB)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="tpfAfter"  name="보상 후" stroke="#10B981" fill="url(#tpfA)" dot={false} connectNulls />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
 
             {/* DPF */}
             <div className="chart-card chart-card-wide">
-              <h3 className="chart-title">DPF (%) — Before / After</h3>
+              <h3 className="chart-title">DPF (%) — 보상 전 / 후</h3>
               <ResponsiveContainer width="100%" height={CHART_H}>
                 <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
                   <Grads defs={[{ id: "dpfB", color: "#64748B" }, { id: "dpfA", color: "#6366F1" }]} />
                   <CartesianGrid {...GRID} />
                   <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
                   <YAxis {...AXIS} domain={["auto", "auto"]} unit="%" />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("%")} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} formatter={fmtUnit("%")} />
                   <Legend {...LEG} />
-                  <Area type="monotone" dataKey="dpfBefore" name="Before" stroke="#64748B" strokeDasharray="4 3" fill="url(#dpfB)" dot={false} connectNulls />
-                  <Area type="monotone" dataKey="dpfAfter"  name="After"  stroke="#6366F1" fill="url(#dpfA)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="dpfBefore" name="보상 전" stroke="#64748B" strokeDasharray="4 3" fill="url(#dpfB)" dot={false} connectNulls />
+                  <Area type="monotone" dataKey="dpfAfter"  name="보상 후" stroke="#6366F1" fill="url(#dpfA)" dot={false} connectNulls />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -340,7 +344,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
               return (
                 <div key={phase} className="chart-card chart-card-wide">
                   <h3 className="chart-title">
-                    {phase} Current THD (%) — Load / Grid
+                    {phase} 전류 THD (%) — 보상 전 / 후
                     <span className="chart-title-sub">last {hours}h</span>
                   </h3>
                   <ResponsiveContainer width="100%" height={CHART_H}>
@@ -362,14 +366,14 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                       />
                       <YAxis {...AXIS} domain={["auto", "auto"]} unit="%" />
                       <Tooltip
-                        contentStyle={TOOLTIP_STYLE}
+                        contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE}
                         formatter={fmtUnit("%")}
                       />
                       <Legend {...LEG} />
                       <Area
                         type="monotone"
                         dataKey={`thdBefore${phase}`}
-                        name="Load (Before)"
+                        name="부하 (보상 전)"
                         stroke="#64748B"
                         strokeDasharray="4 3"
                         fill={`url(#${gradB})`}
@@ -379,7 +383,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                       <Area
                         type="monotone"
                         dataKey={`thdAfter${phase}`}
-                        name="Grid (After)"
+                        name="계통 (보상 후)"
                         stroke={color}
                         fill={`url(#${gradA})`}
                         dot={false}
@@ -424,7 +428,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                     />
                     <YAxis {...AXIS} unit={` ${capUnit}`} />
                     <Tooltip
-                      contentStyle={TOOLTIP_STYLE}
+                      contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE}
                       formatter={fmtUnitNamed(capUnit)}
                     />
                     <Legend {...LEG} />
@@ -502,7 +506,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                   <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
                   <YAxis {...AXIS} domain={[0, 50]} unit="°C" />
                   <Tooltip
-                    contentStyle={TOOLTIP_STYLE}
+                    contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE}
                     formatter={fmtUnit("°C")}
                   />
                   <Legend {...LEG} />
@@ -566,7 +570,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                   <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
                   <YAxis {...AXIS} domain={[0, 150]} unit="°C" />
                   <Tooltip
-                    contentStyle={TOOLTIP_STYLE}
+                    contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE}
                     formatter={fmtUnit("°C")}
                   />
                   <Legend {...LEG} />
@@ -630,7 +634,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                   <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
                   <YAxis {...AXIS} domain={["auto", "auto"]} unit=" m/s" />
                   <Tooltip
-                    contentStyle={TOOLTIP_STYLE}
+                    contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE}
                     formatter={fmtUnit("m/s")}
                   />
                   <Legend {...LEG} />

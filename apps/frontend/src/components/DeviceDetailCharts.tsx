@@ -28,7 +28,10 @@ const TOOLTIP_STYLE = {
   border: "1px solid rgba(255,255,255,0.08)",
   borderRadius: 8,
   fontSize: 12,
+  color: "#e2e8f0",
 };
+const TOOLTIP_LABEL_STYLE = { color: "#e2e8f0" };
+const TOOLTIP_ITEM_STYLE = { color: "#e2e8f0" };
 const TOOLTIP_CURSOR = { fill: "rgba(255,255,255,0.04)" };
 
 const CHART_H = 240;
@@ -407,7 +410,7 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 allowDecimals={false}
                 domain={yDomainWithPadding}
               />
-              <Tooltip contentStyle={TOOLTIP_STYLE} cursor={TOOLTIP_CURSOR} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} cursor={TOOLTIP_CURSOR} />
               <Bar
                 dataKey="전압"
                 fill="#3B82F6"
@@ -447,7 +450,7 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 allowDecimals={false}
                 domain={yDomainWithPadding}
               />
-              <Tooltip contentStyle={TOOLTIP_STYLE} cursor={TOOLTIP_CURSOR} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} cursor={TOOLTIP_CURSOR} />
               <Legend
                 wrapperStyle={{ fontSize: 12, paddingTop: 4 }}
                 iconType="circle"
@@ -497,7 +500,7 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
               allowDecimals={false}
               domain={yDomainWithPadding}
             />
-            <Tooltip contentStyle={TOOLTIP_STYLE} cursor={TOOLTIP_CURSOR} />
+            <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} cursor={TOOLTIP_CURSOR} />
             <Legend
               wrapperStyle={{ fontSize: 12, paddingTop: 4 }}
               iconType="circle"
@@ -549,7 +552,7 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 allowDecimals={false}
                 domain={yDomainWithPadding}
               />
-              <Tooltip contentStyle={TOOLTIP_STYLE} cursor={TOOLTIP_CURSOR} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} cursor={TOOLTIP_CURSOR} />
               <Legend
                 wrapperStyle={{ fontSize: 12, paddingTop: 4 }}
                 iconType="circle"
@@ -621,6 +624,8 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
               />
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
+                labelStyle={TOOLTIP_LABEL_STYLE}
+                itemStyle={TOOLTIP_ITEM_STYLE}
                 cursor={TOOLTIP_CURSOR}
                 formatter={(v) => [`${v} °C`]}
               />
@@ -680,6 +685,8 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
               />
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
+                labelStyle={TOOLTIP_LABEL_STYLE}
+                itemStyle={TOOLTIP_ITEM_STYLE}
                 cursor={TOOLTIP_CURSOR}
                 formatter={(v) => [`${v} °C`]}
               />
@@ -739,6 +746,8 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
               />
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
+                labelStyle={TOOLTIP_LABEL_STYLE}
+                itemStyle={TOOLTIP_ITEM_STYLE}
                 cursor={TOOLTIP_CURSOR}
                 formatter={(v) => [`${v} m/s`]}
               />
