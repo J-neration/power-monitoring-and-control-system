@@ -1,13 +1,23 @@
 node_modules
 .DS_Store
+
+# ── 환경 변수 파일 (실제 값이 들어가는 모든 .env 변형) ──────────────
 .env
 .env.local
+.env.development
 .env.development.local
+.env.test
 .env.test.local
+.env.production
 .env.production.local
+# .env.*.example 파일은 커밋 가능 (템플릿 전용, 실제 값 없음)
+
+# ── 빌드 아티팩트 ─────────────────────────────────────────────────────
 .next
 dist
 build
 coverage
+
+# ── 로그 ─────────────────────────────────────────────────────────────
 *.log
 *.sqlite

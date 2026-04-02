@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   moduleChipClassName,
   moduleStatusLabel,
@@ -29,8 +29,26 @@ export default function DeviceModulePowerPanel({
   const [message, setMessage] = useState<{
     type: "ok" | "err";
     text: string;
+    hint?: string;
   } | null>(null);
   const [pendingCommandId, setPendingCommandId] = useState<string | null>(null);
+  const [pendingCommandLabel, setPendingCommandLabel] = useState<string | null>(
+    null,
+  );
+
+  // 60초 안에 HMI ACK가 오지 않으면 대기 상태를 해제
+  useEffect(() => {
+    if (!pendingCommandId) return;
+    const timer = setTimeout(() => {
+      setPendingCommandId(null);
+      setPendingCommandLabel(null);
+      setMessage({
+        type: "err",
+        text: "HMI 응답 시간 초과 (60초) — 명령은 등록되었을 수 있으나 실행 여부를 확인할 수 없습니다.",
+      });
+    }, 60_000);
+    return () => clearTimeout(timer);
+  }, [pendingCommandId]);
 
   // Update message when HMI ACKs the pending command
   useWsEvents((msg) => {
@@ -40,20 +58,31 @@ export default function DeviceModulePowerPanel({
       pendingCommandId &&
       msg.commandId === pendingCommandId
     ) {
+      const label = pendingCommandLabel ?? "명령";
       setPendingCommandId(null);
+      setPendingCommandLabel(null);
       setMessage(
         msg.status === "acked"
-          ? { type: "ok", text: "명령 실행 완료" }
-          : { type: "err", text: "명령 실행 실패" },
+          ? {
+              type: "ok",
+              text: `${label} 실행 완료`,
+              hint: "약 15~20초 후 데이터가 갱신됩니다. 잠시 기다려주세요.",
+            }
+          : { type: "err", text: `${label} 실행 실패` },
       );
     }
   });
 
   const send = async (module: number, power: "on" | "off" | "refresh") => {
     const key = `${module}-${power}`;
+    const label =
+      power === "refresh"
+        ? "데이터 갱신"
+        : `M${module + 1} 파워 ${power === "on" ? "ON" : "OFF"}`;
     setBusy(key);
     setMessage(null);
     setPendingCommandId(null);
+    setPendingCommandLabel(label);
     try {
       const res = await fetch("/api/receiver/commands/create", {
         method: "POST",
@@ -72,6 +101,7 @@ export default function DeviceModulePowerPanel({
         command?: { id: string };
       };
       if (!res.ok) {
+        setPendingCommandLabel(null);
         setMessage({
           type: "err",
           text: data.message ?? data.code ?? `요청 실패 (${res.status})`,
@@ -82,16 +112,12 @@ export default function DeviceModulePowerPanel({
       setPendingCommandId(id || null);
       setMessage({
         type: "ok",
-        text:
-          power === "refresh"
-            ? id
-              ? `데이터 갱신 명령 등록됨: ${id} — HMI 응답 대기 중…`
-              : "데이터 갱신 명령이 등록되었습니다."
-            : id
-              ? `명령 등록됨: ${id} — HMI 응답 대기 중…`
-              : "명령이 등록되었습니다.",
+        text: id
+          ? `${label} 명령 등록됨 ${id}— HMI 응답 대기 중…`
+          : `${label} 명령이 등록되었습니다.`,
       });
     } catch {
+      setPendingCommandLabel(null);
       setMessage({ type: "err", text: "네트워크 오류" });
     } finally {
       setBusy(null);
@@ -101,10 +127,7 @@ export default function DeviceModulePowerPanel({
   const activeSlots =
     numOfMods == null || Number.isNaN(numOfMods)
       ? MODULE_SLOT_COUNT
-      : Math.min(
-          Math.max(0, Math.trunc(numOfMods)),
-          MODULE_SLOT_COUNT,
-        );
+      : Math.min(Math.max(0, Math.trunc(numOfMods)), MODULE_SLOT_COUNT);
 
   return (
     <section className="device-detail-body">
@@ -115,29 +138,37 @@ export default function DeviceModulePowerPanel({
         </h3>
 
         {message ? (
-          <p
-            className={
-              message.type === "ok"
-                ? "device-module-power-msg device-module-power-msg-ok"
-                : "device-module-power-msg device-module-power-msg-err"
-            }
-            role="status"
-          >
-            {message.text}
-          </p>
+          <div role="status" className="device-module-power-msg-wrap">
+            <p
+              className={
+                message.type === "ok"
+                  ? "device-module-power-msg device-module-power-msg-ok"
+                  : "device-module-power-msg device-module-power-msg-err"
+              }
+            >
+              {message.text}
+            </p>
+            {message.hint ? (
+              <p className="device-module-power-msg device-module-power-msg-hint">
+                {message.hint}
+              </p>
+            ) : null}
+          </div>
         ) : null}
         <div className="device-refresh-row">
           <button
             type="button"
             className="device-refresh-btn"
-            disabled={busy !== null}
-            aria-busy={busy === "0-refresh"}
+            disabled={busy !== null || pendingCommandId !== null}
+            aria-busy={busy === "0-refresh" || pendingCommandId !== null}
             onClick={() => void send(0, "refresh")}
           >
-            {busy === "0-refresh" ? "…" : "↻ 데이터 갱신"}
+            {busy === "0-refresh" || pendingCommandId !== null
+              ? "…"
+              : "↻ 데이터 갱신"}
           </button>
           <span className="device-refresh-hint">
-            HMI에 갱신 명령을 전송합니다 (module 0 · power: refresh)
+            HMI에 갱신 명령을 전송합니다
           </span>
         </div>
 
@@ -184,7 +215,9 @@ export default function DeviceModulePowerPanel({
                   <button
                     type="button"
                     className="module-power-switch-seg module-power-switch-seg-off"
-                    disabled={busy !== null || !slotActive}
+                    disabled={
+                      busy !== null || pendingCommandId !== null || !slotActive
+                    }
                     aria-busy={busy === `${i}-off`}
                     onClick={() => void send(i, "off")}
                   >
@@ -193,7 +226,9 @@ export default function DeviceModulePowerPanel({
                   <button
                     type="button"
                     className="module-power-switch-seg module-power-switch-seg-on"
-                    disabled={busy !== null || !slotActive}
+                    disabled={
+                      busy !== null || pendingCommandId !== null || !slotActive
+                    }
                     aria-busy={busy === `${i}-on`}
                     onClick={() => void send(i, "on")}
                   >

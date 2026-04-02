@@ -2119,9 +2119,17 @@ main.dashboard-full {
   background: rgba(255, 255, 255, 0.06);
 }
 
-.device-module-power-msg {
+.device-module-power-msg-wrap {
   margin: 0 0 12px;
+}
+
+.device-module-power-msg {
+  margin: 0;
   font-size: 13px;
+}
+
+.device-module-power-msg + .device-module-power-msg {
+  margin-top: 4px;
 }
 
 .device-module-power-msg-ok {
@@ -2130,6 +2138,11 @@ main.dashboard-full {
 
 .device-module-power-msg-err {
   color: #fca5a5;
+}
+
+.device-module-power-msg-hint {
+  color: #94a3b8;
+  font-size: 12px;
 }
 
 .device-refresh-row {
