@@ -4,6 +4,8 @@ import { useState } from "react";
 import {
   AreaChart,
   Area,
+  LineChart,
+  Line,   
   XAxis,
   YAxis,
   CartesianGrid,
@@ -22,13 +24,27 @@ const TOOLTIP_STYLE = {
 };
 
 const CHART_H = 220;
-const AXIS = { stroke: "rgba(255,255,255,0.35)", fontSize: 11, tickLine: false } as const;
-const GRID = { strokeDasharray: "3 3", stroke: "rgba(255,255,255,0.06)" } as const;
-const LEG  = { wrapperStyle: { fontSize: 12 }, iconType: "circle" as const, iconSize: 8 };
+const AXIS = {
+  stroke: "rgba(255,255,255,0.35)",
+  fontSize: 11,
+  tickLine: false,
+} as const;
+const GRID = {
+  strokeDasharray: "3 3",
+  stroke: "rgba(255,255,255,0.06)",
+} as const;
+const LEG = {
+  wrapperStyle: { fontSize: 12 },
+  iconType: "circle" as const,
+  iconSize: 8,
+};
 
 const fmtUnit = (unit: string) => (v: unknown) => [`${v} ${unit}`] as [string];
 const fmtUnitNamed = (unit: string) => (v: unknown, name: unknown) =>
-  [`${v} ${unit}`, String(name)] as [string, string];
+  [`${typeof v === "number" ? v.toFixed(2) : v} ${unit}`, String(name)] as [
+    string,
+    string,
+  ];
 
 function fmtTime(iso: string) {
   const d = new Date(iso);
@@ -52,12 +68,16 @@ function formatDataDateRangeLabel(readings: TelemetryReading[]): string {
   return a === b ? a : `${a} – ${b}`;
 }
 
-function Grads({ defs }: { defs: { id: string; color: string; opacity?: number }[] }) {
+function Grads({
+  defs,
+}: {
+  defs: { id: string; color: string; opacity?: number }[];
+}) {
   return (
     <defs>
       {defs.map(({ id, color, opacity = 0.3 }) => (
         <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="5%"  stopColor={color} stopOpacity={opacity} />
+          <stop offset="5%" stopColor={color} stopOpacity={opacity} />
           <stop offset="95%" stopColor={color} stopOpacity={0} />
         </linearGradient>
       ))}
@@ -65,15 +85,22 @@ function Grads({ defs }: { defs: { id: string; color: string; opacity?: number }
   );
 }
 
-const TEMP_COLORS = ["#F97316", "#EC4899", "#8B5CF6", "#3B82F6", "#10B981", "#F59E0B"];
+const TEMP_COLORS = [
+  "#F97316",
+  "#EC4899",
+  "#8B5CF6",
+  "#3B82F6",
+  "#10B981",
+  "#F59E0B",
+];
 
 type SubTab = "pf" | "thd" | "capacity" | "temp";
 
 const SUB_TABS: { key: SubTab; label: string; color: string }[] = [
-  { key: "pf",       label: "PF",       color: "#10B981" },
-  { key: "thd",      label: "THD",      color: "#F59E0B" },
+  { key: "pf", label: "PF", color: "#10B981" },
+  { key: "thd", label: "THD", color: "#F59E0B" },
   { key: "capacity", label: "Capacity", color: "#8B5CF6" },
-  { key: "temp",     label: "Temp",     color: "#F97316" },
+  { key: "temp", label: "Temp", color: "#F97316" },
 ];
 
 type Props = {
@@ -89,22 +116,33 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
     return (
       <div className="chart-card chart-card-wide history-empty">
         <p>최근 {hours}시간 수신된 데이터가 없습니다.</p>
-        <p className="history-empty-sub">HMI에서 데이터를 전송하면 여기에 그래프가 표시됩니다.</p>
+        <p className="history-empty-sub">
+          HMI에서 데이터를 전송하면 여기에 그래프가 표시됩니다.
+        </p>
       </div>
     );
   }
 
   const capUnit = model === "paf" ? "A" : "kvar";
-  const maxAreaSensors  = Math.max(...readings.map((r) => r.areaTemp?.length ?? 0), 0);
-  const maxModSensors   = Math.max(...readings.map((r) => r.moduleTemp?.length ?? 0), 0);
-  const maxFans         = Math.max(...readings.map((r) => r.fanSpeed?.length ?? 0), 0);
+  const maxAreaSensors = Math.max(
+    ...readings.map((r) => r.areaTemp?.length ?? 0),
+    0,
+  );
+  const maxModSensors = Math.max(
+    ...readings.map((r) => r.moduleTemp?.length ?? 0),
+    0,
+  );
+  const maxFans = Math.max(...readings.map((r) => r.fanSpeed?.length ?? 0), 0);
 
   const data = readings.map((r) => {
     const totalCap = r.totalCapacity ?? null;
-    const opCap    = r.operatingCapacity ?? null;
-    const rpCap    = r.reactivePowerCapacity ?? null;
-    const margin   = r.availableMargin ?? (totalCap != null && opCap != null ? totalCap - opCap : null);
-    const idleCap  = opCap != null && rpCap != null ? Math.max(0, opCap - rpCap) : null;
+    const opCap = r.operatingCapacity ?? null;
+    const rpCap = r.reactivePowerCapacity ?? null;
+    const margin =
+      r.availableMargin ??
+      (totalCap != null && opCap != null ? totalCap - opCap : null);
+    const idleCap =
+      opCap != null && rpCap != null ? Math.max(0, opCap - rpCap) : null;
     /** TPF/DPF: API·DB는 퍼센트(0–100) 스케일 */
     const pfPct = (v: number | null | undefined) =>
       v != null ? Math.round(v * 10) / 10 : null;
@@ -112,27 +150,41 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
     const row: Record<string, unknown> = {
       time: fmtTime(r.recordedAt),
       recordedAt: r.recordedAt,
-      vL1: r.vL1 ?? null, vL2: r.vL2 ?? null, vL3: r.vL3 ?? null,
+      vL1: r.vL1 ?? null,
+      vL2: r.vL2 ?? null,
+      vL3: r.vL3 ?? null,
       loadCurrentL1: r.loadCurrentL1 ?? null,
       loadCurrentL2: r.loadCurrentL2 ?? null,
       loadCurrentL3: r.loadCurrentL3 ?? null,
-      thdBeforeL1: r.loadCurrentTHDL1 ?? null, thdAfterL1: r.gridCurrentTHDL1 ?? null,
-      thdBeforeL2: r.loadCurrentTHDL2 ?? null, thdAfterL2: r.gridCurrentTHDL2 ?? null,
-      thdBeforeL3: r.loadCurrentTHDL3 ?? null, thdAfterL3: r.gridCurrentTHDL3 ?? null,
-      tpfBefore: pfPct(r.tpf1), tpfAfter: pfPct(r.tpf2),
-      dpfBefore: pfPct(r.dpf1), dpfAfter: pfPct(r.dpf2),
-      sBefore: r.uncompS ?? null, sAfter: r.compS ?? null,
-      pBefore: r.uncompP ?? null, pAfter: r.compP ?? null,
-      qBefore: r.uncompQ ?? null, qAfter: r.compQ ?? null,
-      hBefore: r.uncompH ?? null, hAfter: r.compH ?? null,
-      reactive: rpCap, idle: idleCap, margin,
+      thdBeforeL1: r.loadCurrentTHDL1 ?? null,
+      thdAfterL1: r.gridCurrentTHDL1 ?? null,
+      thdBeforeL2: r.loadCurrentTHDL2 ?? null,
+      thdAfterL2: r.gridCurrentTHDL2 ?? null,
+      thdBeforeL3: r.loadCurrentTHDL3 ?? null,
+      thdAfterL3: r.gridCurrentTHDL3 ?? null,
+      tpfBefore: pfPct(r.tpf1),
+      tpfAfter: pfPct(r.tpf2),
+      dpfBefore: pfPct(r.dpf1),
+      dpfAfter: pfPct(r.dpf2),
+      sBefore: r.uncompS ?? null,
+      sAfter: r.compS ?? null,
+      pBefore: r.uncompP ?? null,
+      pAfter: r.compP ?? null,
+      qBefore: r.uncompQ ?? null,
+      qAfter: r.compQ ?? null,
+      hBefore: r.uncompH ?? null,
+      hAfter: r.compH ?? null,
+      reactive: rpCap,
+      idle: idleCap,
+      margin,
     };
 
     for (let i = 0; i < maxAreaSensors; i++) {
       row[`area${i}`] = r.areaTemp?.[i] ?? null;
     }
     for (let i = 0; i < maxModSensors; i++) {
-      row[`mod${i}`] = r.moduleTemp?.[i] ?? null;
+      const modVal = r.moduleTemp?.[i] ?? null;
+      row[`mod${i}`] = modVal != null && modVal >= 0 ? modVal : null;
     }
     for (let i = 0; i < maxFans; i++) {
       row[`fan${i}`] = r.fanSpeed?.[i] ?? null;
@@ -160,9 +212,12 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
           </button>
         ))}
       </div>
-
+      {dataDateLabel ? (
+        <p className="history-data-date-line" aria-label="데이터 기준 날짜">
+          {dataDateLabel}
+        </p>
+      ) : null}
       <div className="device-charts-grid">
-
         {/* ══════════════════════════════════════════════════
             PF — S, P, Q, H, TPF, DPF
            ══════════════════════════════════════════════════ */}
@@ -244,7 +299,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                   <Grads defs={[{ id: "tpfB", color: "#64748B" }, { id: "tpfA", color: "#10B981" }]} />
                   <CartesianGrid {...GRID} />
                   <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
-                  <YAxis {...AXIS} domain={[0, 100]} unit="%" />
+                  <YAxis {...AXIS} domain={["auto", "auto"]} unit="%" />
                   <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("%")} />
                   <Legend {...LEG} />
                   <Area type="monotone" dataKey="tpfBefore" name="Before" stroke="#64748B" strokeDasharray="4 3" fill="url(#tpfB)" dot={false} connectNulls />
@@ -261,7 +316,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                   <Grads defs={[{ id: "dpfB", color: "#64748B" }, { id: "dpfA", color: "#6366F1" }]} />
                   <CartesianGrid {...GRID} />
                   <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
-                  <YAxis {...AXIS} domain={[0, 100]} unit="%" />
+                  <YAxis {...AXIS} domain={["auto", "auto"]} unit="%" />
                   <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("%")} />
                   <Legend {...LEG} />
                   <Area type="monotone" dataKey="dpfBefore" name="Before" stroke="#64748B" strokeDasharray="4 3" fill="url(#dpfB)" dot={false} connectNulls />
@@ -276,35 +331,66 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
             THD
            ══════════════════════════════════════════════════ */}
         {subTab === "thd" && (
-          <div className="chart-card chart-card-wide">
-            <h3 className="chart-title">
-              Current THD (%) — Before / After
-              <span className="chart-title-sub">last {hours}h</span>
-            </h3>
-            <ResponsiveContainer width="100%" height={CHART_H + 40}>
-              <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
-                <Grads defs={[
-                  { id: "tB1", color: "#3B82F6", opacity: 0.18 },
-                  { id: "tA1", color: "#3B82F6", opacity: 0.35 },
-                  { id: "tB2", color: "#F59E0B", opacity: 0.18 },
-                  { id: "tA2", color: "#F59E0B", opacity: 0.35 },
-                  { id: "tB3", color: "#EC4899", opacity: 0.18 },
-                  { id: "tA3", color: "#EC4899", opacity: 0.35 },
-                ]} />
-                <CartesianGrid {...GRID} />
-                    <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
-                <YAxis {...AXIS} domain={["auto", "auto"]} unit="%" />
-                <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("%")} />
-                <Legend {...LEG} />
-                <Area type="monotone" dataKey="thdBeforeL1" name="L1 Before" stroke="#3B82F6" strokeDasharray="4 3" strokeOpacity={0.6} fill="url(#tB1)" dot={false} connectNulls />
-                <Area type="monotone" dataKey="thdAfterL1"  name="L1 After"  stroke="#3B82F6" fill="url(#tA1)" dot={false} connectNulls />
-                <Area type="monotone" dataKey="thdBeforeL2" name="L2 Before" stroke="#F59E0B" strokeDasharray="4 3" strokeOpacity={0.6} fill="url(#tB2)" dot={false} connectNulls />
-                <Area type="monotone" dataKey="thdAfterL2"  name="L2 After"  stroke="#F59E0B" fill="url(#tA2)" dot={false} connectNulls />
-                <Area type="monotone" dataKey="thdBeforeL3" name="L3 Before" stroke="#EC4899" strokeDasharray="4 3" strokeOpacity={0.6} fill="url(#tB3)" dot={false} connectNulls />
-                <Area type="monotone" dataKey="thdAfterL3"  name="L3 After"  stroke="#EC4899" fill="url(#tA3)" dot={false} connectNulls />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <>
+            {(["L1", "L2", "L3"] as const).map((phase, idx) => {
+              const colors = ["#3B82F6", "#F59E0B", "#EC4899"];
+              const color = colors[idx];
+              const gradB = `thdB${phase}`;
+              const gradA = `thdA${phase}`;
+              return (
+                <div key={phase} className="chart-card chart-card-wide">
+                  <h3 className="chart-title">
+                    {phase} Current THD (%) — Load / Grid
+                    <span className="chart-title-sub">last {hours}h</span>
+                  </h3>
+                  <ResponsiveContainer width="100%" height={CHART_H}>
+                    <AreaChart
+                      data={data}
+                      margin={{ top: 8, right: 16, left: -10, bottom: 0 }}
+                    >
+                      <Grads
+                        defs={[
+                          { id: gradB, color: "#64748B", opacity: 0.2 },
+                          { id: gradA, color, opacity: 0.35 },
+                        ]}
+                      />
+                      <CartesianGrid {...GRID} />
+                      <XAxis
+                        dataKey="time"
+                        {...AXIS}
+                        interval="preserveStartEnd"
+                      />
+                      <YAxis {...AXIS} domain={["auto", "auto"]} unit="%" />
+                      <Tooltip
+                        contentStyle={TOOLTIP_STYLE}
+                        formatter={fmtUnit("%")}
+                      />
+                      <Legend {...LEG} />
+                      <Area
+                        type="monotone"
+                        dataKey={`thdBefore${phase}`}
+                        name="Load (Before)"
+                        stroke="#64748B"
+                        strokeDasharray="4 3"
+                        fill={`url(#${gradB})`}
+                        dot={false}
+                        connectNulls
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey={`thdAfter${phase}`}
+                        name="Grid (After)"
+                        stroke={color}
+                        fill={`url(#${gradA})`}
+                        dot={false}
+                        connectNulls
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              );
+            })}
+          </>
         )}
 
         {/* ══════════════════════════════════════════════════
@@ -319,24 +405,65 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                   <span className="chart-title-sub">last {hours}h</span>
                 </h3>
                 <ResponsiveContainer width="100%" height={CHART_H + 20}>
-                  <AreaChart data={data} margin={{ top: 8, right: 16, left: -4, bottom: 0 }}>
-                    <Grads defs={[
-                      { id: "capR", color: "#10B981", opacity: 0.5 },
-                      { id: "capI", color: "#3B82F6", opacity: 0.4 },
-                      { id: "capM", color: "#475569", opacity: 0.35 },
-                    ]} />
+                  <AreaChart
+                    data={data}
+                    margin={{ top: 8, right: 16, left: -4, bottom: 0 }}
+                  >
+                    <Grads
+                      defs={[
+                        { id: "capR", color: "#10B981", opacity: 0.5 },
+                        { id: "capI", color: "#3B82F6", opacity: 0.4 },
+                        { id: "capM", color: "#475569", opacity: 0.35 },
+                      ]}
+                    />
                     <CartesianGrid {...GRID} />
-                    <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
+                    <XAxis
+                      dataKey="time"
+                      {...AXIS}
+                      interval="preserveStartEnd"
+                    />
                     <YAxis {...AXIS} unit={` ${capUnit}`} />
-                    <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnitNamed(capUnit)} />
+                    <Tooltip
+                      contentStyle={TOOLTIP_STYLE}
+                      formatter={fmtUnitNamed(capUnit)}
+                    />
                     <Legend {...LEG} />
-                    <Area type="monotone" dataKey="reactive" name="Reactive Power Output" stackId="cap" stroke="#10B981" fill="url(#capR)" dot={false} connectNulls />
-                    <Area type="monotone" dataKey="idle"     name="Operating Reserve"     stackId="cap" stroke="#3B82F6" fill="url(#capI)" dot={false} connectNulls />
-                    <Area type="monotone" dataKey="margin"   name="Available Margin"      stackId="cap" stroke="#64748B" fill="url(#capM)" dot={false} connectNulls />
+                    <Area
+                      type="monotone"
+                      dataKey="reactive"
+                      name="Reactive Power Output"
+                      stackId="cap"
+                      stroke="#10B981"
+                      fill="url(#capR)"
+                      dot={false}
+                      connectNulls
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="idle"
+                      name="Operating Reserve"
+                      stackId="cap"
+                      stroke="#3B82F6"
+                      fill="url(#capI)"
+                      dot={false}
+                      connectNulls
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="margin"
+                      name="Available Margin"
+                      stackId="cap"
+                      stroke="#64748B"
+                      fill="url(#capM)"
+                      dot={false}
+                      connectNulls
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
                 <div className="capacity-legend-row">
-                  <span className="cap-badge cap-reactive">Reactive Power Output</span>
+                  <span className="cap-badge cap-reactive">
+                    Reactive Power Output
+                  </span>
                   <span className="cap-badge cap-idle">Operating Reserve</span>
                   <span className="cap-badge cap-margin">Available Margin</span>
                 </div>
@@ -361,20 +488,58 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                 <span className="chart-title-sub">last {hours}h</span>
               </h3>
               <ResponsiveContainer width="100%" height={CHART_H}>
-                <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
-                  <Grads defs={Array.from({ length: maxAreaSensors }, (_, i) => ({
-                    id: `ga${i}`, color: TEMP_COLORS[i % TEMP_COLORS.length],
-                  }))} />
+                <AreaChart
+                  data={data}
+                  margin={{ top: 8, right: 16, left: -10, bottom: 0 }}
+                >
+                  <Grads
+                    defs={Array.from({ length: maxAreaSensors }, (_, i) => ({
+                      id: `ga${i}`,
+                      color: TEMP_COLORS[i % TEMP_COLORS.length],
+                    }))}
+                  />
                   <CartesianGrid {...GRID} />
                   <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
-                  <YAxis {...AXIS} domain={["auto", "auto"]} unit="°C" />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("°C")} />
+                  <YAxis {...AXIS} domain={[0, 50]} unit="°C" />
+                  <Tooltip
+                    contentStyle={TOOLTIP_STYLE}
+                    formatter={fmtUnit("°C")}
+                  />
                   <Legend {...LEG} />
-                  <ReferenceLine y={38} stroke="#EF4444" strokeDasharray="4 3" label={{ value: "38°C", fill: "#EF4444", fontSize: 10 }} />
+                  <ReferenceLine
+                    y={30}
+                    stroke="#F97316"
+                    strokeDasharray="3 3"
+                    strokeOpacity={0.5}
+                    label={{
+                      value: "30°C",
+                      fill: "#F97316",
+                      fontSize: 10,
+                      position: "insideTopRight",
+                    }}
+                  />
+                  <ReferenceLine
+                    y={38}
+                    stroke="#EF4444"
+                    strokeDasharray="4 3"
+                    label={{
+                      value: "38°C",
+                      fill: "#EF4444",
+                      fontSize: 10,
+                      position: "insideTopRight",
+                    }}
+                  />
                   {Array.from({ length: maxAreaSensors }, (_, i) => (
-                    <Area key={i} type="monotone" dataKey={`area${i}`} name={`Zone ${i + 1}`}
+                    <Area
+                      key={i}
+                      type="monotone"
+                      dataKey={`area${i}`}
+                      name={`Zone ${i + 1}`}
                       stroke={TEMP_COLORS[i % TEMP_COLORS.length]}
-                      fill={`url(#ga${i})`} dot={false} connectNulls />
+                      fill={`url(#ga${i})`}
+                      dot={false}
+                      connectNulls
+                    />
                   ))}
                 </AreaChart>
               </ResponsiveContainer>
@@ -387,20 +552,58 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                 <span className="chart-title-sub">last {hours}h</span>
               </h3>
               <ResponsiveContainer width="100%" height={CHART_H}>
-                <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
-                  <Grads defs={Array.from({ length: maxModSensors }, (_, i) => ({
-                    id: `gm${i}`, color: TEMP_COLORS[i % TEMP_COLORS.length],
-                  }))} />
+                <AreaChart
+                  data={data}
+                  margin={{ top: 8, right: 16, left: -10, bottom: 0 }}
+                >
+                  <Grads
+                    defs={Array.from({ length: maxModSensors }, (_, i) => ({
+                      id: `gm${i}`,
+                      color: TEMP_COLORS[i % TEMP_COLORS.length],
+                    }))}
+                  />
                   <CartesianGrid {...GRID} />
                   <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
-                  <YAxis {...AXIS} domain={["auto", "auto"]} unit="°C" />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("°C")} />
+                  <YAxis {...AXIS} domain={[0, 150]} unit="°C" />
+                  <Tooltip
+                    contentStyle={TOOLTIP_STYLE}
+                    formatter={fmtUnit("°C")}
+                  />
                   <Legend {...LEG} />
-                  <ReferenceLine y={100} stroke="#EF4444" strokeDasharray="4 3" label={{ value: "100°C", fill: "#EF4444", fontSize: 10 }} />
+                  <ReferenceLine
+                    y={40}
+                    stroke="#FACC15"
+                    strokeDasharray="3 3"
+                    strokeOpacity={0.5}
+                    label={{
+                      value: "40°C",
+                      fill: "#FACC15",
+                      fontSize: 10,
+                      position: "insideTopRight",
+                    }}
+                  />
+                  <ReferenceLine
+                    y={90}
+                    stroke="#EF4444"
+                    strokeDasharray="4 3"
+                    label={{
+                      value: "90°C",
+                      fill: "#EF4444",
+                      fontSize: 10,
+                      position: "insideTopRight",
+                    }}
+                  />
                   {Array.from({ length: maxModSensors }, (_, i) => (
-                    <Area key={i} type="monotone" dataKey={`mod${i}`} name={`Mod ${i + 1}`}
+                    <Area
+                      key={i}
+                      type="monotone"
+                      dataKey={`mod${i}`}
+                      name={`Mod ${i + 1}`}
                       stroke={TEMP_COLORS[i % TEMP_COLORS.length]}
-                      fill={`url(#gm${i})`} dot={false} connectNulls />
+                      fill={`url(#gm${i})`}
+                      dot={false}
+                      connectNulls
+                    />
                   ))}
                 </AreaChart>
               </ResponsiveContainer>
@@ -413,33 +616,42 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                 <span className="chart-title-sub">last {hours}h</span>
               </h3>
               <ResponsiveContainer width="100%" height={CHART_H}>
-                <AreaChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
-                  <Grads defs={Array.from({ length: maxFans }, (_, i) => ({
-                    id: `gf${i}`, color: TEMP_COLORS[i % TEMP_COLORS.length],
-                  }))} />
+                <AreaChart
+                  data={data}
+                  margin={{ top: 8, right: 16, left: -10, bottom: 0 }}
+                >
+                  <Grads
+                    defs={Array.from({ length: maxFans }, (_, i) => ({
+                      id: `gf${i}`,
+                      color: TEMP_COLORS[i % TEMP_COLORS.length],
+                    }))}
+                  />
                   <CartesianGrid {...GRID} />
                   <XAxis dataKey="time" {...AXIS} interval="preserveStartEnd" />
                   <YAxis {...AXIS} domain={["auto", "auto"]} unit=" m/s" />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={fmtUnit("m/s")} />
+                  <Tooltip
+                    contentStyle={TOOLTIP_STYLE}
+                    formatter={fmtUnit("m/s")}
+                  />
                   <Legend {...LEG} />
                   {Array.from({ length: maxFans }, (_, i) => (
-                    <Area key={i} type="monotone" dataKey={`fan${i}`} name={`Fan ${i + 1}`}
+                    <Area
+                      key={i}
+                      type="monotone"
+                      dataKey={`fan${i}`}
+                      name={`Fan ${i + 1}`}
                       stroke={TEMP_COLORS[i % TEMP_COLORS.length]}
-                      fill={`url(#gf${i})`} dot={false} connectNulls />
+                      fill={`url(#gf${i})`}
+                      dot={false}
+                      connectNulls
+                    />
                   ))}
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </>
         )}
-
       </div>
-
-      {dataDateLabel ? (
-        <p className="history-data-date-line" aria-label="데이터 기준 날짜">
-          {dataDateLabel}
-        </p>
-      ) : null}
     </>
   );
 }
