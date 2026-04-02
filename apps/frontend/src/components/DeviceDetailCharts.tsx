@@ -48,7 +48,10 @@ const yDomainWithPadding = [
 
 function ChartEmpty({ message = "데이터 없음" }: { message?: string }) {
   return (
-    <div className="history-empty device-detail-chart-empty" style={{ minHeight: CHART_H - 32 }}>
+    <div
+      className="history-empty device-detail-chart-empty"
+      style={{ minHeight: CHART_H - 32 }}
+    >
       <p>{message}</p>
     </div>
   );
@@ -71,7 +74,10 @@ function PfGauge({
     return (
       <div className="pf-gauge pf-gauge-empty">
         <span className="pf-gauge-title">{label}</span>
-        <div className="history-empty device-detail-chart-empty" style={{ minHeight: 120 }}>
+        <div
+          className="history-empty device-detail-chart-empty"
+          style={{ minHeight: 120 }}
+        >
           <p>데이터 없음</p>
         </div>
       </div>
@@ -94,27 +100,33 @@ function PfGauge({
     );
   }
 
-  const improved = aPct >= bPct;
+  /* Use absolute values for rendering — TPF/DPF can be negative (leading PF) */
+  const bAbs = Math.abs(bPct);
+  const aAbs = Math.abs(aPct);
 
+  const afterColor =
+    aAbs >= 90 ? "#10B981" : aAbs >= 60 ? "#FACC15" : "#F97316";
+
+  /* Outer ring = 보상 후 (colored), inner ring = 보상 전 (gray) */
   const data = [
-    { name: "보상 후", value: aPct, fill: improved ? "#10B981" : "#EF4444" },
-    { name: "보상 전", value: bPct, fill: "#374151" },
+    { name: "보상 후", value: aAbs, fill: afterColor },
+    { name: "보상 전", value: bAbs, fill: "#4B5563" },
   ];
 
   return (
     <div className="pf-gauge">
-      <ResponsiveContainer width="100%" height={140}>
+      <ResponsiveContainer width="100%" height={150}>
         <RadialBarChart
-          innerRadius="60%"
-          outerRadius="90%"
+          innerRadius="45%"
+          outerRadius="95%"
           startAngle={180}
           endAngle={0}
           data={data}
-          barSize={10}
+          barSize={12}
         >
           <RadialBar
             dataKey="value"
-            cornerRadius={5}
+            cornerRadius={4}
             background={{ fill: "rgba(255,255,255,0.04)" }}
           >
             {data.map((entry, i) => (
@@ -130,7 +142,7 @@ function PfGauge({
           <span className="pf-gauge-arrow">→</span>
           <span
             className="pf-gauge-after"
-            style={{ color: improved ? "#10B981" : "#EF4444" }}
+            style={{ color: afterColor }}
           >
             {aPct.toFixed(1)}%
           </span>
@@ -324,8 +336,7 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
 
   const capUnit = device.model === "paf" ? "A" : "kvar";
   const capOk = hasCapTelemetry(device);
-  const totalCap =
-    device.totalCapacity ?? device.capacity ?? null;
+  const totalCap = device.totalCapacity ?? device.capacity ?? null;
   const opCap = device.operatingCapacity ?? null;
   const rpCap = device.reactivePowerCapacity ?? null;
   const margin =
@@ -491,18 +502,22 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
               iconType="circle"
               iconSize={8}
             />
-            <Bar
-              dataKey="보상전"
-              fill="#F59E0B"
-              radius={[4, 4, 0, 0]}
-              barSize={28}
-            />
-            <Bar
-              dataKey="보상후"
-              fill="#6366F1"
-              radius={[4, 4, 0, 0]}
-              barSize={28}
-            />
+            <Bar dataKey="보상전" radius={[4, 4, 0, 0]} barSize={28}>
+              {thdData.map((entry, i) => (
+                <Cell
+                  key={i}
+                  fill={(entry.보상전 ?? 0) < 20 ? "#10B981" : "#F59E0B"}
+                />
+              ))}
+            </Bar>
+            <Bar dataKey="보상후" radius={[4, 4, 0, 0]} barSize={28}>
+              {thdData.map((entry, i) => (
+                <Cell
+                  key={i}
+                  fill={(entry.보상후 ?? 0) < 20 ? "#10B981" : "#F59E0B"}
+                />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -608,12 +623,20 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 strokeDasharray="4 3"
                 label={{ value: "경보", fill: "#EF4444", fontSize: 11 }}
               />
-              <Bar
-                dataKey="온도"
-                fill="#F97316"
-                radius={[4, 4, 0, 0]}
-                barSize={36}
-              />
+              <Bar dataKey="온도" radius={[4, 4, 0, 0]} barSize={36}>
+                {areaTempData.map((entry, i) => (
+                  <Cell
+                    key={i}
+                    fill={
+                      entry.온도 >= 38
+                        ? "#EF4444"
+                        : entry.온도 >= 30
+                        ? "#F97316"
+                        : "#10B981"
+                    }
+                  />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         ) : (
@@ -658,12 +681,20 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 strokeDasharray="4 3"
                 label={{ value: "경보", fill: "#EF4444", fontSize: 11 }}
               />
-              <Bar
-                dataKey="온도"
-                fill="#EC4899"
-                radius={[4, 4, 0, 0]}
-                barSize={30}
-              />
+              <Bar dataKey="온도" radius={[4, 4, 0, 0]} barSize={30}>
+                {moduleTempData.map((entry, i) => (
+                  <Cell
+                    key={i}
+                    fill={
+                      entry.온도 >= 90
+                        ? "#EF4444"
+                        : entry.온도 >= 40
+                        ? "#FACC15"
+                        : "#10B981"
+                    }
+                  />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         ) : (
@@ -720,7 +751,10 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
         <h3 className="chart-title">
           용량 현황 ({capUnit})
           {capOk && totalCap != null ? (
-            <span className="chart-title-sub"> — 총용량 {totalCap} {capUnit}</span>
+            <span className="chart-title-sub">
+              {" "}
+              — 총용량 {totalCap} {capUnit}
+            </span>
           ) : null}
         </h3>
         {capOk && totalCap != null ? (
@@ -755,21 +789,30 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
             </div>
             <div className="cap-snapshot-stats">
               <div className="cap-stat">
-                <span className="cap-stat-dot" style={{ background: "#10B981" }} />
+                <span
+                  className="cap-stat-dot"
+                  style={{ background: "#10B981" }}
+                />
                 <span className="cap-stat-label">무효전력 발생</span>
                 <span className="cap-stat-val">
                   {rpCap != null ? `${rpCap} ${capUnit}` : "—"}
                 </span>
               </div>
               <div className="cap-stat">
-                <span className="cap-stat-dot" style={{ background: "#3B82F6" }} />
+                <span
+                  className="cap-stat-dot"
+                  style={{ background: "#3B82F6" }}
+                />
                 <span className="cap-stat-label">운전 용량</span>
                 <span className="cap-stat-val">
                   {opCap != null ? `${opCap} ${capUnit}` : "—"}
                 </span>
               </div>
               <div className="cap-stat">
-                <span className="cap-stat-dot" style={{ background: "#64748B" }} />
+                <span
+                  className="cap-stat-dot"
+                  style={{ background: "#64748B" }}
+                />
                 <span className="cap-stat-label">여유 마진</span>
                 <span className="cap-stat-val">
                   {margin != null
@@ -778,9 +821,14 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 </span>
               </div>
               <div className="cap-stat">
-                <span className="cap-stat-dot" style={{ background: "rgba(255,255,255,0.2)" }} />
+                <span
+                  className="cap-stat-dot"
+                  style={{ background: "rgba(255,255,255,0.2)" }}
+                />
                 <span className="cap-stat-label">총 용량</span>
-                <span className="cap-stat-val">{totalCap} {capUnit}</span>
+                <span className="cap-stat-val">
+                  {totalCap} {capUnit}
+                </span>
               </div>
             </div>
           </>
