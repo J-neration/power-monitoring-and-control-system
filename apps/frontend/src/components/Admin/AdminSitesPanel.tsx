@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { SiteListFromApi } from "../../types/admin";
-import { CLIENT_LABELS } from "../../data/clients";
+import { CLIENT_LABELS, isTestClient } from "../../data/clients";
 
 type Props = {
   initialSites: SiteListFromApi[];
@@ -22,8 +22,19 @@ const REGION_OPTIONS = [
   "경기도",
   "인천",
   "부산",
+  "대구",
   "대전",
+  "광주",
+  "울산",
+  "세종",
   "경상북도",
+  "경상남도",
+  "충청북도",
+  "충청남도",
+  "전라남도",
+  "전북특별자치도",
+  "강원도",
+  "제주특별자치도",
   "기타",
 ];
 
@@ -457,9 +468,14 @@ export default function AdminSitesPanel({ initialSites }: Props) {
                       {isOpen ? "▼" : "▶"}
                     </span>
                     <div>
-                      <span className="admin-sites-name">{site.name}</span>
+                      <span className="admin-sites-name">
+                        {site.name}
+                        {isTestClient(site.client) && (
+                          <span className="test-badge">TEST</span>
+                        )}
+                      </span>
                       <span className="admin-sites-meta">
-                        {site.client} · {site.region} · 설치지점{" "}
+                        {CLIENT_LABELS[site.client] ?? site.client} · {site.region} · 설치지점{" "}
                         {site.installations.length}개
                       </span>
                     </div>

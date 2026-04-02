@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { Site, DeviceStatus } from "../../types/site";
-import { CLIENT_LABELS } from "../../data/clients";
+import { CLIENT_LABELS, isTestClient } from "../../data/clients";
 
 const statusPriority: Record<DeviceStatus, number> = {
   fault: 4,
@@ -59,8 +59,13 @@ export default function SiteSummaryPanel({ site }: { site: Site | null }) {
       {/* Site header */}
       <div className="detail-site-top">
         <div className={`detail-status-dot ${siteStatus}`} />
-        <div className="detail-site-info">
-          <h2 className="detail-site-name">{site.name}</h2>
+          <div className="detail-site-info">
+          <h2 className="detail-site-name">
+            {site.name}
+            {isTestClient(site.client) && (
+              <span className="test-badge">TEST</span>
+            )}
+          </h2>
           <span className="detail-site-addr">
             {CLIENT_LABELS[site.client] ?? site.client} · {site.address}
           </span>

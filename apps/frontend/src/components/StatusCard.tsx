@@ -218,7 +218,7 @@ export const StatusCard = ({ device }: StatusCardProps) => {
           <p style={{ fontSize: 12, opacity: 0.6 }}>
             Received{" "}
             {device.lastSeenAt
-              ? new Date(device.lastSeenAt).toLocaleString()
+              ? new Date(device.lastSeenAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
               : "-"}
           </p>
           {device.lastIp && (

@@ -1526,6 +1526,25 @@ main.dashboard-full {
 .detail-site-name {
   font-size: 15px;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* TEST 뱃지: prime 제외 모든 사이트에 표시 (개발·시연용 mock 데이터) */
+.test-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 180, 0, 0.18);
+  color: #f5a623;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border: 1px solid rgba(245, 166, 35, 0.4);
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 .detail-site-addr {
   font-size: 11px;

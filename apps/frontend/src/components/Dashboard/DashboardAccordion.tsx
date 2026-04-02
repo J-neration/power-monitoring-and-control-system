@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef } from "react";
 import type { Site } from "../../types/site";
 import type { DeviceStatus } from "../../types/site";
+import { isTestClient } from "../../data/clients";
 
 type Props = {
   regionEntries: [string, Site[]][];
@@ -116,7 +117,12 @@ export default function DashboardAccordion({ regionEntries, selectedRegion }: Pr
                         href={`/sites/${encodeURIComponent(site.id)}`}
                       >
                         <div className="region-device-top">
-                          <strong className="region-title">{site.name}</strong>
+                          <strong className="region-title">
+                            {site.name}
+                            {isTestClient(site.client) && (
+                              <span className="test-badge">TEST</span>
+                            )}
+                          </strong>
                           <span className="region-device-menu">{site.address}</span>
                         </div>
 
