@@ -3198,7 +3198,7 @@ main.dashboard-full {
 }
 
 .history-data-date-line {
-  margin: 12px 0 0;
+  margin: 12px;
   text-align: center;
   font-size: 12px;
   font-variant-numeric: tabular-nums;

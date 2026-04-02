@@ -29,6 +29,7 @@ const TOOLTIP_STYLE = {
   borderRadius: 8,
   fontSize: 12,
 };
+const TOOLTIP_CURSOR = { fill: "rgba(255,255,255,0.04)" };
 
 const CHART_H = 240;
 
@@ -406,7 +407,7 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 allowDecimals={false}
                 domain={yDomainWithPadding}
               />
-              <Tooltip contentStyle={TOOLTIP_STYLE} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} cursor={TOOLTIP_CURSOR} />
               <Bar
                 dataKey="전압"
                 fill="#3B82F6"
@@ -446,7 +447,7 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 allowDecimals={false}
                 domain={yDomainWithPadding}
               />
-              <Tooltip contentStyle={TOOLTIP_STYLE} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} cursor={TOOLTIP_CURSOR} />
               <Legend
                 wrapperStyle={{ fontSize: 12, paddingTop: 4 }}
                 iconType="circle"
@@ -496,13 +497,13 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
               allowDecimals={false}
               domain={yDomainWithPadding}
             />
-            <Tooltip contentStyle={TOOLTIP_STYLE} />
+            <Tooltip contentStyle={TOOLTIP_STYLE} cursor={TOOLTIP_CURSOR} />
             <Legend
               wrapperStyle={{ fontSize: 12, paddingTop: 4 }}
               iconType="circle"
               iconSize={8}
             />
-            <Bar dataKey="보상전" radius={[4, 4, 0, 0]} barSize={28}>
+            <Bar dataKey="보상전" fill="#F59E0B" radius={[4, 4, 0, 0]} barSize={28}>
               {thdData.map((entry, i) => (
                 <Cell
                   key={i}
@@ -510,7 +511,7 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 />
               ))}
             </Bar>
-            <Bar dataKey="보상후" radius={[4, 4, 0, 0]} barSize={28}>
+            <Bar dataKey="보상후" fill="#6366F1" radius={[4, 4, 0, 0]} barSize={28}>
               {thdData.map((entry, i) => (
                 <Cell
                   key={i}
@@ -548,11 +549,16 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 allowDecimals={false}
                 domain={yDomainWithPadding}
               />
-              <Tooltip contentStyle={TOOLTIP_STYLE} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} cursor={TOOLTIP_CURSOR} />
               <Legend
                 wrapperStyle={{ fontSize: 12, paddingTop: 4 }}
                 iconType="circle"
                 iconSize={8}
+              />
+              <ReferenceLine
+                y={0}
+                stroke="rgba(255,255,255,0.25)"
+                strokeWidth={1}
               />
               <Bar
                 dataKey="보상전"
@@ -615,6 +621,7 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
               />
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
+                cursor={TOOLTIP_CURSOR}
                 formatter={(v) => [`${v} °C`]}
               />
               <ReferenceLine
@@ -673,6 +680,7 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
               />
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
+                cursor={TOOLTIP_CURSOR}
                 formatter={(v) => [`${v} °C`]}
               />
               <ReferenceLine
@@ -731,6 +739,7 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
               />
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
+                cursor={TOOLTIP_CURSOR}
                 formatter={(v) => [`${v} m/s`]}
               />
               <Bar
