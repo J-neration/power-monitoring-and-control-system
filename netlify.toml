@@ -1,0 +1,15 @@
+# 공통 빌드 설정
+[build]
+  base = "apps/frontend"
+  command = "yarn build"
+  publish = ".next"
+
+# Production 환경변수 (main 브랜치)
+[context.production.environment]
+  NEXT_PUBLIC_API_BASE = "https://pmcsbackend-production.up.railway.app"
+  COMMAND_API_BASE = "https://pmcsbackend-production.up.railway.app"
+
+# Dev 환경변수 (dev 브랜치)
+[context.dev.environment]
+  NEXT_PUBLIC_API_BASE = "https://pmcsbackend-dev.up.railway.app"
+  COMMAND_API_BASE = "https://pmcsbackend-dev.up.railway.app"
