@@ -4,12 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "migrate:deploy": "prisma migrate deploy",
+    "dev": "cross-env NODE_ENV=development tsx watch src/index.ts",
     "build": "prisma generate && tsc -p tsconfig.json",
-    "start": "node dist/src/index.js",
+    "start": "cross-env NODE_ENV=production node dist/src/index.js",
     "lint": "echo \"No linter configured\"",
-    "test": "node --test --import tsx \"src/**/*.test.ts\""
+    "test": "node --test --import tsx \"src/**/*.test.ts\"",
+
+    "db:migrate:dev": "cross-env NODE_ENV=development prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:seed": "cross-env NODE_ENV=development tsx prisma/seed.ts",
+    "db:reset": "cross-env NODE_ENV=development prisma migrate reset",
+    "db:studio": "cross-env NODE_ENV=development prisma studio"
   },
   "dependencies": {
     "@fastify/cookie": "^9.4.0",

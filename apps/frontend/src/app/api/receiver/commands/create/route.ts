@@ -12,14 +12,20 @@ const API_BASE =
 export async function POST(request: NextRequest) {
   const token = request.cookies.get("pmcs_token")?.value;
   if (!token) {
-    return NextResponse.json({ message: "인증이 필요합니다." }, { status: 401 });
+    return NextResponse.json(
+      { message: "인증이 필요합니다." },
+      { status: 401 },
+    );
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ message: "잘못된 요청입니다." }, { status: 400 });
+    return NextResponse.json(
+      { message: "잘못된 요청입니다." },
+      { status: 400 },
+    );
   }
 
   let backendRes: Response;

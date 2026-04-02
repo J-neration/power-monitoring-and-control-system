@@ -5,14 +5,23 @@
     "apps/*"
   ],
   "scripts": {
-    "db:migrate:deploy": "npx prisma migrate deploy --config=apps/backend/prisma.config.ts",
-    "dev": "concurrently --names \"frontend,backend\" --prefix-colors \"cyan,green\" --prefix \"[{name}]\" \"yarn workspace @pmcs/frontend dev\" \"yarn workspace @pmcs/backend dev\"",
-    "dev:frontend": "yarn workspace @pmcs/frontend dev",
-    "dev:backend": "yarn workspace @pmcs/backend dev",
+    "dev": "cross-env NODE_ENV=development concurrently --names \"frontend,backend\" --prefix-colors \"cyan,green\" --prefix \"[{name}]\" \"yarn workspace @pmcs/frontend dev\" \"yarn workspace @pmcs/backend dev\"",
+    "dev:frontend": "cross-env NODE_ENV=development yarn workspace @pmcs/frontend dev",
+    "dev:backend": "cross-env NODE_ENV=development yarn workspace @pmcs/backend dev",
     "build": "yarn workspace @pmcs/frontend build && yarn workspace @pmcs/backend build",
-    "lint": "yarn workspace @pmcs/frontend lint && yarn workspace @pmcs/backend lint"
+    "lint": "yarn workspace @pmcs/frontend lint && yarn workspace @pmcs/backend lint",
+
+    "db:start": "docker compose up -d postgres",
+    "db:stop": "docker compose down",
+    "db:migrate:dev": "cross-env NODE_ENV=development yarn workspace @pmcs/backend db:migrate:dev",
+    "db:migrate:deploy": "yarn workspace @pmcs/backend db:migrate:deploy",
+    "db:seed": "cross-env NODE_ENV=development yarn workspace @pmcs/backend db:seed",
+    "db:reset": "cross-env NODE_ENV=development yarn workspace @pmcs/backend db:reset",
+    "db:studio": "cross-env NODE_ENV=development yarn workspace @pmcs/backend db:studio",
+    "db:pull-prod": "node scripts/pull-prod.mjs"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0"
   }
 }

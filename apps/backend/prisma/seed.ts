@@ -1,5 +1,19 @@
-import "dotenv/config";
+import path from "node:path";
+import { config } from "dotenv";
 import bcrypt from "bcryptjs";
+
+// prisma/seed.ts → 한 단계 위가 apps/backend/ (env 파일들이 위치한 곳)
+const appDir = path.resolve(import.meta.dirname, "..");
+const nodeEnv = process.env.NODE_ENV ?? "development";
+
+for (const file of [
+  ".env",
+  ".env.local",
+  `.env.${nodeEnv}`,
+  `.env.${nodeEnv}.local`,
+]) {
+  config({ path: path.resolve(appDir, file), override: true });
+}
 import { PrismaClient } from "./generated/client/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import {
