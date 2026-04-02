@@ -80,7 +80,7 @@ export default async function DeviceDetailPage({ params }: Props) {
             <p>
               Received{" "}
               {device.lastSeenAt
-                ? new Date(device.lastSeenAt).toLocaleString()
+                ? new Date(device.lastSeenAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
                 : "-"}
             </p>
             {device.lastIp ? <p>IP {device.lastIp}</p> : null}

@@ -258,6 +258,41 @@ const seed = async () => {
   } else {
     console.log(`ADMIN 계정 이미 존재: ${adminUsername} — 스킵`);
   }
+
+  // ── DEV 테스트 계정 ───────────────────────────────
+  type DevUser = { username: string; password: string; role: "CLIENT" | "SITE" | "ADMIN"; clientKey?: string; siteId?: string };
+  const devUsers: DevUser[] = [
+    { username: "datacenteradmin", password: "test1234", role: "CLIENT", clientKey: "datacenter" },
+    { username: "lotte",           password: "test1234", role: "CLIENT", clientKey: "lotte" },
+  ];
+
+  for (const u of devUsers) {
+    const found = await prisma.user.findUnique({ where: { username: u.username } });
+    if (!found) {
+      const passwordHash = await bcrypt.hash(u.password, 12);
+      await prisma.user.create({
+        data: {
+          username: u.username,
+          passwordHash,
+          role: u.role,
+          clientKey: u.clientKey ?? null,
+          siteId: u.siteId ?? null,
+        },
+      });
+      console.log(`DEV 계정 생성: ${u.username} / ${u.password}  (${u.role}, clientKey=${u.clientKey ?? "-"})`);
+    } else {
+      // role·clientKey 등이 잘못 설정된 경우를 대비해 항상 동기화
+      await prisma.user.update({
+        where: { username: u.username },
+        data: {
+          role: u.role,
+          clientKey: u.clientKey ?? null,
+          siteId: u.siteId ?? null,
+        },
+      });
+      console.log(`DEV 계정 동기화: ${u.username}  (${u.role}, clientKey=${u.clientKey ?? "-"})`);
+    }
+  }
 };
 
 seed()

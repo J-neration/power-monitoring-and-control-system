@@ -1,0 +1,12 @@
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "./prisma/generated/client/client.js";
+import { config } from "dotenv";
+import path from "node:path";
+config({ path: path.resolve(import.meta.dirname, ".env") });
+config({ path: path.resolve(import.meta.dirname, ".env.local"), override: true });
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
+const sites = await prisma.site.findMany({ select: { id: true, name: true, client: true, region: true }, orderBy: { client: "asc" } });
+console.log(JSON.stringify(sites, null, 2));
+console.log(`\nTotal: ${sites.length} sites`);
+await prisma.$disconnect();
