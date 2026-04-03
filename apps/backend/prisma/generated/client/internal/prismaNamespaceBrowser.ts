@@ -229,8 +229,6 @@ export const ModuleFaultStateScalarFieldEnum = {
   id: 'id',
   installationId: 'installationId',
   faultCode: 'faultCode',
-  firstSeenAt: 'firstSeenAt',
-  lastSeenAt: 'lastSeenAt',
   repeatCount: 'repeatCount',
   resolvedAt: 'resolvedAt',
   lastEvent: 'lastEvent',

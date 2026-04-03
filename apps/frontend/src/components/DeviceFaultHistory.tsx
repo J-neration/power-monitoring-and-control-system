@@ -137,12 +137,6 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
                       <span className="fault-time-abs">
                         {new Date(f.occurredAt).toLocaleString("ko-KR", {
                           timeZone: "Asia/Seoul",
-                          year: "2-digit",
-                          month: "2-digit",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          second: "2-digit",
                         })}
                       </span>
                       <span className="fault-time-rel">{relativeTime(f.occurredAt)}</span>
