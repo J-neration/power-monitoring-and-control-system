@@ -7,10 +7,12 @@ import DeviceHistoryCharts from "./DeviceHistoryCharts";
 import DeviceModulePowerPanel from "./DeviceModulePowerPanel";
 import DeviceFaultHistory from "./DeviceFaultHistory";
 import { StatusCard } from "./StatusCard";
+import ViewingBanner from "./ViewingBanner";
 import type { DeviceWithInstallation } from "../types/site";
 import type { TelemetryReading } from "../types/site";
 import type { FaultEvent } from "../lib/api";
 import { useWsEvents } from "../hooks/useWsEvents";
+import { useDeviceViewing } from "../hooks/useDeviceViewing";
 
 type Tab = "monitor" | "analytics" | "faults";
 
@@ -58,6 +60,10 @@ export default function DeviceDetailTabs({
   const [tab, setTab] = useState<Tab>("monitor");
   const router = useRouter();
 
+  // Notify the server that this user is actively viewing the device.
+  // This enables HMI command polling on the device side.
+  const { showBanner, dismissBanner } = useDeviceViewing(device.installationId);
+
   // Refresh server component data when this installation's device reports in
   useWsEvents((msg) => {
     if (
@@ -72,6 +78,7 @@ export default function DeviceDetailTabs({
 
   return (
     <>
+      {showBanner && <ViewingBanner onDismiss={dismissBanner} />}
       <div className="device-tab-bar">
         <button
           type="button"
