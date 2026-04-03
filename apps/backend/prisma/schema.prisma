@@ -87,6 +87,7 @@ model Installation {
   device           Device?                     // 최신 텔레메트리 (1:1)
   telemetryRecords TelemetryRecord[]           // 시계열 이력
   commands         DeviceCommand[]
+  faultEvents      FaultEvent[]               // fault 이력
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -238,6 +239,29 @@ model TelemetryRecord {
   availableMargin       Float?
 
   @@index([installationId, recordedAt])
+}
+
+/* =========================
+ * 5) FaultEvent (모듈 fault 이력)
+ * ========================= */
+model FaultEvent {
+  id             String       @id @default(cuid())
+  installationId String
+  installation   Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  /// HMI가 보낸 ICCID (조회 편의용, null 허용)
+  iccid          String?
+
+  /// 0-based 모듈 번호 (0=M1 … 5=M6)
+  module         Int
+
+  /// HMI fault 설명 (최대 48자)
+  desc           String       @db.VarChar(48)
+
+  occurredAt     DateTime     @default(now())
+
+  @@index([installationId, occurredAt])
+  @@index([iccid, occurredAt])
 }
 
 model DeviceCommand {

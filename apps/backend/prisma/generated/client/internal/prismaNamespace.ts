@@ -389,6 +389,7 @@ export const ModelName = {
   Installation: 'Installation',
   Device: 'Device',
   TelemetryRecord: 'TelemetryRecord',
+  FaultEvent: 'FaultEvent',
   DeviceCommand: 'DeviceCommand'
 } as const
 
@@ -405,7 +406,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "site" | "installation" | "device" | "telemetryRecord" | "deviceCommand"
+    modelProps: "user" | "site" | "installation" | "device" | "telemetryRecord" | "faultEvent" | "deviceCommand"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -779,6 +780,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    FaultEvent: {
+      payload: Prisma.$FaultEventPayload<ExtArgs>
+      fields: Prisma.FaultEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FaultEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FaultEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FaultEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FaultEventPayload>
+        }
+        findFirst: {
+          args: Prisma.FaultEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FaultEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FaultEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FaultEventPayload>
+        }
+        findMany: {
+          args: Prisma.FaultEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FaultEventPayload>[]
+        }
+        create: {
+          args: Prisma.FaultEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FaultEventPayload>
+        }
+        createMany: {
+          args: Prisma.FaultEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.FaultEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FaultEventPayload>[]
+        }
+        delete: {
+          args: Prisma.FaultEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FaultEventPayload>
+        }
+        update: {
+          args: Prisma.FaultEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FaultEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.FaultEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FaultEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.FaultEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FaultEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.FaultEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FaultEventPayload>
+        }
+        aggregate: {
+          args: Prisma.FaultEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFaultEvent>
+        }
+        groupBy: {
+          args: Prisma.FaultEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FaultEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FaultEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FaultEventCountAggregateOutputType> | number
+        }
+      }
+    }
     DeviceCommand: {
       payload: Prisma.$DeviceCommandPayload<ExtArgs>
       fields: Prisma.DeviceCommandFieldRefs
@@ -1026,6 +1101,18 @@ export const TelemetryRecordScalarFieldEnum = {
 } as const
 
 export type TelemetryRecordScalarFieldEnum = (typeof TelemetryRecordScalarFieldEnum)[keyof typeof TelemetryRecordScalarFieldEnum]
+
+
+export const FaultEventScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  iccid: 'iccid',
+  module: 'module',
+  desc: 'desc',
+  occurredAt: 'occurredAt'
+} as const
+
+export type FaultEventScalarFieldEnum = (typeof FaultEventScalarFieldEnum)[keyof typeof FaultEventScalarFieldEnum]
 
 
 export const DeviceCommandScalarFieldEnum = {
@@ -1280,6 +1367,7 @@ export type GlobalOmitConfig = {
   installation?: Prisma.InstallationOmit
   device?: Prisma.DeviceOmit
   telemetryRecord?: Prisma.TelemetryRecordOmit
+  faultEvent?: Prisma.FaultEventOmit
   deviceCommand?: Prisma.DeviceCommandOmit
 }
 

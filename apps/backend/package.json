@@ -13,6 +13,7 @@
     "db:migrate:dev": "cross-env NODE_ENV=development prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "cross-env NODE_ENV=development tsx prisma/seed.ts",
+    "db:seed:telemetry": "cross-env NODE_ENV=development tsx prisma/seedTelemetry.ts",
     "db:reset": "cross-env NODE_ENV=development prisma migrate reset",
     "db:studio": "cross-env NODE_ENV=development prisma studio"
   },

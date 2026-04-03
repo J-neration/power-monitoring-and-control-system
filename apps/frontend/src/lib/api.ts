@@ -2,6 +2,14 @@ import { cookies } from "next/headers";
 import type { Device, DeviceWithInstallation, Site, TelemetryReading } from "../types/site";
 import type { SiteListFromApi } from "../types/admin";
 
+export type FaultEvent = {
+  id: string;
+  module: number;
+  desc: string;
+  occurredAt: string;
+  installationId: string;
+};
+
 const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
 
 /** 서버 컴포넌트 전용: pmcs_token 쿠키를 Authorization 헤더로 포워딩 */
@@ -83,6 +91,20 @@ export const fetchDevice = async (installationId: string) => {
   if (!response.ok) throw new Error("Failed to fetch device");
   const data = (await response.json()) as { device: DeviceWithInstallation };
   return data.device ?? null;
+};
+
+/** GET /receiver/faults — Admin 전용, installationId로 fault 이력 조회 */
+export const fetchFaults = async (
+  installationId: string,
+  limit = 50
+): Promise<FaultEvent[]> => {
+  const response = await fetch(
+    `${apiBase}/receiver/faults?installationId=${encodeURIComponent(installationId)}&limit=${limit}`,
+    { cache: "no-store", headers: authHeaders() }
+  );
+  if (!response.ok) return [];
+  const data = (await response.json()) as { faults: FaultEvent[] };
+  return data.faults ?? [];
 };
 
 /** GET /sites — ADMIN 응답에 installations[].iccid 포함 */
