@@ -58,6 +58,11 @@ export type TelemetryRecord = Prisma.TelemetryRecordModel
  */
 export type FaultEvent = Prisma.FaultEventModel
 /**
+ * Model ModuleFaultState
+ * Modbus 모듈(1–6)별 fault 상태 — POST /receiver/faults·/faults/critical 에서 upsert
+ */
+export type ModuleFaultState = Prisma.ModuleFaultStateModel
+/**
  * Model DeviceCommand
  * 
  */

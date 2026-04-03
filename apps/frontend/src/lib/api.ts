@@ -8,6 +8,8 @@ export type FaultEvent = {
   desc: string;
   occurredAt: string;
   installationId: string;
+  /** LTE ModuleFaultState 에서만 — HMI eventName (예: Over Temperature) */
+  eventName?: string | null;
 };
 
 const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
@@ -93,13 +95,13 @@ export const fetchDevice = async (installationId: string) => {
   return data.device ?? null;
 };
 
-/** GET /receiver/faults — Admin 전용, installationId로 fault 이력 조회 */
+/** GET /devices/:id/faults — Admin 전용, installationId로 fault 이력 조회 (lte-{iccid} 자동 설치와 합침) */
 export const fetchFaults = async (
   installationId: string,
   limit = 50
 ): Promise<FaultEvent[]> => {
   const response = await fetch(
-    `${apiBase}/receiver/faults?installationId=${encodeURIComponent(installationId)}&limit=${limit}`,
+    `${apiBase}/devices/${encodeURIComponent(installationId)}/faults?limit=${limit}`,
     { cache: "no-store", headers: authHeaders() }
   );
   if (!response.ok) return [];

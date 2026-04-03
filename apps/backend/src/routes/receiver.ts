@@ -1,6 +1,8 @@
 import { FastifyPluginAsync } from "fastify";
 import {
   deviceService,
+  ensureInstallationForIccid,
+  getInstallationIdByIccid,
   resolveInstallationIdForReceiver,
 } from "../services/deviceService.js";
 import { z } from "zod";
@@ -74,10 +76,73 @@ const ackSchema = z.object({
   message: z.string().optional(),
 });
 
+const receiverFaultEntrySchema = z.object({
+  faultCode: z.number().int().min(1).max(6),
+  event: z.enum(["RAISE", "CLEAR"]),
+  /** 사람이 읽을 수 있는 이벤트 이름 (예: Over Temperature) */
+  eventName: z.string().max(64).optional(),
+  firstSeen: z.number().finite(),
+  lastSeen: z.number().finite(),
+  count: z.number().int().min(0),
+});
+
+const receiverFaultBatchSchema = z.object({
+  iccid: z.string().min(1),
+  faults: z.array(receiverFaultEntrySchema),
+});
+
+const receiverFaultCriticalSchema = z.object({
+  iccid: z.string().min(1),
+  faultCode: z.number().int().min(1).max(6),
+  event: z.enum(["RAISE", "CLEAR"]),
+  eventName: z.string().max(64).optional(),
+  ts: z.number().finite(),
+  channel: z.literal("critical"),
+});
+
+const parseJsonObject = (rawBody: unknown): Record<string, unknown> | null => {
+  if (typeof rawBody === "string") {
+    try {
+      return JSON.parse(rawBody) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }
+  if (Buffer.isBuffer(rawBody)) {
+    try {
+      return JSON.parse(rawBody.toString("utf-8")) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }
+  if (rawBody && typeof rawBody === "object" && !Array.isArray(rawBody)) {
+    return rawBody as Record<string, unknown>;
+  }
+  return null;
+};
+
 /** HMI는 iccid만 보내고, DB에 등록된 매핑으로만 식별 (설치 전환 시 Railway 등에 1 로 설정) */
 const receiverRequireIccidOnly = () =>
   process.env.RECEIVER_REQUIRE_ICCID === "1" ||
   process.env.RECEIVER_REQUIRE_ICCID === "true";
+
+/** false 이면 POST /receiver/faults* 에서 미등록 ICCID → 404 (기본: 자동 Installation·Device 생성) */
+const receiverFaultsAutoProvision = () => {
+  const v = process.env.RECEIVER_FAULTS_AUTO_PROVISION;
+  if (v === "0" || v === "false") return false;
+  return true;
+};
+
+const resolveIccidToInstallationId = async (iccid: string) => {
+  if (receiverFaultsAutoProvision()) {
+    return ensureInstallationForIccid(iccid);
+  }
+  const id = await getInstallationIdByIccid(iccid);
+  if (!id) {
+    return { ok: false as const, error: "UNKNOWN_ICCID" as const };
+  }
+  return { ok: true as const, installationId: id, created: false };
+};
 
 export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
   server,
@@ -95,6 +160,118 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
     }
     return true;
   };
+
+  const notifyCriticalFault = (payload: {
+    installationId: string;
+    iccid: string;
+    faultCode: number;
+    event: "RAISE" | "CLEAR";
+    ts: number;
+  }) => {
+    wsHub.broadcast({
+      type: "critical_fault",
+      installationId: payload.installationId,
+      iccid: payload.iccid,
+      faultCode: payload.faultCode,
+      event: payload.event,
+      ts: payload.ts,
+    });
+    if (payload.event !== "RAISE") return;
+    const url = process.env.CRITICAL_FAULT_WEBHOOK_URL?.trim();
+    if (!url) return;
+    void fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        ...payload,
+        source: "pmcs-receiver",
+        channel: "critical",
+      }),
+    }).catch((err: unknown) => {
+      server.log.warn({ err }, "CRITICAL_FAULT_WEBHOOK_URL request failed");
+    });
+  };
+
+  /* 더 구체적인 경로를 먼저 등록 (POST /faults 가 /faults/critical 을 가리지 않도록) */
+  server.post("/faults/critical", async (request, reply) => {
+    const obj = parseJsonObject(request.body);
+    if (!obj) {
+      return reply.status(400).send({ message: "Invalid JSON body" });
+    }
+    const parsed = receiverFaultCriticalSchema.safeParse(obj);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        message: "Invalid request body",
+        errors: parsed.error.flatten(),
+      });
+    }
+    const { iccid, faultCode, event, ts, eventName } = parsed.data;
+    const identity = await resolveIccidToInstallationId(iccid);
+    if (!identity.ok) {
+      if (identity.error === "UNKNOWN_ICCID") {
+        return reply.status(404).send({
+          message:
+            "No installation is registered for this iccid. Register the SIM in the admin UI or set RECEIVER_FAULTS_AUTO_PROVISION.",
+        });
+      }
+      return reply.status(400).send({ message: "Invalid iccid" });
+    }
+    await faultService.upsertReceiverFaultState({
+      installationId: identity.installationId,
+      fault: {
+        faultCode,
+        event,
+        firstSeen: ts,
+        lastSeen: ts,
+        count: 1,
+        ...(eventName !== undefined ? { eventName } : {}),
+      },
+      criticalChannel: true,
+    });
+    notifyCriticalFault({
+      installationId: identity.installationId,
+      iccid: iccid.trim().replace(/[\s-]/g, ""),
+      faultCode,
+      event,
+      ts,
+    });
+    return reply.status(201).send({ ok: true });
+  });
+
+  server.post("/faults", async (request, reply) => {
+    const obj = parseJsonObject(request.body);
+    if (!obj) {
+      return reply.status(400).send({ message: "Invalid JSON body" });
+    }
+    if (typeof obj.iccid !== "string" || !Array.isArray(obj.faults)) {
+      return reply.status(400).send({
+        message: "Missing required fields: iccid and faults (array)",
+      });
+    }
+    const parsed = receiverFaultBatchSchema.safeParse(obj);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        message: "Invalid request body",
+        errors: parsed.error.flatten(),
+      });
+    }
+    const identity = await resolveIccidToInstallationId(parsed.data.iccid);
+    if (!identity.ok) {
+      if (identity.error === "UNKNOWN_ICCID") {
+        return reply.status(404).send({
+          message:
+            "No installation is registered for this iccid. Register the SIM in the admin UI or set RECEIVER_FAULTS_AUTO_PROVISION.",
+        });
+      }
+      return reply.status(400).send({ message: "Invalid iccid" });
+    }
+    await faultService.upsertReceiverFaultStates({
+      installationId: identity.installationId,
+      faults: parsed.data.faults,
+      criticalChannel: false,
+    });
+    return reply.status(201).send({ ok: true });
+  });
 
   server.post("/", async (request, reply) => {
     // API Key 검증

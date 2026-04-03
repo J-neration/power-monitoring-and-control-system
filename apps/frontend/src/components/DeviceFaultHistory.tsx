@@ -13,12 +13,22 @@ function moduleLabel(module: number): string {
   return `M${module + 1}`;
 }
 
+/**
+ * 상대 시각 — 분·시간·일 단위.
+ * occurredAt 이 지금보다 미래로 잡히면(시각 동기·타임존·Unix 해석 차이) "N시간 후"는 의미가 없으므로
+ * fault 는 항상 과거 이벤트로 두고 "방금"만 표시한다.
+ */
 function relativeTime(iso: string): string {
-  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (diff < 60) return `${diff}초 전`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
-  return `${Math.floor(diff / 86400)}일 전`;
+  const diffSec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+
+  if (diffSec < 0) {
+    return "방금";
+  }
+  if (diffSec < 60) return "1분 미만";
+  if (diffMin < 60) return `${diffMin}분 전`;
+  if (diffMin < 1440) return `${Math.floor(diffMin / 60)}시간 전`;
+  return `${Math.floor(diffMin / 1440)}일 전`;
 }
 
 export default function DeviceFaultHistory({ installationId, faults }: Props) {
@@ -110,6 +120,7 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
                 <tr>
                   <th>발생시각</th>
                   <th>모듈</th>
+                  <th>이벤트</th>
                   <th>설명</th>
                 </tr>
               </thead>
@@ -132,6 +143,9 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
                     </td>
                     <td>
                       <span className="fault-module-badge">{moduleLabel(f.module)}</span>
+                    </td>
+                    <td className="fault-event-name">
+                      {f.eventName?.trim() ? f.eventName : "—"}
                     </td>
                     <td className="fault-desc">{f.desc}</td>
                   </tr>

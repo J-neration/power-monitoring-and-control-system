@@ -88,6 +88,7 @@ model Installation {
   telemetryRecords TelemetryRecord[]           // 시계열 이력
   commands         DeviceCommand[]
   faultEvents      FaultEvent[]               // fault 이력
+  moduleFaultStates ModuleFaultState[]        // HMI /receiver/faults upsert 상태
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -262,6 +263,33 @@ model FaultEvent {
 
   @@index([installationId, occurredAt])
   @@index([iccid, occurredAt])
+}
+
+/// Modbus 모듈(1–6)별 fault 상태 — POST /receiver/faults·/faults/critical 에서 upsert
+model ModuleFaultState {
+  id               String       @id @default(cuid())
+  installationId   String
+  installation     Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  /// Modbus 모듈 주소 1–6
+  faultCode        Int
+  firstSeenAt      DateTime
+  lastSeenAt       DateTime
+  repeatCount      Int          @default(0)
+  resolvedAt       DateTime?
+  lastEvent        String       @db.VarChar(16) // RAISE | CLEAR
+
+  /// critical 즉시 전송 채널에서 올린 경우 (마지막 이벤트 기준)
+  criticalChannel  Boolean      @default(false)
+
+  /// HMI 가 보낸 사람이 읽을 수 있는 이벤트 이름 (예: Over Temperature)
+  eventName        String?      @db.VarChar(64)
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@unique([installationId, faultCode])
+  @@index([installationId, resolvedAt])
 }
 
 model DeviceCommand {
