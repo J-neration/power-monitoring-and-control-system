@@ -6,6 +6,7 @@ import {
 import { z } from "zod";
 import { authenticate, requireAdmin } from "../middleware/authenticate.js";
 import { commandService, CommandError } from "../services/commandService.js";
+import { faultService } from "../services/faultService.js";
 import { wsHub } from "../lib/wsHub.js";
 
 type ReceiverOptions = { receiverApiKey: string };
@@ -55,6 +56,8 @@ type ReceiverBody = {
   availableMargin?: number | string;
   /** 장치 모델: psta | paf | psvg (소문자 권장) */
   model?: string;
+  /** 모듈 fault 배열. fault 없으면 [] */
+  faults?: Array<{ module: number; desc: string }>;
   [key: string]: unknown;
 };
 
@@ -190,6 +193,24 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       model: typeof body.model === "string" ? body.model : undefined,
     });
 
+    // fault 이벤트 저장 (faults 배열이 있고 비어있지 않은 경우)
+    const rawFaults = Array.isArray(body.faults) ? body.faults : [];
+    const validFaults = rawFaults.filter(
+      (f): f is { module: number; desc: string } =>
+        f !== null &&
+        typeof f === "object" &&
+        typeof f.module === "number" &&
+        typeof f.desc === "string" &&
+        f.desc.trim().length > 0,
+    );
+    if (validFaults.length > 0 && identity.installationId) {
+      await faultService.saveFaults({
+        installationId: identity.installationId,
+        iccid: typeof body.iccid === "string" ? body.iccid : null,
+        faults: validFaults,
+      });
+    }
+
     if (identity.installationId) {
       wsHub.broadcast({
         type: "device_updated",
@@ -207,6 +228,18 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       },
       device,
     });
+  });
+
+  // Fault 이력 조회 (Admin 전용)
+  server.get("/faults", { preHandler: requireAdmin }, async (request, reply) => {
+    const q = request.query as { iccid?: string; installationId?: string; limit?: string };
+    const limit = q.limit ? Number.parseInt(q.limit, 10) : 50;
+    const faults = await faultService.getFaults({
+      iccid: q.iccid,
+      installationId: q.installationId,
+      limit: Number.isFinite(limit) ? limit : 50,
+    });
+    return reply.send({ faults });
   });
 
   // Web/Admin -> create command

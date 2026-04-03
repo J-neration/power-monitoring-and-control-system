@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import DeviceDetailChartsLazy from "./DeviceDetailChartsLazy";
 import DeviceHistoryCharts from "./DeviceHistoryCharts";
 import DeviceModulePowerPanel from "./DeviceModulePowerPanel";
+import DeviceFaultHistory from "./DeviceFaultHistory";
 import { StatusCard } from "./StatusCard";
 import type { DeviceWithInstallation } from "../types/site";
 import type { TelemetryReading } from "../types/site";
+import type { FaultEvent } from "../lib/api";
 import { useWsEvents } from "../hooks/useWsEvents";
 
-type Tab = "monitor" | "analytics";
+type Tab = "monitor" | "analytics" | "faults";
 
 const MonitorIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -25,14 +27,24 @@ const AnalyticsIcon = () => (
   </svg>
 );
 
+const FaultIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+    <line x1="12" y1="9" x2="12" y2="13" />
+    <line x1="12" y1="17" x2="12.01" y2="17" />
+  </svg>
+);
+
 type Props = {
   device: DeviceWithInstallation;
   readings: TelemetryReading[];
   hours: number;
-  /** ADMIN만 모듈 전원 제어 패널 표시 */
+  /** ADMIN만 모듈 전원 제어 패널 + Fault 이력 표시 */
   isAdmin?: boolean;
   /** 명령 audit용 (로그인 사용자명) */
   adminUsername?: string;
+  /** Admin 전용: fault 이력 */
+  faults?: FaultEvent[];
 };
 
 export default function DeviceDetailTabs({
@@ -41,6 +53,7 @@ export default function DeviceDetailTabs({
   hours,
   isAdmin = false,
   adminUsername,
+  faults = [],
 }: Props) {
   const [tab, setTab] = useState<Tab>("monitor");
   const router = useRouter();
@@ -54,6 +67,8 @@ export default function DeviceDetailTabs({
       router.refresh();
     }
   });
+
+  const hasFaults = faults.length > 0;
 
   return (
     <>
@@ -74,6 +89,17 @@ export default function DeviceDetailTabs({
           <span className="device-tab-icon"><AnalyticsIcon /></span>
           Analytics
         </button>
+        {isAdmin && (
+          <button
+            type="button"
+            className={`device-tab-btn${tab === "faults" ? " active" : ""}${hasFaults ? " device-tab-btn-fault" : ""}`}
+            onClick={() => setTab("faults")}
+          >
+            <span className="device-tab-icon"><FaultIcon /></span>
+            Faults
+            {hasFaults && <span className="fault-tab-count">{faults.length}</span>}
+          </button>
+        )}
       </div>
 
       {tab === "monitor" && (
@@ -105,6 +131,13 @@ export default function DeviceDetailTabs({
           </div>
           <DeviceHistoryCharts readings={readings} hours={hours} model={device.model} />
         </section>
+      )}
+
+      {tab === "faults" && isAdmin && (
+        <DeviceFaultHistory
+          installationId={device.installationId}
+          faults={faults}
+        />
       )}
     </>
   );

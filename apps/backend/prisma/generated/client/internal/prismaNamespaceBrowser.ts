@@ -56,6 +56,7 @@ export const ModelName = {
   Installation: 'Installation',
   Device: 'Device',
   TelemetryRecord: 'TelemetryRecord',
+  FaultEvent: 'FaultEvent',
   DeviceCommand: 'DeviceCommand'
 } as const
 
@@ -209,6 +210,18 @@ export const TelemetryRecordScalarFieldEnum = {
 } as const
 
 export type TelemetryRecordScalarFieldEnum = (typeof TelemetryRecordScalarFieldEnum)[keyof typeof TelemetryRecordScalarFieldEnum]
+
+
+export const FaultEventScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  iccid: 'iccid',
+  module: 'module',
+  desc: 'desc',
+  occurredAt: 'occurredAt'
+} as const
+
+export type FaultEventScalarFieldEnum = (typeof FaultEventScalarFieldEnum)[keyof typeof FaultEventScalarFieldEnum]
 
 
 export const DeviceCommandScalarFieldEnum = {

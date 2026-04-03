@@ -6,6 +6,7 @@
  */
 import "dotenv/config";
 import { PrismaClient } from "./generated/client/client.js";
+import type { TelemetryRecordCreateManyInput } from "./generated/client/models/TelemetryRecord.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const prisma = new PrismaClient({
@@ -37,6 +38,18 @@ const TARGETS = [
 const INTERVAL_MINUTES = 30;
 const TOTAL_POINTS = 48; // 24시간
 
+/** moduleStatus: 0=STANDBY 2=RUNNING 3=FAULT — 대부분 RUNNING, 약간 STANDBY, fault는 드물게 */
+const TELEM_MODULE_PATTERNS: number[][] = [
+  [2, 2, 2, 2, 2, 2],
+  [2, 2, 2, 2, 2, 0],
+  [2, 2, 2, 2, 0, 2],
+  [2, 2, 2, 2, 2, 2],
+  [2, 2, 0, 2, 2, 2],
+  [2, 2, 2, 2, 2, 2],
+  [2, 2, 2, 2, 2, 0],
+  [2, 2, 2, 2, 2, 3], // 타깃 중 하나만 이 패턴(간헐 fault 1슬롯)
+];
+
 async function main() {
   const now = Date.now();
 
@@ -49,7 +62,7 @@ async function main() {
       console.log(`  [${installationId}] 기존 ${deleted.count}개 삭제`);
     }
 
-    const records = [];
+    const records: TelemetryRecordCreateManyInput[] = [];
     for (let i = 0; i < TOTAL_POINTS; i++) {
       const recordedAt = new Date(now - (TOTAL_POINTS - i) * INTERVAL_MINUTES * 60 * 1000);
 
@@ -58,7 +71,8 @@ async function main() {
       const vBase = isRnd ? 218 : 220.3;
       const iBase = isRnd ? 30 : 47;
       const thdBase = isRnd ? 8 : 3.2;
-      const qBase = isRnd ? 3000 : 4200;
+      // S/P/Q/H: kvar·kVA 스케일 테스트값 (대략 10~100)
+      const qBase = isRnd ? 45 : 60;
 
       // 야간(0~6시)에는 부하 전류가 낮아지는 패턴
       const hour = recordedAt.getHours();
@@ -80,25 +94,27 @@ async function main() {
       const gridCurrentTHDL2 = wave(thdBase * 0.65 + 0.2, 0.7, 0.9, 0.2, i);
       const gridCurrentTHDL3 = wave(thdBase * 0.65 - 0.1, 0.9, 1.6, 0.2, i);
 
-      const uncompQ = wave(qBase * nightFactor, qBase * 0.1, 0, qBase * 0.02, i);
-      const compQ = wave(uncompQ * 0.27, uncompQ * 0.05, 0.3, uncompQ * 0.01, i);
+      const uncompQ = wave(qBase * nightFactor, 10, 0, 2, i);
+      const compQ = wave(Math.max(15, uncompQ * 0.28), 4, 0.3, 1, i);
 
       const tpf1 = pfWave(0.84, 0.04, 0, i);
       const tpf2 = pfWave(0.97, 0.02, 0.2, i);
       const dpf1 = pfWave(0.85, 0.04, 0.1, i);
       const dpf2 = pfWave(0.98, 0.01, 0.3, i);
 
-      const uncompS = wave(38700 * nightFactor, 1500, 0, 200, i);
-      const compS = wave(33200 * nightFactor, 1200, 0.2, 150, i);
-      const uncompP = wave(32500 * nightFactor, 1200, 0, 150, i);
-      const compP = wave(31800 * nightFactor, 1100, 0.1, 120, i);
-      const uncompH = wave(1800 * nightFactor, 300, 0.5, 50, i);
-      const compH = wave(500 * nightFactor, 100, 0.6, 20, i);
+      const uncompS = wave(72 * nightFactor, 12, 0, 3, i);
+      const compS = wave(64 * nightFactor, 10, 0.2, 2.5, i);
+      const uncompP = wave(58 * nightFactor, 10, 0, 2.5, i);
+      const compP = wave(55 * nightFactor, 9, 0.1, 2, i);
+      const uncompH = wave(38 * nightFactor, 8, 0.5, 2, i);
+      const compH = wave(26 * nightFactor, 3, 0.6, 1, i);
 
       records.push({
         installationId,
         recordedAt,
-        moduleStatus: isRnd ? [] : [2, 2, 2, 2, 2, 2],
+        moduleStatus: isRnd
+          ? []
+          : TELEM_MODULE_PATTERNS[TARGETS.indexOf(installationId) % TELEM_MODULE_PATTERNS.length],
         numOfMods: isRnd ? 0 : 6,
         vL1: wave(vBase, 1.5, 0, 0.3, i),
         vL2: wave(vBase + 0.8, 1.2, 0.5, 0.3, i),

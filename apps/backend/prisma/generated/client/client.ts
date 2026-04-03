@@ -73,6 +73,13 @@ export type Device = Prisma.DeviceModel
  */
 export type TelemetryRecord = Prisma.TelemetryRecordModel
 /**
+ * Model FaultEvent
+ * =========================
+ *  * 5) FaultEvent (모듈 fault 이력)
+ *  * =========================
+ */
+export type FaultEvent = Prisma.FaultEventModel
+/**
  * Model DeviceCommand
  * 
  */

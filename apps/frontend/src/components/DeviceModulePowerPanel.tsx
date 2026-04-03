@@ -9,6 +9,7 @@ import {
 import { useWsEvents } from "../hooks/useWsEvents";
 
 const MODULE_SLOT_COUNT = 6;
+const COMMAND_ACK_TIMEOUT_MS = 130_000;
 
 type Props = {
   installationId: string;
@@ -36,7 +37,7 @@ export default function DeviceModulePowerPanel({
     null,
   );
 
-  // 60초 안에 HMI ACK가 오지 않으면 대기 상태를 해제
+  // HMI 폴링 주기(60초) 고려: 최대 130초까지 ACK 대기
   useEffect(() => {
     if (!pendingCommandId) return;
     const timer = setTimeout(() => {
@@ -44,9 +45,9 @@ export default function DeviceModulePowerPanel({
       setPendingCommandLabel(null);
       setMessage({
         type: "err",
-        text: "HMI 응답 시간 초과 (60초) — 명령은 등록되었을 수 있으나 실행 여부를 확인할 수 없습니다.",
+        text: "HMI 응답 시간 초과 (최대 130초 대기) — 명령은 등록되었을 수 있으나 실행 여부를 확인할 수 없습니다.",
       });
-    }, 60_000);
+    }, COMMAND_ACK_TIMEOUT_MS);
     return () => clearTimeout(timer);
   }, [pendingCommandId]);
 
@@ -66,7 +67,7 @@ export default function DeviceModulePowerPanel({
           ? {
               type: "ok",
               text: `${label} 실행 완료`,
-              hint: "약 15~20초 후 데이터가 갱신됩니다. 잠시 기다려주세요.",
+              hint: "약 60~80초 후 데이터가 갱신될 수 있습니다. 잠시 기다려주세요.",
             }
           : { type: "err", text: `${label} 실행 실패` },
       );
@@ -113,7 +114,7 @@ export default function DeviceModulePowerPanel({
       setMessage({
         type: "ok",
         text: id
-          ? `${label} 명령 등록됨 ${id}— HMI 응답 대기 중…`
+          ? `${label} 명령 등록됨 ${id}— HMI 응답 대기 중… (최대 약 130초)`
           : `${label} 명령이 등록되었습니다.`,
       });
     } catch {
