@@ -1,0 +1,41 @@
+# Neon **production** 브랜치에만 스키마 반영 (데이터는 옮기지 않음 — migrate deploy 만 실행)
+#
+# 사용법:
+# 1) GitHub repo → Settings → Secrets and variables → Actions
+# 2) New repository secret 이름: DATABASE_URL_PRODUCTION
+#    값: Neon 콘솔 → **production(main 브랜치)** → Connection string (pooler/direct 아무거나)
+# 3) main 에 merge / push 되면 prisma/migrations 변경 시 자동 실행, 또는 Actions 탭에서 수동 실행
+#
+# 주의: DATABASE_URL_PRODUCTION 이 dev 브랜치 URL 이면 dev DB 만 바뀝니다. 반드시 prod URL 인지 확인하세요.
+
+name: Prisma migrate (production)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/backend/prisma/**"
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: production
+      DATABASE_URL: ${{ secrets.DATABASE_URL_PRODUCTION }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "yarn"
+          cache-dependency-path: yarn.lock
+
+      - name: Install
+        run: yarn install --frozen-lockfile
+
+      - name: prisma migrate deploy
+        working-directory: apps/backend
+        run: npx prisma migrate deploy
