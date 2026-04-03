@@ -40,8 +40,6 @@ export type ModuleFaultStateMinAggregateOutputType = {
   id: string | null
   installationId: string | null
   faultCode: number | null
-  firstSeenAt: Date | null
-  lastSeenAt: Date | null
   repeatCount: number | null
   resolvedAt: Date | null
   lastEvent: string | null
@@ -55,8 +53,6 @@ export type ModuleFaultStateMaxAggregateOutputType = {
   id: string | null
   installationId: string | null
   faultCode: number | null
-  firstSeenAt: Date | null
-  lastSeenAt: Date | null
   repeatCount: number | null
   resolvedAt: Date | null
   lastEvent: string | null
@@ -70,8 +66,6 @@ export type ModuleFaultStateCountAggregateOutputType = {
   id: number
   installationId: number
   faultCode: number
-  firstSeenAt: number
-  lastSeenAt: number
   repeatCount: number
   resolvedAt: number
   lastEvent: number
@@ -97,8 +91,6 @@ export type ModuleFaultStateMinAggregateInputType = {
   id?: true
   installationId?: true
   faultCode?: true
-  firstSeenAt?: true
-  lastSeenAt?: true
   repeatCount?: true
   resolvedAt?: true
   lastEvent?: true
@@ -112,8 +104,6 @@ export type ModuleFaultStateMaxAggregateInputType = {
   id?: true
   installationId?: true
   faultCode?: true
-  firstSeenAt?: true
-  lastSeenAt?: true
   repeatCount?: true
   resolvedAt?: true
   lastEvent?: true
@@ -127,8 +117,6 @@ export type ModuleFaultStateCountAggregateInputType = {
   id?: true
   installationId?: true
   faultCode?: true
-  firstSeenAt?: true
-  lastSeenAt?: true
   repeatCount?: true
   resolvedAt?: true
   lastEvent?: true
@@ -229,8 +217,6 @@ export type ModuleFaultStateGroupByOutputType = {
   id: string
   installationId: string
   faultCode: number
-  firstSeenAt: Date
-  lastSeenAt: Date
   repeatCount: number
   resolvedAt: Date | null
   lastEvent: string
@@ -267,8 +253,6 @@ export type ModuleFaultStateWhereInput = {
   id?: Prisma.StringFilter<"ModuleFaultState"> | string
   installationId?: Prisma.StringFilter<"ModuleFaultState"> | string
   faultCode?: Prisma.IntFilter<"ModuleFaultState"> | number
-  firstSeenAt?: Prisma.DateTimeFilter<"ModuleFaultState"> | Date | string
-  lastSeenAt?: Prisma.DateTimeFilter<"ModuleFaultState"> | Date | string
   repeatCount?: Prisma.IntFilter<"ModuleFaultState"> | number
   resolvedAt?: Prisma.DateTimeNullableFilter<"ModuleFaultState"> | Date | string | null
   lastEvent?: Prisma.StringFilter<"ModuleFaultState"> | string
@@ -283,8 +267,6 @@ export type ModuleFaultStateOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   installationId?: Prisma.SortOrder
   faultCode?: Prisma.SortOrder
-  firstSeenAt?: Prisma.SortOrder
-  lastSeenAt?: Prisma.SortOrder
   repeatCount?: Prisma.SortOrder
   resolvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastEvent?: Prisma.SortOrder
@@ -303,8 +285,6 @@ export type ModuleFaultStateWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ModuleFaultStateWhereInput | Prisma.ModuleFaultStateWhereInput[]
   installationId?: Prisma.StringFilter<"ModuleFaultState"> | string
   faultCode?: Prisma.IntFilter<"ModuleFaultState"> | number
-  firstSeenAt?: Prisma.DateTimeFilter<"ModuleFaultState"> | Date | string
-  lastSeenAt?: Prisma.DateTimeFilter<"ModuleFaultState"> | Date | string
   repeatCount?: Prisma.IntFilter<"ModuleFaultState"> | number
   resolvedAt?: Prisma.DateTimeNullableFilter<"ModuleFaultState"> | Date | string | null
   lastEvent?: Prisma.StringFilter<"ModuleFaultState"> | string
@@ -319,8 +299,6 @@ export type ModuleFaultStateOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   installationId?: Prisma.SortOrder
   faultCode?: Prisma.SortOrder
-  firstSeenAt?: Prisma.SortOrder
-  lastSeenAt?: Prisma.SortOrder
   repeatCount?: Prisma.SortOrder
   resolvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastEvent?: Prisma.SortOrder
@@ -342,8 +320,6 @@ export type ModuleFaultStateScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"ModuleFaultState"> | string
   installationId?: Prisma.StringWithAggregatesFilter<"ModuleFaultState"> | string
   faultCode?: Prisma.IntWithAggregatesFilter<"ModuleFaultState"> | number
-  firstSeenAt?: Prisma.DateTimeWithAggregatesFilter<"ModuleFaultState"> | Date | string
-  lastSeenAt?: Prisma.DateTimeWithAggregatesFilter<"ModuleFaultState"> | Date | string
   repeatCount?: Prisma.IntWithAggregatesFilter<"ModuleFaultState"> | number
   resolvedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ModuleFaultState"> | Date | string | null
   lastEvent?: Prisma.StringWithAggregatesFilter<"ModuleFaultState"> | string
@@ -356,8 +332,6 @@ export type ModuleFaultStateScalarWhereWithAggregatesInput = {
 export type ModuleFaultStateCreateInput = {
   id?: string
   faultCode: number
-  firstSeenAt: Date | string
-  lastSeenAt: Date | string
   repeatCount?: number
   resolvedAt?: Date | string | null
   lastEvent: string
@@ -372,8 +346,6 @@ export type ModuleFaultStateUncheckedCreateInput = {
   id?: string
   installationId: string
   faultCode: number
-  firstSeenAt: Date | string
-  lastSeenAt: Date | string
   repeatCount?: number
   resolvedAt?: Date | string | null
   lastEvent: string
@@ -386,8 +358,6 @@ export type ModuleFaultStateUncheckedCreateInput = {
 export type ModuleFaultStateUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   faultCode?: Prisma.IntFieldUpdateOperationsInput | number
-  firstSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   repeatCount?: Prisma.IntFieldUpdateOperationsInput | number
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastEvent?: Prisma.StringFieldUpdateOperationsInput | string
@@ -402,8 +372,6 @@ export type ModuleFaultStateUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   installationId?: Prisma.StringFieldUpdateOperationsInput | string
   faultCode?: Prisma.IntFieldUpdateOperationsInput | number
-  firstSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   repeatCount?: Prisma.IntFieldUpdateOperationsInput | number
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastEvent?: Prisma.StringFieldUpdateOperationsInput | string
@@ -417,8 +385,6 @@ export type ModuleFaultStateCreateManyInput = {
   id?: string
   installationId: string
   faultCode: number
-  firstSeenAt: Date | string
-  lastSeenAt: Date | string
   repeatCount?: number
   resolvedAt?: Date | string | null
   lastEvent: string
@@ -431,8 +397,6 @@ export type ModuleFaultStateCreateManyInput = {
 export type ModuleFaultStateUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   faultCode?: Prisma.IntFieldUpdateOperationsInput | number
-  firstSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   repeatCount?: Prisma.IntFieldUpdateOperationsInput | number
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastEvent?: Prisma.StringFieldUpdateOperationsInput | string
@@ -446,8 +410,6 @@ export type ModuleFaultStateUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   installationId?: Prisma.StringFieldUpdateOperationsInput | string
   faultCode?: Prisma.IntFieldUpdateOperationsInput | number
-  firstSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   repeatCount?: Prisma.IntFieldUpdateOperationsInput | number
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastEvent?: Prisma.StringFieldUpdateOperationsInput | string
@@ -476,8 +438,6 @@ export type ModuleFaultStateCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   installationId?: Prisma.SortOrder
   faultCode?: Prisma.SortOrder
-  firstSeenAt?: Prisma.SortOrder
-  lastSeenAt?: Prisma.SortOrder
   repeatCount?: Prisma.SortOrder
   resolvedAt?: Prisma.SortOrder
   lastEvent?: Prisma.SortOrder
@@ -496,8 +456,6 @@ export type ModuleFaultStateMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   installationId?: Prisma.SortOrder
   faultCode?: Prisma.SortOrder
-  firstSeenAt?: Prisma.SortOrder
-  lastSeenAt?: Prisma.SortOrder
   repeatCount?: Prisma.SortOrder
   resolvedAt?: Prisma.SortOrder
   lastEvent?: Prisma.SortOrder
@@ -511,8 +469,6 @@ export type ModuleFaultStateMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   installationId?: Prisma.SortOrder
   faultCode?: Prisma.SortOrder
-  firstSeenAt?: Prisma.SortOrder
-  lastSeenAt?: Prisma.SortOrder
   repeatCount?: Prisma.SortOrder
   resolvedAt?: Prisma.SortOrder
   lastEvent?: Prisma.SortOrder
@@ -572,8 +528,6 @@ export type ModuleFaultStateUncheckedUpdateManyWithoutInstallationNestedInput = 
 export type ModuleFaultStateCreateWithoutInstallationInput = {
   id?: string
   faultCode: number
-  firstSeenAt: Date | string
-  lastSeenAt: Date | string
   repeatCount?: number
   resolvedAt?: Date | string | null
   lastEvent: string
@@ -586,8 +540,6 @@ export type ModuleFaultStateCreateWithoutInstallationInput = {
 export type ModuleFaultStateUncheckedCreateWithoutInstallationInput = {
   id?: string
   faultCode: number
-  firstSeenAt: Date | string
-  lastSeenAt: Date | string
   repeatCount?: number
   resolvedAt?: Date | string | null
   lastEvent: string
@@ -630,8 +582,6 @@ export type ModuleFaultStateScalarWhereInput = {
   id?: Prisma.StringFilter<"ModuleFaultState"> | string
   installationId?: Prisma.StringFilter<"ModuleFaultState"> | string
   faultCode?: Prisma.IntFilter<"ModuleFaultState"> | number
-  firstSeenAt?: Prisma.DateTimeFilter<"ModuleFaultState"> | Date | string
-  lastSeenAt?: Prisma.DateTimeFilter<"ModuleFaultState"> | Date | string
   repeatCount?: Prisma.IntFilter<"ModuleFaultState"> | number
   resolvedAt?: Prisma.DateTimeNullableFilter<"ModuleFaultState"> | Date | string | null
   lastEvent?: Prisma.StringFilter<"ModuleFaultState"> | string
@@ -644,8 +594,6 @@ export type ModuleFaultStateScalarWhereInput = {
 export type ModuleFaultStateCreateManyInstallationInput = {
   id?: string
   faultCode: number
-  firstSeenAt: Date | string
-  lastSeenAt: Date | string
   repeatCount?: number
   resolvedAt?: Date | string | null
   lastEvent: string
@@ -658,8 +606,6 @@ export type ModuleFaultStateCreateManyInstallationInput = {
 export type ModuleFaultStateUpdateWithoutInstallationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   faultCode?: Prisma.IntFieldUpdateOperationsInput | number
-  firstSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   repeatCount?: Prisma.IntFieldUpdateOperationsInput | number
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastEvent?: Prisma.StringFieldUpdateOperationsInput | string
@@ -672,8 +618,6 @@ export type ModuleFaultStateUpdateWithoutInstallationInput = {
 export type ModuleFaultStateUncheckedUpdateWithoutInstallationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   faultCode?: Prisma.IntFieldUpdateOperationsInput | number
-  firstSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   repeatCount?: Prisma.IntFieldUpdateOperationsInput | number
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastEvent?: Prisma.StringFieldUpdateOperationsInput | string
@@ -686,8 +630,6 @@ export type ModuleFaultStateUncheckedUpdateWithoutInstallationInput = {
 export type ModuleFaultStateUncheckedUpdateManyWithoutInstallationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   faultCode?: Prisma.IntFieldUpdateOperationsInput | number
-  firstSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   repeatCount?: Prisma.IntFieldUpdateOperationsInput | number
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastEvent?: Prisma.StringFieldUpdateOperationsInput | string
@@ -703,8 +645,6 @@ export type ModuleFaultStateSelect<ExtArgs extends runtime.Types.Extensions.Inte
   id?: boolean
   installationId?: boolean
   faultCode?: boolean
-  firstSeenAt?: boolean
-  lastSeenAt?: boolean
   repeatCount?: boolean
   resolvedAt?: boolean
   lastEvent?: boolean
@@ -719,8 +659,6 @@ export type ModuleFaultStateSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   id?: boolean
   installationId?: boolean
   faultCode?: boolean
-  firstSeenAt?: boolean
-  lastSeenAt?: boolean
   repeatCount?: boolean
   resolvedAt?: boolean
   lastEvent?: boolean
@@ -735,8 +673,6 @@ export type ModuleFaultStateSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   id?: boolean
   installationId?: boolean
   faultCode?: boolean
-  firstSeenAt?: boolean
-  lastSeenAt?: boolean
   repeatCount?: boolean
   resolvedAt?: boolean
   lastEvent?: boolean
@@ -751,8 +687,6 @@ export type ModuleFaultStateSelectScalar = {
   id?: boolean
   installationId?: boolean
   faultCode?: boolean
-  firstSeenAt?: boolean
-  lastSeenAt?: boolean
   repeatCount?: boolean
   resolvedAt?: boolean
   lastEvent?: boolean
@@ -762,7 +696,7 @@ export type ModuleFaultStateSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ModuleFaultStateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "installationId" | "faultCode" | "firstSeenAt" | "lastSeenAt" | "repeatCount" | "resolvedAt" | "lastEvent" | "criticalChannel" | "eventName" | "createdAt" | "updatedAt", ExtArgs["result"]["moduleFaultState"]>
+export type ModuleFaultStateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "installationId" | "faultCode" | "repeatCount" | "resolvedAt" | "lastEvent" | "criticalChannel" | "eventName" | "createdAt" | "updatedAt", ExtArgs["result"]["moduleFaultState"]>
 export type ModuleFaultStateInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }
@@ -785,8 +719,6 @@ export type $ModuleFaultStatePayload<ExtArgs extends runtime.Types.Extensions.In
      * Modbus 모듈 주소 1–6
      */
     faultCode: number
-    firstSeenAt: Date
-    lastSeenAt: Date
     repeatCount: number
     resolvedAt: Date | null
     lastEvent: string
@@ -1227,8 +1159,6 @@ export interface ModuleFaultStateFieldRefs {
   readonly id: Prisma.FieldRef<"ModuleFaultState", 'String'>
   readonly installationId: Prisma.FieldRef<"ModuleFaultState", 'String'>
   readonly faultCode: Prisma.FieldRef<"ModuleFaultState", 'Int'>
-  readonly firstSeenAt: Prisma.FieldRef<"ModuleFaultState", 'DateTime'>
-  readonly lastSeenAt: Prisma.FieldRef<"ModuleFaultState", 'DateTime'>
   readonly repeatCount: Prisma.FieldRef<"ModuleFaultState", 'Int'>
   readonly resolvedAt: Prisma.FieldRef<"ModuleFaultState", 'DateTime'>
   readonly lastEvent: Prisma.FieldRef<"ModuleFaultState", 'String'>
