@@ -57,6 +57,7 @@ export const ModelName = {
   Device: 'Device',
   TelemetryRecord: 'TelemetryRecord',
   FaultEvent: 'FaultEvent',
+  ModuleFaultState: 'ModuleFaultState',
   DeviceCommand: 'DeviceCommand'
 } as const
 
@@ -222,6 +223,24 @@ export const FaultEventScalarFieldEnum = {
 } as const
 
 export type FaultEventScalarFieldEnum = (typeof FaultEventScalarFieldEnum)[keyof typeof FaultEventScalarFieldEnum]
+
+
+export const ModuleFaultStateScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  faultCode: 'faultCode',
+  firstSeenAt: 'firstSeenAt',
+  lastSeenAt: 'lastSeenAt',
+  repeatCount: 'repeatCount',
+  resolvedAt: 'resolvedAt',
+  lastEvent: 'lastEvent',
+  criticalChannel: 'criticalChannel',
+  eventName: 'eventName',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ModuleFaultStateScalarFieldEnum = (typeof ModuleFaultStateScalarFieldEnum)[keyof typeof ModuleFaultStateScalarFieldEnum]
 
 
 export const DeviceCommandScalarFieldEnum = {

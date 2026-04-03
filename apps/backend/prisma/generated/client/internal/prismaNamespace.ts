@@ -390,6 +390,7 @@ export const ModelName = {
   Device: 'Device',
   TelemetryRecord: 'TelemetryRecord',
   FaultEvent: 'FaultEvent',
+  ModuleFaultState: 'ModuleFaultState',
   DeviceCommand: 'DeviceCommand'
 } as const
 
@@ -406,7 +407,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "site" | "installation" | "device" | "telemetryRecord" | "faultEvent" | "deviceCommand"
+    modelProps: "user" | "site" | "installation" | "device" | "telemetryRecord" | "faultEvent" | "moduleFaultState" | "deviceCommand"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -854,6 +855,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ModuleFaultState: {
+      payload: Prisma.$ModuleFaultStatePayload<ExtArgs>
+      fields: Prisma.ModuleFaultStateFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ModuleFaultStateFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultStatePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ModuleFaultStateFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultStatePayload>
+        }
+        findFirst: {
+          args: Prisma.ModuleFaultStateFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultStatePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ModuleFaultStateFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultStatePayload>
+        }
+        findMany: {
+          args: Prisma.ModuleFaultStateFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultStatePayload>[]
+        }
+        create: {
+          args: Prisma.ModuleFaultStateCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultStatePayload>
+        }
+        createMany: {
+          args: Prisma.ModuleFaultStateCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ModuleFaultStateCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultStatePayload>[]
+        }
+        delete: {
+          args: Prisma.ModuleFaultStateDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultStatePayload>
+        }
+        update: {
+          args: Prisma.ModuleFaultStateUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultStatePayload>
+        }
+        deleteMany: {
+          args: Prisma.ModuleFaultStateDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ModuleFaultStateUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ModuleFaultStateUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultStatePayload>[]
+        }
+        upsert: {
+          args: Prisma.ModuleFaultStateUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultStatePayload>
+        }
+        aggregate: {
+          args: Prisma.ModuleFaultStateAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateModuleFaultState>
+        }
+        groupBy: {
+          args: Prisma.ModuleFaultStateGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ModuleFaultStateGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ModuleFaultStateCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ModuleFaultStateCountAggregateOutputType> | number
+        }
+      }
+    }
     DeviceCommand: {
       payload: Prisma.$DeviceCommandPayload<ExtArgs>
       fields: Prisma.DeviceCommandFieldRefs
@@ -1115,6 +1190,24 @@ export const FaultEventScalarFieldEnum = {
 export type FaultEventScalarFieldEnum = (typeof FaultEventScalarFieldEnum)[keyof typeof FaultEventScalarFieldEnum]
 
 
+export const ModuleFaultStateScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  faultCode: 'faultCode',
+  firstSeenAt: 'firstSeenAt',
+  lastSeenAt: 'lastSeenAt',
+  repeatCount: 'repeatCount',
+  resolvedAt: 'resolvedAt',
+  lastEvent: 'lastEvent',
+  criticalChannel: 'criticalChannel',
+  eventName: 'eventName',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ModuleFaultStateScalarFieldEnum = (typeof ModuleFaultStateScalarFieldEnum)[keyof typeof ModuleFaultStateScalarFieldEnum]
+
+
 export const DeviceCommandScalarFieldEnum = {
   id: 'id',
   installationId: 'installationId',
@@ -1368,6 +1461,7 @@ export type GlobalOmitConfig = {
   device?: Prisma.DeviceOmit
   telemetryRecord?: Prisma.TelemetryRecordOmit
   faultEvent?: Prisma.FaultEventOmit
+  moduleFaultState?: Prisma.ModuleFaultStateOmit
   deviceCommand?: Prisma.DeviceCommandOmit
 }
 

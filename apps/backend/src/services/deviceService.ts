@@ -225,7 +225,7 @@ const canAccessDevice = (
 };
 
 /** USIM ICCID 정규화 (공백·하이픈 제거). HMI 페이로드와 DB 저장 시 동일 규칙 사용 */
-const normalizeIccid = (value: unknown): string => {
+export const normalizeIccid = (value: unknown): string => {
   if (typeof value !== "string") return "";
   return value.trim().replace(/[\s-]/g, "");
 };
@@ -240,6 +240,67 @@ export type ReceiverIdentityResolution = {
  * 1) iccid → DB Installation.iccid 매핑
  * 2) 없으면 device_id / installationId (기존 HMI 호환)
  */
+/**
+ * ICCID로 Installation·Device 보장 (미등록 시 unknown 사이트에 자동 생성).
+ * POST /receiver/faults* 전용 — API 키 없이 ICCID만으로 수신할 때 사용.
+ */
+export const getInstallationIdByIccid = async (
+  iccidRaw: string,
+): Promise<string | null> => {
+  const iccid = normalizeIccid(iccidRaw);
+  if (!iccid) return null;
+  const row = await prisma.installation.findUnique({
+    where: { iccid },
+    select: { id: true },
+  });
+  return row?.id ?? null;
+};
+
+export const ensureInstallationForIccid = async (
+  iccidRaw: string,
+): Promise<
+  | { ok: true; installationId: string; created: boolean }
+  | { ok: false; error: "INVALID_ICCID" }
+> => {
+  const iccid = normalizeIccid(iccidRaw);
+  if (!iccid) return { ok: false, error: "INVALID_ICCID" };
+
+  const existing = await prisma.installation.findUnique({
+    where: { iccid },
+    select: { id: true },
+  });
+
+  await prisma.site.upsert({
+    where: { id: "unknown" },
+    update: { name: "Unknown", client: "unknown", region: "기타", address: "Unknown" },
+    create: { id: "unknown", name: "Unknown", client: "unknown", region: "기타", address: "Unknown" },
+  });
+
+  const inst = await prisma.installation.upsert({
+    where: { iccid },
+    update: {},
+    create: {
+      id: `lte-${iccid}`,
+      siteId: "unknown",
+      label: `Auto (ICCID …${iccid.slice(-4)})`,
+      iccid,
+    },
+    select: { id: true },
+  });
+
+  await prisma.device.upsert({
+    where: { installationId: inst.id },
+    update: {},
+    create: { installationId: inst.id, lastIp: "unknown" },
+  });
+
+  return {
+    ok: true,
+    installationId: inst.id,
+    created: !existing,
+  };
+};
+
 export const resolveInstallationIdForReceiver = async (input: {
   iccid?: string | null;
   device_id?: string | null;
