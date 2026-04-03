@@ -11,7 +11,8 @@ const prisma = new PrismaClient({
 
 export type FaultInput = {
   module: number;
-  desc: string;
+  /** 없으면 빈 문자열 저장 (페이로드 축소용) */
+  desc?: string;
 };
 
 export type ReceiverFaultUpsertInput = {
@@ -57,25 +58,6 @@ type FaultListRow = {
   occurredAt: Date;
   installationId: string;
   eventName?: string | null;
-};
-
-const descFromModuleFaultState = (s: {
-  faultCode: number;
-  lastEvent: string;
-  repeatCount: number;
-  resolvedAt: Date | null;
-  criticalChannel: boolean;
-  eventName?: string | null;
-}): string => {
-  const parts = [
-    "LTE",
-    `M${s.faultCode}`,
-    s.lastEvent,
-    `×${s.repeatCount}`,
-  ];
-  if (s.resolvedAt) parts.push("cleared");
-  if (s.criticalChannel) parts.push("CRITICAL");
-  return parts.join(" · ").slice(0, 48);
 };
 
 /**
@@ -196,7 +178,7 @@ const mergeFaultLists = (
   const fromState: FaultListRow[] = states.map((s) => ({
     id: `mfs-${s.id}`,
     module: s.faultCode - 1,
-    desc: descFromModuleFaultState(s),
+    desc: "",
     occurredAt: s.lastSeenAt,
     installationId: s.installationId,
     eventName: s.eventName,
@@ -221,7 +203,7 @@ export const faultService = {
         installationId: params.installationId,
         iccid: params.iccid ?? null,
         module: f.module,
-        desc: f.desc.slice(0, 48),
+        desc: (f.desc ?? "").trim().slice(0, 48),
         occurredAt: now,
       })),
     });
