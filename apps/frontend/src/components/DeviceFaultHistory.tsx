@@ -13,6 +13,13 @@ function moduleLabel(module: number): string {
   return `M${module + 1}`;
 }
 
+function faultLabel(f: { eventName?: string | null; desc: string }): string {
+  const name = f.eventName?.trim();
+  if (name) return name;
+  const d = f.desc.trim();
+  return d.length > 0 ? d : "—";
+}
+
 /**
  * 상대 시각 — 분·시간·일 단위.
  * occurredAt 이 지금보다 미래로 잡히면(시각 동기·타임존·Unix 해석 차이) "N시간 후"는 의미가 없으므로
@@ -85,7 +92,7 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
                 마지막 fault:{" "}
                 <strong>{relativeTime(latestFault.occurredAt)}</strong>
                 {" — "}
-                {moduleLabel(latestFault.module)} {latestFault.desc}
+                {moduleLabel(latestFault.module)} {faultLabel(latestFault)}
               </span>
             )}
           </div>
@@ -121,7 +128,6 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
                   <th>발생시각</th>
                   <th>모듈</th>
                   <th>이벤트</th>
-                  <th>설명</th>
                 </tr>
               </thead>
               <tbody>
@@ -144,10 +150,7 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
                     <td>
                       <span className="fault-module-badge">{moduleLabel(f.module)}</span>
                     </td>
-                    <td className="fault-event-name">
-                      {f.eventName?.trim() ? f.eventName : "—"}
-                    </td>
-                    <td className="fault-desc">{f.desc}</td>
+                    <td className="fault-event-name">{faultLabel(f)}</td>
                   </tr>
                 ))}
               </tbody>
