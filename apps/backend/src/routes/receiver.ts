@@ -58,8 +58,11 @@ type ReceiverBody = {
   availableMargin?: number | string;
   /** 장치 모델: psta | paf | psvg (소문자 권장) */
   model?: string;
-  /** 모듈 fault 배열. fault 없으면 [] */
-  faults?: Array<{ module: number; desc: string }>;
+  /** 모듈 fault 배열. fault 없으면 [] — desc 생략 가능 */
+  faults?: Array<{ module: number; desc?: string }>;
+  /** Unix 초(또는 ms) — 장비 측정 시각; 없으면 서버 수신 시각 사용 */
+  timestamp?: number | string;
+  ts?: number | string;
   [key: string]: unknown;
 };
 
@@ -368,18 +371,21 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       reactivePowerCapacity: body.reactivePowerCapacity,
       availableMargin: body.availableMargin,
       model: typeof body.model === "string" ? body.model : undefined,
+      timestamp: body.timestamp,
+      ts: body.ts,
     });
 
     // fault 이벤트 저장 (faults 배열이 있고 비어있지 않은 경우)
     const rawFaults = Array.isArray(body.faults) ? body.faults : [];
-    const validFaults = rawFaults.filter(
-      (f): f is { module: number; desc: string } =>
-        f !== null &&
-        typeof f === "object" &&
-        typeof f.module === "number" &&
-        typeof f.desc === "string" &&
-        f.desc.trim().length > 0,
-    );
+    const validFaults = rawFaults
+      .filter(
+        (f): f is { module: number; desc?: string } =>
+          f !== null && typeof f === "object" && typeof f.module === "number",
+      )
+      .map((f) => ({
+        module: f.module,
+        desc: typeof f.desc === "string" ? f.desc : "",
+      }));
     if (validFaults.length > 0 && identity.installationId) {
       await faultService.saveFaults({
         installationId: identity.installationId,

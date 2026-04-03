@@ -101,6 +101,20 @@ const toNumber = (value?: number | string) => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
+/** HMI Unix 시각(초 또는 ms). 없거나 비정상이면 서버 수신 시각 */
+const eventTimeFromPayload = (payload: {
+  timestamp?: number | string;
+  ts?: number | string;
+}): Date => {
+  const n = toNumber(payload.timestamp ?? payload.ts);
+  if (n === undefined) return new Date();
+  const sec = n > 10_000_000_000 ? n / 1000 : n;
+  if (!Number.isFinite(sec) || sec < 1_000_000_000 || sec > 4_000_000_000) {
+    return new Date();
+  }
+  return new Date(sec * 1000);
+};
+
 const toStatus = (value?: number | string): DeviceStatus | undefined => {
   if (value === undefined || value === null) {
     return undefined;
@@ -397,11 +411,16 @@ export const deviceService = {
     availableMargin?: number | string;
     /** HMI 펌웨어가 보내는 장치 유형 (psta | paf | psvg). 있으면 레지스트리보다 우선 */
     model?: string;
+    /** Unix 초(또는 ms). 있으면 lastSeenAt·TelemetryRecord.recordedAt에 사용 */
+    timestamp?: number | string;
+    ts?: number | string;
   }) => {
     const installationId = payload.device_id?.trim();
     if (!installationId) {
       return null;
     }
+
+    const eventAt = eventTimeFromPayload(payload);
 
     const reg = findRegistryByDeviceId(installationId);
 
@@ -549,7 +568,7 @@ export const deviceService = {
         update: {
           model,
           capacity: deviceCapacity,
-          lastSeenAt: new Date(),
+          lastSeenAt: eventAt,
           ...(payload.ip ? { lastIp: payload.ip } : {}),
           ...(lastValue !== undefined ? { lastValue } : {}),
           ...telemetryFields,
@@ -558,7 +577,7 @@ export const deviceService = {
           installationId,
           model,
           capacity: deviceCapacity,
-          lastSeenAt: new Date(),
+          lastSeenAt: eventAt,
           ...(payload.ip ? { lastIp: payload.ip } : {}),
           ...(lastValue !== undefined ? { lastValue } : {}),
           ...telemetryFields,
@@ -569,7 +588,7 @@ export const deviceService = {
       await tx.telemetryRecord.create({
         data: {
           installationId,
-          recordedAt: new Date(),
+          recordedAt: eventAt,
           ...telemetryFields,
         },
       });
