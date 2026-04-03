@@ -8,7 +8,7 @@ export type FaultEvent = {
   desc: string;
   occurredAt: string;
   installationId: string;
-  /** LTE ModuleFaultState 에서만 — HMI eventName (예: Over Temperature) */
+  /** ModuleFaultState 병합 행 — HMI eventName (예: Over Temperature) */
   eventName?: string | null;
 };
 

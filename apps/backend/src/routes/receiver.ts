@@ -79,15 +79,36 @@ const ackSchema = z.object({
   message: z.string().optional(),
 });
 
-const receiverFaultEntrySchema = z.object({
-  faultCode: z.number().int().min(1).max(6),
-  event: z.enum(["RAISE", "CLEAR"]),
-  /** 사람이 읽을 수 있는 이벤트 이름 (예: Over Temperature) */
-  eventName: z.string().max(64).optional(),
-  firstSeen: z.number().finite(),
-  lastSeen: z.number().finite(),
-  count: z.number().int().min(0),
-});
+/**
+ * 펌웨어 alias 통일. **firstSeen / lastSeen / count 는 스키마에 없음** — 레거시 키는 무시.
+ * 출력은 faultCode·event·(eventName) 만 넘겨 Zod 가 unknown 키로 실패하지 않게 함.
+ */
+const normalizeReceiverFaultEntry = (raw: unknown): unknown => {
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return raw;
+  const o = raw as Record<string, unknown>;
+  let faultCode: unknown = o.faultCode ?? o.fault_code ?? o.code;
+  if (faultCode === undefined && o.module !== undefined) {
+    const m = typeof o.module === "number" ? o.module : Number(o.module);
+    if (Number.isInteger(m) && m >= 0 && m <= 5) faultCode = m + 1;
+  }
+  const eventRaw = o.event ?? o.evt;
+  const event =
+    typeof eventRaw === "string" ? eventRaw.toUpperCase() : eventRaw;
+  const eventName = o.eventName ?? o.event_name ?? o.name;
+  const out: Record<string, unknown> = { faultCode, event };
+  if (eventName !== undefined) out.eventName = eventName;
+  return out;
+};
+
+/** 필수: faultCode(1–6), event. eventName 선택. firstSeen·lastSeen·count 불필요 */
+const receiverFaultEntrySchema = z.preprocess(
+  normalizeReceiverFaultEntry,
+  z.object({
+    faultCode: z.coerce.number().int().min(1).max(6),
+    event: z.enum(["RAISE", "CLEAR"]),
+    eventName: z.string().max(64).optional(),
+  }),
+);
 
 const receiverFaultBatchSchema = z.object({
   iccid: z.string().min(1),
@@ -96,10 +117,9 @@ const receiverFaultBatchSchema = z.object({
 
 const receiverFaultCriticalSchema = z.object({
   iccid: z.string().min(1),
-  faultCode: z.number().int().min(1).max(6),
+  faultCode: z.coerce.number().int().min(1).max(6),
   event: z.enum(["RAISE", "CLEAR"]),
   eventName: z.string().max(64).optional(),
-  ts: z.number().finite(),
   channel: z.literal("critical"),
 });
 
@@ -208,7 +228,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
         errors: parsed.error.flatten(),
       });
     }
-    const { iccid, faultCode, event, ts, eventName } = parsed.data;
+    const { iccid, faultCode, event, eventName } = parsed.data;
     const identity = await resolveIccidToInstallationId(iccid);
     if (!identity.ok) {
       if (identity.error === "UNKNOWN_ICCID") {
@@ -224,9 +244,6 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       fault: {
         faultCode,
         event,
-        firstSeen: ts,
-        lastSeen: ts,
-        count: 1,
         ...(eventName !== undefined ? { eventName } : {}),
       },
       criticalChannel: true,
@@ -236,7 +253,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       iccid: iccid.trim().replace(/[\s-]/g, ""),
       faultCode,
       event,
-      ts,
+      ts: Math.floor(Date.now() / 1000),
     });
     return reply.status(201).send({ ok: true });
   });

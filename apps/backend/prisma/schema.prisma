@@ -273,8 +273,6 @@ model ModuleFaultState {
 
   /// Modbus 모듈 주소 1–6
   faultCode        Int
-  firstSeenAt      DateTime
-  lastSeenAt       DateTime
   repeatCount      Int          @default(0)
   resolvedAt       DateTime?
   lastEvent        String       @db.VarChar(16) // RAISE | CLEAR

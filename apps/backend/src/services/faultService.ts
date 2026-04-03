@@ -15,29 +15,12 @@ export type FaultInput = {
   desc?: string;
 };
 
+/** POST /receiver/faults* 본문의 fault 항목 */
 export type ReceiverFaultUpsertInput = {
   faultCode: number;
   event: "RAISE" | "CLEAR";
-  firstSeen: number;
-  lastSeen: number;
-  count: number;
   /** HMI 가 보내는 사람이 읽을 수 있는 이름 (예: Over Temperature) */
   eventName?: string | null;
-};
-
-/**
- * HMI Unix 시각: 보통 **초**(≈10자리). 일부는 **밀리초**(13자리 전후).
- * 1e12 초는 현실적으로 없으므로 ≥1e12 는 ms 로 본다.
- */
-const epochFromDevice = (value: number): Date => {
-  if (!Number.isFinite(value)) {
-    return new Date();
-  }
-  const v = Math.trunc(value);
-  if (v >= 1_000_000_000_000) {
-    return new Date(v);
-  }
-  return new Date(v * 1000);
 };
 
 const normalizeEventNameForDb = (v: string | null | undefined): string | null => {
@@ -128,7 +111,7 @@ const fetchModuleFaultStatesForInstallations = async (
       id: true,
       installationId: true,
       faultCode: true,
-      lastSeenAt: true,
+      updatedAt: true,
       lastEvent: true,
       repeatCount: true,
       resolvedAt: true,
@@ -142,12 +125,12 @@ const fetchModuleFaultStatesForInstallations = async (
 
 /** 동일 ICCID로 `lte-*` 와 레지스트리 설치에 중복 행이 있으면 faultCode 당 최신 한 건만 */
 const dedupeModuleStatesByFaultCode = <
-  T extends { faultCode: number; lastSeenAt: Date },
+  T extends { faultCode: number; updatedAt: Date },
 >(
   states: T[],
 ): T[] => {
   const sorted = [...states].sort(
-    (a, b) => b.lastSeenAt.getTime() - a.lastSeenAt.getTime(),
+    (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
   );
   const map = new Map<number, T>();
   for (const s of sorted) {
@@ -162,7 +145,7 @@ const mergeFaultLists = (
     id: string;
     installationId: string;
     faultCode: number;
-    lastSeenAt: Date;
+    updatedAt: Date;
     lastEvent: string;
     repeatCount: number;
     resolvedAt: Date | null;
@@ -179,7 +162,7 @@ const mergeFaultLists = (
     id: `mfs-${s.id}`,
     module: s.faultCode - 1,
     desc: "",
-    occurredAt: s.lastSeenAt,
+    occurredAt: s.updatedAt,
     installationId: s.installationId,
     eventName: s.eventName,
   }));
@@ -284,7 +267,7 @@ export const faultService = {
 
   /**
    * POST /receiver/faults* — Modbus faultCode(1–6)당 한 행 upsert.
-   * RAISE → resolvedAt null, CLEAR → resolvedAt = lastSeen.
+   * 시각은 DB `updatedAt`(갱신 시각)과 CLEAR 시 `resolvedAt`(서버 수신 시각)만 사용.
    */
   upsertReceiverFaultState: async (params: {
     installationId: string;
@@ -292,8 +275,6 @@ export const faultService = {
     criticalChannel?: boolean;
   }) => {
     const { installationId, fault, criticalChannel = false } = params;
-    const firstSeenAt = epochFromDevice(fault.firstSeen);
-    const lastSeenAt = epochFromDevice(fault.lastSeen);
 
     const enCreate = normalizeEventNameForDb(fault.eventName);
 
@@ -305,18 +286,14 @@ export const faultService = {
         create: {
           installationId,
           faultCode: fault.faultCode,
-          firstSeenAt,
-          lastSeenAt,
-          repeatCount: fault.count,
+          repeatCount: 1,
           resolvedAt: null,
           lastEvent: "RAISE",
           criticalChannel,
           eventName: enCreate,
         },
         update: {
-          firstSeenAt,
-          lastSeenAt,
-          repeatCount: fault.count,
+          repeatCount: { increment: 1 },
           resolvedAt: null,
           lastEvent: "RAISE",
           ...(criticalChannel ? { criticalChannel: true } : {}),
@@ -325,6 +302,7 @@ export const faultService = {
       });
     }
 
+    const now = new Date();
     return prisma.moduleFaultState.upsert({
       where: {
         installationId_faultCode: { installationId, faultCode: fault.faultCode },
@@ -332,18 +310,15 @@ export const faultService = {
       create: {
         installationId,
         faultCode: fault.faultCode,
-        firstSeenAt,
-        lastSeenAt,
-        repeatCount: fault.count,
-        resolvedAt: lastSeenAt,
+        repeatCount: 1,
+        resolvedAt: now,
         lastEvent: "CLEAR",
         criticalChannel,
         eventName: enCreate,
       },
       update: {
-        lastSeenAt,
-        repeatCount: fault.count,
-        resolvedAt: lastSeenAt,
+        repeatCount: { increment: 1 },
+        resolvedAt: now,
         lastEvent: "CLEAR",
         ...(criticalChannel ? { criticalChannel: true } : {}),
         ...eventNamePatch(fault),
