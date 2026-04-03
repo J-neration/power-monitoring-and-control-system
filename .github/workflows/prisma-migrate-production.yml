@@ -21,9 +21,6 @@ on:
 jobs:
   migrate:
     runs-on: ubuntu-latest
-    env:
-      NODE_ENV: production
-      DATABASE_URL: ${{ secrets.DATABASE_URL_PRODUCTION }}
     steps:
       - uses: actions/checkout@v4
 
@@ -33,9 +30,13 @@ jobs:
           cache: "yarn"
           cache-dependency-path: yarn.lock
 
+      # NODE_ENV=production 이면 devDependencies(prisma CLI) 가 빠져 npx 가 다른 버전을 받음 → prisma/config 로드 실패
       - name: Install
         run: yarn install --frozen-lockfile
 
       - name: prisma migrate deploy
         working-directory: apps/backend
-        run: npx prisma migrate deploy
+        env:
+          NODE_ENV: production
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PRODUCTION }}
+        run: yarn db:migrate:deploy
