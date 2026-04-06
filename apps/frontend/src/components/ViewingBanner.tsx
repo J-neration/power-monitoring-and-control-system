@@ -56,10 +56,10 @@ export default function ViewingBanner({ onDismiss }: Props) {
       <div className="viewing-banner-body">
         <InfoIcon />
         <div className="viewing-banner-text">
-          <span className="viewing-banner-title">Live monitoring active</span>
+          <span className="viewing-banner-title">실시간 모니터링 중</span>
           <span className="viewing-banner-desc">
-            Device status and remote commands may take up to{" "}
-            <strong>60 seconds</strong> to reflect on this page.
+            장치 상태와 원격 명령은 이 화면에 반영되기까지 최대{" "}
+            <strong>60초</strong> 걸릴 수 있습니다.
           </span>
         </div>
       </div>
@@ -67,7 +67,7 @@ export default function ViewingBanner({ onDismiss }: Props) {
         type="button"
         className="viewing-banner-close"
         onClick={onDismiss}
-        aria-label="Dismiss"
+        aria-label="닫기"
       >
         <CloseIcon />
       </button>

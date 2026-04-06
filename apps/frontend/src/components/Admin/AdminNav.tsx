@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 const NAV_ITEMS = [
   {
@@ -41,30 +42,108 @@ const NAV_ITEMS = [
   },
 ];
 
+const MenuIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <line x1="4" y1="6" x2="20" y2="6" />
+    <line x1="4" y1="12" x2="20" y2="12" />
+    <line x1="4" y1="18" x2="20" y2="18" />
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
 export default function AdminNav() {
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+
+  useEffect(() => {
+    closeMenu();
+  }, [pathname, closeMenu]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    document.documentElement.classList.add("admin-nav-drawer-open");
+    document.body.classList.add("admin-nav-drawer-open");
+    return () => {
+      document.documentElement.classList.remove("admin-nav-drawer-open");
+      document.body.classList.remove("admin-nav-drawer-open");
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeMenu();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen, closeMenu]);
 
   return (
-    <aside className="admin-nav">
-      <div className="admin-nav-header">
-        <span className="admin-nav-badge">ADMIN</span>
-        <span className="admin-nav-title">관리자 패널</span>
+    <>
+      <div className="admin-nav-mobile-bar">
+        <button
+          type="button"
+          className="admin-nav-menu-btn"
+          onClick={() => setMenuOpen(true)}
+          aria-expanded={menuOpen}
+          aria-controls="admin-nav-panel"
+          aria-label="관리 메뉴 열기"
+        >
+          <MenuIcon />
+        </button>
+        <span className="admin-nav-mobile-title">관리자 패널</span>
       </div>
-      <nav className="admin-nav-list">
-        {NAV_ITEMS.map((item) => {
-          const active = pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`admin-nav-item${active ? " active" : ""}`}
-            >
-              <span className="admin-nav-icon">{item.icon}</span>
-              <span className="admin-nav-label">{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-    </aside>
+
+      <button
+        type="button"
+        className={`admin-nav-backdrop${menuOpen ? " is-visible" : ""}`}
+        tabIndex={menuOpen ? 0 : -1}
+        aria-hidden={!menuOpen}
+        aria-label="메뉴 닫기"
+        onClick={closeMenu}
+      />
+
+      <aside
+        id="admin-nav-panel"
+        className={`admin-nav${menuOpen ? " admin-nav--open" : ""}`}
+      >
+        <div className="admin-nav-header">
+          <span className="admin-nav-badge">ADMIN</span>
+          <span className="admin-nav-title">관리자 패널</span>
+          <button
+            type="button"
+            className="admin-nav-close-btn"
+            onClick={closeMenu}
+            aria-label="메뉴 닫기"
+          >
+            <CloseIcon />
+          </button>
+        </div>
+        <nav className="admin-nav-list" aria-label="관리자 메뉴">
+          {NAV_ITEMS.map((item) => {
+            const active = pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`admin-nav-item${active ? " active" : ""}`}
+                onClick={closeMenu}
+              >
+                <span className="admin-nav-icon">{item.icon}</span>
+                <span className="admin-nav-label">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
+    </>
   );
 }
