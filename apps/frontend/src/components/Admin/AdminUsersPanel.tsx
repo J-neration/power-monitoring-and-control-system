@@ -36,13 +36,19 @@ const ROLE_COLOR: Record<UserRole, string> = {
 
 function formatDate(iso: string | null) {
   if (!iso) return "-";
-  return new Date(iso).toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
+  return new Date(iso).toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
 }
 
 function scopeLabel(user: AdminUser, sites: SiteListFromApi[]) {
   if (user.role === "ADMIN") return "전체";
   if (user.role === "CLIENT") {
-    return user.clientKey ? (CLIENT_LABELS[user.clientKey] ?? user.clientKey) : "-";
+    return user.clientKey
+      ? (CLIENT_LABELS[user.clientKey] ?? user.clientKey)
+      : "-";
   }
   const site = sites.find((s) => s.siteId === user.siteId);
   return site?.name ?? user.siteId ?? "-";
@@ -50,11 +56,20 @@ function scopeLabel(user: AdminUser, sites: SiteListFromApi[]) {
 
 export default function AdminUsersPanel({ initialUsers, sites }: Props) {
   const [users, setUsers] = useState<AdminUser[]>(initialUsers);
-  const [flash, setFlash] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [flash, setFlash] = useState<{
+    type: "ok" | "err";
+    text: string;
+  } | null>(null);
 
   // 생성 폼
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ username: "", password: "", role: "CLIENT" as UserRole, clientKey: "", siteId: "" });
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+    role: "CLIENT" as UserRole,
+    clientKey: "",
+    siteId: "",
+  });
   const [creating, setCreating] = useState(false);
   const [createdPassword, setCreatedPassword] = useState<string | null>(null);
 
@@ -71,7 +86,10 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
     setTimeout(() => setFlash(null), 4000);
   }
 
-  const clientOptions = Object.entries(CLIENT_LABELS).map(([v, l]) => ({ value: v, label: l }));
+  const clientOptions = Object.entries(CLIENT_LABELS).map(([v, l]) => ({
+    value: v,
+    label: l,
+  }));
 
   // ── 생성 ──────────────────────────────────────────
   async function handleCreate() {
@@ -102,12 +120,24 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = (await res.json().catch(() => ({}))) as { message?: string; user?: AdminUser };
-      if (!res.ok) { showFlash("err", data.message ?? `오류 (${res.status})`); return; }
+      const data = (await res.json().catch(() => ({}))) as {
+        message?: string;
+        user?: AdminUser;
+      };
+      if (!res.ok) {
+        showFlash("err", data.message ?? `오류 (${res.status})`);
+        return;
+      }
 
       setUsers((prev) => [data.user!, ...prev]);
       setCreatedPassword(form.password);
-      setForm({ username: "", password: "", role: "CLIENT", clientKey: "", siteId: "" });
+      setForm({
+        username: "",
+        password: "",
+        role: "CLIENT",
+        clientKey: "",
+        siteId: "",
+      });
       setShowCreate(false);
     } catch {
       showFlash("err", "네트워크 오류");
@@ -118,7 +148,10 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
 
   // ── 비밀번호 변경 ─────────────────────────────────
   async function handleSavePw(userId: string) {
-    if (newPw.length < 4) { showFlash("err", "비밀번호는 4자 이상이어야 합니다."); return; }
+    if (newPw.length < 4) {
+      showFlash("err", "비밀번호는 4자 이상이어야 합니다.");
+      return;
+    }
     setSavingPw(true);
     try {
       const res = await fetch(`/api/admin/users/${userId}`, {
@@ -127,7 +160,10 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
         body: JSON.stringify({ newPassword: newPw }),
       });
       const data = (await res.json().catch(() => ({}))) as { message?: string };
-      if (!res.ok) { showFlash("err", data.message ?? `오류 (${res.status})`); return; }
+      if (!res.ok) {
+        showFlash("err", data.message ?? `오류 (${res.status})`);
+        return;
+      }
       showFlash("ok", "비밀번호가 변경되었습니다.");
       setPwEditId(null);
       setNewPw("");
@@ -147,10 +183,19 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !user.isActive }),
       });
-      const data = (await res.json().catch(() => ({}))) as { message?: string; user?: AdminUser };
-      if (!res.ok) { showFlash("err", data.message ?? `오류 (${res.status})`); return; }
-      setUsers((prev) => prev.map((u) => u.id === user.id ? data.user! : u));
-      showFlash("ok", `계정이 ${!user.isActive ? "활성화" : "비활성화"}되었습니다.`);
+      const data = (await res.json().catch(() => ({}))) as {
+        message?: string;
+        user?: AdminUser;
+      };
+      if (!res.ok) {
+        showFlash("err", data.message ?? `오류 (${res.status})`);
+        return;
+      }
+      setUsers((prev) => prev.map((u) => (u.id === user.id ? data.user! : u)));
+      showFlash(
+        "ok",
+        `계정이 ${!user.isActive ? "활성화" : "비활성화"}되었습니다.`,
+      );
     } catch {
       showFlash("err", "네트워크 오류");
     } finally {
@@ -160,12 +205,21 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
 
   // ── 삭제 ─────────────────────────────────────────
   async function handleDelete(user: AdminUser) {
-    if (!confirm(`"${user.username}" 계정을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+    if (
+      !confirm(
+        `"${user.username}" 계정을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`,
+      )
+    )
+      return;
     setActionId(user.id);
     try {
-      const res = await fetch(`/api/admin/users/${user.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/users/${user.id}`, {
+        method: "DELETE",
+      });
       if (res.status !== 204 && !res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { message?: string };
+        const data = (await res.json().catch(() => ({}))) as {
+          message?: string;
+        };
         showFlash("err", data.message ?? `오류 (${res.status})`);
         return;
       }
@@ -181,23 +235,36 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
   return (
     <div className="admin-users-wrap">
       {flash && (
-        <p className={`admin-iccid-flash ${flash.type}`} role="status">{flash.text}</p>
+        <p className={`admin-iccid-flash ${flash.type}`} role="status">
+          {flash.text}
+        </p>
       )}
 
       {/* 생성 완료 알림 */}
       {createdPassword && (
         <div className="user-created-banner">
-          <div className="user-created-banner-title">계정이 생성되었습니다.</div>
+          <div className="user-created-banner-title">
+            계정이 생성되었습니다.
+          </div>
           <div className="user-created-banner-body">
-            아래 정보를 담당자에게 전달하세요. 이 창을 닫으면 비밀번호를 다시 확인할 수 없습니다.
+            아래 정보를 담당자에게 전달하세요. 이 창을 닫으면 비밀번호를 다시
+            확인할 수 없습니다.
           </div>
           <div className="user-created-creds">
             <span className="user-created-label">아이디</span>
             <code className="admin-iccid-code">{users[0]?.username}</code>
-            <span className="user-created-label" style={{ marginLeft: 16 }}>비밀번호</span>
+            <span className="user-created-label" style={{ marginLeft: 16 }}>
+              비밀번호
+            </span>
             <code className="admin-iccid-code">{createdPassword}</code>
           </div>
-          <button type="button" className="admin-sites-cancel-btn" onClick={() => setCreatedPassword(null)}>닫기</button>
+          <button
+            type="button"
+            className="admin-sites-cancel-btn"
+            onClick={() => setCreatedPassword(null)}
+          >
+            닫기
+          </button>
         </div>
       )}
 
@@ -206,7 +273,10 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
         <button
           type="button"
           className="admin-sites-add-btn"
-          onClick={() => { setShowCreate((v) => !v); setCreatedPassword(null); }}
+          onClick={() => {
+            setShowCreate((v) => !v);
+            setCreatedPassword(null);
+          }}
         >
           {showCreate ? "취소" : "+ 새 계정 추가"}
         </button>
@@ -218,12 +288,17 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
           <p className="admin-sites-form-title">새 계정 등록</p>
           <div className="admin-sites-form-grid">
             <label className="admin-sites-form-label">
-              아이디 <span className="admin-sites-form-hint">(영문·숫자, 2자 이상)</span>
+              아이디{" "}
+              <span className="admin-sites-form-hint">
+                (영문·숫자, 2자 이상)
+              </span>
               <input
                 className="admin-sites-input"
                 placeholder="lotte_manager"
                 value={form.username}
-                onChange={(e) => setForm((p) => ({ ...p, username: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, username: e.target.value }))
+                }
               />
             </label>
             <label className="admin-sites-form-label">
@@ -233,7 +308,9 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
                 type="text"
                 placeholder="4자 이상"
                 value={form.password}
-                onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, password: e.target.value }))
+                }
               />
             </label>
             <label className="admin-sites-form-label">
@@ -241,7 +318,14 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
               <select
                 className="admin-sites-input"
                 value={form.role}
-                onChange={(e) => setForm((p) => ({ ...p, role: e.target.value as UserRole, clientKey: "", siteId: "" }))}
+                onChange={(e) =>
+                  setForm((p) => ({
+                    ...p,
+                    role: e.target.value as UserRole,
+                    clientKey: "",
+                    siteId: "",
+                  }))
+                }
               >
                 <option value="CLIENT">건설사 담당자</option>
                 <option value="SITE">현장 관리자</option>
@@ -255,11 +339,15 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
                 <select
                   className="admin-sites-input"
                   value={form.clientKey}
-                  onChange={(e) => setForm((p) => ({ ...p, clientKey: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, clientKey: e.target.value }))
+                  }
                 >
                   <option value="">선택하세요</option>
                   {clientOptions.map((c) => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -271,11 +359,15 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
                 <select
                   className="admin-sites-input"
                   value={form.siteId}
-                  onChange={(e) => setForm((p) => ({ ...p, siteId: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, siteId: e.target.value }))
+                  }
                 >
                   <option value="">선택하세요</option>
                   {sites.map((s) => (
-                    <option key={s.siteId} value={s.siteId}>{s.name}</option>
+                    <option key={s.siteId} value={s.siteId}>
+                      {s.name}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -315,31 +407,49 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
             <tbody>
               {users.map((user) => (
                 <>
-                  <tr key={user.id} className={!user.isActive ? "user-row-inactive" : ""}>
+                  <tr
+                    key={user.id}
+                    className={!user.isActive ? "user-row-inactive" : ""}
+                  >
                     <td>
                       <code className="admin-iccid-code">{user.username}</code>
                     </td>
                     <td>
-                      <span className={`user-role-badge ${ROLE_COLOR[user.role]}`}>
+                      <span
+                        className={`user-role-badge ${ROLE_COLOR[user.role]}`}
+                      >
                         {ROLE_LABEL[user.role]}
                       </span>
                     </td>
                     <td className="user-scope">{scopeLabel(user, sites)}</td>
                     <td>
-                      {user.isActive
-                        ? <span className="user-status-active">활성</span>
-                        : <span className="user-status-inactive">비활성</span>}
+                      {user.isActive ? (
+                        <span className="user-status-active">활성</span>
+                      ) : (
+                        <span className="user-status-inactive">비활성</span>
+                      )}
                     </td>
-                    <td style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>{formatDate(user.lastLoginAt)}</td>
-                    <td style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>{formatDate(user.createdAt)}</td>
+                    <td
+                      style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}
+                    >
+                      {formatDate(user.lastLoginAt)}
+                    </td>
+                    <td
+                      style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}
+                    >
+                      {formatDate(user.createdAt)}
+                    </td>
                     <td>
                       <div className="user-actions">
                         <button
                           type="button"
                           className="user-action-btn"
-                          onClick={() => { setPwEditId(pwEditId === user.id ? null : user.id); setNewPw(""); }}
+                          onClick={() => {
+                            setPwEditId(pwEditId === user.id ? null : user.id);
+                            setNewPw("");
+                          }}
                         >
-                          비밀번호
+                          비밀번호 변경
                         </button>
                         <button
                           type="button"
@@ -347,7 +457,11 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
                           disabled={actionId === user.id}
                           onClick={() => handleToggleActive(user)}
                         >
-                          {actionId === user.id ? "…" : user.isActive ? "비활성화" : "활성화"}
+                          {actionId === user.id
+                            ? "…"
+                            : user.isActive
+                              ? "비활성화"
+                              : "활성화"}
                         </button>
                         <button
                           type="button"
@@ -387,7 +501,10 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
                           <button
                             type="button"
                             className="admin-sites-cancel-btn"
-                            onClick={() => { setPwEditId(null); setNewPw(""); }}
+                            onClick={() => {
+                              setPwEditId(null);
+                              setNewPw("");
+                            }}
                           >
                             취소
                           </button>
