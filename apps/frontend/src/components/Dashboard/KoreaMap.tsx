@@ -39,11 +39,11 @@ const GEO_TO_REGION: Record<string, string> = {
 type StatusStyle = { active: string; selected: string; stroke: string };
 
 const STATUS_STYLE: Record<DeviceStatus, StatusStyle> = {
-  running: { active: "#0a2e14", selected: "#0f4520", stroke: "#34C759" },
-  standby: { active: "#2a1e00", selected: "#3d2c00", stroke: "#F59E0B" },
-  start: { active: "#2a1e00", selected: "#3d2c00", stroke: "#F59E0B" },
-  fault: { active: "#2d0a0a", selected: "#3f0e0e", stroke: "#EF4444" },
-  offline: { active: "#161e2c", selected: "#1e2840", stroke: "#4B5563" },
+  running: { active: "#0a2e14", selected: "#0f4520", stroke: "#5ee986" },
+  standby: { active: "#2a1e00", selected: "#3d2c00", stroke: "#fcd34d" },
+  start: { active: "#2a1e00", selected: "#3d2c00", stroke: "#fcd34d" },
+  fault: { active: "#2d0a0a", selected: "#3f0e0e", stroke: "#f87171" },
+  offline: { active: "#161e2c", selected: "#1e2840", stroke: "#9ca3af" },
 };
 
 function lerpColor(a: string, b: string, t: number): string {
@@ -70,7 +70,7 @@ function regionHealthColors(stats: RegionStats): {
 } {
   const { total, counts } = stats;
   if (total === 0)
-    return { fill: "#161e2c", fillSelected: "#1e2840", stroke: "#4B5563" };
+    return { fill: "#161e2c", fillSelected: "#1e2840", stroke: "#9ca3af" };
 
   const okRatio = (counts.running ?? 0) / total;
   const faultRatio = (counts.fault ?? 0) / total;
@@ -85,21 +85,21 @@ function regionHealthColors(stats: RegionStats): {
       Math.min(faultRatio * 3, 1),
     );
     const stroke = lerpColor(
-      "#34C759",
-      "#EF4444",
+      "#5ee986",
+      "#f87171",
       Math.min(faultRatio * 2.5, 1),
     );
     return { fill, fillSelected: fillSel, stroke };
   }
   if (okRatio >= 0.8)
-    return { fill: "#0a2e14", fillSelected: "#0f4520", stroke: "#34C759" };
+    return { fill: "#0a2e14", fillSelected: "#0f4520", stroke: "#5ee986" };
   if (okRatio >= 0.5) {
     const fill = lerpColor("#0a2e14", "#2a1e00", 1 - okRatio);
     const fillSel = lerpColor("#0f4520", "#3d2c00", 1 - okRatio);
-    const stroke = lerpColor("#34C759", "#F59E0B", 1 - okRatio);
+    const stroke = lerpColor("#5ee986", "#fcd34d", 1 - okRatio);
     return { fill, fillSelected: fillSel, stroke };
   }
-  return { fill: "#2a1e00", fillSelected: "#3d2c00", stroke: "#F59E0B" };
+  return { fill: "#2a1e00", fillSelected: "#3d2c00", stroke: "#fcd34d" };
 }
 
 const STATUS_DOT: Record<DeviceStatus, string> = {
@@ -222,7 +222,7 @@ function resolveCoords(
   return CITY_COORDS[region] ?? null;
 }
 
-const INITIAL_CENTER: [number, number] = [127.8, 36.0];
+const INITIAL_CENTER: [number, number] = [127.8, 35.52];
 const INITIAL_ZOOM = 1;
 const ZOOM_STEP = 1.6;
 const MIN_ZOOM = 1;
@@ -371,7 +371,7 @@ export default function KoreaMap({
 
       <ComposableMap
         projection="geoMercator"
-        projectionConfig={{ center: [127.8, 36.0], scale: 3000 }}
+        projectionConfig={{ center: [127.8, 35.7], scale: 3000 }}
         width={300}
         height={400}
         style={{ width: "100%", height: "100%" }}
@@ -381,7 +381,9 @@ export default function KoreaMap({
           center={center}
           minZoom={MIN_ZOOM}
           maxZoom={MAX_ZOOM}
-          {...{ filterZoomEvent: (evt: { type: string }) => evt.type !== "wheel" } as Record<string, unknown>}
+          {...({
+            filterZoomEvent: (evt: { type: string }) => evt.type !== "wheel",
+          } as Record<string, unknown>)}
           onMoveEnd={({ zoom: z, coordinates }) => {
             setZoom(z);
             setCenter(coordinates);
@@ -403,18 +405,18 @@ export default function KoreaMap({
                       geography={geo}
                       style={{
                         default: {
-                          fill: "#0e1118",
-                          stroke: "#1a2030",
-                          strokeWidth: 0.4,
+                          fill: "#161c28",
+                          stroke: "rgba(203, 213, 225, 0.55)",
+                          strokeWidth: 0.5,
                           outline: "none",
                         },
                         hover: {
-                          fill: "#141b28",
-                          stroke: "#1a2030",
-                          strokeWidth: 0.4,
+                          fill: "#1c2433",
+                          stroke: "rgba(226, 232, 240, 0.72)",
+                          strokeWidth: 0.95,
                           outline: "none",
                         },
-                        pressed: { fill: "#0e1118", outline: "none" },
+                        pressed: { fill: "#161c28", outline: "none" },
                       }}
                     />
                   );
@@ -462,14 +464,14 @@ export default function KoreaMap({
                       default: {
                         fill,
                         stroke: colors.stroke,
-                        strokeWidth: isSelected ? 1.2 : 0.7,
+                        strokeWidth: isSelected ? 1.45 : 1.05,
                         outline: "none",
                         cursor: "pointer",
                       },
                       hover: {
                         fill: colors.fillSelected,
                         stroke: colors.stroke,
-                        strokeWidth: 1.2,
+                        strokeWidth: 1.45,
                         outline: "none",
                         cursor: "pointer",
                       },
