@@ -30,6 +30,7 @@ export default function LoginPage() {
 
       if (!res.ok) {
         setError(data.message ?? "로그인에 실패했습니다.");
+        setLoading(false);
         return;
       }
 
