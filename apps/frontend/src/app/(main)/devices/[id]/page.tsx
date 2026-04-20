@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchDevice, fetchReadings, fetchFaults } from "../../../../lib/api";
@@ -8,6 +9,13 @@ import type { DeviceWithInstallation } from "../../../../types/site";
 type Props = {
   params: { id: string };
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const device = await fetchDevice(decodeURIComponent(params.id)) as DeviceWithInstallation | null;
+  const label = device?.installation?.label ?? "장비 상세";
+  const siteName = device?.installation?.site?.name;
+  return { title: siteName ? `${label} - ${siteName}` : label };
+}
 
 const HISTORY_HOURS = 24;
 
