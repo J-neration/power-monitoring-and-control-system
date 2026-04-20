@@ -702,7 +702,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                     strokeDasharray="3 3"
                     strokeOpacity={0.5}
                     label={{
-                      value: "30°C",
+                      value: "35°C",
                       fill: "#F97316",
                       fontSize: 10,
                       position: "insideTopRight",
@@ -713,7 +713,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                     stroke="#EF4444"
                     strokeDasharray="4 3"
                     label={{
-                      value: "38°C",
+                      value: "40°C",
                       fill: "#EF4444",
                       fontSize: 10,
                       position: "insideTopRight",

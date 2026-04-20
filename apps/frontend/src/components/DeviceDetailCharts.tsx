@@ -144,10 +144,7 @@ function PfGauge({
         <div className="pf-gauge-values">
           <span className="pf-gauge-before">{bPct.toFixed(1)}%</span>
           <span className="pf-gauge-arrow">→</span>
-          <span
-            className="pf-gauge-after"
-            style={{ color: afterColor }}
-          >
+          <span className="pf-gauge-after" style={{ color: afterColor }}>
             {aPct.toFixed(1)}%
           </span>
         </div>
@@ -410,7 +407,12 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 allowDecimals={false}
                 domain={yDomainWithPadding}
               />
-              <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} cursor={TOOLTIP_CURSOR} />
+              <Tooltip
+                contentStyle={TOOLTIP_STYLE}
+                labelStyle={TOOLTIP_LABEL_STYLE}
+                itemStyle={TOOLTIP_ITEM_STYLE}
+                cursor={TOOLTIP_CURSOR}
+              />
               <Bar
                 dataKey="전압"
                 fill="#3B82F6"
@@ -450,7 +452,12 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 allowDecimals={false}
                 domain={yDomainWithPadding}
               />
-              <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} cursor={TOOLTIP_CURSOR} />
+              <Tooltip
+                contentStyle={TOOLTIP_STYLE}
+                labelStyle={TOOLTIP_LABEL_STYLE}
+                itemStyle={TOOLTIP_ITEM_STYLE}
+                cursor={TOOLTIP_CURSOR}
+              />
               <Legend
                 wrapperStyle={{ fontSize: 12, paddingTop: 4 }}
                 iconType="circle"
@@ -500,13 +507,23 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
               allowDecimals={false}
               domain={yDomainWithPadding}
             />
-            <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} cursor={TOOLTIP_CURSOR} />
+            <Tooltip
+              contentStyle={TOOLTIP_STYLE}
+              labelStyle={TOOLTIP_LABEL_STYLE}
+              itemStyle={TOOLTIP_ITEM_STYLE}
+              cursor={TOOLTIP_CURSOR}
+            />
             <Legend
               wrapperStyle={{ fontSize: 12, paddingTop: 4 }}
               iconType="circle"
               iconSize={8}
             />
-            <Bar dataKey="보상전" fill="#F59E0B" radius={[4, 4, 0, 0]} barSize={28}>
+            <Bar
+              dataKey="보상전"
+              fill="#F59E0B"
+              radius={[4, 4, 0, 0]}
+              barSize={28}
+            >
               {thdData.map((entry, i) => (
                 <Cell
                   key={i}
@@ -514,7 +531,12 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 />
               ))}
             </Bar>
-            <Bar dataKey="보상후" fill="#6366F1" radius={[4, 4, 0, 0]} barSize={28}>
+            <Bar
+              dataKey="보상후"
+              fill="#6366F1"
+              radius={[4, 4, 0, 0]}
+              barSize={28}
+            >
               {thdData.map((entry, i) => (
                 <Cell
                   key={i}
@@ -552,7 +574,12 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 allowDecimals={false}
                 domain={yDomainWithPadding}
               />
-              <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} cursor={TOOLTIP_CURSOR} />
+              <Tooltip
+                contentStyle={TOOLTIP_STYLE}
+                labelStyle={TOOLTIP_LABEL_STYLE}
+                itemStyle={TOOLTIP_ITEM_STYLE}
+                cursor={TOOLTIP_CURSOR}
+              />
               <Legend
                 wrapperStyle={{ fontSize: 12, paddingTop: 4 }}
                 iconType="circle"
@@ -640,11 +667,11 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                   <Cell
                     key={i}
                     fill={
-                      entry.온도 >= 38
+                      entry.온도 >= 40
                         ? "#EF4444"
-                        : entry.온도 >= 30
-                        ? "#F97316"
-                        : "#10B981"
+                        : entry.온도 >= 35
+                          ? "#F97316"
+                          : "#10B981"
                     }
                   />
                 ))}
@@ -704,8 +731,8 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                       entry.온도 >= 90
                         ? "#EF4444"
                         : entry.온도 >= 40
-                        ? "#FACC15"
-                        : "#10B981"
+                          ? "#FACC15"
+                          : "#10B981"
                     }
                   />
                 ))}
