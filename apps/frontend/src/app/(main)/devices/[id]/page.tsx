@@ -41,6 +41,7 @@ export default async function DeviceDetailPage({ params }: Props) {
               {siteId ? (
                 <Link
                   href={`/sites/${encodeURIComponent(siteId)}`}
+                  target="_blank"
                   className="breadcrumb-item"
                 >
                   {site?.name ?? "현장"}
