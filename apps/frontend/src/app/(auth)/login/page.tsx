@@ -30,13 +30,14 @@ export default function LoginPage() {
 
       if (!res.ok) {
         setError(data.message ?? "로그인에 실패했습니다.");
-        setLoading(false);
         return;
       }
 
       window.location.href = "/";
+      return;
     } catch {
       setError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
       setLoading(false);
     }
   }
