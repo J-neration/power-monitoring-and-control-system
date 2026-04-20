@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchSites } from "../../../../lib/api";
 import type { Device, DeviceStatus } from "../../../../types/site";
@@ -6,6 +7,12 @@ import { CLIENT_LABELS } from "../../../../data/clients";
 type Props = {
   params: { siteId: string };
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const sites = await fetchSites();
+  const site = sites.find((s) => s.id === decodeURIComponent(params.siteId));
+  return { title: site?.name ?? "현장 상세" };
+}
 
 const statusPriority: Record<DeviceStatus, number> = {
   fault: 4,
