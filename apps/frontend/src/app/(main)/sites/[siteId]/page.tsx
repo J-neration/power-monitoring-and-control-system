@@ -141,6 +141,7 @@ export default async function SitePage({ params }: Props) {
             <Link
               key={inst.id}
               href={`/devices/${encodeURIComponent(inst.id)}`}
+              target="_blank"
               className="site-inst-card"
             >
               <div className="site-inst-top">

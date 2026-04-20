@@ -136,12 +136,14 @@ const CITY_COORDS: Record<string, [number, number]> = {
   동구: [127.46, 36.31],
   중구: [127.42, 36.33],
   // 경기도 시 단위
-  안양시: [126.95, 37.39],
+  안양시: [126.92, 37.40],
   수원시: [127.0, 37.26],
   성남시: [127.13, 37.42],
-  화성시: [127.07, 37.2],
+  화성시: [127.10, 37.18],
+  동탄: [127.07, 37.20],
   용인시: [127.18, 37.24],
-  고양시: [126.83, 37.66],
+  고양시: [126.77, 37.66],
+  일산: [126.77, 37.68],
   평택시: [127.09, 36.99],
   파주시: [126.78, 37.76],
   김포시: [126.72, 37.62],
@@ -210,14 +212,16 @@ function resolveCoords(
   const parts = address
     .replace(/특별시|광역시|특별자치시|특별자치도/g, "")
     .split(/\s+/);
+  // 1) 부분 매칭 — 주소 전체에서 가장 긴 키를 먼저 선택 (더 구체적인 지역 우선)
+  const allKeys = Object.keys(CITY_COORDS).sort(
+    (a, b) => b.length - a.length,
+  );
+  for (const key of allKeys) {
+    if (address.includes(key)) return CITY_COORDS[key];
+  }
+  // 2) part별 정확 매칭 폴백
   for (const part of parts) {
     if (CITY_COORDS[part]) return CITY_COORDS[part];
-  }
-  for (const part of parts) {
-    const match = Object.keys(CITY_COORDS).find(
-      (k) => part.includes(k) || k.includes(part),
-    );
-    if (match) return CITY_COORDS[match];
   }
   return CITY_COORDS[region] ?? null;
 }

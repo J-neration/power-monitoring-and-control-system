@@ -39,6 +39,7 @@ export default function InstallationSummaryCard({
   return (
     <Link
       href={`/devices/${encodeURIComponent(installationId)}`}
+      target="_blank"
       className="device-card"
     >
       {/* Header */}

@@ -107,6 +107,7 @@ export default function SiteSummaryPanel({ site }: { site: Site | null }) {
             <Link
               key={inst.id}
               href={`/devices/${encodeURIComponent(inst.id)}`}
+              target="_blank"
               className="summary-inst-card"
             >
               <div className="summary-inst-header">
@@ -150,6 +151,7 @@ export default function SiteSummaryPanel({ site }: { site: Site | null }) {
       {/* Footer link */}
       <Link
         href={`/sites/${encodeURIComponent(site.id)}`}
+        target="_blank"
         className="summary-more-link"
       >
         현장 상세보기 →
