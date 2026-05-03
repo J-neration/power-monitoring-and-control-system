@@ -652,7 +652,7 @@ export const deviceService = {
     if (!canAccessDevice(ctx, d.installation.site.client, d.installation.siteId))
       return null;
 
-    const clampedHours = Math.min(Math.max(hours, 1), 168); // 1h ~ 7일
+    const clampedHours = Math.min(Math.max(hours, 1), 336); // 1h ~ 14일
     const since = new Date(Date.now() - clampedHours * 60 * 60 * 1000);
     return prisma.telemetryRecord.findMany({
       where: {

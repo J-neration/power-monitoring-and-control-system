@@ -9,7 +9,7 @@ type Props = {
   params: { id: string };
 };
 
-const HISTORY_HOURS = 24;
+const HISTORY_HOURS = 336;
 
 export default async function DeviceDetailPage({ params }: Props) {
   const id = decodeURIComponent(params.id);
