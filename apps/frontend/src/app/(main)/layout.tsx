@@ -103,7 +103,7 @@ export default async function MainLayout({
           {user && (
             <div className="header-user-info">
               {user.role === "ADMIN" ? (
-                <Link href="/admin" className="global-header-admin-link">
+                <Link href="/admin" target="_blank" className="global-header-admin-link">
                   관리자 패널
                 </Link>
               ) : (

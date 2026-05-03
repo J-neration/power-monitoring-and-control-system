@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchDevice, fetchReadings, fetchFaults } from "../../../../lib/api";
@@ -41,6 +42,7 @@ export default async function DeviceDetailPage({ params }: Props) {
               {siteId ? (
                 <Link
                   href={`/sites/${encodeURIComponent(siteId)}`}
+                  target="_blank"
                   className="breadcrumb-item"
                 >
                   {site?.name ?? "현장"}

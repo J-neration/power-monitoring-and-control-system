@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
+
+export const metadata: Metadata = { title: "관리자 패널" };
 import { redirect } from "next/navigation";
 import AdminNav from "../../../components/Admin/AdminNav";
 
