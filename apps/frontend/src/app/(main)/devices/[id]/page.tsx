@@ -10,6 +10,13 @@ type Props = {
   params: { id: string };
 };
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const device = await fetchDevice(decodeURIComponent(params.id)) as DeviceWithInstallation | null;
+  const label = device?.installation?.label ?? "장비 상세";
+  const siteName = device?.installation?.site?.name;
+  return { title: siteName ? `${label} - ${siteName}` : label };
+}
+
 const HISTORY_HOURS = 336;
 
 export default async function DeviceDetailPage({ params }: Props) {
