@@ -624,7 +624,7 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
 
       {/* Area Temperature */}
       <div className="chart-card chart-card-lg">
-        <h3 className="chart-title">구역 온도 (°C)</h3>
+        <h3 className="chart-title">주위 온도 (°C)</h3>
         {hasAreaTemp ? (
           <ResponsiveContainer width="100%" height={CHART_H}>
             <BarChart

@@ -49,10 +49,10 @@ export type SiteEntry = {
 };
 
 export const CLIENT_LABELS: Record<string, string> = {
-  lotte: "롯데건설",
-  gs: "GS건설",
-  hyundai: "현대건설",
-  posco: "포스코이앤씨",
+  lotte: "L건설",
+  gs: "G건설",
+  hyundai: "H건설",
+  posco: "P건설",
   prime: "프라임솔루션",
   datacenter: "데이터센터",
 };
@@ -94,10 +94,10 @@ export const siteRegistry: SiteEntry[] = [
     ],
   },
 
-  // ── 롯데건설 ─────────────────────────────────────────────────────────────
+  // ── L건설 ───────────────────────────────────────────────────────────────
   {
     siteId: "lotte-songdo-xi",
-    name: "송도 크리스탈자이",
+    name: "송도 C사",
     client: "lotte",
     region: "인천",
     address: "인천광역시 연수구 송도동 24-5",
@@ -217,7 +217,7 @@ export const siteRegistry: SiteEntry[] = [
   },
   {
     siteId: "lotte-haeundae-castle",
-    name: "해운대 롯데캐슬",
+    name: "해운대 L사",
     client: "lotte",
     region: "부산",
     address: "부산광역시 해운대구 마린시티로 38",
@@ -300,7 +300,7 @@ export const siteRegistry: SiteEntry[] = [
   },
   {
     siteId: "lotte-jamsil-castle",
-    name: "잠실 롯데캐슬",
+    name: "잠실 L사",
     client: "lotte",
     region: "서울",
     address: "서울특별시 송파구 올림픽로 300",
@@ -382,10 +382,10 @@ export const siteRegistry: SiteEntry[] = [
     ],
   },
 
-  // ── GS건설 ─────
+  // ── G건설 ──────
   {
     siteId: "gs-cheongna-xi",
-    name: "청라 자이",
+    name: "청라 G사",
     client: "gs",
     region: "인천",
     address: "인천광역시 서구 청라동 162-1",
@@ -467,10 +467,10 @@ export const siteRegistry: SiteEntry[] = [
     ],
   },
 
-  // ── 현대건설 ─────────────────────────────────────────────────────────────
+  // ── H건설 ───────────────────────────────────────────────────────────────
   {
     siteId: "hyundai-daejeon-hillstate",
-    name: "대전 힐스테이트",
+    name: "대전 H사",
     client: "hyundai",
     region: "대전",
     address: "대전광역시 유성구 테크노4로 17",
@@ -553,7 +553,7 @@ export const siteRegistry: SiteEntry[] = [
   },
   {
     siteId: "hyundai-gumi-hillstate",
-    name: "구미 힐스테이트",
+    name: "구미 H사",
     client: "hyundai",
     region: "경상북도",
     address: "경상북도 구미시 산동면 첨단기업1로 10",
@@ -672,10 +672,10 @@ export const siteRegistry: SiteEntry[] = [
     ],
   },
 
-  // ── 포스코이앤씨 ─────────────────────────────────────────────────────────
+  // ── P건설 ───────────────────────────────────────────────────────────────
   {
     siteId: "posco-dongtan-sharp",
-    name: "동탄 더샵",
+    name: "동탄 P사",
     client: "posco",
     region: "경기도",
     address: "경기도 화성시 동탄대로 520",
@@ -757,10 +757,10 @@ export const siteRegistry: SiteEntry[] = [
     ],
   },
 
-  // ── 롯데건설 (추가 현장) ──────────────────────────────────────────────────
+  // ── L건설 (추가 현장) ────────────────────────────────────────────────────
   {
     siteId: "lotte-mapo-castle",
-    name: "마포 롯데캐슬",
+    name: "마포 L사",
     client: "lotte",
     region: "서울",
     address: "서울특별시 마포구 신수로 56",
@@ -843,7 +843,7 @@ export const siteRegistry: SiteEntry[] = [
   },
   {
     siteId: "lotte-ilsan-castle",
-    name: "일산 롯데캐슬",
+    name: "일산 L사",
     client: "lotte",
     region: "경기도",
     address: "경기도 고양시 일산동구 일산로 323",
@@ -963,7 +963,7 @@ export const siteRegistry: SiteEntry[] = [
   },
   {
     siteId: "lotte-sejong-castle",
-    name: "세종 롯데캐슬",
+    name: "세종 L사",
     client: "lotte",
     region: "세종",
     address: "세종특별자치시 도움5로 56",
@@ -1046,7 +1046,7 @@ export const siteRegistry: SiteEntry[] = [
   },
   {
     siteId: "lotte-gwangju-castle",
-    name: "광주 롯데캐슬",
+    name: "광주 L사",
     client: "lotte",
     region: "광주",
     address: "광주광역시 남구 봉선로 78",
@@ -1129,7 +1129,7 @@ export const siteRegistry: SiteEntry[] = [
   },
   {
     siteId: "lotte-daegu-castle",
-    name: "대구 롯데캐슬",
+    name: "대구 L사",
     client: "lotte",
     region: "대구",
     address: "대구광역시 수성구 범안로 149",
@@ -1212,7 +1212,7 @@ export const siteRegistry: SiteEntry[] = [
   },
   {
     siteId: "lotte-ulsan-castle",
-    name: "울산 롯데캐슬",
+    name: "울산 L사",
     client: "lotte",
     region: "울산",
     address: "울산광역시 남구 삼산로 100",
@@ -1294,10 +1294,10 @@ export const siteRegistry: SiteEntry[] = [
     ],
   },
 
-  // ── 롯데건설 (제주) ────────────────────────────────────────────────────────
+  // ── L건설 (제주) ──────────────────────────────────────────────────────────
   {
     siteId: "lotte-jeju-castle",
-    name: "제주 롯데캐슬",
+    name: "제주 L사",
     client: "lotte",
     region: "제주특별자치도",
     address: "제주특별자치도 제주시 연동 312-10",
@@ -1382,7 +1382,7 @@ export const siteRegistry: SiteEntry[] = [
   // ── 데이터센터 ────────────────────────────────────────────────────────────
   {
     siteId: "dc-seoul-mapo",
-    name: "서울 마포 데이터센터",
+    name: "서울 OO 데이터센터",
     client: "datacenter",
     region: "서울",
     address: "서울특별시 마포구 상암동 1695",
@@ -1502,7 +1502,7 @@ export const siteRegistry: SiteEntry[] = [
   },
   {
     siteId: "dc-busan-centum",
-    name: "부산 센텀 데이터센터",
+    name: "부산 OO 데이터센터",
     client: "datacenter",
     region: "부산",
     address: "부산광역시 해운대구 센텀중앙로 78",
@@ -1585,7 +1585,7 @@ export const siteRegistry: SiteEntry[] = [
   },
   {
     siteId: "dc-daejeon-daedeok",
-    name: "대전 대덕 데이터센터",
+    name: "대전 OO 데이터센터",
     client: "datacenter",
     region: "대전",
     address: "대전광역시 유성구 테크노4로 77",
@@ -1705,7 +1705,7 @@ export const siteRegistry: SiteEntry[] = [
   },
   {
     siteId: "dc-incheon-songdo",
-    name: "인천 송도 데이터센터",
+    name: "인천 OO 데이터센터",
     client: "datacenter",
     region: "인천",
     address: "인천광역시 연수구 테크노파크로 236",
@@ -1788,7 +1788,7 @@ export const siteRegistry: SiteEntry[] = [
   },
   {
     siteId: "dc-gwangju-cheomdan",
-    name: "광주 첨단 데이터센터",
+    name: "광주 OO 데이터센터",
     client: "datacenter",
     region: "광주",
     address: "광주광역시 북구 첨단과기로 108",
@@ -1871,7 +1871,7 @@ export const siteRegistry: SiteEntry[] = [
   },
   {
     siteId: "dc-daegu-techno",
-    name: "대구 테크노 데이터센터",
+    name: "대구 OO 데이터센터",
     client: "datacenter",
     region: "대구",
     address: "대구광역시 달서구 테크노대로 105",
