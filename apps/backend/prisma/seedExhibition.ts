@@ -25,7 +25,7 @@ const prisma = new PrismaClient({
 const KST_OFFSET = 9 * 60 * 60 * 1000;
 const PERIOD_START = new Date("2026-04-26T15:00:00Z"); // 4/27 00:00 KST
 const PERIOD_END = new Date("2026-05-10T15:00:00Z");   // 5/10 24:00 KST
-const INTERVAL_MS = 30 * 60 * 1000; // 30분
+const INTERVAL_MS = 60 * 60 * 1000; // 1시간
 const TOTAL_POINTS = Math.floor((PERIOD_END.getTime() - PERIOD_START.getTime()) / INTERVAL_MS);
 
 const r = (v: number, d = 1) => Math.round(v * Math.pow(10, d)) / Math.pow(10, d);
@@ -202,24 +202,22 @@ async function main() {
         const gridCurrentL2 = r(wave((d.gridCurrentL2 ?? baseI + 1.5) * iScale, 4.5, phase + 0.6, 0.9, t));
         const gridCurrentL3 = r(wave((d.gridCurrentL3 ?? baseI + 2.5) * iScale, 5.5, phase + 1.1, 0.9, t));
 
-        // 부하측 THD (보상 전): 부하 높을수록 THD 증가
+        // 부하측 THD (보상 전): ~28-32% 수준
         const thdLoadFactor = 0.9 + 0.2 * lf;
-        const loadCurrentTHDL1 = r(wave(baseThdLoad * thdLoadFactor, 2.0, phase + 2.0, 0.5, t));
-        const loadCurrentTHDL2 = r(wave((d.loadCurrentTHDL2 ?? baseThdLoad + 0.5) * thdLoadFactor, 1.8, phase + 2.5, 0.5, t));
-        const loadCurrentTHDL3 = r(wave((d.loadCurrentTHDL3 ?? baseThdLoad - 0.3) * thdLoadFactor, 2.2, phase + 3.0, 0.5, t));
+        const loadCurrentTHDL1 = r(Math.max(18, wave(baseThdLoad * thdLoadFactor, 2.5, phase + 2.0, 0.8, t)));
+        const loadCurrentTHDL2 = r(Math.max(18, wave((d.loadCurrentTHDL2 ?? baseThdLoad + 0.5) * thdLoadFactor, 2.3, phase + 2.5, 0.8, t)));
+        const loadCurrentTHDL3 = r(Math.max(18, wave((d.loadCurrentTHDL3 ?? baseThdLoad - 0.3) * thdLoadFactor, 2.8, phase + 3.0, 0.8, t)));
 
-        // 계통측 THD (보상 후): 안정적으로 낮음
-        const gridCurrentTHDL1 = r(wave(baseThdGrid, 0.3, phase + 2.1, 0.15, t));
-        const gridCurrentTHDL2 = r(wave((d.gridCurrentTHDL2 ?? baseThdGrid + 0.2), 0.3, phase + 2.6, 0.15, t));
-        const gridCurrentTHDL3 = r(wave((d.gridCurrentTHDL3 ?? baseThdGrid - 0.1), 0.3, phase + 3.1, 0.15, t));
+        // 계통측 THD (보상 후): ~1.5-3% 수준
+        const gridCurrentTHDL1 = r(Math.max(1.0, wave(baseThdGrid, 0.3, phase + 2.1, 0.15, t)));
+        const gridCurrentTHDL2 = r(Math.max(1.0, wave((d.gridCurrentTHDL2 ?? baseThdGrid + 0.2), 0.3, phase + 2.6, 0.15, t)));
+        const gridCurrentTHDL3 = r(Math.max(1.0, wave((d.gridCurrentTHDL3 ?? baseThdGrid - 0.1), 0.3, phase + 3.1, 0.15, t)));
 
-        // 역률 (보상 전: 70-80%, 보상 후: 96-99%)
-        const pfBefore = (d.tpf1 ?? 75) / 100;
-        const pfAfter = (d.tpf2 ?? 98) / 100;
-        const tpf1 = r(Math.max(0.60, Math.min(0.95, wave(pfBefore, 0.02, phase + 0.3, 0.008, t))), 4);
-        const tpf2 = r(Math.max(0.90, Math.min(1.0, wave(pfAfter, 0.008, phase + 0.4, 0.003, t))), 4);
-        const dpf1 = r(Math.max(0.62, Math.min(0.95, wave((d.dpf1 ?? 76) / 100, 0.02, phase + 0.35, 0.008, t))), 4);
-        const dpf2 = r(Math.max(0.92, Math.min(1.0, wave((d.dpf2 ?? 99) / 100, 0.006, phase + 0.45, 0.003, t))), 4);
+        // 역률 (보상 전: ~75%, 보상 후: ~98%) — 0-100 스케일
+        const tpf1 = r(Math.max(65, Math.min(85, wave(d.tpf1 ?? 75, 2, phase + 0.3, 0.8, t))), 1);
+        const tpf2 = r(Math.max(95, Math.min(100, wave(d.tpf2 ?? 98, 0.8, phase + 0.4, 0.3, t))), 1);
+        const dpf1 = r(Math.max(67, Math.min(87, wave(d.dpf1 ?? 77, 2, phase + 0.35, 0.8, t))), 1);
+        const dpf2 = r(Math.max(96, Math.min(100, wave(d.dpf2 ?? 99, 0.6, phase + 0.45, 0.3, t))), 1);
 
         // 전력 (보상 전후 차이 극대화)
         const powerScale = lf;
