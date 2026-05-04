@@ -259,6 +259,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                     strokeDasharray="4 3"
                     fill="url(#sB)"
                     dot={false}
+                    isAnimationActive={false}
                     connectNulls
                   />
                   <Area
@@ -268,6 +269,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                     stroke="#8B5CF6"
                     fill="url(#sA)"
                     dot={false}
+                    isAnimationActive={false}
                     connectNulls
                   />
                 </AreaChart>
@@ -306,6 +308,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                     strokeDasharray="4 3"
                     fill="url(#pB)"
                     dot={false}
+                    isAnimationActive={false}
                     connectNulls
                   />
                   <Area
@@ -315,6 +318,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                     stroke="#3B82F6"
                     fill="url(#pA)"
                     dot={false}
+                    isAnimationActive={false}
                     connectNulls
                   />
                 </AreaChart>
@@ -353,6 +357,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                     strokeDasharray="4 3"
                     fill="url(#qB)"
                     dot={false}
+                    isAnimationActive={false}
                     connectNulls
                   />
                   <Area
@@ -362,6 +367,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                     stroke="#10B981"
                     fill="url(#qA)"
                     dot={false}
+                    isAnimationActive={false}
                     connectNulls
                   />
                 </AreaChart>
@@ -400,6 +406,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                     strokeDasharray="4 3"
                     fill="url(#hB)"
                     dot={false}
+                    isAnimationActive={false}
                     connectNulls
                   />
                   <Area
@@ -409,6 +416,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                     stroke="#F59E0B"
                     fill="url(#hA)"
                     dot={false}
+                    isAnimationActive={false}
                     connectNulls
                   />
                 </AreaChart>
@@ -447,6 +455,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                     strokeDasharray="4 3"
                     fill="url(#tpfB)"
                     dot={false}
+                    isAnimationActive={false}
                     connectNulls
                   />
                   <Area
@@ -456,6 +465,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                     stroke="#10B981"
                     fill="url(#tpfA)"
                     dot={false}
+                    isAnimationActive={false}
                     connectNulls
                   />
                 </AreaChart>
@@ -494,6 +504,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                     strokeDasharray="4 3"
                     fill="url(#dpfB)"
                     dot={false}
+                    isAnimationActive={false}
                     connectNulls
                   />
                   <Area
@@ -503,6 +514,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                     stroke="#6366F1"
                     fill="url(#dpfA)"
                     dot={false}
+                    isAnimationActive={false}
                     connectNulls
                   />
                 </AreaChart>
@@ -560,6 +572,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                         strokeDasharray="4 3"
                         fill={`url(#${gradB})`}
                         dot={false}
+                        isAnimationActive={false}
                         connectNulls
                       />
                       <Area
@@ -569,6 +582,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                         stroke={color}
                         fill={`url(#${gradA})`}
                         dot={false}
+                        isAnimationActive={false}
                         connectNulls
                       />
                     </AreaChart>
@@ -624,6 +638,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                       stroke="#10B981"
                       fill="url(#capR)"
                       dot={false}
+                      isAnimationActive={false}
                       connectNulls
                     />
                     <Area
@@ -634,6 +649,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                       stroke="#3B82F6"
                       fill="url(#capI)"
                       dot={false}
+                      isAnimationActive={false}
                       connectNulls
                     />
                     <Area
@@ -644,6 +660,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                       stroke="#64748B"
                       fill="url(#capM)"
                       dot={false}
+                      isAnimationActive={false}
                       connectNulls
                     />
                   </AreaChart>
@@ -728,6 +745,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                       stroke={TEMP_COLORS[i % TEMP_COLORS.length]}
                       fill={`url(#ga${i})`}
                       dot={false}
+                      isAnimationActive={false}
                       connectNulls
                     />
                   ))}
@@ -794,6 +812,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                       stroke={TEMP_COLORS[i % TEMP_COLORS.length]}
                       fill={`url(#gm${i})`}
                       dot={false}
+                      isAnimationActive={false}
                       connectNulls
                     />
                   ))}
@@ -837,6 +856,7 @@ export default function DeviceHistoryCharts({ readings, hours, model }: Props) {
                       stroke={TEMP_COLORS[i % TEMP_COLORS.length]}
                       fill={`url(#gf${i})`}
                       dot={false}
+                      isAnimationActive={false}
                       connectNulls
                     />
                   ))}
