@@ -33,6 +33,8 @@ export type DeviceAvgAggregateOutputType = {
   moduleStatus: number | null
   numOfMods: number | null
   lastValue: number | null
+  csq: number | null
+  rsrp: number | null
   vL1: number | null
   vL2: number | null
   vL3: number | null
@@ -74,6 +76,8 @@ export type DeviceSumAggregateOutputType = {
   moduleStatus: number[]
   numOfMods: number | null
   lastValue: number | null
+  csq: number | null
+  rsrp: number | null
   vL1: number | null
   vL2: number | null
   vL3: number | null
@@ -118,6 +122,8 @@ export type DeviceMinAggregateOutputType = {
   lastSeenAt: Date | null
   lastValue: number | null
   lastIp: string | null
+  csq: number | null
+  rsrp: number | null
   vL1: number | null
   vL2: number | null
   vL3: number | null
@@ -161,6 +167,8 @@ export type DeviceMaxAggregateOutputType = {
   lastSeenAt: Date | null
   lastValue: number | null
   lastIp: string | null
+  csq: number | null
+  rsrp: number | null
   vL1: number | null
   vL2: number | null
   vL3: number | null
@@ -205,6 +213,8 @@ export type DeviceCountAggregateOutputType = {
   lastSeenAt: number
   lastValue: number
   lastIp: number
+  csq: number
+  rsrp: number
   vL1: number
   vL2: number
   vL3: number
@@ -250,6 +260,8 @@ export type DeviceAvgAggregateInputType = {
   moduleStatus?: true
   numOfMods?: true
   lastValue?: true
+  csq?: true
+  rsrp?: true
   vL1?: true
   vL2?: true
   vL3?: true
@@ -291,6 +303,8 @@ export type DeviceSumAggregateInputType = {
   moduleStatus?: true
   numOfMods?: true
   lastValue?: true
+  csq?: true
+  rsrp?: true
   vL1?: true
   vL2?: true
   vL3?: true
@@ -335,6 +349,8 @@ export type DeviceMinAggregateInputType = {
   lastSeenAt?: true
   lastValue?: true
   lastIp?: true
+  csq?: true
+  rsrp?: true
   vL1?: true
   vL2?: true
   vL3?: true
@@ -378,6 +394,8 @@ export type DeviceMaxAggregateInputType = {
   lastSeenAt?: true
   lastValue?: true
   lastIp?: true
+  csq?: true
+  rsrp?: true
   vL1?: true
   vL2?: true
   vL3?: true
@@ -422,6 +440,8 @@ export type DeviceCountAggregateInputType = {
   lastSeenAt?: true
   lastValue?: true
   lastIp?: true
+  csq?: true
+  rsrp?: true
   vL1?: true
   vL2?: true
   vL3?: true
@@ -556,6 +576,8 @@ export type DeviceGroupByOutputType = {
   lastSeenAt: Date
   lastValue: number | null
   lastIp: string | null
+  csq: number | null
+  rsrp: number | null
   vL1: number | null
   vL2: number | null
   vL3: number | null
@@ -626,6 +648,8 @@ export type DeviceWhereInput = {
   lastSeenAt?: Prisma.DateTimeFilter<"Device"> | Date | string
   lastValue?: Prisma.FloatNullableFilter<"Device"> | number | null
   lastIp?: Prisma.StringNullableFilter<"Device"> | string | null
+  csq?: Prisma.IntNullableFilter<"Device"> | number | null
+  rsrp?: Prisma.FloatNullableFilter<"Device"> | number | null
   vL1?: Prisma.FloatNullableFilter<"Device"> | number | null
   vL2?: Prisma.FloatNullableFilter<"Device"> | number | null
   vL3?: Prisma.FloatNullableFilter<"Device"> | number | null
@@ -674,6 +698,8 @@ export type DeviceOrderByWithRelationInput = {
   lastSeenAt?: Prisma.SortOrder
   lastValue?: Prisma.SortOrderInput | Prisma.SortOrder
   lastIp?: Prisma.SortOrderInput | Prisma.SortOrder
+  csq?: Prisma.SortOrderInput | Prisma.SortOrder
+  rsrp?: Prisma.SortOrderInput | Prisma.SortOrder
   vL1?: Prisma.SortOrderInput | Prisma.SortOrder
   vL2?: Prisma.SortOrderInput | Prisma.SortOrder
   vL3?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -725,6 +751,8 @@ export type DeviceWhereUniqueInput = Prisma.AtLeast<{
   lastSeenAt?: Prisma.DateTimeFilter<"Device"> | Date | string
   lastValue?: Prisma.FloatNullableFilter<"Device"> | number | null
   lastIp?: Prisma.StringNullableFilter<"Device"> | string | null
+  csq?: Prisma.IntNullableFilter<"Device"> | number | null
+  rsrp?: Prisma.FloatNullableFilter<"Device"> | number | null
   vL1?: Prisma.FloatNullableFilter<"Device"> | number | null
   vL2?: Prisma.FloatNullableFilter<"Device"> | number | null
   vL3?: Prisma.FloatNullableFilter<"Device"> | number | null
@@ -773,6 +801,8 @@ export type DeviceOrderByWithAggregationInput = {
   lastSeenAt?: Prisma.SortOrder
   lastValue?: Prisma.SortOrderInput | Prisma.SortOrder
   lastIp?: Prisma.SortOrderInput | Prisma.SortOrder
+  csq?: Prisma.SortOrderInput | Prisma.SortOrder
+  rsrp?: Prisma.SortOrderInput | Prisma.SortOrder
   vL1?: Prisma.SortOrderInput | Prisma.SortOrder
   vL2?: Prisma.SortOrderInput | Prisma.SortOrder
   vL3?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -828,6 +858,8 @@ export type DeviceScalarWhereWithAggregatesInput = {
   lastSeenAt?: Prisma.DateTimeWithAggregatesFilter<"Device"> | Date | string
   lastValue?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
   lastIp?: Prisma.StringNullableWithAggregatesFilter<"Device"> | string | null
+  csq?: Prisma.IntNullableWithAggregatesFilter<"Device"> | number | null
+  rsrp?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
   vL1?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
   vL2?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
   vL3?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
@@ -874,6 +906,8 @@ export type DeviceCreateInput = {
   lastSeenAt?: Date | string
   lastValue?: number | null
   lastIp?: string | null
+  csq?: number | null
+  rsrp?: number | null
   vL1?: number | null
   vL2?: number | null
   vL3?: number | null
@@ -922,6 +956,8 @@ export type DeviceUncheckedCreateInput = {
   lastSeenAt?: Date | string
   lastValue?: number | null
   lastIp?: string | null
+  csq?: number | null
+  rsrp?: number | null
   vL1?: number | null
   vL2?: number | null
   vL3?: number | null
@@ -968,6 +1004,8 @@ export type DeviceUpdateInput = {
   lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rsrp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1016,6 +1054,8 @@ export type DeviceUncheckedUpdateInput = {
   lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rsrp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1063,6 +1103,8 @@ export type DeviceCreateManyInput = {
   lastSeenAt?: Date | string
   lastValue?: number | null
   lastIp?: string | null
+  csq?: number | null
+  rsrp?: number | null
   vL1?: number | null
   vL2?: number | null
   vL3?: number | null
@@ -1109,6 +1151,8 @@ export type DeviceUpdateManyMutationInput = {
   lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rsrp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1156,6 +1200,8 @@ export type DeviceUncheckedUpdateManyInput = {
   lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rsrp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1224,6 +1270,8 @@ export type DeviceCountOrderByAggregateInput = {
   lastSeenAt?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
   lastIp?: Prisma.SortOrder
+  csq?: Prisma.SortOrder
+  rsrp?: Prisma.SortOrder
   vL1?: Prisma.SortOrder
   vL2?: Prisma.SortOrder
   vL3?: Prisma.SortOrder
@@ -1267,6 +1315,8 @@ export type DeviceAvgOrderByAggregateInput = {
   moduleStatus?: Prisma.SortOrder
   numOfMods?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
+  csq?: Prisma.SortOrder
+  rsrp?: Prisma.SortOrder
   vL1?: Prisma.SortOrder
   vL2?: Prisma.SortOrder
   vL3?: Prisma.SortOrder
@@ -1311,6 +1361,8 @@ export type DeviceMaxOrderByAggregateInput = {
   lastSeenAt?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
   lastIp?: Prisma.SortOrder
+  csq?: Prisma.SortOrder
+  rsrp?: Prisma.SortOrder
   vL1?: Prisma.SortOrder
   vL2?: Prisma.SortOrder
   vL3?: Prisma.SortOrder
@@ -1354,6 +1406,8 @@ export type DeviceMinOrderByAggregateInput = {
   lastSeenAt?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
   lastIp?: Prisma.SortOrder
+  csq?: Prisma.SortOrder
+  rsrp?: Prisma.SortOrder
   vL1?: Prisma.SortOrder
   vL2?: Prisma.SortOrder
   vL3?: Prisma.SortOrder
@@ -1394,6 +1448,8 @@ export type DeviceSumOrderByAggregateInput = {
   moduleStatus?: Prisma.SortOrder
   numOfMods?: Prisma.SortOrder
   lastValue?: Prisma.SortOrder
+  csq?: Prisma.SortOrder
+  rsrp?: Prisma.SortOrder
   vL1?: Prisma.SortOrder
   vL2?: Prisma.SortOrder
   vL3?: Prisma.SortOrder
@@ -1499,6 +1555,14 @@ export type NullableFloatFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type DeviceUpdateareaTempInput = {
   set?: number[]
   push?: number | number[]
@@ -1522,6 +1586,8 @@ export type DeviceCreateWithoutInstallationInput = {
   lastSeenAt?: Date | string
   lastValue?: number | null
   lastIp?: string | null
+  csq?: number | null
+  rsrp?: number | null
   vL1?: number | null
   vL2?: number | null
   vL3?: number | null
@@ -1568,6 +1634,8 @@ export type DeviceUncheckedCreateWithoutInstallationInput = {
   lastSeenAt?: Date | string
   lastValue?: number | null
   lastIp?: string | null
+  csq?: number | null
+  rsrp?: number | null
   vL1?: number | null
   vL2?: number | null
   vL3?: number | null
@@ -1630,6 +1698,8 @@ export type DeviceUpdateWithoutInstallationInput = {
   lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rsrp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1676,6 +1746,8 @@ export type DeviceUncheckedUpdateWithoutInstallationInput = {
   lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rsrp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1725,6 +1797,8 @@ export type DeviceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   lastSeenAt?: boolean
   lastValue?: boolean
   lastIp?: boolean
+  csq?: boolean
+  rsrp?: boolean
   vL1?: boolean
   vL2?: boolean
   vL3?: boolean
@@ -1773,6 +1847,8 @@ export type DeviceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   lastSeenAt?: boolean
   lastValue?: boolean
   lastIp?: boolean
+  csq?: boolean
+  rsrp?: boolean
   vL1?: boolean
   vL2?: boolean
   vL3?: boolean
@@ -1821,6 +1897,8 @@ export type DeviceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   lastSeenAt?: boolean
   lastValue?: boolean
   lastIp?: boolean
+  csq?: boolean
+  rsrp?: boolean
   vL1?: boolean
   vL2?: boolean
   vL3?: boolean
@@ -1869,6 +1947,8 @@ export type DeviceSelectScalar = {
   lastSeenAt?: boolean
   lastValue?: boolean
   lastIp?: boolean
+  csq?: boolean
+  rsrp?: boolean
   vL1?: boolean
   vL2?: boolean
   vL3?: boolean
@@ -1907,7 +1987,7 @@ export type DeviceSelectScalar = {
   updatedAt?: boolean
 }
 
-export type DeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"installationId" | "model" | "capacity" | "moduleStatus" | "numOfMods" | "lastSeenAt" | "lastValue" | "lastIp" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "uncompS" | "compS" | "uncompP" | "compP" | "uncompQ" | "compQ" | "uncompH" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "areaTemp" | "moduleTemp" | "fanSpeed" | "totalCapacity" | "operatingCapacity" | "reactivePowerCapacity" | "availableMargin" | "createdAt" | "updatedAt", ExtArgs["result"]["device"]>
+export type DeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"installationId" | "model" | "capacity" | "moduleStatus" | "numOfMods" | "lastSeenAt" | "lastValue" | "lastIp" | "csq" | "rsrp" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "uncompS" | "compS" | "uncompP" | "compP" | "uncompQ" | "compQ" | "uncompH" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "areaTemp" | "moduleTemp" | "fanSpeed" | "totalCapacity" | "operatingCapacity" | "reactivePowerCapacity" | "availableMargin" | "createdAt" | "updatedAt", ExtArgs["result"]["device"]>
 export type DeviceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }
@@ -1932,6 +2012,14 @@ export type $DevicePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     lastSeenAt: Date
     lastValue: number | null
     lastIp: string | null
+    /**
+     * LTE 신호 (AT+CSQ RSSI, 0–31; 99=unknown)
+     */
+    csq: number | null
+    /**
+     * LTE RSRP (dBm, e.g. -84)
+     */
+    rsrp: number | null
     vL1: number | null
     vL2: number | null
     vL3: number | null
@@ -2400,6 +2488,8 @@ export interface DeviceFieldRefs {
   readonly lastSeenAt: Prisma.FieldRef<"Device", 'DateTime'>
   readonly lastValue: Prisma.FieldRef<"Device", 'Float'>
   readonly lastIp: Prisma.FieldRef<"Device", 'String'>
+  readonly csq: Prisma.FieldRef<"Device", 'Int'>
+  readonly rsrp: Prisma.FieldRef<"Device", 'Float'>
   readonly vL1: Prisma.FieldRef<"Device", 'Float'>
   readonly vL2: Prisma.FieldRef<"Device", 'Float'>
   readonly vL3: Prisma.FieldRef<"Device", 'Float'>

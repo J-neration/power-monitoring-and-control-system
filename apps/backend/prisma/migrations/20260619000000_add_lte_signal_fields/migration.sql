@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "Device" ADD COLUMN "csq" INTEGER,
+ADD COLUMN "rsrp" DOUBLE PRECISION;
+
+-- AlterTable
+ALTER TABLE "TelemetryRecord" ADD COLUMN "csq" INTEGER,
+ADD COLUMN "rsrp" DOUBLE PRECISION;

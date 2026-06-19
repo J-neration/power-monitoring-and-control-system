@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { fetchDevice, fetchReadings, fetchFaults } from "../../../../lib/api";
 import { getSessionUser } from "../../../../lib/auth-server";
 import DeviceDetailTabs from "../../../../components/DeviceDetailTabs";
+import LteSignalIndicator from "../../../../components/LteSignalIndicator";
 import type { DeviceWithInstallation } from "../../../../types/site";
-
 type Props = {
   params: { id: string };
 };
@@ -22,7 +22,11 @@ export default async function DeviceDetailPage({ params }: Props) {
     isAdmin ? fetchFaults(id) : Promise.resolve([]),
   ]);
 
-  if (!device) notFound();
+  if (!device) {
+    // If a non-installation id is entered on /devices, prefer sending
+    // the user to the site route instead of a hard 404.
+    redirect(`/sites/${encodeURIComponent(id)}`);
+  }
 
   const site = device.installation?.site;
   const siteId = site?.id;
@@ -71,20 +75,30 @@ export default async function DeviceDetailPage({ params }: Props) {
                 </span>
               ) : null}
               {device.capacity != null ? (
-                <span className="device-capacity-badge">{device.capacity} A</span>
+                <span className="device-capacity-badge">
+                  {device.capacity} A
+                </span>
               ) : null}{" "}
               ID: {device.installationId}
             </p>
           </div>
 
-          <div className="device-detail-received">
-            <p>
-              Received{" "}
-              {device.lastSeenAt
-                ? new Date(device.lastSeenAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
-                : "-"}
-            </p>
-            {device.lastIp ? <p>IP {device.lastIp}</p> : null}
+          <div className="device-detail-aside">
+            <div className="device-detail-lte">
+              <span className="device-detail-lte-title">LTE 신호</span>
+              <LteSignalIndicator device={device} variant="detail" />
+            </div>
+            <div className="device-detail-received">
+              <p>
+                Received{" "}
+                {device.lastSeenAt
+                  ? new Date(device.lastSeenAt).toLocaleString("ko-KR", {
+                      timeZone: "Asia/Seoul",
+                    })
+                  : "-"}
+              </p>
+              {device.lastIp ? <p>IP {device.lastIp}</p> : null}
+            </div>
           </div>
         </div>
       </section>

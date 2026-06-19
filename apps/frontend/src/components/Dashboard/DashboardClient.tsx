@@ -7,6 +7,8 @@ import type { DeviceStatus } from "../../types/site";
 import { CLIENT_LABELS } from "../../data/clients";
 import SiteSummaryPanel from "./SiteSummaryPanel";
 import KoreaMap from "./KoreaMap";
+import LteRadarOverlay from "./LteRadarOverlay";
+import LteSignalIndicator from "../LteSignalIndicator";
 import { useWsEvents } from "../../hooks/useWsEvents";
 
 const REFRESH_SEC = 30;
@@ -256,6 +258,10 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                       {inst.label}
                                     </span>
                                   </div>
+                                  <LteSignalIndicator
+                                    device={inst.device}
+                                    variant="compact"
+                                  />
                                   <span
                                     className={`site-card-badge ${instStatus}`}
                                   >
@@ -277,13 +283,13 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
 
         {/* Center: map */}
         <div className="dash-map-panel">
-          <div className="map-scan-overlay" />
           <KoreaMap
             allSites={sites}
             selectedSiteId={selectedSite?.id ?? ""}
             deriveSiteStatus={deriveSiteStatus}
             onSelect={handleSelectSite}
           />
+          <LteRadarOverlay />
         </div>
 
         {/* Right: site summary panel */}

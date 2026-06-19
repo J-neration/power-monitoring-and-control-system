@@ -112,6 +112,11 @@ model Device {
   lastValue      Float?
   lastIp         String?  @default("unknown")
 
+  /// LTE 신호 (AT+CSQ RSSI, 0–31; 99=unknown)
+  csq            Int?
+  /// LTE RSRP (dBm, e.g. -84)
+  rsrp           Float?
+
   // 전압 (V)
   vL1             Float?
   vL2             Float?
@@ -184,6 +189,11 @@ model TelemetryRecord {
 
   moduleStatus     Int[]   @default([])
   numOfMods        Int?
+
+  /// LTE 신호 (AT+CSQ RSSI, 0–31; 99=unknown)
+  csq              Int?
+  /// LTE RSRP (dBm, e.g. -84)
+  rsrp             Float?
 
   // 전압 (V)
   vL1              Float?
