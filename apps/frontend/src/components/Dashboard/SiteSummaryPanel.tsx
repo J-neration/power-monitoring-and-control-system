@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Site, DeviceStatus } from "../../types/site";
 import { CLIENT_LABELS, isTestClient } from "../../data/clients";
+import LteSignalIndicator from "../LteSignalIndicator";
 
 const statusPriority: Record<DeviceStatus, number> = {
   fault: 4,
@@ -116,6 +117,10 @@ export default function SiteSummaryPanel({ site }: { site: Site | null }) {
                 <span className={`site-card-badge ${instStatus}`}>
                   {STATUS_LABEL[instStatus]}
                 </span>
+              </div>
+              <div className="summary-inst-lte">
+                <span className="summary-inst-lte-title">LTE 신호</span>
+                <LteSignalIndicator device={d} variant="detail" />
               </div>
               <div className="site-inst-table">
                 <div className="sit-row">
