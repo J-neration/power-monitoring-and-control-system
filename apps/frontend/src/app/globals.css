@@ -1347,6 +1347,8 @@ main.dashboard-full {
   align-items: stretch;
   overflow: hidden;
   padding: 24px 16px;
+  position: relative;
+  isolation: isolate;
 }
 
 /* ── Map markers (new) ───────────────────────────────────────── */
@@ -1804,6 +1806,23 @@ main.dashboard-full {
   transform-origin: center;
 }
 
+@keyframes marker-lte-ping {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.marker-lte-ping {
+  animation: marker-lte-ping 3.6s ease-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 /* ── Korea Map wrapper ───────────────────────────────────────── */
 .korea-map-wrapper {
   position: relative;
@@ -1811,6 +1830,7 @@ main.dashboard-full {
   height: 100%;
   display: flex;
   align-items: stretch;
+  z-index: 1;
 }
 
 .map-zoom-controls {
@@ -2022,6 +2042,134 @@ main.dashboard-full {
   text-overflow: ellipsis;
 }
 
+.summary-inst-lte {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.summary-inst-lte-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.4;
+}
+
+/* ── LTE signal indicator ─────────────────────────────────────── */
+.lte-signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lte-signal--detail {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px 8px;
+}
+
+.lte-signal-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 11px;
+  flex-shrink: 0;
+}
+
+.lte-signal-bar {
+  width: 3px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.lte-signal-bar:nth-child(1) {
+  height: 4px;
+}
+.lte-signal-bar:nth-child(2) {
+  height: 6px;
+}
+.lte-signal-bar:nth-child(3) {
+  height: 8px;
+}
+.lte-signal-bar:nth-child(4) {
+  height: 11px;
+}
+
+.lte-signal--excellent .lte-signal-bar--on {
+  background: #34c759;
+}
+.lte-signal--fair .lte-signal-bar--on {
+  background: #f59e0b;
+}
+.lte-signal--poor .lte-signal-bar--on {
+  background: #f97316;
+}
+.lte-signal--critical .lte-signal-bar--on {
+  background: #ef4444;
+}
+.lte-signal--none .lte-signal-bar--on {
+  background: #6b7280;
+}
+
+.lte-signal-label {
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lte-signal--excellent .lte-signal-label {
+  color: #5ee986;
+}
+.lte-signal--fair .lte-signal-label {
+  color: #fcd34d;
+}
+.lte-signal--poor .lte-signal-label {
+  color: #fb923c;
+}
+.lte-signal--critical .lte-signal-label {
+  color: #f87171;
+}
+.lte-signal--none .lte-signal-label {
+  color: #9ca3af;
+}
+
+.lte-signal-meta {
+  flex-basis: 100%;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.42);
+  font-variant-numeric: tabular-nums;
+}
+
+.lte-signal--compact .lte-signal-label {
+  font-size: 9px;
+}
+
+.lte-signal--compact .lte-signal-bars {
+  height: 9px;
+}
+
+.lte-signal--compact .lte-signal-bar:nth-child(1) {
+  height: 3px;
+}
+.lte-signal--compact .lte-signal-bar:nth-child(2) {
+  height: 5px;
+}
+.lte-signal--compact .lte-signal-bar:nth-child(3) {
+  height: 7px;
+}
+.lte-signal--compact .lte-signal-bar:nth-child(4) {
+  height: 9px;
+}
+
+.inst-card .lte-signal--compact {
+  flex-shrink: 0;
+}
+
 .summary-inst-metrics {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -2093,13 +2241,55 @@ main.dashboard-full {
   min-width: 0;
 }
 
+.device-detail-aside {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  align-self: flex-start;
+}
+
+.device-detail-lte {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(8, 14, 10, 0.55);
+  border: 1px solid rgba(52, 199, 89, 0.16);
+  min-width: 180px;
+}
+
+.device-detail-lte-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(94, 233, 134, 0.55);
+  align-self: flex-start;
+}
+
+.device-detail-lte .lte-signal--detail {
+  align-items: flex-end;
+}
+
+.device-detail-lte-hint {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.38);
+  text-align: right;
+  max-width: 220px;
+}
+
 .device-detail-received {
   flex: 0 0 auto;
   text-align: right;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.55);
   line-height: 1.45;
-  align-self: flex-start;
 }
 
 .device-detail-received p {
@@ -2895,44 +3085,180 @@ main.dashboard-full {
   }
 }
 
-/* ── Map scan line ───────────────────────────────── */
-.dash-map-panel {
-  position: relative;
-  overflow: hidden;
-}
-
-.map-scan-overlay {
+/* ── LTE monitor overlay (balanced) ──────────────────────────── */
+.lte-monitor-overlay {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 10;
+  z-index: 5;
   overflow: hidden;
 }
 
-.map-scan-overlay::after {
-  content: "";
+.lte-monitor-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.22;
+  background-image:
+    linear-gradient(rgba(52, 199, 89, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(52, 199, 89, 0.05) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    black 12%,
+    black 88%,
+    transparent 100%
+  );
+}
+
+.lte-monitor-scanline {
   position: absolute;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 1.5px;
   background: linear-gradient(
     90deg,
     transparent 0%,
     rgba(52, 199, 89, 0) 20%,
-    rgba(52, 199, 89, 0.45) 50%,
+    rgba(94, 233, 134, 0.35) 50%,
     rgba(52, 199, 89, 0) 80%,
     transparent 100%
   );
-  box-shadow: 0 0 12px 3px rgba(52, 199, 89, 0.2);
-  animation: map-scan 5s linear infinite;
+  box-shadow: 0 0 10px 2px rgba(52, 199, 89, 0.12);
+  animation: lte-monitor-scan 7s linear infinite;
 }
 
-@keyframes map-scan {
+@keyframes lte-monitor-scan {
   0% {
     top: -2px;
+    opacity: 0;
+  }
+  6% {
+    opacity: 0.85;
+  }
+  94% {
+    opacity: 0.85;
   }
   100% {
     top: 100%;
+    opacity: 0;
+  }
+}
+
+.lte-monitor-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: rgba(8, 14, 10, 0.78);
+  border: 1px solid rgba(52, 199, 89, 0.22);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(6px);
+}
+
+.lte-monitor-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.lte-monitor-bar-seg {
+  width: 3px;
+  border-radius: 1px;
+  background: rgba(52, 199, 89, 0.85);
+}
+
+.lte-monitor-bar-seg-1 {
+  height: 4px;
+  opacity: 0.55;
+}
+.lte-monitor-bar-seg-2 {
+  height: 6px;
+  opacity: 0.7;
+}
+.lte-monitor-bar-seg-3 {
+  height: 9px;
+  opacity: 0.85;
+}
+.lte-monitor-bar-seg-4 {
+  height: 12px;
+}
+
+.lte-monitor-badge-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #5ee986;
+  white-space: nowrap;
+}
+
+.lte-monitor-badge-sub {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: rgba(94, 233, 134, 0.5);
+  white-space: nowrap;
+  padding-left: 6px;
+  border-left: 1px solid rgba(52, 199, 89, 0.18);
+}
+
+.lte-monitor-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34c759;
+  flex-shrink: 0;
+}
+
+.lte-monitor-dot--live {
+  animation: live-dot-pulse 2s ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(52, 199, 89, 0.5);
+}
+
+.lte-monitor-footer {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 14px;
+  z-index: 11;
+  height: 28px;
+  border-radius: 6px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(8, 14, 10, 0.55) 100%
+  );
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+
+.lte-monitor-wave {
+  width: 100%;
+  height: 100%;
+  opacity: 0.55;
+}
+
+.lte-monitor-wave-path {
+  fill: none;
+  stroke: rgba(52, 199, 89, 0.6);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  animation: lte-monitor-wave-drift 5s linear infinite;
+}
+
+@keyframes lte-monitor-wave-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-40px);
   }
 }
 

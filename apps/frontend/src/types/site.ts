@@ -16,6 +16,11 @@ export type Device = {
   lastValue?: number | null;
   lastIp?: string | null;
 
+  /** LTE AT+CSQ (0–31) */
+  csq?: number | null;
+  /** LTE RSRP (dBm) */
+  rsrp?: number | null;
+
   moduleStatus?: number[];
   numOfMods?: number;
 

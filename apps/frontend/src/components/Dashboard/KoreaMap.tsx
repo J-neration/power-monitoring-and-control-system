@@ -500,9 +500,10 @@ export default function KoreaMap({
           </Geographies>
 
           {/* Site markers — one dot per site, worst status */}
-          {siteMarkers.map((marker) => {
+          {siteMarkers.map((marker, idx) => {
             const isFault = marker.status === "fault";
             const isSelected = marker.siteId === selectedSiteId;
+            const isLinked = marker.status !== "offline";
             const color = STATUS_DOT[marker.status];
             const innerR = (isSelected ? 4 : 3) / zoom;
             const outerR = (isSelected ? 9 : 7) / zoom;
@@ -524,6 +525,17 @@ export default function KoreaMap({
                 onMouseLeave={() => setTooltip(null)}
                 style={{ cursor: "pointer" }}
               >
+                {isLinked && !isSelected && (
+                  <circle
+                    r={outerR * 1.8}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth={0.55 / zoom}
+                    opacity={0}
+                    className="marker-lte-ping"
+                    style={{ animationDelay: `${(idx % 5) * 1.1}s` }}
+                  />
+                )}
                 {isFault && !isSelected && (
                   <circle
                     r={outerR * 1.8}

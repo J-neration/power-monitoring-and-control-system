@@ -101,6 +101,11 @@ const toNumber = (value?: number | string) => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
+const toInteger = (value?: number | string) => {
+  const n = toNumber(value);
+  return n === undefined ? undefined : Math.trunc(n);
+};
+
 /** HMI Unix 시각(초 또는 ms). 없거나 비정상이면 서버 수신 시각 */
 const eventTimeFromPayload = (payload: {
   timestamp?: number | string;
@@ -409,6 +414,10 @@ export const deviceService = {
     operatingCapacity?: number | string;
     reactivePowerCapacity?: number | string;
     availableMargin?: number | string;
+    /** LTE 신호 강도 (AT+CSQ RSSI, 0–31) */
+    csq?: number | string;
+    /** LTE RSRP (dBm, e.g. -84) */
+    rsrp?: number | string;
     /** HMI 펌웨어가 보내는 장치 유형 (psta | paf | psvg). 있으면 레지스트리보다 우선 */
     model?: string;
     /** Unix 초(또는 ms). 있으면 lastSeenAt·TelemetryRecord.recordedAt에 사용 */
@@ -470,6 +479,8 @@ export const deviceService = {
     const operatingCapacity = toNumber(payload.operatingCapacity);
     const reactivePowerCapacity = toNumber(payload.reactivePowerCapacity);
     const availableMargin = toNumber(payload.availableMargin);
+    const csq = toInteger(payload.csq);
+    const rsrp = toNumber(payload.rsrp);
 
     return prisma.$transaction(async (tx) => {
       // 1) Ensure Site + Installation exist
@@ -560,6 +571,8 @@ export const deviceService = {
         ...(operatingCapacity !== undefined ? { operatingCapacity } : {}),
         ...(reactivePowerCapacity !== undefined ? { reactivePowerCapacity } : {}),
         ...(availableMargin !== undefined ? { availableMargin } : {}),
+        ...(csq !== undefined ? { csq } : {}),
+        ...(rsrp !== undefined ? { rsrp } : {}),
       };
 
       // 2) Device 최신 스냅샷 upsert
