@@ -53,6 +53,104 @@ type SiteRow = {
   installations: InstRow[];
 };
 
+type SiteForm = {
+  name: string;
+  client: string;
+  region: string;
+  address: string;
+};
+
+function clientSelectValue(client: string) {
+  return CLIENT_OPTIONS.some((c) => c.value === client) ? client : "__custom__";
+}
+
+function SiteFieldsForm({
+  values,
+  customClient,
+  onChange,
+  onCustomClientChange,
+  siteId,
+}: {
+  values: SiteForm;
+  customClient: string;
+  onChange: (patch: Partial<SiteForm>) => void;
+  onCustomClientChange: (value: string) => void;
+  siteId?: string;
+}) {
+  return (
+    <div className="admin-sites-form-grid">
+      {siteId != null && (
+        <label className="admin-sites-form-label">
+          현장 ID
+          <input className="admin-sites-input" value={siteId} readOnly disabled />
+        </label>
+      )}
+      <label className="admin-sites-form-label">
+        현장명
+        <input
+          className="admin-sites-input"
+          placeholder="동탄 롯데캐슬"
+          value={values.name}
+          onChange={(e) => onChange({ name: e.target.value })}
+        />
+      </label>
+      <label className="admin-sites-form-label">
+        건설사
+        <select
+          className="admin-sites-input"
+          value={values.client}
+          onChange={(e) => {
+            onChange({ client: e.target.value });
+            if (e.target.value !== "__custom__") onCustomClientChange("");
+          }}
+        >
+          {CLIENT_OPTIONS.map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.label}
+            </option>
+          ))}
+          <option value="__custom__">직접 입력…</option>
+        </select>
+        {values.client === "__custom__" && (
+          <input
+            className="admin-sites-input"
+            style={{ marginTop: 6 }}
+            placeholder="건설사명 입력 (예: 대우건설)"
+            value={customClient}
+            onChange={(e) => onCustomClientChange(e.target.value)}
+          />
+        )}
+      </label>
+      <label className="admin-sites-form-label">
+        지역
+        <select
+          className="admin-sites-input"
+          value={values.region}
+          onChange={(e) => onChange({ region: e.target.value })}
+        >
+          {REGION_OPTIONS.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label
+        className="admin-sites-form-label"
+        style={{ gridColumn: siteId != null ? "1 / -1" : undefined }}
+      >
+        주소
+        <input
+          className="admin-sites-input"
+          placeholder="경기도 화성시 동탄대로 123"
+          value={values.address}
+          onChange={(e) => onChange({ address: e.target.value })}
+        />
+      </label>
+    </div>
+  );
+}
+
 export default function AdminSitesPanel({ initialSites }: Props) {
   const [sites, setSites] = useState<SiteRow[]>(() =>
     initialSites.map((s) => ({
@@ -97,6 +195,16 @@ export default function AdminSitesPanel({ initialSites }: Props) {
   const [deletingSite, setDeletingSite] = useState<string | null>(null);
   const [deletingInst, setDeletingInst] = useState<string | null>(null);
 
+  const [editingSiteId, setEditingSiteId] = useState<string | null>(null);
+  const [editSite, setEditSite] = useState<SiteForm>({
+    name: "",
+    client: "prime",
+    region: "경기도",
+    address: "",
+  });
+  const [editCustomClient, setEditCustomClient] = useState("");
+  const [savingSite, setSavingSite] = useState<string | null>(null);
+
   function showFlash(type: "ok" | "err", text: string) {
     setFlash({ type, text });
     setTimeout(() => setFlash(null), 3500);
@@ -108,6 +216,76 @@ export default function AdminSitesPanel({ initialSites }: Props) {
       next.has(siteId) ? next.delete(siteId) : next.add(siteId);
       return next;
     });
+    if (editingSiteId === siteId) {
+      setEditingSiteId(null);
+    }
+  }
+
+  function startEditSite(site: SiteRow) {
+    const selectClient = clientSelectValue(site.client);
+    setEditingSiteId(site.siteId);
+    setEditSite({
+      name: site.name,
+      client: selectClient,
+      region: site.region,
+      address: site.address,
+    });
+    setEditCustomClient(selectClient === "__custom__" ? site.client : "");
+    setExpanded((prev) => new Set([...prev, site.siteId]));
+  }
+
+  function cancelEditSite() {
+    setEditingSiteId(null);
+    setEditCustomClient("");
+  }
+
+  // ── 현장 수정 ─────────────────────────────────────────
+  async function handleUpdateSite(siteId: string) {
+    const clientValue =
+      editSite.client === "__custom__" ? editCustomClient.trim() : editSite.client;
+    if (!editSite.name || !editSite.address || !clientValue) {
+      showFlash("err", "이름, 건설사, 주소는 필수입니다.");
+      return;
+    }
+    setSavingSite(siteId);
+    try {
+      const payload = {
+        name: editSite.name,
+        client: clientValue,
+        region: editSite.region,
+        address: editSite.address,
+      };
+      const res = await fetch(`/api/admin/sites/${encodeURIComponent(siteId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = (await res.json().catch(() => ({}))) as { message?: string };
+      if (!res.ok) {
+        showFlash("err", data.message ?? `오류 (${res.status})`);
+        return;
+      }
+      setSites((prev) =>
+        prev.map((s) =>
+          s.siteId === siteId
+            ? {
+                ...s,
+                name: payload.name,
+                client: payload.client,
+                region: payload.region,
+                address: payload.address,
+              }
+            : s,
+        ),
+      );
+      setEditingSiteId(null);
+      setEditCustomClient("");
+      showFlash("ok", "현장 정보가 저장되었습니다.");
+    } catch {
+      showFlash("err", "네트워크 오류");
+    } finally {
+      setSavingSite(null);
+    }
   }
 
   // ── 현장 추가 ─────────────────────────────────────────
@@ -485,6 +663,15 @@ export default function AdminSitesPanel({ initialSites }: Props) {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <code className="admin-iccid-code">{site.siteId}</code>
+                    {editingSiteId !== site.siteId ? (
+                      <button
+                        type="button"
+                        className="admin-sites-edit-btn"
+                        onClick={() => startEditSite(site)}
+                      >
+                        수정
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="admin-sites-del-btn"
@@ -499,6 +686,39 @@ export default function AdminSitesPanel({ initialSites }: Props) {
                 {/* 설치지점 목록 */}
                 {isOpen && (
                   <div className="admin-sites-inst-body">
+                    {editingSiteId === site.siteId && (
+                      <div className="admin-sites-edit-card">
+                        <p className="admin-sites-form-title">현장 정보 수정</p>
+                        <SiteFieldsForm
+                          siteId={site.siteId}
+                          values={editSite}
+                          customClient={editCustomClient}
+                          onChange={(patch) =>
+                            setEditSite((p) => ({ ...p, ...patch }))
+                          }
+                          onCustomClientChange={setEditCustomClient}
+                        />
+                        <div className="admin-sites-form-actions">
+                          <button
+                            type="button"
+                            className="admin-iccid-save"
+                            disabled={savingSite === site.siteId}
+                            onClick={() => handleUpdateSite(site.siteId)}
+                          >
+                            {savingSite === site.siteId ? "저장 중…" : "변경 저장"}
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-sites-cancel-btn"
+                            disabled={savingSite === site.siteId}
+                            onClick={cancelEditSite}
+                          >
+                            취소
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     {site.installations.length === 0 ? (
                       <p className="admin-sites-no-inst">설치지점 없음</p>
                     ) : (

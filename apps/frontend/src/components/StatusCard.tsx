@@ -1,60 +1,40 @@
-import type { DeviceStatus, DeviceWithInstallation } from "../types/site";
-import { moduleChipClassName, moduleStatusLabel } from "../lib/moduleStatus";
+import type { ReactNode } from "react";
+import type { DeviceWithInstallation } from "../types/site";
+import MetricValue from "./MetricValue";
+import ModuleSlotGrid from "./ModuleSlotGrid";
 
 type StatusCardProps = {
   device: DeviceWithInstallation;
+  compact?: boolean;
 };
 
-const statusColors: Record<DeviceStatus, string> = {
-  standby: "#9aa4b2",
-  start: "#ffcc00",
-  running: "#2ecc71",
-  fault: "#f24141",
-  offline: "#6b7280",
-};
-
-const fmt = (v: unknown, digits = 2) => {
-  if (v === null || v === undefined) return "-";
-  if (typeof v === "number")
-    return Number.isFinite(v) ? v.toFixed(digits) : "-";
-  const s = String(v).trim();
-  return s.length ? s : "-";
-};
-
-export const StatusCard = ({ device }: StatusCardProps) => {
-  const site = device.installation?.site;
-  const title = `${site?.name ?? "Site"} / ${device.installation?.label ?? "Installation"}`;
-  const location = `${site?.region ?? ""} ${site?.address ?? ""}`.trim();
-
+function MetricCell({
+  label,
+  children,
+  colSpan,
+}: {
+  label: string;
+  children: ReactNode;
+  colSpan?: number;
+}) {
   return (
-    <article className="panel">
-      <div
-        className="badge"
-        style={{ border: `1px solid ${statusColors[device.status]}` }}
-      >
-        <span
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            background: statusColors[device.status],
-          }}
-        />
-        {device.status.toUpperCase()}
-      </div>
+    <tr>
+      <td className="detail-metrics-label">{label}</td>
+      {colSpan ? (
+        <td className="detail-metrics-value" colSpan={colSpan}>
+          {children}
+        </td>
+      ) : (
+        children
+      )}
+    </tr>
+  );
+}
 
-      {/* 기존 device.name -> site.name + installation.label */}
-      <h3 style={{ marginTop: 12 }}>{title}</h3>
-
-      {/* 기존 device.location -> site.region + site.address */}
-      <p style={{ opacity: 0.7, marginTop: 4 }}>{location || "-"}</p>
-
-      {/* 기존 device.id -> installationId */}
-      <p style={{ fontSize: 12, opacity: 0.6, marginTop: 6 }}>
-        Installation ID: {device.installationId}
-      </p>
-
-      <div className="detail-metrics">
+export function StatusCard({ device, compact = false }: StatusCardProps) {
+  return (
+    <article className="scada-metrics-panel">
+      <div className="scada-metrics-grid">
         <table className="detail-metrics-table">
           <thead>
             <tr>
@@ -68,65 +48,48 @@ export const StatusCard = ({ device }: StatusCardProps) => {
           </thead>
           <tbody>
             <tr>
-              <td className="detail-metrics-label">Current (A)</td>
+              <td className="detail-metrics-label">전류 (A)</td>
               <td className="detail-metrics-value">
-                {fmt(device.loadCurrentL1, 1)}
-              </td>
-              <td className="detail-metrics-value">
-                {fmt(device.loadCurrentL2, 1)}
+                <MetricValue value={device.loadCurrentL1} />
               </td>
               <td className="detail-metrics-value">
-                {fmt(device.loadCurrentL3, 1)}
-              </td>
-            </tr>
-            <tr>
-              <td className="detail-metrics-label">Current THD (%)</td>
-              <td className="detail-metrics-value">
-                {fmt(device.loadCurrentTHDL1, 1)}
+                <MetricValue value={device.loadCurrentL2} />
               </td>
               <td className="detail-metrics-value">
-                {fmt(device.loadCurrentTHDL2, 1)}
+                <MetricValue value={device.loadCurrentL3} />
+              </td>
+            </tr>
+            <tr>
+              <td className="detail-metrics-label">THD (%)</td>
+              <td className="detail-metrics-value">
+                <MetricValue value={device.loadCurrentTHDL1} kind="thd" />
               </td>
               <td className="detail-metrics-value">
-                {fmt(device.loadCurrentTHDL3, 1)}
+                <MetricValue value={device.loadCurrentTHDL2} kind="thd" />
+              </td>
+              <td className="detail-metrics-value">
+                <MetricValue value={device.loadCurrentTHDL3} kind="thd" />
               </td>
             </tr>
-            <tr>
-              <td className="detail-metrics-label">TPF (%)</td>
-              <td className="detail-metrics-value" colSpan={3}>
-                {fmt(device.tpf1, 3)}
-              </td>
-            </tr>
-            <tr>
-              <td className="detail-metrics-label">DPF (%)</td>
-              <td className="detail-metrics-value" colSpan={3}>
-                {fmt(device.dpf1, 3)}
-              </td>
-            </tr>
-            <tr>
-              <td className="detail-metrics-label">S (kVA)</td>
-              <td className="detail-metrics-value" colSpan={3}>
-                {fmt(device.uncompS, 2)}
-              </td>
-            </tr>
-            <tr>
-              <td className="detail-metrics-label">P (kW)</td>
-              <td className="detail-metrics-value" colSpan={3}>
-                {fmt(device.uncompP, 2)}
-              </td>
-            </tr>
-            <tr>
-              <td className="detail-metrics-label">Q (kvar)</td>
-              <td className="detail-metrics-value" colSpan={3}>
-                {fmt(device.uncompQ, 2)}
-              </td>
-            </tr>
-            <tr>
-              <td className="detail-metrics-label">H (kvar)</td>
-              <td className="detail-metrics-value" colSpan={3}>
-                {fmt(device.uncompH, 2)}
-              </td>
-            </tr>
+            <MetricCell label="TPF (%)" colSpan={3}>
+              <MetricValue value={device.tpf1} kind="pf" suffix="%" digits={2} />
+            </MetricCell>
+            <MetricCell label="DPF (%)" colSpan={3}>
+              <MetricValue value={device.dpf1} kind="pf" suffix="%" digits={2} />
+            </MetricCell>
+            {!compact && (
+              <>
+                <MetricCell label="S (kVA)" colSpan={3}>
+                  <MetricValue value={device.uncompS} digits={2} />
+                </MetricCell>
+                <MetricCell label="P (kW)" colSpan={3}>
+                  <MetricValue value={device.uncompP} digits={2} />
+                </MetricCell>
+                <MetricCell label="Q (kvar)" colSpan={3}>
+                  <MetricValue value={device.uncompQ} digits={2} />
+                </MetricCell>
+              </>
+            )}
           </tbody>
         </table>
 
@@ -143,105 +106,67 @@ export const StatusCard = ({ device }: StatusCardProps) => {
           </thead>
           <tbody>
             <tr>
-              <td className="detail-metrics-label">Current (A)</td>
+              <td className="detail-metrics-label">전류 (A)</td>
               <td className="detail-metrics-value">
-                {fmt(device.gridCurrentL1, 1)}
-              </td>
-              <td className="detail-metrics-value">
-                {fmt(device.gridCurrentL2, 1)}
+                <MetricValue value={device.gridCurrentL1} />
               </td>
               <td className="detail-metrics-value">
-                {fmt(device.gridCurrentL3, 1)}
-              </td>
-            </tr>
-            <tr>
-              <td className="detail-metrics-label">Current THD (%)</td>
-              <td className="detail-metrics-value">
-                {fmt(device.gridCurrentTHDL1, 1)}
+                <MetricValue value={device.gridCurrentL2} />
               </td>
               <td className="detail-metrics-value">
-                {fmt(device.gridCurrentTHDL2, 1)}
+                <MetricValue value={device.gridCurrentL3} />
+              </td>
+            </tr>
+            <tr>
+              <td className="detail-metrics-label">THD (%)</td>
+              <td className="detail-metrics-value">
+                <MetricValue value={device.gridCurrentTHDL1} kind="thd" />
               </td>
               <td className="detail-metrics-value">
-                {fmt(device.gridCurrentTHDL3, 1)}
+                <MetricValue value={device.gridCurrentTHDL2} kind="thd" />
+              </td>
+              <td className="detail-metrics-value">
+                <MetricValue value={device.gridCurrentTHDL3} kind="thd" />
               </td>
             </tr>
-            <tr>
-              <td className="detail-metrics-label">TPF (Grid)</td>
-              <td className="detail-metrics-value" colSpan={3}>
-                {fmt(device.tpf2, 3)}
-              </td>
-            </tr>
-            <tr>
-              <td className="detail-metrics-label">DPF (Grid)</td>
-              <td className="detail-metrics-value" colSpan={3}>
-                {fmt(device.dpf2, 3)}
-              </td>
-            </tr>
-            <tr>
-              <td className="detail-metrics-label">S (kVA)</td>
-              <td className="detail-metrics-value" colSpan={3}>
-                {fmt(device.compS, 2)}
-              </td>
-            </tr>
-            <tr>
-              <td className="detail-metrics-label">P (kW)</td>
-              <td className="detail-metrics-value" colSpan={3}>
-                {fmt(device.compP, 2)}
-              </td>
-            </tr>
-            <tr>
-              <td className="detail-metrics-label">Q (kvar)</td>
-              <td className="detail-metrics-value" colSpan={3}>
-                {fmt(device.compQ, 2)}
-              </td>
-            </tr>
-            <tr>
-              <td className="detail-metrics-label">H (kvar)</td>
-              <td className="detail-metrics-value" colSpan={3}>
-                {fmt(device.compH, 2)}
-              </td>
-            </tr>
+            <MetricCell label="TPF (%)" colSpan={3}>
+              <MetricValue value={device.tpf2} kind="pf" suffix="%" digits={2} />
+            </MetricCell>
+            <MetricCell label="DPF (%)" colSpan={3}>
+              <MetricValue value={device.dpf2} kind="pf" suffix="%" digits={2} />
+            </MetricCell>
+            {!compact && (
+              <>
+                <MetricCell label="S (kVA)" colSpan={3}>
+                  <MetricValue value={device.compS} digits={2} />
+                </MetricCell>
+                <MetricCell label="P (kW)" colSpan={3}>
+                  <MetricValue value={device.compP} digits={2} />
+                </MetricCell>
+                <MetricCell label="Q (kvar)" colSpan={3}>
+                  <MetricValue value={device.compQ} digits={2} />
+                </MetricCell>
+              </>
+            )}
           </tbody>
         </table>
       </div>
 
-      <div className="detail-footer">
+      <div className="scada-metrics-footer">
         <div className="detail-voltage">
-          <span>Voltage</span>
+          <span>전압 (V)</span>
           <strong>
-            L1 {fmt(device.vL1, 1)} / L2 {fmt(device.vL2, 1)} / L3{" "}
-            {fmt(device.vL3, 1)}
+            L1 <MetricValue value={device.vL1} kind="voltage" /> / L2{" "}
+            <MetricValue value={device.vL2} kind="voltage" /> / L3{" "}
+            <MetricValue value={device.vL3} kind="voltage" />
           </strong>
-        </div>
-        <div>
-          <p style={{ fontSize: 12, opacity: 0.6 }}>
-            Received{" "}
-            {device.lastSeenAt
-              ? new Date(device.lastSeenAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
-              : "-"}
-          </p>
-          {device.lastIp && (
-            <p style={{ fontSize: 12, opacity: 0.6 }}>IP {device.lastIp}</p>
-          )}
         </div>
       </div>
 
-      {device.moduleStatus && device.moduleStatus.length > 0 && (
-        <div className="module-status">
-          <p className="module-status-title">Module Status</p>
-          <div className="module-status-list">
-            {device.moduleStatus.map((code, index) => (
-              <span
-                key={`module-${index}`}
-                className={moduleChipClassName(code)}
-              >
-                M{index + 1} {moduleStatusLabel(code)}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+      <ModuleSlotGrid
+        moduleStatus={device.moduleStatus}
+        numOfMods={device.numOfMods}
+      />
     </article>
   );
-};
+}

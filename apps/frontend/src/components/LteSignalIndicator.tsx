@@ -20,7 +20,11 @@ export default function LteSignalIndicator({
   const info = getLteSignalInfo(device?.rsrp, device?.csq, offline);
   const detail = formatLteSignalDetail(info);
   const lastSeen = formatLastSeen(device?.lastSeenAt);
-  const title = [info.label, detail, lastSeen ? `마지막 수신 ${lastSeen}` : null]
+  const title = [
+    info.label,
+    detail,
+    lastSeen ? `마지막 수신 ${lastSeen}` : null,
+  ]
     .filter(Boolean)
     .join(" · ");
 
@@ -37,14 +41,6 @@ export default function LteSignalIndicator({
           />
         ))}
       </span>
-      <span className="lte-signal-label">{info.label}</span>
-      {variant === "detail" && (detail || lastSeen) && (
-        <span className="lte-signal-meta">
-          {[detail, lastSeen ? `마지막 수신 ${lastSeen}` : null]
-            .filter(Boolean)
-            .join(" · ")}
-        </span>
-      )}
     </div>
   );
 }

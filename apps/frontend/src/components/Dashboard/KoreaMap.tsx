@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useLayoutEffect } from "react";
 import {
   ComposableMap,
   Geographies,
@@ -11,6 +11,7 @@ import {
 import type { MouseEvent } from "react";
 import type { Site } from "../../types/site";
 import type { DeviceStatus } from "../../types/site";
+import { STATUS_LABEL } from "../../lib/deviceStatus";
 
 const GEO_URL = "/korea-provinces.json";
 
@@ -108,14 +109,6 @@ const STATUS_DOT: Record<DeviceStatus, string> = {
   start: "#F59E0B",
   fault: "#EF4444",
   offline: "#4B5563",
-};
-
-const STATUS_LABEL: Record<DeviceStatus, string> = {
-  running: "정상",
-  standby: "대기",
-  start: "기동 중",
-  fault: "이상",
-  offline: "오프라인",
 };
 
 const CITY_COORDS: Record<string, [number, number]> = {
@@ -257,6 +250,7 @@ type Props = {
   selectedSiteId: string;
   deriveSiteStatus: (site: Site) => DeviceStatus;
   onSelect: (siteId: string) => void;
+  onSelectedMarkerPosition?: (point: { x: number; y: number } | null) => void;
 };
 
 type Tooltip = { lines: string[]; x: number; y: number };
@@ -266,10 +260,12 @@ export default function KoreaMap({
   selectedSiteId,
   deriveSiteStatus,
   onSelect,
+  onSelectedMarkerPosition,
 }: Props) {
   const [zoom, setZoom] = useState(INITIAL_ZOOM);
   const [center, setCenter] = useState<[number, number]>(INITIAL_CENTER);
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
+  const selectedMarkerRef = useRef<SVGCircleElement | null>(null);
 
   const regionStats = useMemo(() => {
     const map = new Map<string, RegionStats>();
@@ -329,6 +325,27 @@ export default function KoreaMap({
       status: DeviceStatus;
     }[];
   }, [allSites, deriveSiteStatus]);
+
+  useLayoutEffect(() => {
+    if (!onSelectedMarkerPosition) return;
+
+    const report = () => {
+      const el = selectedMarkerRef.current;
+      if (!el) {
+        onSelectedMarkerPosition(null);
+        return;
+      }
+      const rect = el.getBoundingClientRect();
+      onSelectedMarkerPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
+    };
+
+    report();
+    window.addEventListener("resize", report);
+    return () => window.removeEventListener("resize", report);
+  }, [selectedSiteId, zoom, center, siteMarkers, onSelectedMarkerPosition]);
 
   const handleZoomIn = () => setZoom((z) => Math.min(z * ZOOM_STEP, MAX_ZOOM));
   const handleZoomOut = () => setZoom((z) => Math.max(z / ZOOM_STEP, MIN_ZOOM));
@@ -504,9 +521,10 @@ export default function KoreaMap({
             const isFault = marker.status === "fault";
             const isSelected = marker.siteId === selectedSiteId;
             const isLinked = marker.status !== "offline";
+            const isDimmed = Boolean(selectedSiteId) && !isSelected;
             const color = STATUS_DOT[marker.status];
-            const innerR = (isSelected ? 4 : 3) / zoom;
-            const outerR = (isSelected ? 9 : 7) / zoom;
+            const innerR = 3 / zoom;
+            const outerR = 7 / zoom;
             return (
               <Marker
                 key={marker.siteId}
@@ -523,7 +541,11 @@ export default function KoreaMap({
                   })
                 }
                 onMouseLeave={() => setTooltip(null)}
-                style={{ cursor: "pointer" }}
+                style={{
+                  cursor: "pointer",
+                  opacity: isDimmed ? 0.38 : 1,
+                  transition: "opacity 0.25s ease",
+                }}
               >
                 {isLinked && !isSelected && (
                   <circle
@@ -544,28 +566,19 @@ export default function KoreaMap({
                     className="marker-pulse-ring"
                   />
                 )}
-                {isSelected && (
-                  <circle
-                    r={outerR * 1.6}
-                    fill="none"
-                    stroke="#ffffff"
-                    strokeWidth={1.5 / zoom}
-                    opacity={0.7}
-                    className="marker-selected-ring"
-                  />
-                )}
                 <circle
                   r={outerR}
                   fill={color}
-                  opacity={isSelected ? 0.35 : 0.2}
+                  opacity={0.2}
                   stroke={color}
                   strokeWidth={0.8 / zoom}
                 />
                 <circle
                   r={innerR}
+                  ref={isSelected ? selectedMarkerRef : undefined}
                   fill={color}
-                  stroke={isSelected ? "#ffffff" : "#0b0d12"}
-                  strokeWidth={(isSelected ? 1.2 : 0.8) / zoom}
+                  stroke="#0b0d12"
+                  strokeWidth={0.8 / zoom}
                 />
               </Marker>
             );
