@@ -34,6 +34,12 @@ const eventNamePatch = (fault: ReceiverFaultUpsertInput) =>
     ? {}
     : { eventName: normalizeEventNameForDb(fault.eventName) };
 
+/**
+ * 자동 해제 기준: 마지막 갱신(updatedAt) 후 이 시간 동안 재발생(RAISE)이 없으면
+ * 활성 fault에서 자동 제외한다. (기본 24시간)
+ */
+const AUTO_CLEAR_MS = 24 * 60 * 60 * 1000;
+
 type FaultListRow = {
   id: string;
   module: number;
@@ -41,6 +47,10 @@ type FaultListRow = {
   occurredAt: Date;
   installationId: string;
   eventName?: string | null;
+  /** 현재 활성(빨강) 여부 — RAISE 상태 + 미확인 + 자동해제 시간 미경과 */
+  active: boolean;
+  resolvedAt?: Date | null;
+  acknowledgedAt?: Date | null;
 };
 
 /**
@@ -117,6 +127,7 @@ const fetchModuleFaultStatesForInstallations = async (
       resolvedAt: true,
       criticalChannel: true,
       eventName: true,
+      acknowledgedAt: true,
     },
   });
   const byId = new Map(rows.map((r) => [r.id, r]));
@@ -139,8 +150,31 @@ const dedupeModuleStatesByFaultCode = <
   return [...map.values()];
 };
 
+/**
+ * ModuleFaultState 한 행이 현재 "활성"인지 판정.
+ * 활성 = 마지막 이벤트가 RAISE && 사용자 미확인 && 마지막 갱신 후 자동해제 시간 미경과.
+ * (CLEAR 수신 → resolvedAt/ lastEvent=CLEAR → 비활성, acknowledgedAt 설정 → 비활성)
+ */
+const isModuleStateActive = (s: {
+  lastEvent: string;
+  acknowledgedAt: Date | null;
+  updatedAt: Date;
+  now?: number;
+}): boolean => {
+  if (s.lastEvent !== "RAISE") return false;
+  if (s.acknowledgedAt != null) return false;
+  const now = s.now ?? Date.now();
+  return now - s.updatedAt.getTime() < AUTO_CLEAR_MS;
+};
+
 const mergeFaultLists = (
-  events: FaultListRow[],
+  events: Array<{
+    id: string;
+    module: number;
+    desc: string;
+    occurredAt: Date;
+    installationId: string;
+  }>,
   states: Array<{
     id: string;
     installationId: string;
@@ -151,12 +185,18 @@ const mergeFaultLists = (
     resolvedAt: Date | null;
     criticalChannel: boolean;
     eventName: string | null;
+    acknowledgedAt: Date | null;
   }>,
   limit: number,
 ): FaultListRow[] => {
+  const now = Date.now();
+  // 순수 이력(FaultEvent)은 과거 로그이므로 항상 비활성으로 둔다.
   const eventRows: FaultListRow[] = events.map((e) => ({
     ...e,
     eventName: null,
+    active: false,
+    resolvedAt: null,
+    acknowledgedAt: null,
   }));
   const fromState: FaultListRow[] = states.map((s) => ({
     id: `mfs-${s.id}`,
@@ -165,6 +205,14 @@ const mergeFaultLists = (
     occurredAt: s.updatedAt,
     installationId: s.installationId,
     eventName: s.eventName,
+    active: isModuleStateActive({
+      lastEvent: s.lastEvent,
+      acknowledgedAt: s.acknowledgedAt,
+      updatedAt: s.updatedAt,
+      now,
+    }),
+    resolvedAt: s.resolvedAt,
+    acknowledgedAt: s.acknowledgedAt,
   }));
   return [...eventRows, ...fromState]
     .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime())
@@ -296,6 +344,9 @@ export const faultService = {
           repeatCount: { increment: 1 },
           resolvedAt: null,
           lastEvent: "RAISE",
+          // 재발생 시 이전 확인(Acknowledge) 무효화 → 다시 활성으로 표시
+          acknowledgedAt: null,
+          acknowledgedBy: null,
           ...(criticalChannel ? { criticalChannel: true } : {}),
           ...eventNamePatch(fault),
         },
@@ -324,6 +375,36 @@ export const faultService = {
         ...eventNamePatch(fault),
       },
     });
+  },
+
+  /**
+   * 사용자(Admin) Acknowledge — 활성(RAISE·미확인) ModuleFaultState 를 확인 처리.
+   * faultCode 지정 시 해당 모듈만, 미지정 시 설치의 활성 fault 전체.
+   * lte-{iccid} 등 동일 ICCID 설치까지 함께 처리한다.
+   */
+  acknowledge: async (params: {
+    installationId: string;
+    faultCode?: number;
+    module?: number;
+    username?: string | null;
+  }): Promise<{ acknowledged: number }> => {
+    const faultCode =
+      params.faultCode ??
+      (params.module != null ? params.module + 1 : undefined);
+    const ids = await installationIdsForModuleFaultState(params.installationId);
+    const result = await prisma.moduleFaultState.updateMany({
+      where: {
+        installationId: { in: ids },
+        lastEvent: "RAISE",
+        acknowledgedAt: null,
+        ...(faultCode != null ? { faultCode } : {}),
+      },
+      data: {
+        acknowledgedAt: new Date(),
+        acknowledgedBy: params.username ?? null,
+      },
+    });
+    return { acknowledged: result.count };
   },
 
   upsertReceiverFaultStates: async (params: {

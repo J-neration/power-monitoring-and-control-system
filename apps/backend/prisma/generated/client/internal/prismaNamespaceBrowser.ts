@@ -234,6 +234,8 @@ export const ModuleFaultStateScalarFieldEnum = {
   lastEvent: 'lastEvent',
   criticalChannel: 'criticalChannel',
   eventName: 'eventName',
+  acknowledgedAt: 'acknowledgedAt',
+  acknowledgedBy: 'acknowledgedBy',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

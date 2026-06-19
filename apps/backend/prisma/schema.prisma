@@ -283,6 +283,11 @@ model ModuleFaultState {
   /// HMI 가 보낸 사람이 읽을 수 있는 이벤트 이름 (예: Over Temperature)
   eventName        String?      @db.VarChar(64)
 
+  /// 사용자(Admin)가 확인(Acknowledge)한 시각 — 설정되면 활성 fault에서 제외
+  acknowledgedAt   DateTime?
+  /// 확인한 사용자명 (audit)
+  acknowledgedBy   String?      @db.VarChar(64)
+
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
