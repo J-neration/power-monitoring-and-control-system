@@ -10,6 +10,12 @@ export type FaultEvent = {
   installationId: string;
   /** ModuleFaultState 병합 행 — HMI eventName (예: Over Temperature) */
   eventName?: string | null;
+  /** 현재 활성(빨강) 여부 — RAISE 상태 + 미확인 + 자동해제 시간 미경과 */
+  active?: boolean;
+  /** CLEAR 수신 시각 (없으면 미해제) */
+  resolvedAt?: string | null;
+  /** 사용자 Acknowledge 시각 */
+  acknowledgedAt?: string | null;
 };
 
 const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";

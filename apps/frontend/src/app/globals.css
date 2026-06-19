@@ -6071,6 +6071,74 @@ body.pmcs-control-room .global-header:hover {
   color: #f87171;
 }
 
+/* 활성 fault 없음 — 일반 회색 배지 */
+.fault-latest-badge-clear {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* fault 상태 칩 */
+.fault-status-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.fault-status-active {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.fault-status-acknowledged {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #a5b4fc;
+}
+
+.fault-status-resolved,
+.fault-status-history {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* 활성 행 강조 */
+.fault-row-active td {
+  background: rgba(239, 68, 68, 0.04);
+}
+
+/* Acknowledge(확인) 버튼 */
+.fault-ack-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+.fault-ack-btn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fecaca;
+}
+
+.fault-ack-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* 새로고침 버튼 행 */
 .fault-refresh-row {
   display: flex;

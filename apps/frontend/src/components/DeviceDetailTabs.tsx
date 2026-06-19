@@ -74,7 +74,10 @@ export default function DeviceDetailTabs({
     }
   });
 
-  const hasFaults = faults.length > 0;
+  // 활성(미해제·미확인·자동해제 시간 미경과) fault 만 빨강 + 카운트 대상.
+  // 해제·확인된 fault 는 이력에는 남되 탭은 일반 회색으로 표시된다.
+  const activeFaultCount = faults.filter((f) => f.active).length;
+  const hasActiveFaults = activeFaultCount > 0;
 
   return (
     <>
@@ -99,12 +102,12 @@ export default function DeviceDetailTabs({
         {isAdmin && (
           <button
             type="button"
-            className={`device-tab-btn${tab === "faults" ? " active" : ""}${hasFaults ? " device-tab-btn-fault" : ""}`}
+            className={`device-tab-btn${tab === "faults" ? " active" : ""}${hasActiveFaults ? " device-tab-btn-fault" : ""}`}
             onClick={() => setTab("faults")}
           >
             <span className="device-tab-icon"><FaultIcon /></span>
             장애
-            {hasFaults && <span className="fault-tab-count">{faults.length}</span>}
+            {hasActiveFaults && <span className="fault-tab-count">{activeFaultCount}</span>}
           </button>
         )}
       </div>
@@ -134,8 +137,7 @@ export default function DeviceDetailTabs({
         <section className="device-detail-body">
           <div className="history-section-header">
             <h2 className="history-section-title">
-              24시간 이력
-              <span className="history-section-sub"> — 최근 {hours}시간</span>
+              최근 {hours}시간 이력
             </h2>
           </div>
           <DeviceHistoryCharts

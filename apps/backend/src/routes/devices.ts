@@ -26,6 +26,23 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
     return reply.send({ faults });
   });
 
+  /** Admin: fault Acknowledge(확인) — 활성 fault 를 확인 처리해 비활성으로 전환 */
+  server.post("/:id/faults/ack", { preHandler: requireAdmin }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const device = await deviceService.get({ id }, request.user);
+    if (!device) {
+      return reply.status(404).send({ message: "Device not found" });
+    }
+    const body = (request.body as { faultCode?: number; module?: number } | undefined) ?? {};
+    const result = await faultService.acknowledge({
+      installationId: id,
+      faultCode: typeof body.faultCode === "number" ? body.faultCode : undefined,
+      module: typeof body.module === "number" ? body.module : undefined,
+      username: request.user.username,
+    });
+    return reply.send(result);
+  });
+
   server.get("/:id", { preHandler: authenticate }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const device = await deviceService.get({ id }, request.user);
