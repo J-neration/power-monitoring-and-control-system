@@ -89,6 +89,24 @@ export const siteService = {
     return prisma.site.create({ data });
   },
 
+  /* ─── 현장 수정 ────────────────────────────────── */
+  update: async (
+    siteId: string,
+    data: {
+      name: string;
+      client: string;
+      region: string;
+      address: string;
+    },
+  ) => {
+    const site = await prisma.site.findUnique({ where: { id: siteId } });
+    if (!site) return null;
+    return prisma.site.update({
+      where: { id: siteId },
+      data,
+    });
+  },
+
   /* ─── 현장 삭제 (Installation/Device/Telemetry cascade) ─ */
   delete: async (siteId: string) => {
     const site = await prisma.site.findUnique({ where: { id: siteId } });

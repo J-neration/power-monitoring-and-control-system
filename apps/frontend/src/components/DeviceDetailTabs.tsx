@@ -89,7 +89,7 @@ export default function DeviceDetailTabs({
           onClick={() => setTab("monitor")}
         >
           <span className="device-tab-icon"><MonitorIcon /></span>
-          Monitor
+          모니터
         </button>
         <button
           type="button"
@@ -97,7 +97,7 @@ export default function DeviceDetailTabs({
           onClick={() => setTab("analytics")}
         >
           <span className="device-tab-icon"><AnalyticsIcon /></span>
-          Analytics
+          이력
         </button>
         {isAdmin && (
           <button
@@ -106,14 +106,14 @@ export default function DeviceDetailTabs({
             onClick={() => setTab("faults")}
           >
             <span className="device-tab-icon"><FaultIcon /></span>
-            Faults
+            장애
             {hasActiveFaults && <span className="fault-tab-count">{activeFaultCount}</span>}
           </button>
         )}
       </div>
 
       {tab === "monitor" && (
-        <>
+        <div className="device-monitor-layout">
           {isAdmin ? (
             <DeviceModulePowerPanel
               installationId={device.installationId}
@@ -122,13 +122,15 @@ export default function DeviceDetailTabs({
               requestedBy={adminUsername}
             />
           ) : null}
-          <section className="device-detail-body">
+          <section className="device-detail-body device-monitor-charts">
+            <h2 className="scada-section-title">실시간 계측</h2>
             <DeviceDetailChartsLazy device={device} />
           </section>
-          <section className="device-detail-body">
+          <section className="device-detail-body device-monitor-metrics">
+            <h2 className="scada-section-title">Load / Grid 상세</h2>
             <StatusCard device={device} />
           </section>
-        </>
+        </div>
       )}
 
       {tab === "analytics" && (
@@ -138,7 +140,12 @@ export default function DeviceDetailTabs({
               최근 {hours}시간 이력
             </h2>
           </div>
-          <DeviceHistoryCharts readings={readings} hours={hours} model={device.model} />
+          <DeviceHistoryCharts
+            readings={readings}
+            hours={hours}
+            model={device.model}
+            faults={faults}
+          />
         </section>
       )}
 

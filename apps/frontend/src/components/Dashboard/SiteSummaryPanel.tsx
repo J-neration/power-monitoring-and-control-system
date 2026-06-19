@@ -3,34 +3,18 @@
 import Link from "next/link";
 import type { Site, DeviceStatus } from "../../types/site";
 import { CLIENT_LABELS, isTestClient } from "../../data/clients";
+import LteSignalIndicator from "../LteSignalIndicator";
+import MetricValue from "../MetricValue";
+import InstallationSparkline from "../InstallationSparkline";
+import { deriveSiteStatus, STATUS_LABEL } from "../../lib/deviceStatus";
 
-const statusPriority: Record<DeviceStatus, number> = {
-  fault: 4,
-  offline: 3,
-  start: 2,
-  standby: 2,
-  running: 1,
-};
-
-function deriveSiteStatus(site: Site): DeviceStatus {
-  let worst: DeviceStatus = "running";
-  for (const inst of site.installations) {
-    const s = inst.device?.status ?? "offline";
-    if (statusPriority[s] > statusPriority[worst]) worst = s;
-  }
-  return worst;
-}
-
-const STATUS_LABEL: Record<DeviceStatus, string> = {
-  running: "RUNNING",
-  standby: "STANDBY",
-  start: "START",
-  fault: "FAULT",
-  offline: "OFFLINE",
-};
-
-
-export default function SiteSummaryPanel({ site }: { site: Site | null }) {
+export default function SiteSummaryPanel({
+  site,
+  showSparklines = false,
+}: {
+  site: Site | null;
+  showSparklines?: boolean;
+}) {
   if (!site) {
     return (
       <div className="dash-detail dash-detail-empty">
@@ -83,7 +67,7 @@ export default function SiteSummaryPanel({ site }: { site: Site | null }) {
         </div>
         <div className="summary-stat summary-stat-ok">
           <span className="summary-stat-value">{stats.running}</span>
-          <span className="summary-stat-label">정상</span>
+          <span className="summary-stat-label">가동</span>
         </div>
         <div className="summary-stat summary-stat-warn">
           <span className="summary-stat-value">{stats.standby}</span>
@@ -117,31 +101,55 @@ export default function SiteSummaryPanel({ site }: { site: Site | null }) {
                   {STATUS_LABEL[instStatus]}
                 </span>
               </div>
+              <div className="summary-inst-lte">
+                <span className="summary-inst-lte-title">LTE 신호</span>
+                <LteSignalIndicator device={d} variant="detail" />
+              </div>
               <div className="site-inst-table">
                 <div className="sit-row">
                   <span className="sit-label">V (V)</span>
-                  <span>{d?.vL1 != null ? d.vL1.toFixed(1) : "-"}</span>
-                  <span>{d?.vL2 != null ? d.vL2.toFixed(1) : "-"}</span>
-                  <span>{d?.vL3 != null ? d.vL3.toFixed(1) : "-"}</span>
+                  <MetricValue value={d?.vL1} kind="voltage" />
+                  <MetricValue value={d?.vL2} kind="voltage" />
+                  <MetricValue value={d?.vL3} kind="voltage" />
                 </div>
                 <div className="sit-row">
                   <span className="sit-label">Grid I (A)</span>
-                  <span>{d?.gridCurrentL1 != null ? d.gridCurrentL1.toFixed(1) : "-"}</span>
-                  <span>{d?.gridCurrentL2 != null ? d.gridCurrentL2.toFixed(1) : "-"}</span>
-                  <span>{d?.gridCurrentL3 != null ? d.gridCurrentL3.toFixed(1) : "-"}</span>
+                  <MetricValue value={d?.gridCurrentL1} />
+                  <MetricValue value={d?.gridCurrentL2} />
+                  <MetricValue value={d?.gridCurrentL3} />
                 </div>
                 <div className="sit-row sit-row-pf">
                   <span className="sit-label">TPF2 / DPF2</span>
-                  <span>{d?.tpf2 != null ? `${d.tpf2.toFixed(1)}%` : "-"}</span>
-                  <span>{d?.dpf2 != null ? `${d.dpf2.toFixed(1)}%` : "-"}</span>
+                  <MetricValue value={d?.tpf2} suffix="%" />
+                  <MetricValue value={d?.dpf2} suffix="%" />
                   <span />
                 </div>
                 <div className="sit-row">
                   <span className="sit-label">Grid THD (%)</span>
-                  <span>{d?.gridCurrentTHDL1 != null ? d.gridCurrentTHDL1.toFixed(1) : "-"}</span>
-                  <span>{d?.gridCurrentTHDL2 != null ? d.gridCurrentTHDL2.toFixed(1) : "-"}</span>
-                  <span>{d?.gridCurrentTHDL3 != null ? d.gridCurrentTHDL3.toFixed(1) : "-"}</span>
+                  <MetricValue value={d?.gridCurrentTHDL1} kind="thd" />
+                  <MetricValue value={d?.gridCurrentTHDL2} kind="thd" />
+                  <MetricValue value={d?.gridCurrentTHDL3} kind="thd" />
                 </div>
+                {showSparklines && (
+                  <div className="site-inst-trends">
+                    <div className="summary-inst-sparkline">
+                      <span className="sit-label">THD 1h</span>
+                      <InstallationSparkline
+                        installationId={inst.id}
+                        hours={1}
+                        metric="thd"
+                      />
+                    </div>
+                    <div className="summary-inst-sparkline">
+                      <span className="sit-label">TPF 1h</span>
+                      <InstallationSparkline
+                        installationId={inst.id}
+                        hours={1}
+                        metric="pf"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </Link>
           );

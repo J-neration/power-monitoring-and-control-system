@@ -56,6 +56,10 @@ type ReceiverBody = {
   operatingCapacity?: number | string;
   reactivePowerCapacity?: number | string;
   availableMargin?: number | string;
+  /** LTE 신호 강도 (AT+CSQ RSSI, 0–31) */
+  csq?: number | string;
+  /** LTE RSRP (dBm, e.g. -84) */
+  rsrp?: number | string;
   /** 장치 모델: psta | paf | psvg (소문자 권장) */
   model?: string;
   /** 모듈 fault 배열. fault 없으면 [] — desc 생략 가능 */
@@ -326,6 +330,12 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       device_id: body.device_id,
       installationId: body.installationId,
     });
+    if (body.csq != null || body.rsrp != null) {
+      server.log.info(
+        { csq: body.csq, rsrp: body.rsrp, installationId: identity.installationId },
+        "LTE signal fields in payload",
+      );
+    }
     if (identity.installationId) {
       server.log.info(
         { installationId: identity.installationId, resolvedVia: identity.resolvedVia },
@@ -387,6 +397,8 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       operatingCapacity: body.operatingCapacity,
       reactivePowerCapacity: body.reactivePowerCapacity,
       availableMargin: body.availableMargin,
+      csq: body.csq,
+      rsrp: body.rsrp,
       model: typeof body.model === "string" ? body.model : undefined,
       timestamp: body.timestamp,
       ts: body.ts,

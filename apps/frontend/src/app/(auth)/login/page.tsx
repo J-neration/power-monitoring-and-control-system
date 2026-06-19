@@ -44,19 +44,40 @@ export default function LoginPage() {
 
   return (
     <div className="login-page">
+      <div className="login-page-grid" aria-hidden />
+      <div className="login-page-scanline" aria-hidden />
+
       <div className="login-card">
-        {/* Logo */}
+        <div className="login-status-strip" aria-hidden>
+          <span className="login-status-dot login-status-dot--live" />
+          <span>SYSTEM ONLINE</span>
+          <span className="login-status-sep">|</span>
+          <span>PMCS v0.1</span>
+        </div>
+
         <div className="login-logo">
-          <Image src="/logo.png" alt="PrimeSolution" width={48} height={22} priority />
+          <Image
+            src="/logo.png"
+            alt="PrimeSolution"
+            width={48}
+            height={22}
+            priority
+          />
           <span className="login-logo-text">PRIMESOLUTION</span>
         </div>
 
-        <h1 className="login-title">로그인</h1>
-        <p className="login-subtitle">PMCS 전력 모니터링 시스템</p>
+        <p className="login-system-badge">전력 모니터링 관제센터</p>
+
+        <h1 className="login-title">운영자 로그인</h1>
+        <p className="login-subtitle">
+          Power Monitoring and Control System
+        </p>
 
         <form className="login-form" onSubmit={handleSubmit} noValidate>
           <div className="login-field">
-            <label className="login-label" htmlFor="username">아이디</label>
+            <label className="login-label" htmlFor="username">
+              아이디
+            </label>
             <input
               id="username"
               className="login-input"
@@ -70,7 +91,9 @@ export default function LoginPage() {
           </div>
 
           <div className="login-field">
-            <label className="login-label" htmlFor="password">비밀번호</label>
+            <label className="login-label" htmlFor="password">
+              비밀번호
+            </label>
             <input
               id="password"
               className="login-input"
@@ -89,11 +112,7 @@ export default function LoginPage() {
             className={`login-btn${loading ? " loading" : ""}`}
             disabled={loading}
           >
-            {loading ? (
-              <span className="login-spinner" />
-            ) : (
-              "로그인"
-            )}
+            {loading ? <span className="login-spinner" /> : "관제 시스템 접속"}
           </button>
         </form>
 
