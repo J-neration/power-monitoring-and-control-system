@@ -4,8 +4,12 @@ import { redirect } from "next/navigation";
 import { fetchDevice, fetchReadings, fetchFaults } from "../../../../lib/api";
 import { getSessionUser } from "../../../../lib/auth-server";
 import DeviceDetailTabs from "../../../../components/DeviceDetailTabs";
+import DeviceKpiStrip from "../../../../components/DeviceKpiStrip";
 import LteSignalIndicator from "../../../../components/LteSignalIndicator";
+import PageLiveRefresh from "../../../../components/PageLiveRefresh";
+import { STATUS_LABEL } from "../../../../lib/deviceStatus";
 import type { DeviceWithInstallation } from "../../../../types/site";
+
 type Props = {
   params: { id: string };
 };
@@ -31,8 +35,6 @@ export default async function DeviceDetailPage({ params }: Props) {
   ]);
 
   if (!device) {
-    // If a non-installation id is entered on /devices, prefer sending
-    // the user to the site route instead of a hard 404.
     redirect(`/sites/${encodeURIComponent(id)}`);
   }
 
@@ -41,11 +43,19 @@ export default async function DeviceDetailPage({ params }: Props) {
   const deviceLabel = device.installation?.label ?? "Installation";
 
   return (
-    <main className="device-detail-page">
-      <section className="device-detail-header">
+    <main
+      className={`device-detail-page device-detail-page--${device.status}`}
+    >
+      {device.status === "fault" && (
+        <div className="page-fault-banner" role="alert">
+          <strong>이상 상태</strong> — 장비 점검이 필요합니다
+        </div>
+      )}
+
+      <section className="device-detail-header scada-panel">
         <div className="device-detail-header-inner">
           <div className="device-detail-header-main">
-            <nav className="device-breadcrumb">
+            <nav className="device-breadcrumb page-breadcrumb">
               <Link href="/" className="breadcrumb-item">
                 대시보드
               </Link>
@@ -68,9 +78,10 @@ export default async function DeviceDetailPage({ params }: Props) {
             </nav>
 
             <div className="device-detail-title-row">
+              <div className={`detail-status-dot ${device.status}`} />
               <h1>{deviceLabel}</h1>
               <span className={`detail-status-badge ${device.status}`}>
-                {device.status.toUpperCase()}
+                {STATUS_LABEL[device.status]}
               </span>
             </div>
 
@@ -85,7 +96,8 @@ export default async function DeviceDetailPage({ params }: Props) {
               ) : null}
               {device.capacity != null ? (
                 <span className="device-capacity-badge">
-                  {device.capacity} A
+                  {device.capacity}{" "}
+                  {device.model === "paf" ? "A" : "kVAR"}
                 </span>
               ) : null}{" "}
               ID: {device.installationId}
@@ -93,13 +105,14 @@ export default async function DeviceDetailPage({ params }: Props) {
           </div>
 
           <div className="device-detail-aside">
+            <PageLiveRefresh installationIds={[device.installationId]} />
             <div className="device-detail-lte">
               <span className="device-detail-lte-title">LTE 신호</span>
               <LteSignalIndicator device={device} variant="detail" />
             </div>
             <div className="device-detail-received">
               <p>
-                Received{" "}
+                마지막 수신{" "}
                 {device.lastSeenAt
                   ? new Date(device.lastSeenAt).toLocaleString("ko-KR", {
                       timeZone: "Asia/Seoul",
@@ -111,6 +124,8 @@ export default async function DeviceDetailPage({ params }: Props) {
           </div>
         </div>
       </section>
+
+      <DeviceKpiStrip device={device} />
 
       <DeviceDetailTabs
         device={device}

@@ -15,6 +15,7 @@
     "db:stop": "docker compose down",
     "db:migrate:dev": "cross-env NODE_ENV=development yarn workspace @pmcs/backend db:migrate:dev",
     "db:migrate:deploy": "yarn workspace @pmcs/backend db:migrate:deploy",
+    "db:migrate:prod": "cross-env NODE_ENV=production yarn workspace @pmcs/backend db:migrate:deploy",
     "db:seed": "cross-env NODE_ENV=development yarn workspace @pmcs/backend db:seed",
     "db:seed:telemetry": "cross-env NODE_ENV=development yarn workspace @pmcs/backend db:seed:telemetry",
     "db:reset": "cross-env NODE_ENV=development yarn workspace @pmcs/backend db:reset",

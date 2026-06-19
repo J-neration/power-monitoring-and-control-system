@@ -4,6 +4,7 @@ import Image from "next/image";
 import { cookies } from "next/headers";
 import LiveClock from "../../components/Dashboard/LiveClock";
 import LogoutButton from "../../components/LogoutButton";
+import SystemStatusBar from "../../components/SystemStatusBar";
 import { CLIENT_LABELS } from "../../data/clients";
 
 const ROLE_LABEL: Record<string, string> = {
@@ -96,6 +97,10 @@ export default async function MainLayout({
             <span className="global-logo-text">PRIMESOLUTION</span>
             <span className="global-logo-text-beta">BETA</span>
           </Link>
+        </div>
+
+        <div className="global-header-center">
+          <SystemStatusBar />
         </div>
 
         <div className="global-header-right">

@@ -33,6 +33,13 @@ const createSiteSchema = z.object({
   address: z.string().min(1),
 });
 
+const updateSiteSchema = z.object({
+  name: z.string().min(1),
+  client: z.string().min(1),
+  region: z.string().min(1),
+  address: z.string().min(1),
+});
+
 const createInstallationSchema = z.object({
   id: z.string().optional(),
   label: z.string().min(1),
@@ -96,6 +103,18 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
       }
       return reply.status(500).send({ message: "현장 생성에 실패했습니다." });
     }
+  });
+
+  /* ── PATCH /admin/sites/:siteId ──────────────────── 현장 수정 */
+  server.patch("/sites/:siteId", { preHandler: requireAdmin }, async (request, reply) => {
+    const { siteId } = request.params as { siteId: string };
+    const parsed = updateSiteSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ message: "입력값이 올바르지 않습니다.", errors: parsed.error.flatten() });
+    }
+    const site = await siteService.update(siteId, parsed.data);
+    if (!site) return reply.status(404).send({ message: "현장을 찾을 수 없습니다." });
+    return reply.send({ site });
   });
 
   /* ── DELETE /admin/sites/:siteId ──────────────────── 현장 삭제 */
