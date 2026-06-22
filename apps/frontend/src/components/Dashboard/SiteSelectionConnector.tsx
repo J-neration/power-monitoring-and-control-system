@@ -1,6 +1,10 @@
 "use client";
 
 import { useLayoutEffect, useState } from "react";
+import {
+  MOBILE_MEDIA_QUERY,
+  useMediaQuery,
+} from "../../hooks/useMediaQuery";
 
 type Point = { x: number; y: number };
 
@@ -22,9 +26,15 @@ export default function SiteSelectionConnector({
   fromEl,
   toPoint,
 }: Props) {
+  const isMobile = useMediaQuery(MOBILE_MEDIA_QUERY);
   const [path, setPath] = useState<string | null>(null);
 
   useLayoutEffect(() => {
+    if (isMobile) {
+      setPath(null);
+      return;
+    }
+
     const update = () => {
       if (!containerEl || !fromEl || !toPoint) {
         setPath(null);
@@ -50,9 +60,9 @@ export default function SiteSelectionConnector({
       window.removeEventListener("resize", update);
       sidebar?.removeEventListener("scroll", update);
     };
-  }, [containerEl, fromEl, toPoint]);
+  }, [containerEl, fromEl, toPoint, isMobile]);
 
-  if (!path) return null;
+  if (isMobile || !path) return null;
 
   return (
     <svg className="site-selection-connector" aria-hidden="true">

@@ -412,6 +412,11 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                   >
                                     {STATUS_LABEL[siteStatus]}
                                   </span>
+                                  {isSiteSelected && (
+                                    <span className="site-group-selected-tag">
+                                      선택
+                                    </span>
+                                  )}
                                 </summary>
 
                                 <div className="site-group-installations">
@@ -462,6 +467,12 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
             </aside>
 
             <div className="dash-map-panel">
+              <div className="dash-map-mobile-header">
+                <span className="dash-map-mobile-label">지도</span>
+                {selectedSite && (
+                  <span className="dash-map-mobile-site">{selectedSite.name}</span>
+                )}
+              </div>
               <KoreaMap
                 allSites={sites}
                 selectedSiteId={selectedSite?.id ?? ""}
