@@ -1,12 +1,18 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type { Site } from "../../types/site";
 import type { DeviceStatus } from "../../types/site";
 import { CLIENT_LABELS } from "../../data/clients";
 import SiteSummaryPanel from "./SiteSummaryPanel";
-import KoreaMap from "./KoreaMap";
+// 지도는 react-simple-maps 의 마커 transform 이 서버/클라이언트에서 부동소수점
+// 끝자리까지 달라져 hydration 경고가 발생하므로 클라이언트 전용으로 렌더한다.
+const KoreaMap = dynamic(() => import("./KoreaMap"), {
+  ssr: false,
+  loading: () => <div className="korea-map-loading" aria-hidden />,
+});
 import LteRadarOverlay from "./LteRadarOverlay";
 import SiteSelectionConnector from "./SiteSelectionConnector";
 import LteSignalIndicator from "../LteSignalIndicator";

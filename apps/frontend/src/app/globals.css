@@ -20,6 +20,24 @@
   --pmcs-panel-border: rgba(0, 212, 170, 0.1);
   --pmcs-divider: rgba(255, 255, 255, 0.06);
 
+  /* ── 반응형 breakpoint 체계 (표준 기준) ───────────────────────
+   *  CSS @media 에는 var() 를 직접 못 쓰므로, 아래 px 값을 정설(canonical)로
+   *  사용하고 모든 미디어쿼리는 이 값에 맞춘다. (JS/문서 참조용 토큰도 노출)
+   *
+   *   sm   ≤ 480px   모바일 폰
+   *   md   ≤ 768px   대형 폰 / 태블릿 세로
+   *   lg   ≤ 1024px  태블릿 가로 / 소형 노트북
+   *   xl   ≥ 1440px  데스크톱
+   *   2xl  ≥ 1920px  대형 모니터 (FHD 관제 디스플레이)
+   *   3xl  ≥ 2560px  초대형 / 4K·QHD 관제 월(wall)
+   * ───────────────────────────────────────────────────────────── */
+  --bp-sm: 480px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1440px;
+  --bp-2xl: 1920px;
+  --bp-3xl: 2560px;
+
   background: var(--pmcs-bg);
   color: var(--pmcs-text);
 }
@@ -1421,11 +1439,22 @@ main.dashboard-full {
 /* ── Center map ──────────────────────────────────────────────── */
 .dash-map-panel {
   display: flex;
-  align-items: stretch;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   padding: 24px 16px;
   position: relative;
   isolation: isolate;
+}
+
+/* 지도가 컨테이너를 100% 채우므로, 대형 모니터(예: 32")에서 패널이 커지면
+ * 지도도 과도하게 커진다. 최대 크기를 캡하고 가운데 정렬해 적정 크기를 유지.
+ * (3:4 세로 비율. 작은 화면에선 패널보다 캡이 커서 영향 없음) */
+.korea-map-loading {
+  width: 100%;
+  height: 100%;
+  max-width: 1400px;
+  max-height: 1440px;
 }
 
 /* ── Map markers (new) ───────────────────────────────────────── */
@@ -1915,6 +1944,10 @@ main.dashboard-full {
   position: relative;
   width: 100%;
   height: 100%;
+  /* 대형 화면에서 지도가 과도하게 커지지 않도록 상한 + 가운데 정렬 */
+  max-width: 1080px;
+  max-height: 1440px;
+  margin: auto;
   display: flex;
   align-items: stretch;
   z-index: 1;
@@ -2224,7 +2257,6 @@ main.dashboard-full {
 .lte-signal--none .lte-signal-label {
   color: #9ca3af;
 }
-
 
 .lte-signal--compact .lte-signal-label {
   font-size: 9px;
@@ -2999,7 +3031,6 @@ main.dashboard-full {
   max-width: 320px;
 }
 
-
 .scada-panel {
   border-color: var(--pmcs-panel-border) !important;
   box-shadow: 0 0 24px rgba(0, 212, 170, 0.04);
@@ -3724,8 +3755,7 @@ main.dashboard-full {
 
 /* ── Metric values (SCADA-style numerics) ──────────────────────── */
 .metric-value {
-  font-family:
-    "JetBrains Mono", "IBM Plex Mono", "Consolas", monospace;
+  font-family: "JetBrains Mono", "IBM Plex Mono", "Consolas", monospace;
   font-variant-numeric: tabular-nums;
   font-size: inherit;
   font-weight: 600;
@@ -4555,7 +4585,11 @@ body.pmcs-control-room .global-header:hover {
     linear-gradient(var(--pmcs-accent-dim) 1px, transparent 1px),
     linear-gradient(90deg, var(--pmcs-accent-dim) 1px, transparent 1px);
   background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 20%, transparent 75%);
+  mask-image: radial-gradient(
+    ellipse 70% 60% at 50% 40%,
+    #000 20%,
+    transparent 75%
+  );
 }
 
 .login-page-scanline {
@@ -6510,5 +6544,79 @@ body.pmcs-control-room .global-header:hover {
   .digital-phase-row {
     grid-template-columns: 90px repeat(3, 1fr);
     gap: 4px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE — 대형/고해상도 모니터 (min-width)
+   관제용 대형 디스플레이·4K 월 대응. 기존 레이아웃은 px 기반이라
+   초대형 화면에서 (1) 흐름 페이지가 과도하게 늘어나고 (2) 텍스트가
+   상대적으로 작아 보이므로, 콘텐츠 폭을 캡하고 핵심 요소를 키운다.
+═══════════════════════════════════════════════════════════════ */
+
+/* ── 2xl: ≥ 1920px (FHD 관제 디스플레이) ───────────────────── */
+@media (min-width: 1920px) {
+  /* 흐름 페이지: 좌우로 무한정 늘어나지 않게 콘텐츠 폭 캡 + 가운데 정렬 */
+  .device-detail-page,
+  .site-page {
+    margin-inline: auto;
+    max-width: 1680px;
+    width: 100%;
+    padding-inline: 40px;
+  }
+
+  /* 대시보드: 고정 사이드 컬럼을 넓혀 대형 화면 공간 활용 */
+  .dash-body {
+    grid-template-columns: 340px 1fr 380px;
+  }
+
+  /* 핵심 SCADA 지표 가독성 ↑ */
+  .kpi-value {
+    font-size: 18px;
+  }
+  .kpi-label {
+    font-size: 13px;
+  }
+  .live-clock {
+    font-size: 15px;
+  }
+  .sidebar-title {
+    font-size: 15px;
+  }
+}
+
+/* ── 3xl: ≥ 2560px (4K·QHD 관제 월) ────────────────────────── */
+@media (min-width: 2560px) {
+  .device-detail-page,
+  .site-page {
+    max-width: 2200px;
+    padding-inline: 56px;
+  }
+
+  /* 멀리서 보는 월 디스플레이 — 사이드 컬럼·간격·텍스트 추가 확대 */
+  .dash-body {
+    grid-template-columns: 420px 1fr 460px;
+  }
+  .dash-kpi-strip {
+    padding: 12px 32px;
+    gap: 12px;
+  }
+  .kpi-value {
+    font-size: 22px;
+  }
+  .kpi-label {
+    font-size: 15px;
+  }
+  .kpi-badge {
+    padding: 8px 18px;
+  }
+  .live-clock {
+    font-size: 17px;
+  }
+  .sidebar-title {
+    font-size: 16px;
+  }
+  .site-card {
+    padding: 14px;
   }
 }
