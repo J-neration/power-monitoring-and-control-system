@@ -1447,6 +1447,11 @@ main.dashboard-full {
   isolation: isolate;
 }
 
+.dash-map-mobile-header {
+  display: none;
+}
+
+/* ── Center map (continued) ── */
 /* 지도가 컨테이너를 100% 채우므로, 대형 모니터(예: 32")에서 패널이 커지면
  * 지도도 과도하게 커진다. 최대 크기를 캡하고 가운데 정렬해 적정 크기를 유지.
  * (3:4 세로 비율. 작은 화면에선 패널보다 캡이 커서 영향 없음) */
@@ -1892,6 +1897,11 @@ main.dashboard-full {
   }
 }
 
+.marker-pulse-ring {
+  animation: marker-pulse 1.8s ease-out infinite;
+  transform-origin: center;
+}
+
 .site-selection-connector {
   position: absolute;
   inset: 0;
@@ -1917,11 +1927,6 @@ main.dashboard-full {
   }
 }
 
-.marker-pulse-ring {
-  animation: marker-pulse 1.8s ease-out infinite;
-  transform-origin: center;
-}
-
 @keyframes marker-lte-ping {
   0% {
     transform: scale(0.5);
@@ -1937,6 +1942,57 @@ main.dashboard-full {
   animation: marker-lte-ping 3.6s ease-out infinite;
   transform-box: fill-box;
   transform-origin: center;
+}
+
+.marker-selection-halo {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.marker-selection-halo--outer {
+  animation: marker-selection-halo-outer 1.4s ease-in-out infinite;
+}
+
+.marker-selection-halo--inner {
+  animation: marker-selection-halo-inner 1.4s ease-in-out infinite;
+  animation-delay: 0.35s;
+}
+
+@keyframes marker-selection-halo-outer {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(1.3);
+  }
+}
+
+@keyframes marker-selection-halo-inner {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.25;
+    transform: scale(1.18);
+  }
+}
+
+.site-group-selected-tag {
+  display: none;
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #0b0d12;
+  background: var(--pmcs-accent);
+  padding: 2px 7px;
+  border-radius: 999px;
+  box-shadow: 0 0 10px var(--pmcs-accent-glow);
 }
 
 /* ── Korea Map wrapper ───────────────────────────────────────── */
@@ -4369,41 +4425,319 @@ body.pmcs-control-room .global-header:hover {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
     overflow: visible;
+    gap: 0;
   }
 
   /* Show detail panel again (was hidden at 1024px) */
   .dash-body > :last-child {
     display: flex;
     border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
 
+  /* ── Sidebar: touch-friendly list ── */
   .dash-sidebar {
     border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    max-height: min(42vh, 340px);
+    overflow: hidden;
+  }
+
+  .sidebar-head {
+    padding-bottom: 6px;
+    background: rgba(0, 0, 0, 0.12);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    max-height: 280px;
-    overflow: hidden;
   }
+
+  .sidebar-title {
+    font-size: 11px;
+    opacity: 0.55;
+    padding: 12px 14px 6px;
+    letter-spacing: 0.1em;
+  }
+
+  .sidebar-search-wrap {
+    padding: 0 14px 10px;
+  }
+
+  .sidebar-search {
+    height: 40px;
+    font-size: 14px;
+    padding: 0 36px 0 12px;
+  }
+
+  .sidebar-search-clear {
+    right: 22px;
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+
+  .sidebar-filters {
+    gap: 6px;
+    padding: 0 14px 10px;
+  }
+
+  .sidebar-filter-chip {
+    min-height: 36px;
+    padding: 8px 0;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+
   .sidebar-list {
-    max-height: 240px;
+    max-height: none;
+    padding: 4px 6px 8px;
+    gap: 2px;
+    -webkit-overflow-scrolling: touch;
   }
 
+  .region-group-summary {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+
+  .region-group-name {
+    font-size: 13px;
+  }
+
+  .site-group-summary {
+    min-height: 44px;
+    padding: 10px 14px 10px 24px;
+    gap: 10px;
+  }
+
+  .site-group-name {
+    font-size: 13px;
+  }
+
+  .site-group-client {
+    font-size: 11px;
+    opacity: 0.5;
+  }
+
+  .inst-card {
+    min-height: 42px;
+    padding: 8px 14px 8px 36px;
+  }
+
+  .site-card-badge {
+    font-size: 10px;
+    padding: 3px 7px;
+  }
+
+  .site-group-summary.selected .site-group-dot {
+    width: 12px;
+    height: 12px;
+    box-shadow:
+      0 0 0 3px var(--pmcs-accent),
+      0 0 0 6px var(--pmcs-accent-glow),
+      0 0 12px var(--pmcs-accent);
+  }
+
+  .site-group-summary.selected {
+    background: rgba(0, 212, 170, 0.14);
+    box-shadow:
+      inset 4px 0 0 var(--pmcs-accent),
+      0 0 0 1px var(--pmcs-accent-border);
+  }
+
+  .site-group-summary.selected .site-group-name {
+    color: var(--pmcs-accent-bright);
+  }
+
+  .site-group-summary.selected .site-card-badge {
+    opacity: 0.85;
+  }
+
+  .site-group-selected-tag {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* ── Map panel ── */
   .dash-map-panel {
-    padding: 8px;
-    height: 320px;
-    overflow: hidden;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 0;
+    height: auto;
+    min-height: 0;
+    background: rgba(0, 0, 0, 0.1);
   }
 
-  /* Detail panel: compact on mobile */
+  .dash-map-mobile-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(0, 0, 0, 0.18);
+    flex-shrink: 0;
+    min-height: 40px;
+  }
+
+  .dash-map-mobile-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.38);
+    flex-shrink: 0;
+  }
+
+  .dash-map-mobile-site {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--pmcs-accent-bright);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  .dash-map-panel .korea-map-wrapper {
+    height: clamp(260px, 38vh, 360px);
+    max-height: none;
+    flex: 1;
+    min-height: 260px;
+  }
+
+  .map-zoom-controls {
+    top: 8px;
+    right: 8px;
+  }
+
+  .zoom-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+    border-radius: 8px;
+  }
+
+  .map-zoom-hint {
+    display: none;
+  }
+
+  /* ── Detail panel ── */
   .dash-detail {
     border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     max-height: none;
     overflow: visible;
-    padding-bottom: 24px;
+    padding: 16px 14px calc(24px + env(safe-area-inset-bottom, 0px));
+    gap: 14px;
   }
+
+  .dash-detail-empty {
+    min-height: 120px;
+    font-size: 14px;
+    opacity: 0.5;
+    text-align: center;
+    padding: 24px 16px;
+  }
+
+  .detail-site-top {
+    flex-wrap: wrap;
+    gap: 8px 10px;
+  }
+
+  .detail-site-name {
+    font-size: 17px;
+    line-height: 1.3;
+  }
+
+  .detail-site-addr {
+    font-size: 12px;
+    opacity: 0.55;
+    line-height: 1.4;
+  }
+
+  .summary-stats-row {
+    gap: 8px;
+  }
+
+  .summary-stat {
+    padding: 10px 6px;
+  }
+
+  .summary-stat-value {
+    font-size: 20px;
+  }
+
+  .summary-stat-label {
+    font-size: 11px;
+    opacity: 0.55;
+  }
+
   .summary-inst-grid {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .summary-inst-card {
+    padding: 14px;
+    gap: 10px;
+    border-radius: 10px;
+  }
+
+  .summary-inst-label {
+    font-size: 14px;
+  }
+
+  .site-inst-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -4px;
+    padding: 0 4px;
+  }
+
+  .sit-row {
+    font-size: 12px;
+    gap: 6px;
+    min-width: 300px;
+    grid-template-columns: 84px repeat(3, 1fr);
+  }
+
+  .sit-label {
+    font-size: 11px;
+    opacity: 0.55;
+  }
+
+  .summary-more-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: var(--pmcs-accent-dim);
+    border: 1px solid var(--pmcs-accent-border);
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  /* ── KPI / ticker / event log ── */
+  .event-log-toggle {
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .event-log-list {
+    max-height: 160px;
+    padding: 0 14px 10px;
+  }
+
+  .event-log-item {
+    grid-template-columns: 64px 44px 1fr;
+    gap: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .alarm-ticker-item {
+    font-size: 12px;
   }
 
   /* ── Site page ── */
@@ -4472,9 +4806,13 @@ body.pmcs-control-room .global-header:hover {
     padding: 0 12px;
   }
 
-  .dash-map-panel {
-    padding: 6px;
-    height: 260px;
+  .dash-map-panel .korea-map-wrapper {
+    height: clamp(220px, 34vh, 300px);
+    min-height: 220px;
+  }
+
+  .dash-sidebar {
+    max-height: min(38vh, 300px);
   }
 
   .site-page {
