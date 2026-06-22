@@ -79,6 +79,20 @@ export const buildServer = async (env: Env) => {
   /* ── WebSocket ────────────────────────────────── */
   await server.register(websocket);
 
+  /* ── 보안 헤더 (모든 응답) ─────────────────────────
+   * API 서버이므로 프레임 차단(DENY)·nosniff·HSTS·referrer 최소화.
+   * CORS 는 위 fastifyCors 가 처리하므로 CORP 는 설정하지 않는다(교차 출처 FE 차단 방지). */
+  server.addHook("onSend", async (_request, reply, payload) => {
+    reply.header("X-Content-Type-Options", "nosniff");
+    reply.header("X-Frame-Options", "DENY");
+    reply.header("Referrer-Policy", "no-referrer");
+    reply.header("Strict-Transport-Security", "max-age=63072000; includeSubDomains");
+    reply.header("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    reply.header("X-DNS-Prefetch-Control", "off");
+    reply.removeHeader("X-Powered-By");
+    return payload;
+  });
+
   /* ── Routes ───────────────────────────────────── */
   await server.register(healthRoutes, { prefix: "/health" });
   await server.register(authRoutes, { prefix: "/auth" });
