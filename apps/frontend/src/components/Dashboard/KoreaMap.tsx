@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useLayoutEffect } from "react";
+import { useState, useMemo } from "react";
 import {
   ComposableMap,
   Geographies,
@@ -12,7 +12,6 @@ import type { MouseEvent } from "react";
 import type { Site } from "../../types/site";
 import type { DeviceStatus } from "../../types/site";
 import { STATUS_LABEL } from "../../lib/deviceStatus";
-import { MOBILE_MEDIA_QUERY, useMediaQuery } from "../../hooks/useMediaQuery";
 
 const GEO_URL = "/korea-provinces.json";
 
@@ -251,7 +250,6 @@ type Props = {
   selectedSiteId: string;
   deriveSiteStatus: (site: Site) => DeviceStatus;
   onSelect: (siteId: string) => void;
-  onSelectedMarkerPosition?: (point: { x: number; y: number } | null) => void;
 };
 
 type Tooltip = { lines: string[]; x: number; y: number };
@@ -261,13 +259,10 @@ export default function KoreaMap({
   selectedSiteId,
   deriveSiteStatus,
   onSelect,
-  onSelectedMarkerPosition,
 }: Props) {
-  const isMobile = useMediaQuery(MOBILE_MEDIA_QUERY);
   const [zoom, setZoom] = useState(INITIAL_ZOOM);
   const [center, setCenter] = useState<[number, number]>(INITIAL_CENTER);
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
-  const selectedMarkerRef = useRef<SVGCircleElement | null>(null);
 
   const regionStats = useMemo(() => {
     const map = new Map<string, RegionStats>();
@@ -327,27 +322,6 @@ export default function KoreaMap({
       status: DeviceStatus;
     }[];
   }, [allSites, deriveSiteStatus]);
-
-  useLayoutEffect(() => {
-    if (!onSelectedMarkerPosition) return;
-
-    const report = () => {
-      const el = selectedMarkerRef.current;
-      if (!el) {
-        onSelectedMarkerPosition(null);
-        return;
-      }
-      const rect = el.getBoundingClientRect();
-      onSelectedMarkerPosition({
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2,
-      });
-    };
-
-    report();
-    window.addEventListener("resize", report);
-    return () => window.removeEventListener("resize", report);
-  }, [selectedSiteId, zoom, center, siteMarkers, onSelectedMarkerPosition]);
 
   const handleZoomIn = () => setZoom((z) => Math.min(z * ZOOM_STEP, MAX_ZOOM));
   const handleZoomOut = () => setZoom((z) => Math.max(z / ZOOM_STEP, MIN_ZOOM));
@@ -499,14 +473,12 @@ export default function KoreaMap({
                       default: {
                         fill,
                         stroke: colors.stroke,
-                        strokeWidth:
-                          isSelected && isMobile ? 2.4 : isSelected ? 1.45 : 1.05,
+                        strokeWidth: isSelected ? 2.4 : 1.05,
                         outline: "none",
                         cursor: "pointer",
-                        filter:
-                          isSelected && isMobile
-                            ? "drop-shadow(0 0 6px rgba(0, 212, 170, 0.65))"
-                            : undefined,
+                        filter: isSelected
+                          ? "drop-shadow(0 0 6px rgba(0, 212, 170, 0.65))"
+                          : undefined,
                       },
                       hover: {
                         fill: colors.fillSelected,
@@ -524,20 +496,19 @@ export default function KoreaMap({
           </Geographies>
 
           {/* Site markers — one dot per site, worst status */}
-          {(isMobile
-            ? [...siteMarkers].sort((a, b) => {
-                if (a.siteId === selectedSiteId) return 1;
-                if (b.siteId === selectedSiteId) return -1;
-                return 0;
-              })
-            : siteMarkers
-          ).map((marker, idx) => {
+          {[...siteMarkers]
+            .sort((a, b) => {
+              if (a.siteId === selectedSiteId) return 1;
+              if (b.siteId === selectedSiteId) return -1;
+              return 0;
+            })
+            .map((marker, idx) => {
             const isFault = marker.status === "fault";
             const isSelected = marker.siteId === selectedSiteId;
             const isLinked = marker.status !== "offline";
             const isDimmed = Boolean(selectedSiteId) && !isSelected;
             const color = STATUS_DOT[marker.status];
-            const sizeBoost = isSelected && isMobile ? 2.2 : 1;
+            const sizeBoost = isSelected ? 1.55 : 1;
             const innerR = (3 / zoom) * sizeBoost;
             const outerR = (7 / zoom) * sizeBoost;
             return (
@@ -559,30 +530,30 @@ export default function KoreaMap({
                 className={isSelected ? "map-marker-selected" : undefined}
                 style={{
                   cursor: "pointer",
-                  opacity: isDimmed ? (isMobile ? 0.18 : 0.38) : 1,
+                  opacity: isDimmed ? 0.22 : 1,
                   transition: "opacity 0.25s ease",
                 }}
               >
-                {isSelected && isMobile && (
+                {isSelected && (
                   <>
                     <circle
-                      r={outerR * 2.4}
+                      r={outerR * 2}
                       fill="none"
                       stroke="var(--pmcs-accent)"
-                      strokeWidth={1.8 / zoom}
+                      strokeWidth={1.4 / zoom}
                       className="marker-selection-halo marker-selection-halo--outer"
                     />
                     <circle
-                      r={outerR * 1.7}
+                      r={outerR * 1.45}
                       fill="none"
                       stroke="var(--pmcs-accent-bright)"
-                      strokeWidth={1.4 / zoom}
+                      strokeWidth={1.1 / zoom}
                       className="marker-selection-halo marker-selection-halo--inner"
                     />
                     <circle
-                      r={outerR * 1.25}
+                      r={outerR * 1.12}
                       fill="var(--pmcs-accent)"
-                      opacity={0.22}
+                      opacity={0.2}
                     />
                   </>
                 )}
@@ -608,16 +579,15 @@ export default function KoreaMap({
                 <circle
                   r={outerR}
                   fill={color}
-                  opacity={isSelected && isMobile ? 0.35 : 0.2}
-                  stroke={isSelected && isMobile ? "var(--pmcs-accent-bright)" : color}
-                  strokeWidth={(isSelected && isMobile ? 1.6 : 0.8) / zoom}
+                  opacity={isSelected ? 0.35 : 0.2}
+                  stroke={isSelected ? "var(--pmcs-accent-bright)" : color}
+                  strokeWidth={(isSelected ? 1.3 : 0.8) / zoom}
                 />
                 <circle
                   r={innerR}
-                  ref={isSelected ? selectedMarkerRef : undefined}
-                  fill={isSelected && isMobile ? "#ffffff" : color}
-                  stroke={isSelected && isMobile ? color : "#0b0d12"}
-                  strokeWidth={(isSelected && isMobile ? 1.8 : 0.8) / zoom}
+                  fill={isSelected ? "#ffffff" : color}
+                  stroke={isSelected ? color : "#0b0d12"}
+                  strokeWidth={(isSelected ? 1.4 : 0.8) / zoom}
                 />
               </Marker>
             );

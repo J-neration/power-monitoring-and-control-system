@@ -14,7 +14,6 @@ const KoreaMap = dynamic(() => import("./KoreaMap"), {
   loading: () => <div className="korea-map-loading" aria-hidden />,
 });
 import LteRadarOverlay from "./LteRadarOverlay";
-import SiteSelectionConnector from "./SiteSelectionConnector";
 import LteSignalIndicator from "../LteSignalIndicator";
 import AlarmTicker from "./AlarmTicker";
 import AlarmPanel from "./AlarmPanel";
@@ -97,13 +96,6 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [countdown, setCountdown] = useState(REFRESH_SEC);
   const countdownRef = useRef(REFRESH_SEC);
-  const [dashBodyEl, setDashBodyEl] = useState<HTMLDivElement | null>(null);
-  const [selectedSummaryEl, setSelectedSummaryEl] =
-    useState<HTMLElement | null>(null);
-  const [markerScreenPoint, setMarkerScreenPoint] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
 
   const handleSelectSite = useCallback((siteId: string) => {
     setSelectedSiteId(siteId);
@@ -189,6 +181,12 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
       ] as const);
   }, [sites, statusFilter, searchQuery]);
 
+  const visibleSiteCount = useMemo(
+    () =>
+      regionGroups.reduce((sum, [, regionSites]) => sum + regionSites.length, 0),
+    [regionGroups],
+  );
+
   const kpis = useMemo(() => {
     let total = 0,
       running = 0,
@@ -255,18 +253,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
 
       {layout !== "alarm" && <EventLogPanel entries={eventLogEntries} />}
 
-      <div
-        className="dash-body"
-        ref={(el) => {
-          setDashBodyEl(el);
-        }}
-      >
-        <SiteSelectionConnector
-          containerEl={dashBodyEl}
-          fromEl={selectedSummaryEl}
-          toPoint={markerScreenPoint}
-        />
-
+      <div className="dash-body">
         {layout === "alarm" ? (
           <>
             <div className="dash-alarm-column">
@@ -288,7 +275,14 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
           <>
             <aside className="dash-sidebar">
               <div className="sidebar-head">
-                <p className="sidebar-title">설치 현황</p>
+                <div className="sidebar-title-row">
+                  <p className="sidebar-title">설치 현황</p>
+                  <span className="sidebar-title-count">
+                    {visibleSiteCount === sites.length
+                      ? `총 ${sites.length}개 현장`
+                      : `${visibleSiteCount}/${sites.length}개 현장`}
+                  </span>
+                </div>
                 <div className="sidebar-search-wrap">
                   <input
                     type="search"
@@ -388,9 +382,6 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                               >
                                 <summary
                                   className={`site-group-summary${isSiteSelected ? " selected" : ""}`}
-                                  ref={(el) => {
-                                    if (isSiteSelected) setSelectedSummaryEl(el);
-                                  }}
                                   onClick={(e) => {
                                     e.preventDefault();
                                     handleSelectSite(site.id);
@@ -478,7 +469,6 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                 selectedSiteId={selectedSite?.id ?? ""}
                 deriveSiteStatus={deriveSiteStatus}
                 onSelect={handleSelectSite}
-                onSelectedMarkerPosition={setMarkerScreenPoint}
               />
               <LteRadarOverlay />
             </div>
