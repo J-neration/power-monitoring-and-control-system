@@ -1,6 +1,15 @@
 import { cookies } from "next/headers";
 import type { Device, DeviceWithInstallation, Site, TelemetryReading } from "../types/site";
-import type { SiteListFromApi } from "../types/admin";
+import type {
+  ClientOptionFromApi,
+  RoleOptionFromApi,
+  SiteListFromApi,
+} from "../types/admin";
+import {
+  DEFAULT_CLIENT_OPTIONS,
+  DEFAULT_ROLE_OPTIONS,
+  withRegistryDefaults,
+} from "../data/registryDefaults";
 
 export type FaultEvent = {
   id: string;
@@ -125,4 +134,44 @@ export const fetchSitesListFromApi = async (): Promise<SiteListFromApi[]> => {
   if (!response.ok) throw new Error("Failed to fetch sites");
   const data = (await response.json()) as { sites: SiteListFromApi[] };
   return data.sites ?? [];
+};
+
+export const fetchClientOptionsFromApi = async (
+  includeInactive = true,
+): Promise<ClientOptionFromApi[]> => {
+  const q = includeInactive ? "?includeInactive=1" : "";
+  try {
+    const response = await fetch(`${apiBase}/admin/registry/clients${q}`, {
+      cache: "no-store",
+      headers: authHeaders(),
+    });
+    if (response.ok) {
+      const data = (await response.json()) as {
+        clients?: ClientOptionFromApi[];
+      };
+      return withRegistryDefaults(
+        data.clients ?? [],
+        DEFAULT_CLIENT_OPTIONS,
+      );
+    }
+  } catch {
+    /* use fallback below */
+  }
+  return DEFAULT_CLIENT_OPTIONS;
+};
+
+export const fetchRoleOptionsFromApi = async (): Promise<RoleOptionFromApi[]> => {
+  try {
+    const response = await fetch(`${apiBase}/admin/registry/roles`, {
+      cache: "no-store",
+      headers: authHeaders(),
+    });
+    if (response.ok) {
+      const data = (await response.json()) as { roles?: RoleOptionFromApi[] };
+      return withRegistryDefaults(data.roles ?? [], DEFAULT_ROLE_OPTIONS);
+    }
+  } catch {
+    /* use fallback below */
+  }
+  return DEFAULT_ROLE_OPTIONS;
 };

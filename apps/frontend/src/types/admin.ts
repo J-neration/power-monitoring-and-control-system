@@ -17,3 +17,19 @@ export type SiteListInstallationFromApi = {
   iccid?: string | null;
   device: unknown | null;
 };
+
+export type ClientOptionFromApi = {
+  id: string;
+  key: string;
+  label: string;
+  sortOrder: number;
+  isActive: boolean;
+};
+
+export type RoleOptionFromApi = {
+  key: "ADMIN" | "CLIENT" | "SITE";
+  label: string;
+  description: string | null;
+  sortOrder: number;
+  isAssignable: boolean;
+};

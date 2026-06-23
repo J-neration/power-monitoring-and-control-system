@@ -1,7 +1,10 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import AdminSitesPanel from "../../../../components/Admin/AdminSitesPanel";
-import { fetchSitesListFromApi } from "../../../../lib/api";
+import {
+  fetchClientOptionsFromApi,
+  fetchSitesListFromApi,
+} from "../../../../lib/api";
 
 const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
 
@@ -21,7 +24,10 @@ async function requireAdmin() {
 export default async function AdminSitesPage() {
   await requireAdmin();
 
-  const sites = await fetchSitesListFromApi().catch(() => []);
+  const [sites, clientOptions] = await Promise.all([
+    fetchSitesListFromApi().catch(() => []),
+    fetchClientOptionsFromApi().catch(() => []),
+  ]);
 
   return (
     <main className="admin-iccid-page">
@@ -31,7 +37,7 @@ export default async function AdminSitesPage() {
           관리자 전용 · 현장·설치지점 등록 및 USIM ICCID 매핑
         </p>
       </div>
-      <AdminSitesPanel initialSites={sites} />
+      <AdminSitesPanel initialSites={sites} clientOptions={clientOptions} />
     </main>
   );
 }

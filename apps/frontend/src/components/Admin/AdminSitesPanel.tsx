@@ -1,21 +1,37 @@
 "use client";
 
-import { useState } from "react";
-import type { SiteListFromApi } from "../../types/admin";
+import { useMemo, useState } from "react";
+import type { ClientOptionFromApi, SiteListFromApi } from "../../types/admin";
 import { CLIENT_LABELS, isTestClient } from "../../data/clients";
 
 type Props = {
   initialSites: SiteListFromApi[];
+  clientOptions?: ClientOptionFromApi[];
 };
 
 function normalizeIccid(raw: string) {
   return raw.trim().replace(/[\s-]/g, "");
 }
 
-const CLIENT_OPTIONS = Object.entries(CLIENT_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}));
+function buildClientOptions(clientOptions?: ClientOptionFromApi[]) {
+  if (clientOptions && clientOptions.length > 0) {
+    return clientOptions
+      .filter((c) => c.isActive)
+      .map((c) => ({ value: c.key, label: c.label }));
+  }
+  return Object.entries(CLIENT_LABELS).map(([value, label]) => ({
+    value,
+    label,
+  }));
+}
+
+function buildClientLabelMap(clientOptions?: ClientOptionFromApi[]) {
+  const map: Record<string, string> = { ...CLIENT_LABELS };
+  for (const c of clientOptions ?? []) {
+    map[c.key] = c.label;
+  }
+  return map;
+}
 
 const REGION_OPTIONS = [
   "서울",
@@ -60,8 +76,11 @@ type SiteForm = {
   address: string;
 };
 
-function clientSelectValue(client: string) {
-  return CLIENT_OPTIONS.some((c) => c.value === client) ? client : "__custom__";
+function clientSelectValue(
+  client: string,
+  clientOptionsList: { value: string; label: string }[],
+) {
+  return clientOptionsList.some((c) => c.value === client) ? client : "__custom__";
 }
 
 function SiteFieldsForm({
@@ -70,12 +89,14 @@ function SiteFieldsForm({
   onChange,
   onCustomClientChange,
   siteId,
+  clientOptionsList,
 }: {
   values: SiteForm;
   customClient: string;
   onChange: (patch: Partial<SiteForm>) => void;
   onCustomClientChange: (value: string) => void;
   siteId?: string;
+  clientOptionsList: { value: string; label: string }[];
 }) {
   return (
     <div className="admin-sites-form-grid">
@@ -104,7 +125,7 @@ function SiteFieldsForm({
             if (e.target.value !== "__custom__") onCustomClientChange("");
           }}
         >
-          {CLIENT_OPTIONS.map((c) => (
+          {clientOptionsList.map((c) => (
             <option key={c.value} value={c.value}>
               {c.label}
             </option>
@@ -151,7 +172,18 @@ function SiteFieldsForm({
   );
 }
 
-export default function AdminSitesPanel({ initialSites }: Props) {
+export default function AdminSitesPanel({
+  initialSites,
+  clientOptions,
+}: Props) {
+  const clientOptionsList = useMemo(
+    () => buildClientOptions(clientOptions),
+    [clientOptions],
+  );
+  const clientLabelMap = useMemo(
+    () => buildClientLabelMap(clientOptions),
+    [clientOptions],
+  );
   const [sites, setSites] = useState<SiteRow[]>(() =>
     initialSites.map((s) => ({
       siteId: s.siteId,
@@ -222,7 +254,7 @@ export default function AdminSitesPanel({ initialSites }: Props) {
   }
 
   function startEditSite(site: SiteRow) {
-    const selectClient = clientSelectValue(site.client);
+    const selectClient = clientSelectValue(site.client, clientOptionsList);
     setEditingSiteId(site.siteId);
     setEditSite({
       name: site.name,
@@ -563,7 +595,7 @@ export default function AdminSitesPanel({ initialSites }: Props) {
                   if (e.target.value !== "__custom__") setCustomClient("");
                 }}
               >
-                {CLIENT_OPTIONS.map((c) => (
+                {clientOptionsList.map((c) => (
                   <option key={c.value} value={c.value}>
                     {c.label}
                   </option>
@@ -653,7 +685,7 @@ export default function AdminSitesPanel({ initialSites }: Props) {
                         )}
                       </span>
                       <span className="admin-sites-meta">
-                        {CLIENT_LABELS[site.client] ?? site.client} · {site.region} · 설치지점{" "}
+                        {clientLabelMap[site.client] ?? site.client} · {site.region} · 설치지점{" "}
                         {site.installations.length}개
                       </span>
                     </div>
@@ -693,6 +725,7 @@ export default function AdminSitesPanel({ initialSites }: Props) {
                           siteId={site.siteId}
                           values={editSite}
                           customClient={editCustomClient}
+                          clientOptionsList={clientOptionsList}
                           onChange={(patch) =>
                             setEditSite((p) => ({ ...p, ...patch }))
                           }

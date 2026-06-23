@@ -385,6 +385,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   User: 'User',
+  ClientOption: 'ClientOption',
+  RoleOption: 'RoleOption',
   Site: 'Site',
   Installation: 'Installation',
   Device: 'Device',
@@ -407,7 +409,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "site" | "installation" | "device" | "telemetryRecord" | "faultEvent" | "moduleFaultState" | "deviceCommand"
+    modelProps: "user" | "clientOption" | "roleOption" | "site" | "installation" | "device" | "telemetryRecord" | "faultEvent" | "moduleFaultState" | "deviceCommand"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -482,6 +484,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserCountAggregateOutputType> | number
+        }
+      }
+    }
+    ClientOption: {
+      payload: Prisma.$ClientOptionPayload<ExtArgs>
+      fields: Prisma.ClientOptionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ClientOptionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientOptionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ClientOptionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientOptionPayload>
+        }
+        findFirst: {
+          args: Prisma.ClientOptionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientOptionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ClientOptionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientOptionPayload>
+        }
+        findMany: {
+          args: Prisma.ClientOptionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientOptionPayload>[]
+        }
+        create: {
+          args: Prisma.ClientOptionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientOptionPayload>
+        }
+        createMany: {
+          args: Prisma.ClientOptionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ClientOptionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientOptionPayload>[]
+        }
+        delete: {
+          args: Prisma.ClientOptionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientOptionPayload>
+        }
+        update: {
+          args: Prisma.ClientOptionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientOptionPayload>
+        }
+        deleteMany: {
+          args: Prisma.ClientOptionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ClientOptionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ClientOptionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientOptionPayload>[]
+        }
+        upsert: {
+          args: Prisma.ClientOptionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientOptionPayload>
+        }
+        aggregate: {
+          args: Prisma.ClientOptionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateClientOption>
+        }
+        groupBy: {
+          args: Prisma.ClientOptionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ClientOptionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ClientOptionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ClientOptionCountAggregateOutputType> | number
+        }
+      }
+    }
+    RoleOption: {
+      payload: Prisma.$RoleOptionPayload<ExtArgs>
+      fields: Prisma.RoleOptionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RoleOptionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleOptionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RoleOptionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleOptionPayload>
+        }
+        findFirst: {
+          args: Prisma.RoleOptionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleOptionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RoleOptionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleOptionPayload>
+        }
+        findMany: {
+          args: Prisma.RoleOptionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleOptionPayload>[]
+        }
+        create: {
+          args: Prisma.RoleOptionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleOptionPayload>
+        }
+        createMany: {
+          args: Prisma.RoleOptionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RoleOptionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleOptionPayload>[]
+        }
+        delete: {
+          args: Prisma.RoleOptionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleOptionPayload>
+        }
+        update: {
+          args: Prisma.RoleOptionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleOptionPayload>
+        }
+        deleteMany: {
+          args: Prisma.RoleOptionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RoleOptionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RoleOptionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleOptionPayload>[]
+        }
+        upsert: {
+          args: Prisma.RoleOptionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleOptionPayload>
+        }
+        aggregate: {
+          args: Prisma.RoleOptionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRoleOption>
+        }
+        groupBy: {
+          args: Prisma.RoleOptionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RoleOptionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RoleOptionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RoleOptionCountAggregateOutputType> | number
         }
       }
     }
@@ -1058,6 +1208,32 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+export const ClientOptionScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  label: 'label',
+  sortOrder: 'sortOrder',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ClientOptionScalarFieldEnum = (typeof ClientOptionScalarFieldEnum)[keyof typeof ClientOptionScalarFieldEnum]
+
+
+export const RoleOptionScalarFieldEnum = {
+  key: 'key',
+  label: 'label',
+  description: 'description',
+  sortOrder: 'sortOrder',
+  isAssignable: 'isAssignable',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RoleOptionScalarFieldEnum = (typeof RoleOptionScalarFieldEnum)[keyof typeof RoleOptionScalarFieldEnum]
+
+
 export const SiteScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -1460,6 +1636,8 @@ export type PrismaClientOptions = ({
 }
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
+  clientOption?: Prisma.ClientOptionOmit
+  roleOption?: Prisma.RoleOptionOmit
   site?: Prisma.SiteOmit
   installation?: Prisma.InstallationOmit
   device?: Prisma.DeviceOmit
