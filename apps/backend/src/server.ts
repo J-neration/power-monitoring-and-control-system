@@ -104,6 +104,16 @@ export const buildServer = async (env: Env) => {
     receiverApiKey: env.RECEIVER_API_KEY,
   });
 
+  const { registryService } = await import("./services/registryService.js");
+  const registryReady = await registryService.ensureDefaults();
+  if (registryReady) {
+    server.log.info("User registry defaults ensured (clients & roles)");
+  } else {
+    server.log.warn(
+      "User registry tables missing — run: npm run db:migrate:deploy (in apps/backend)",
+    );
+  }
+
   server.get("/ws", { websocket: true }, (connection) => {
     const socket = (connection as unknown as { socket: { readyState: number; send(d: string): void; on(e: string, cb: () => void): void } }).socket ?? connection;
     wsHub.add(socket);

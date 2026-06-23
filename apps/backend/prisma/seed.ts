@@ -244,6 +244,10 @@ const seed = async () => {
 
   console.log(`\nSeeded ${siteRegistry.length} sites successfully.`);
 
+  const { registryService } = await import("../src/services/registryService.js");
+  await registryService.ensureDefaults();
+  console.log("Registry options (clients & roles) ensured.");
+
   // ── 계정 시드 ─────────────────────────────────────
   // username 기준으로 항상 동기화한다(비밀번호·role·clientKey 포함).
   // 기존 계정도 재시드 시 아래 값으로 강제 갱신되므로, 비밀번호 변경이 반영된다.
@@ -251,7 +255,7 @@ const seed = async () => {
   const seedUsers: SeedUser[] = [
     { username: "admin",           password: "primernd1!", role: "ADMIN" },
     { username: "lotte",           password: "lttadmin1!", role: "CLIENT", clientKey: "lotte" },
-    // coupang: 계정만 생성, 현장(Site.client="coupang") 연결은 추후 추가
+    // coupang: CLIENT 계정 — clientKey=coupang, 아래 3개 현장(AYG1/YAT/SCH1) 조회
     { username: "coupang",         password: "cpngadmin1!", role: "CLIENT", clientKey: "coupang" },
     // 기존 DEV 테스트 계정 유지
     { username: "datacenteradmin", password: "test1234",   role: "CLIENT", clientKey: "datacenter" },

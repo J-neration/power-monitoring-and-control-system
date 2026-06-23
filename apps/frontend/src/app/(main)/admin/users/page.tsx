@@ -1,6 +1,15 @@
 import { cookies } from "next/headers";
 import AdminUsersPanel from "../../../../components/Admin/AdminUsersPanel";
-import { fetchSitesListFromApi } from "../../../../lib/api";
+import {
+  DEFAULT_CLIENT_OPTIONS,
+  DEFAULT_ROLE_OPTIONS,
+  withRegistryDefaults,
+} from "../../../../data/registryDefaults";
+import {
+  fetchClientOptionsFromApi,
+  fetchRoleOptionsFromApi,
+  fetchSitesListFromApi,
+} from "../../../../lib/api";
 
 const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
 
@@ -28,9 +37,11 @@ async function fetchUsers(): Promise<AdminUser[]> {
 }
 
 export default async function AdminUsersPage() {
-  const [users, sites] = await Promise.all([
+  const [users, sites, clients, roles] = await Promise.all([
     fetchUsers(),
     fetchSitesListFromApi().catch(() => []),
+    fetchClientOptionsFromApi().catch(() => []),
+    fetchRoleOptionsFromApi().catch(() => []),
   ]);
 
   return (
@@ -41,7 +52,14 @@ export default async function AdminUsersPage() {
           관리자 전용 · 건설사 / 현장 담당자 계정 생성 및 관리
         </p>
       </div>
-      <AdminUsersPanel initialUsers={users} sites={sites} />
+      <div className="admin-users-wrap">
+        <AdminUsersPanel
+          initialUsers={users}
+          sites={sites}
+          clientOptions={withRegistryDefaults(clients, DEFAULT_CLIENT_OPTIONS)}
+          roleOptions={withRegistryDefaults(roles, DEFAULT_ROLE_OPTIONS)}
+        />
+      </div>
     </main>
   );
 }
