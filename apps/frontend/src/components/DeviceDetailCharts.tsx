@@ -29,6 +29,10 @@ import {
   TOOLTIP_ITEM_STYLE,
   TOOLTIP_LABEL_STYLE,
   TOOLTIP_STYLE,
+  TEMP_ALARM_REF,
+  TEMP_CHART_MARGIN_RIGHT,
+  TEMP_THRESHOLDS,
+  TEMP_WARN_REF,
   VOLTAGE_NOMINAL,
 } from "../lib/chartTheme";
 import { getPfLevel } from "../lib/metricThreshold";
@@ -601,7 +605,7 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
           <ResponsiveContainer width="100%" height={CHART_H}>
             <BarChart
               data={areaTempData}
-              margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
+              margin={{ top: 8, right: TEMP_CHART_MARGIN_RIGHT, left: -10, bottom: 0 }}
             >
               <CartesianGrid {...GRID} />
               <XAxis dataKey="sensor" {...AXIS} />
@@ -619,19 +623,36 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 formatter={(v) => [`${v} °C`]}
               />
               <ReferenceLine
-                y={38}
+                y={TEMP_THRESHOLDS.areaWarn}
+                stroke={CHART_COLORS.load}
+                {...TEMP_WARN_REF}
+                label={{
+                  value: `주의 ${TEMP_THRESHOLDS.areaWarn}°C`,
+                  position: "right",
+                  fill: CHART_COLORS.load,
+                  fontSize: 10,
+                }}
+              />
+              <ReferenceLine
+                y={TEMP_THRESHOLDS.areaAlarm}
                 stroke={CHART_COLORS.danger}
-                strokeDasharray="4 3"
-                label={{ value: "경보 38°C", fill: CHART_COLORS.danger, fontSize: 10 }}
+                {...TEMP_ALARM_REF}
+                label={{
+                  value: `경보 ${TEMP_THRESHOLDS.areaAlarm}°C`,
+                  position: "right",
+                  fill: CHART_COLORS.danger,
+                  fontSize: 10,
+                  fontWeight: 600,
+                }}
               />
               <Bar dataKey="온도" radius={[4, 4, 0, 0]} barSize={36}>
                 {areaTempData.map((entry, i) => (
                   <Cell
                     key={i}
                     fill={
-                      entry.온도 >= 38
+                      entry.온도 >= TEMP_THRESHOLDS.areaAlarm
                         ? CHART_COLORS.danger
-                        : entry.온도 >= 30
+                        : entry.온도 >= TEMP_THRESHOLDS.areaWarn
                           ? CHART_COLORS.load
                           : CHART_COLORS.accent
                     }
@@ -650,7 +671,7 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
           <ResponsiveContainer width="100%" height={CHART_H}>
             <BarChart
               data={moduleTempData}
-              margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
+              margin={{ top: 8, right: TEMP_CHART_MARGIN_RIGHT, left: -10, bottom: 0 }}
             >
               <CartesianGrid {...GRID} />
               <XAxis dataKey="sensor" {...AXIS} fontSize={11} />
@@ -668,19 +689,36 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 formatter={(v) => [`${v} °C`]}
               />
               <ReferenceLine
-                y={90}
+                y={TEMP_THRESHOLDS.moduleWarn}
+                stroke={CHART_COLORS.warn}
+                {...TEMP_WARN_REF}
+                label={{
+                  value: `주의 ${TEMP_THRESHOLDS.moduleWarn}°C`,
+                  position: "right",
+                  fill: CHART_COLORS.warn,
+                  fontSize: 10,
+                }}
+              />
+              <ReferenceLine
+                y={TEMP_THRESHOLDS.moduleAlarm}
                 stroke={CHART_COLORS.danger}
-                strokeDasharray="4 3"
-                label={{ value: "경보 90°C", fill: CHART_COLORS.danger, fontSize: 10 }}
+                {...TEMP_ALARM_REF}
+                label={{
+                  value: `경보 ${TEMP_THRESHOLDS.moduleAlarm}°C`,
+                  position: "right",
+                  fill: CHART_COLORS.danger,
+                  fontSize: 10,
+                  fontWeight: 600,
+                }}
               />
               <Bar dataKey="온도" radius={[4, 4, 0, 0]} barSize={30}>
                 {moduleTempData.map((entry, i) => (
                   <Cell
                     key={i}
                     fill={
-                      entry.온도 >= 90
+                      entry.온도 >= TEMP_THRESHOLDS.moduleAlarm
                         ? CHART_COLORS.danger
-                        : entry.온도 >= 40
+                        : entry.온도 >= TEMP_THRESHOLDS.moduleWarn
                           ? CHART_COLORS.warn
                           : CHART_COLORS.accent
                     }

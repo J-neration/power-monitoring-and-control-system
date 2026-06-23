@@ -13,7 +13,28 @@ export const CHART_COLORS = {
   pink: "#ec4899",
 } as const;
 
-export const THD_THRESHOLDS = { warn: 5, danger: 8 } as const;
+export const TEMP_THRESHOLDS = {
+  areaWarn: 30,
+  areaAlarm: 38,
+  moduleWarn: 40,
+  moduleAlarm: 90,
+} as const;
+
+/** 주의 온도 — 점선(격자와 패턴 구분) */
+export const TEMP_WARN_REF = {
+  strokeDasharray: "6 4",
+  strokeOpacity: 0.55,
+  strokeWidth: 1,
+} as const;
+
+/** 경보 온도 — 실선(격자 점선과 겹쳐 보이지 않도록) */
+export const TEMP_ALARM_REF = {
+  strokeWidth: 2,
+} as const;
+
+export const TEMP_CHART_MARGIN_RIGHT = 72;
+
+export const THD_THRESHOLDS = { danger: 20 } as const;
 export const PF_THRESHOLDS = { warn: 90, danger: 85 } as const;
 export const VOLTAGE_NOMINAL = 220;
 
@@ -59,8 +80,7 @@ export const LEGEND = {
 
 export function thdBarColor(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return CHART_COLORS.load;
-  if (value > THD_THRESHOLDS.danger) return CHART_COLORS.danger;
-  if (value > THD_THRESHOLDS.warn) return CHART_COLORS.warn;
+  if (value >= THD_THRESHOLDS.danger) return CHART_COLORS.danger;
   return CHART_COLORS.accent;
 }
 

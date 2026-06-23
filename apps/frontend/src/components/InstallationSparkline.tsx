@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import MiniSparkline from "./MiniSparkline";
+import { THD_THRESHOLDS } from "../lib/chartTheme";
 import type { TelemetryReading } from "../types/site";
 
 type Props = {
@@ -74,11 +75,9 @@ export default function InstallationSparkline({
 
   const stroke =
     metric === "thd"
-      ? values.some((v) => v > 8)
+      ? values.some((v) => v >= THD_THRESHOLDS.danger)
         ? "#f87171"
-        : values.some((v) => v > 5)
-          ? "#fbbf24"
-          : "#34c759"
+        : "#34c759"
       : pfStrokeColor(values);
 
   if (loading) {

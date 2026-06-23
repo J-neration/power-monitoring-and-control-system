@@ -8,6 +8,10 @@ import type { FaultEvent } from "../lib/api";
 import {
   CHART_COLORS,
   fmtChartTime,
+  TEMP_ALARM_REF,
+  TEMP_CHART_MARGIN_RIGHT,
+  TEMP_THRESHOLDS,
+  TEMP_WARN_REF,
 } from "../lib/chartTheme";
 import type { TelemetryReading } from "../types/site";
 
@@ -406,18 +410,30 @@ export default function DeviceHistoryCharts({
                 faults={faults}
                 brush
                 onBrushChange={setBrush}
+                margin={{ right: TEMP_CHART_MARGIN_RIGHT, bottom: 20 }}
               >
                 <ReferenceLine
-                  y={30}
+                  y={TEMP_THRESHOLDS.areaWarn}
                   stroke={CHART_COLORS.load}
-                  strokeDasharray="3 3"
-                  strokeOpacity={0.5}
+                  {...TEMP_WARN_REF}
+                  label={{
+                    value: `주의 ${TEMP_THRESHOLDS.areaWarn}°C`,
+                    position: "right",
+                    fill: CHART_COLORS.load,
+                    fontSize: 10,
+                  }}
                 />
                 <ReferenceLine
-                  y={38}
+                  y={TEMP_THRESHOLDS.areaAlarm}
                   stroke={CHART_COLORS.danger}
-                  strokeDasharray="4 3"
-                  label={{ value: "38°C", fill: CHART_COLORS.danger, fontSize: 10 }}
+                  {...TEMP_ALARM_REF}
+                  label={{
+                    value: `경보 ${TEMP_THRESHOLDS.areaAlarm}°C`,
+                    position: "right",
+                    fill: CHART_COLORS.danger,
+                    fontSize: 10,
+                    fontWeight: 600,
+                  }}
                 />
               </HistoryAreaChart>
             </ChartCard>
@@ -437,18 +453,30 @@ export default function DeviceHistoryCharts({
                 yDomain={[0, 150]}
                 yUnit="°C"
                 faults={faults}
+                margin={{ right: TEMP_CHART_MARGIN_RIGHT }}
               >
                 <ReferenceLine
-                  y={40}
+                  y={TEMP_THRESHOLDS.moduleWarn}
                   stroke={CHART_COLORS.warn}
-                  strokeDasharray="3 3"
-                  strokeOpacity={0.5}
+                  {...TEMP_WARN_REF}
+                  label={{
+                    value: `주의 ${TEMP_THRESHOLDS.moduleWarn}°C`,
+                    position: "right",
+                    fill: CHART_COLORS.warn,
+                    fontSize: 10,
+                  }}
                 />
                 <ReferenceLine
-                  y={90}
+                  y={TEMP_THRESHOLDS.moduleAlarm}
                   stroke={CHART_COLORS.danger}
-                  strokeDasharray="4 3"
-                  label={{ value: "90°C", fill: CHART_COLORS.danger, fontSize: 10 }}
+                  {...TEMP_ALARM_REF}
+                  label={{
+                    value: `경보 ${TEMP_THRESHOLDS.moduleAlarm}°C`,
+                    position: "right",
+                    fill: CHART_COLORS.danger,
+                    fontSize: 10,
+                    fontWeight: 600,
+                  }}
                 />
               </HistoryAreaChart>
             </ChartCard>

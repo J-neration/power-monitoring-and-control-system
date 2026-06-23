@@ -1,3 +1,5 @@
+import { THD_THRESHOLDS } from "./chartTheme";
+
 export type MetricLevel = "normal" | "warn" | "danger";
 
 export function formatMetric(
@@ -11,8 +13,7 @@ export function formatMetric(
 /** Grid/load current THD (%) thresholds */
 export function getThdLevel(value: number | null | undefined): MetricLevel {
   if (value == null || !Number.isFinite(value)) return "normal";
-  if (value > 8) return "danger";
-  if (value > 5) return "warn";
+  if (value >= THD_THRESHOLDS.danger) return "danger";
   return "normal";
 }
 
