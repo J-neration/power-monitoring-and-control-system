@@ -58,6 +58,7 @@ type Props = {
   brush?: boolean;
   onBrushChange?: (range: { startIndex?: number; endIndex?: number }) => void;
   children?: ReactNode;
+  margin?: { top?: number; right?: number; left?: number; bottom?: number };
 };
 
 export default function HistoryAreaChart({
@@ -71,13 +72,18 @@ export default function HistoryAreaChart({
   brush,
   onBrushChange,
   children,
+  margin,
 }: Props) {
+  const chartMargin = {
+    top: margin?.top ?? 8,
+    right: margin?.right ?? 16,
+    left: margin?.left ?? -4,
+    bottom: margin?.bottom ?? (brush ? 20 : 0),
+  };
+
   return (
     <ResponsiveContainer width="100%" height={CHART_H}>
-      <AreaChart
-        data={data}
-        margin={{ top: 8, right: 16, left: -4, bottom: brush ? 20 : 0 }}
-      >
+      <AreaChart data={data} margin={chartMargin}>
         <Grads defs={grads} />
         <CartesianGrid {...GRID} />
         <XAxis

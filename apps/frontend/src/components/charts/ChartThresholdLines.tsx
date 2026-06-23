@@ -5,8 +5,7 @@ type Kind = "thd" | "pf";
 
 const CONFIG = {
   thd: [
-    { y: THD_THRESHOLDS.warn, label: "주의 5%", color: "#fbbf24" },
-    { y: THD_THRESHOLDS.danger, label: "위험 8%", color: "#f87171" },
+    { y: THD_THRESHOLDS.danger, label: "위험 20%", color: "#f87171" },
   ],
   pf: [
     { y: PF_THRESHOLDS.warn, label: "주의 90%", color: "#fbbf24" },
