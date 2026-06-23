@@ -9,6 +9,8 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/User.js'
+export type * from './models/ClientOption.js'
+export type * from './models/RoleOption.js'
 export type * from './models/Site.js'
 export type * from './models/Installation.js'
 export type * from './models/Device.js'

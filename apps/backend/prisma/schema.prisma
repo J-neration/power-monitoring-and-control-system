@@ -55,6 +55,32 @@ model User {
   @@index([username])
 }
 
+/// 유저 등록·현장 등록 시 선택 가능한 건설사 목록 (관리자 관리)
+model ClientOption {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  label     String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+/// 유저 등록 시 선택 가능한 역할 표시명·설명 (키는 UserRole enum과 동일)
+model RoleOption {
+  key           String   @id
+  label         String
+  description   String?
+  sortOrder     Int      @default(0)
+  isAssignable  Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isAssignable, sortOrder])
+}
+
 /* =========================
  * 1) Site (현장 – 아파트 단지 등)
  * ========================= */

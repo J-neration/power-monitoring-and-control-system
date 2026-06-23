@@ -52,6 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  ClientOption: 'ClientOption',
+  RoleOption: 'RoleOption',
   Site: 'Site',
   Installation: 'Installation',
   Device: 'Device',
@@ -91,6 +93,32 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const ClientOptionScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  label: 'label',
+  sortOrder: 'sortOrder',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ClientOptionScalarFieldEnum = (typeof ClientOptionScalarFieldEnum)[keyof typeof ClientOptionScalarFieldEnum]
+
+
+export const RoleOptionScalarFieldEnum = {
+  key: 'key',
+  label: 'label',
+  description: 'description',
+  sortOrder: 'sortOrder',
+  isAssignable: 'isAssignable',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RoleOptionScalarFieldEnum = (typeof RoleOptionScalarFieldEnum)[keyof typeof RoleOptionScalarFieldEnum]
 
 
 export const SiteScalarFieldEnum = {
