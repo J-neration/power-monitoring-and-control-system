@@ -30,14 +30,15 @@ export default function LoginPage() {
 
       if (!res.ok) {
         setError(data.message ?? "로그인에 실패했습니다.");
+        setLoading(false);
         return;
       }
 
-      window.location.href = "/";
-      return;
+      // 성공: 로딩·비활성 상태 유지한 채 전체 이동 (finally에서 loading 해제하면
+      // 대시보드 SSR 전환 전까지 버튼이 다시 활성화되어 중복 클릭 유발)
+      window.location.assign("/");
     } catch {
       setError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.");
-    } finally {
       setLoading(false);
     }
   }
@@ -87,6 +88,7 @@ export default function LoginPage() {
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
               autoFocus
+              disabled={loading}
             />
           </div>
 
@@ -102,6 +104,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
+              disabled={loading}
             />
           </div>
 
@@ -111,8 +114,16 @@ export default function LoginPage() {
             type="submit"
             className={`login-btn${loading ? " loading" : ""}`}
             disabled={loading}
+            aria-busy={loading}
           >
-            {loading ? <span className="login-spinner" /> : "관제 시스템 접속"}
+            {loading ? (
+              <>
+                <span className="login-spinner" aria-hidden />
+                <span>관제 시스템 접속 중…</span>
+              </>
+            ) : (
+              "관제 시스템 접속"
+            )}
           </button>
         </form>
 
