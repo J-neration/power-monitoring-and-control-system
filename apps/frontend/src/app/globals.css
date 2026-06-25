@@ -5114,6 +5114,11 @@ body.pmcs-control-room .global-header:hover {
   box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.08);
 }
 
+.login-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .login-error {
   font-size: 13px;
   color: #f87171;
@@ -5141,6 +5146,7 @@ body.pmcs-control-room .global-header:hover {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 10px;
   font-family: inherit;
   box-shadow: 0 0 20px rgba(0, 212, 170, 0.2);
 }
