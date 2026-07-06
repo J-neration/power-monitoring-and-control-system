@@ -36,6 +36,27 @@ import {
   VOLTAGE_NOMINAL,
 } from "../lib/chartTheme";
 import { getPfLevel } from "../lib/metricThreshold";
+function ThdBarLegend() {
+  const items = [
+    { label: "보상 전", color: CHART_COLORS.accent },
+    { label: "보상 후", color: CHART_COLORS.accent },
+  ];
+  return (
+    <ul className="thd-bar-legend">
+      {items.map((item) => (
+        <li key={item.label}>
+          <span
+            className="thd-bar-legend-dot"
+            style={{ background: item.color }}
+            aria-hidden
+          />
+          {item.label}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /** auto 축에서 최소값 막대가 바닥선에 붙어 안 보이는 현상 방지 */
 const yDomainWithPadding = [
   (dataMin: number) => {
@@ -515,11 +536,11 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
                 itemStyle={TOOLTIP_ITEM_STYLE}
                 cursor={TOOLTIP_CURSOR}
               />
-              <Legend {...LEGEND} />
+              <Legend content={<ThdBarLegend />} />
               <ChartThresholdLines kind="thd" />
               <Bar
                 dataKey="보상전"
-                fill={CHART_COLORS.load}
+                fill={CHART_COLORS.accent}
                 radius={[4, 4, 0, 0]}
                 barSize={28}
               >
@@ -529,7 +550,7 @@ export default function DeviceDetailCharts({ device }: { device: Device }) {
               </Bar>
               <Bar
                 dataKey="보상후"
-                fill={CHART_COLORS.purple}
+                fill={CHART_COLORS.accent}
                 radius={[4, 4, 0, 0]}
                 barSize={28}
               >

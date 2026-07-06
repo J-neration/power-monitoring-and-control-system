@@ -168,6 +168,8 @@ export default function SitePageView({ site }: { site: Site }) {
               <Link
                 key={inst.id}
                 href={`/devices/${encodeURIComponent(inst.id)}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={`site-inst-card site-inst-card--${instStatus}`}
               >
                 <div className="site-inst-top">

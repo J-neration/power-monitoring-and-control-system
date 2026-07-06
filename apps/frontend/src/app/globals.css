@@ -6931,6 +6931,31 @@ body.pmcs-control-room .global-header:hover {
   font-weight: 600;
 }
 
+.thd-bar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  list-style: none;
+  padding: 8px 0 0;
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.thd-bar-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.thd-bar-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .digital-phase-panel {
   display: flex;
   flex-direction: column;
