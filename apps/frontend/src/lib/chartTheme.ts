@@ -79,7 +79,7 @@ export const LEGEND = {
 };
 
 export function thdBarColor(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value)) return CHART_COLORS.load;
+  if (value == null || !Number.isFinite(value)) return CHART_COLORS.gridMuted;
   if (value >= THD_THRESHOLDS.danger) return CHART_COLORS.danger;
   return CHART_COLORS.accent;
 }
