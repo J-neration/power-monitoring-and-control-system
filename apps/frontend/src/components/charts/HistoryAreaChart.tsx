@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import {
   Area,
   AreaChart,
-  Brush,
   CartesianGrid,
   Legend,
   ResponsiveContainer,
@@ -53,13 +52,24 @@ type Props = {
   grads: GradDef[];
   yUnit?: string;
   yDomain?: [number | string, number | string];
+  yAxisWidth?: number;
   threshold?: "thd" | "pf";
   faults?: FaultEvent[];
-  brush?: boolean;
-  onBrushChange?: (range: { startIndex?: number; endIndex?: number }) => void;
   children?: ReactNode;
   margin?: { top?: number; right?: number; left?: number; bottom?: number };
 };
+
+function yAxisWidthForUnit(unit?: string): number {
+  if (!unit) return 34;
+  const u = unit.trim().toLowerCase();
+  if (u === "%") return 38;
+  if (u === "°c") return 42;
+  if (u === "m/s") return 46;
+  if (u.endsWith("kvar") || u.endsWith("kva") || u.endsWith("kw") || u === "a") {
+    return 58;
+  }
+  return 44;
+}
 
 export default function HistoryAreaChart({
   data,
@@ -67,18 +77,18 @@ export default function HistoryAreaChart({
   grads,
   yUnit,
   yDomain = ["auto", "auto"],
+  yAxisWidth,
   threshold,
   faults = [],
-  brush,
-  onBrushChange,
   children,
   margin,
 }: Props) {
+  const axisWidth = yAxisWidth ?? yAxisWidthForUnit(yUnit);
   const chartMargin = {
     top: margin?.top ?? 8,
     right: margin?.right ?? 16,
-    left: margin?.left ?? -4,
-    bottom: margin?.bottom ?? (brush ? 20 : 0),
+    left: margin?.left ?? 0,
+    bottom: margin?.bottom ?? 0,
   };
 
   return (
@@ -94,6 +104,7 @@ export default function HistoryAreaChart({
         />
         <YAxis
           {...AXIS}
+          width={axisWidth}
           domain={yDomain}
           unit={yUnit}
           tick={{ ...AXIS.tick, className: "tabular-nums" }}
@@ -117,18 +128,6 @@ export default function HistoryAreaChart({
             stackId={s.stackId}
           />
         ))}
-        {brush && onBrushChange ? (
-          <Brush
-            dataKey="time"
-            height={22}
-            stroke="#00d4aa"
-            fill="rgba(0, 212, 170, 0.08)"
-            travellerWidth={8}
-            onChange={(range) =>
-              onBrushChange(range as { startIndex?: number; endIndex?: number })
-            }
-          />
-        ) : null}
       </AreaChart>
     </ResponsiveContainer>
   );

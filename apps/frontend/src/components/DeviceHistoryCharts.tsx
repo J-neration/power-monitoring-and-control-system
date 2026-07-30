@@ -33,8 +33,6 @@ const SUB_TABS: { key: SubTab; label: string; color: string }[] = [
   { key: "temp", label: "온도", color: CHART_COLORS.load },
 ];
 
-type BrushRange = { startIndex?: number; endIndex?: number };
-
 function formatDataDateRangeLabel(readings: TelemetryReading[]): string {
   let minT = Infinity;
   let maxT = -Infinity;
@@ -51,12 +49,6 @@ function formatDataDateRangeLabel(readings: TelemetryReading[]): string {
   return a === b ? a : `${a} – ${b}`;
 }
 
-function sliceByBrush<T>(data: T[], brush: BrushRange): T[] {
-  const { startIndex, endIndex } = brush;
-  if (startIndex == null || endIndex == null) return data;
-  return data.slice(startIndex, endIndex + 1);
-}
-
 type Props = {
   readings: TelemetryReading[];
   hours: number;
@@ -71,7 +63,6 @@ export default function DeviceHistoryCharts({
   faults = [],
 }: Props) {
   const [subTab, setSubTab] = useState<SubTab>("pf");
-  const [brush, setBrush] = useState<BrushRange>({});
 
   const capUnit = model === "paf" ? "A" : "kvar";
   const hoursLabel = `최근 ${hours}시간`;
@@ -161,7 +152,6 @@ export default function DeviceHistoryCharts({
       };
     }, [readings]);
 
-  const visible = sliceByBrush(data, brush);
   const dataDateLabel = formatDataDateRangeLabel(readings);
 
   if (readings.length === 0) {
@@ -200,10 +190,7 @@ export default function DeviceHistoryCharts({
             type="button"
             className={`analytics-subtab${subTab === key ? " active" : ""}`}
             style={{ "--tab-accent": color } as React.CSSProperties}
-            onClick={() => {
-              setSubTab(key);
-              setBrush({});
-            }}
+            onClick={() => setSubTab(key)}
           >
             {label}
           </button>
@@ -222,7 +209,7 @@ export default function DeviceHistoryCharts({
           <>
             <ChartCard title="S (kVA)" subtitle="— 보상 전 / 후">
               <HistoryAreaChart
-                data={visible}
+                data={data}
                 grads={[
                   { id: "sB", color: CHART_COLORS.gridMuted },
                   { id: "sA", color: CHART_COLORS.purple },
@@ -234,7 +221,7 @@ export default function DeviceHistoryCharts({
             </ChartCard>
             <ChartCard title="P (kW)" subtitle="— 보상 전 / 후">
               <HistoryAreaChart
-                data={visible}
+                data={data}
                 grads={[
                   { id: "pB", color: CHART_COLORS.gridMuted },
                   { id: "pA", color: CHART_COLORS.blue },
@@ -246,7 +233,7 @@ export default function DeviceHistoryCharts({
             </ChartCard>
             <ChartCard title="Q (kvar)" subtitle="— 보상 전 / 후">
               <HistoryAreaChart
-                data={visible}
+                data={data}
                 grads={[
                   { id: "qB", color: CHART_COLORS.gridMuted },
                   { id: "qA", color: CHART_COLORS.accent },
@@ -258,7 +245,7 @@ export default function DeviceHistoryCharts({
             </ChartCard>
             <ChartCard title="H (kvar)" subtitle="— 보상 전 / 후">
               <HistoryAreaChart
-                data={visible}
+                data={data}
                 grads={[
                   { id: "hB", color: CHART_COLORS.gridMuted },
                   { id: "hA", color: CHART_COLORS.load },
@@ -270,7 +257,7 @@ export default function DeviceHistoryCharts({
             </ChartCard>
             <ChartCard title="TPF (%)" subtitle={`— ${hoursLabel}`} wide>
               <HistoryAreaChart
-                data={visible}
+                data={data}
                 grads={[
                   { id: "tpfB", color: CHART_COLORS.gridMuted, opacity: 0.2 },
                   { id: "tpfA", color: CHART_COLORS.accent, opacity: 0.35 },
@@ -279,13 +266,11 @@ export default function DeviceHistoryCharts({
                 yUnit="%"
                 threshold="pf"
                 faults={faults}
-                brush
-                onBrushChange={setBrush}
               />
             </ChartCard>
             <ChartCard title="DPF (%)" subtitle={`— ${hoursLabel}`} wide>
               <HistoryAreaChart
-                data={visible}
+                data={data}
                 grads={[
                   { id: "dpfB", color: CHART_COLORS.gridMuted, opacity: 0.2 },
                   { id: "dpfA", color: CHART_COLORS.purple, opacity: 0.35 },
@@ -313,7 +298,7 @@ export default function DeviceHistoryCharts({
                 wide
               >
                 <HistoryAreaChart
-                  data={visible}
+                  data={data}
                   grads={[
                     { id: gradB, color: CHART_COLORS.gridMuted, opacity: 0.2 },
                     { id: gradA, color, opacity: 0.35 },
@@ -329,8 +314,6 @@ export default function DeviceHistoryCharts({
                   yUnit="%"
                   threshold="thd"
                   faults={faults}
-                  brush={idx === 0}
-                  onBrushChange={idx === 0 ? setBrush : undefined}
                 />
               </ChartCard>
             );
@@ -344,7 +327,7 @@ export default function DeviceHistoryCharts({
               wide
             >
               <HistoryAreaChart
-                data={visible}
+                data={data}
                 grads={[
                   { id: "capR", color: CHART_COLORS.accent, opacity: 0.5 },
                   { id: "capI", color: CHART_COLORS.blue, opacity: 0.4 },
@@ -373,10 +356,7 @@ export default function DeviceHistoryCharts({
                     stackId: "cap",
                   },
                 ]}
-                yUnit={` ${capUnit}`}
                 faults={faults}
-                brush
-                onBrushChange={setBrush}
               />
               <div className="capacity-legend-row">
                 <span className="cap-badge cap-reactive">무효 전력 발생</span>
@@ -394,7 +374,7 @@ export default function DeviceHistoryCharts({
           <>
             <ChartCard title="구역 온도 (°C)" subtitle={`— ${hoursLabel}`} wide>
               <HistoryAreaChart
-                data={visible}
+                data={data}
                 grads={Array.from({ length: maxAreaSensors }, (_, i) => ({
                   id: `ga${i}`,
                   color: TEMP_COLORS[i % TEMP_COLORS.length],
@@ -408,9 +388,7 @@ export default function DeviceHistoryCharts({
                 yDomain={[0, 50]}
                 yUnit="°C"
                 faults={faults}
-                brush
-                onBrushChange={setBrush}
-                margin={{ right: TEMP_CHART_MARGIN_RIGHT, bottom: 20 }}
+                margin={{ right: TEMP_CHART_MARGIN_RIGHT }}
               >
                 <ReferenceLine
                   y={TEMP_THRESHOLDS.areaWarn}
@@ -439,7 +417,7 @@ export default function DeviceHistoryCharts({
             </ChartCard>
             <ChartCard title="모듈 온도 (°C)" subtitle={`— ${hoursLabel}`} wide>
               <HistoryAreaChart
-                data={visible}
+                data={data}
                 grads={Array.from({ length: maxModSensors }, (_, i) => ({
                   id: `gm${i}`,
                   color: TEMP_COLORS[i % TEMP_COLORS.length],
@@ -482,7 +460,7 @@ export default function DeviceHistoryCharts({
             </ChartCard>
             <ChartCard title="팬 속도 (m/s)" subtitle={`— ${hoursLabel}`} wide>
               <HistoryAreaChart
-                data={visible}
+                data={data}
                 grads={Array.from({ length: maxFans }, (_, i) => ({
                   id: `gf${i}`,
                   color: TEMP_COLORS[i % TEMP_COLORS.length],
