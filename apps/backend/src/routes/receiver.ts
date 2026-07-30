@@ -9,10 +9,7 @@ import { z } from "zod";
 import { requireAdmin } from "../middleware/authenticate.js";
 import { commandService, CommandError } from "../services/commandService.js";
 import { faultService } from "../services/faultService.js";
-import {
-  settingsService,
-  SettingsError,
-} from "../services/settingsService.js";
+import { settingsService, SettingsError } from "../services/settingsService.js";
 import { wsHub } from "../lib/wsHub.js";
 import * as viewingState from "../lib/viewingState.js";
 
@@ -194,14 +191,15 @@ const resolveIccidToInstallationId = async (iccid: string) => {
 
 export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
   server,
-  opts
+  opts,
 ) => {
   const apiKey = opts.receiverApiKey;
   const authByApiKey = (
     request: { headers: Record<string, unknown> },
     reply: { status: (code: number) => { send: (body: unknown) => unknown } },
   ) => {
-    const providedKey = (request.headers["x-api-key"] as string | undefined) ?? "";
+    const providedKey =
+      (request.headers["x-api-key"] as string | undefined) ?? "";
     if (providedKey !== apiKey) {
       reply.status(401).send({ message: "Unauthorized" });
       return false;
@@ -338,7 +336,10 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       try {
         body = JSON.parse(rawBody.toString("utf-8")) as ReceiverBody;
       } catch (error) {
-        server.log.warn({ error }, "Failed to parse LTE payload buffer as JSON");
+        server.log.warn(
+          { error },
+          "Failed to parse LTE payload buffer as JSON",
+        );
         body = {};
       }
     } else if (rawBody && typeof rawBody === "object") {
@@ -353,13 +354,20 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
     });
     if (body.csq != null || body.rsrp != null) {
       server.log.info(
-        { csq: body.csq, rsrp: body.rsrp, installationId: identity.installationId },
+        {
+          csq: body.csq,
+          rsrp: body.rsrp,
+          installationId: identity.installationId,
+        },
         "LTE signal fields in payload",
       );
     }
     if (identity.installationId) {
       server.log.info(
-        { installationId: identity.installationId, resolvedVia: identity.resolvedVia },
+        {
+          installationId: identity.installationId,
+          resolvedVia: identity.resolvedVia,
+        },
         "Receiver identity resolved",
       );
     }
@@ -523,53 +531,67 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
   });
 
   // Fault 이력 조회 (Admin 전용)
-  server.get("/faults", { preHandler: requireAdmin }, async (request, reply) => {
-    const q = request.query as { iccid?: string; installationId?: string; limit?: string };
-    const limit = q.limit ? Number.parseInt(q.limit, 10) : 50;
-    const faults = await faultService.getFaults({
-      iccid: q.iccid,
-      installationId: q.installationId,
-      limit: Number.isFinite(limit) ? limit : 50,
-    });
-    return reply.send({ faults });
-  });
+  server.get(
+    "/faults",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const q = request.query as {
+        iccid?: string;
+        installationId?: string;
+        limit?: string;
+      };
+      const limit = q.limit ? Number.parseInt(q.limit, 10) : 50;
+      const faults = await faultService.getFaults({
+        iccid: q.iccid,
+        installationId: q.installationId,
+        limit: Number.isFinite(limit) ? limit : 50,
+      });
+      return reply.send({ faults });
+    },
+  );
 
   // Web/Admin -> create command
-  server.post("/commands/create", { preHandler: requireAdmin }, async (request, reply) => {
-    const parsed = createCommandSchema.safeParse(request.body);
-    if (!parsed.success) {
-      return reply.status(400).send({
-        message: "Invalid request body",
-        errors: parsed.error.flatten(),
-      });
-    }
-    try {
-      const cmd = await commandService.create({
-        installationId: parsed.data.installationId,
-        module: parsed.data.module,
-        power: parsed.data.power,
-        requestedBy: parsed.data.requestedBy ?? request.user.username,
-        fields: parsed.data.fields ?? null,
-      });
-      server.log.info(
-        {
-          commandId: cmd.id,
-          installationId: cmd.installationId,
-          module: cmd.module,
-          power: cmd.power,
-          hasFields: !!parsed.data.fields,
-        },
-        "Command created",
-      );
-      return reply.status(201).send({ command: cmd });
-    } catch (error) {
-      if (error instanceof CommandError) {
-        return reply.status(error.httpStatus).send({ code: error.code, message: error.message });
+  server.post(
+    "/commands/create",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const parsed = createCommandSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          message: "Invalid request body",
+          errors: parsed.error.flatten(),
+        });
       }
-      server.log.error({ error }, "Failed to create command");
-      return reply.status(500).send({ message: "Failed to create command" });
-    }
-  });
+      try {
+        const cmd = await commandService.create({
+          installationId: parsed.data.installationId,
+          module: parsed.data.module,
+          power: parsed.data.power,
+          requestedBy: parsed.data.requestedBy ?? request.user.username,
+          fields: parsed.data.fields ?? null,
+        });
+        server.log.info(
+          {
+            commandId: cmd.id,
+            installationId: cmd.installationId,
+            module: cmd.module,
+            power: cmd.power,
+            hasFields: !!parsed.data.fields,
+          },
+          "Command created",
+        );
+        return reply.status(201).send({ command: cmd });
+      } catch (error) {
+        if (error instanceof CommandError) {
+          return reply
+            .status(error.httpStatus)
+            .send({ code: error.code, message: error.message });
+        }
+        server.log.error({ error }, "Failed to create command");
+        return reply.status(500).send({ message: "Failed to create command" });
+      }
+    },
+  );
 
   // Device polling -> oldest pending command
   server.get("/commands", async (request, reply) => {
@@ -611,9 +633,14 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       return reply.send(command);
     } catch (error) {
       if (error instanceof CommandError) {
-        return reply.status(error.httpStatus).send({ code: error.code, message: error.message });
+        return reply
+          .status(error.httpStatus)
+          .send({ code: error.code, message: error.message });
       }
-      server.log.error({ error, installationId, iccid: q.iccid }, "Failed to poll command");
+      server.log.error(
+        { error, installationId, iccid: q.iccid },
+        "Failed to poll command",
+      );
       return reply.status(500).send({ message: "Failed to poll command" });
     }
   });
@@ -650,7 +677,9 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       return reply.send({ command: updated });
     } catch (error) {
       if (error instanceof CommandError) {
-        return reply.status(error.httpStatus).send({ code: error.code, message: error.message });
+        return reply
+          .status(error.httpStatus)
+          .send({ code: error.code, message: error.message });
       }
       server.log.error({ error }, "Failed to ack command");
       return reply.status(500).send({ message: "Failed to ack command" });
@@ -658,24 +687,35 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
   });
 
   // UI history
-  server.get("/commands/history", { preHandler: requireAdmin }, async (request, reply) => {
-    const { installationId, limit } = request.query as {
-      installationId?: string;
-      limit?: string;
-    };
-    const parsedLimit = limit ? Number.parseInt(limit, 10) : 50;
-    try {
-      const commands = await commandService.history({
-        installationId: installationId ?? "",
-        limit: Number.isFinite(parsedLimit) ? parsedLimit : 50,
-      });
-      return reply.send({ commands, policy: commandService.policy });
-    } catch (error) {
-      if (error instanceof CommandError) {
-        return reply.status(error.httpStatus).send({ code: error.code, message: error.message });
+  server.get(
+    "/commands/history",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const { installationId, limit } = request.query as {
+        installationId?: string;
+        limit?: string;
+      };
+      const parsedLimit = limit ? Number.parseInt(limit, 10) : 50;
+      try {
+        const commands = await commandService.history({
+          installationId: installationId ?? "",
+          limit: Number.isFinite(parsedLimit) ? parsedLimit : 50,
+        });
+        return reply.send({ commands, policy: commandService.policy });
+      } catch (error) {
+        if (error instanceof CommandError) {
+          return reply
+            .status(error.httpStatus)
+            .send({ code: error.code, message: error.message });
+        }
+        server.log.error(
+          { error, installationId },
+          "Failed to load command history",
+        );
+        return reply
+          .status(500)
+          .send({ message: "Failed to load command history" });
       }
-      server.log.error({ error, installationId }, "Failed to load command history");
-      return reply.status(500).send({ message: "Failed to load command history" });
-    }
-  });
+    },
+  );
 };
