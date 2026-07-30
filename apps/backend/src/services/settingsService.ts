@@ -1,5 +1,8 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient, type Prisma } from "../../prisma/generated/client/client.js";
+import {
+  PrismaClient,
+  type Prisma,
+} from "../../prisma/generated/client/client.js";
 import {
   ensureInstallationForIccid,
   getInstallationIdByIccid,
