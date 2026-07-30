@@ -11,8 +11,8 @@
 
 # Dev 환경변수 (dev 브랜치)
 [context.dev.environment]
-  NEXT_PUBLIC_API_BASE = "https://pmcsbackend-dev.up.railway.app"
-  COMMAND_API_BASE = "https://pmcsbackend-dev.up.railway.app"
+  NEXT_PUBLIC_API_BASE = "https://pmcsbackend-production.up.railway.app"
+  COMMAND_API_BASE = "https://pmcsbackend-production.up.railway.app"
 
 # 보안 헤더 (모든 경로)
 # CSP 는 인라인 스크립트/지도/3rd-party 영향이 커 별도 신중 적용 — 여기서는 제외.
