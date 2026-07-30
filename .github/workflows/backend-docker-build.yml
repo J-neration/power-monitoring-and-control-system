@@ -1,0 +1,75 @@
+# Railway가 쓰는 것과 **동일한** Dockerfile로 이미지를 미리 빌드해서,
+# Railway 배포 실패를 푸시한 사람이 직접 알 수 있게 한다.
+#
+# 왜 필요한가:
+#   Railway 빌드 로그는 Railway 대시보드에서만 보인다. 그래서 백엔드 빌드가 깨지면
+#   대시보드를 보는 사람만 알게 되고, 정작 푸시한 사람은 모른 채 넘어간다.
+#   GitHub Actions는 **워크플로를 실패시킨 커밋의 작성자에게 자동으로 메일을 보낸다.**
+#   → 푸시한 사람이 Railway 계정 없이도 같은 실패 로그를 즉시 받는다.
+#
+# 받는 사람이 메일을 못 받고 있다면:
+#   GitHub → Settings → Notifications → Actions → "Send notifications for failed
+#   workflows only" 체크 + Email 활성화 (기본값이지만 꺼놨을 수 있음)
+#
+# 이 워크플로가 잡아주는 것: prisma generate 스키마 누락, COPY 대상 없음(.dockerignore
+# 오설정), lockfile 불일치, tsc 타입 에러 등 — 전부 Railway에서 터지던 것들.
+
+name: Backend Docker build
+
+# (GitHub Actions는 YAML 앵커를 지원하지 않아 paths를 그대로 중복 기재)
+on:
+  push:
+    paths:
+      - "apps/backend/**"
+      - "package.json"
+      - "yarn.lock"
+      - "Dockerfile"
+      - ".dockerignore"
+      - "railway.toml"
+      - ".github/workflows/backend-docker-build.yml"
+  pull_request:
+    paths:
+      - "apps/backend/**"
+      - "package.json"
+      - "yarn.lock"
+      - "Dockerfile"
+      - ".dockerignore"
+      - "railway.toml"
+      - ".github/workflows/backend-docker-build.yml"
+  workflow_dispatch:
+
+# 같은 브랜치에서 연속 푸시하면 이전 실행은 취소 (PR과 push 중복 실행도 정리)
+concurrency:
+  group: backend-docker-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: docker build (Railway와 동일)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # DATABASE_URL 불필요: prisma generate는 datasource URL 없이도 동작 (Prisma 7.2+)
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 실패 안내
+        if: failure()
+        run: |
+          echo "::error::Railway 배포도 같은 이유로 실패합니다. 위 'Build image' 단계 로그를 확인하세요."
+          {
+            echo "### ❌ 백엔드 Docker 빌드 실패"
+            echo ""
+            echo "Railway에 올라가도 **같은 지점에서 실패**합니다. 머지 전에 고쳐주세요."
+            echo ""
+            echo "위 \`Build image\` 단계의 로그가 Railway 빌드 로그와 동일합니다."
+          } >> "$GITHUB_STEP_SUMMARY"
