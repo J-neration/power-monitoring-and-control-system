@@ -7032,6 +7032,10 @@ body.pmcs-control-room .global-header:hover {
   border-bottom: 1px solid rgba(0, 212, 170, 0.12);
 }
 
+.digital-phase-header > span:not(:first-child) {
+  text-align: right;
+}
+
 .digital-phase-label {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.55);
