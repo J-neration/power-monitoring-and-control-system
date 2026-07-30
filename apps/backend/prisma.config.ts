@@ -19,10 +19,16 @@ for (const file of [
   config({ path: path.resolve(dir, file), override: true });
 }
 
-// 🚨 안전 가드: Neon main(production) 브랜치를 비프로덕션 환경에서 실수로 사용하는 것 방지
-// NEON_BRANCH=main  → production 브랜치 (prisma migrate deploy는 CI/Railway에서만)
-// NEON_BRANCH=dev   → dev 브랜치 (prisma migrate dev 시 사용 가능)
-if (process.env.DATABASE_URL?.includes("neon.tech") && nodeEnv !== "production") {
+// 🚨 안전 가드: Neon main 에 대해 `prisma migrate dev` 만 차단.
+// `prisma generate` / `migrate deploy` (Railway 빌드·부팅) 에서는 throw 하지 않음.
+const argv = process.argv.join(" ");
+const isMigrateDev =
+  argv.includes("migrate") && /\bdev\b/.test(argv) && !argv.includes("deploy");
+if (
+  isMigrateDev &&
+  process.env.DATABASE_URL?.includes("neon.tech") &&
+  nodeEnv !== "production"
+) {
   const neonBranch = process.env.NEON_BRANCH ?? "";
   if (neonBranch === "main" || neonBranch === "production") {
     throw new Error(

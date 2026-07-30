@@ -7,7 +7,7 @@
     "dev": "cross-env NODE_ENV=development tsx watch src/index.ts",
     "postinstall": "prisma generate || echo \"[postinstall] prisma generate skipped (schema not available yet — build step will generate it)\"",
     "build": "prisma generate && tsc -p tsconfig.json",
-    "start": "sh -c '(npx prisma migrate deploy && echo migrate_ok) || echo migrate_failed; node dist/src/index.js'",
+    "start": "node dist/src/index.js",
     "lint": "echo \"No linter configured\"",
     "test": "node --test --import tsx \"src/**/*.test.ts\"",
 

@@ -2,18 +2,26 @@ node_modules
 **/node_modules
 dist
 **/dist
+**/.next
 .git
 .github
 .vscode
 .claude
 .agents
 docs
+*.md
 .DS_Store
 **/.DS_Store
 *.log
 
+# 프론트엔드 소스는 이미지에 불필요하지만, 루트 Dockerfile이
+# `COPY apps/frontend/package.json` 을 하므로 package.json은 남겨야 한다
+# (통째로 제외하면 그 COPY가 "not found"로 실패함).
+apps/frontend/**
+!apps/frontend/package.json
+
 # 시크릿이 이미지에 들어가는 것 방지 (.env는 prisma.config.ts가 override:true로 읽어
 # Railway 환경변수를 덮어쓸 수 있음 → 절대 이미지에 포함하지 말 것)
-.env
-.env.*
-!.env.*.example
+**/.env
+**/.env.*
+!**/.env.*.example
