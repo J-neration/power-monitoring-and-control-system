@@ -38,14 +38,18 @@ export default function SiteSummaryPanel({
     { total: 0, running: 0, fault: 0, standby: 0, offline: 0 },
   );
 
+  const siteHref = `/sites/${encodeURIComponent(site.id)}`;
+
   return (
     <div className="dash-detail">
       {/* Site header */}
       <div className="detail-site-top">
         <div className={`detail-status-dot ${siteStatus}`} />
-          <div className="detail-site-info">
+        <div className="detail-site-info">
           <h2 className="detail-site-name">
-            {site.name}
+            <Link href={siteHref} target="_blank" className="detail-site-name-link">
+              {site.name}
+            </Link>
             {isTestClient(site.client) && (
               <span className="test-badge">TEST</span>
             )}
@@ -54,9 +58,14 @@ export default function SiteSummaryPanel({
             {CLIENT_LABELS[site.client] ?? site.client} · {site.address}
           </span>
         </div>
-        <span className={`detail-status-badge ${siteStatus}`}>
-          {STATUS_LABEL[siteStatus]}
-        </span>
+        <div className="detail-site-actions">
+          <span className={`detail-status-badge ${siteStatus}`}>
+            {STATUS_LABEL[siteStatus]}
+          </span>
+          <Link href={siteHref} target="_blank" className="detail-site-open">
+            상세보기
+          </Link>
+        </div>
       </div>
 
       {/* Summary stats */}
@@ -157,11 +166,7 @@ export default function SiteSummaryPanel({
       </div>
 
       {/* Footer link */}
-      <Link
-        href={`/sites/${encodeURIComponent(site.id)}`}
-        target="_blank"
-        className="summary-more-link"
-      >
+      <Link href={siteHref} target="_blank" className="summary-more-link">
         현장 상세보기 →
       </Link>
     </div>

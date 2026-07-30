@@ -4,15 +4,13 @@ import { useEffect, useRef, useCallback, useState } from "react";
 
 /**
  * How long the tab must remain hidden before we call viewing/stop.
- * A short tab-switch (< 30 s) does not cancel active viewing,
- * which prevents stop/start churn and banner re-pop spam.
+ * A short tab-switch (< 30 s) does not cancel active settings session.
  */
 const HIDE_GRACE_MS = 30_000;
 
 /**
  * How often to re-call viewing/start as a heartbeat.
- * The backend TTL is 90 s; 60 s keeps the entry comfortably fresh
- * and aligns with the HMI command-poll interval.
+ * Backend Settings TTL is 150 s; 60 s keeps the entry fresh.
  */
 const HEARTBEAT_INTERVAL_MS = 60_000;
 
@@ -35,33 +33,26 @@ async function callViewingApi(
 }
 
 type UseDeviceViewingReturn = {
-  /** True while the "up-to-60-second refresh" banner should be visible. */
+  /** True while the Settings-sync banner should be visible. */
   showBanner: boolean;
   /** Call to manually hide the banner (also called automatically after timeout). */
   dismissBanner: () => void;
 };
 
 /**
- * Manages active-viewing state for a device detail page.
+ * Manages webSettingsActive for the Device Settings tab.
  *
- * Behaviour:
- * - Calls viewing/start on mount and whenever the tab becomes visible again
- *   after having been stopped (visibility hidden > HIDE_GRACE_MS).
- * - Calls viewing/stop on unmount and after HIDE_GRACE_MS of tab being hidden.
- * - Sends a heartbeat every HEARTBEAT_INTERVAL_MS to keep the server TTL fresh.
- * - Prevents duplicate start/stop calls via isActiveRef.
- * - Exposes showBanner / dismissBanner for a one-time informational banner.
+ * Only runs while `enabled` is true (Settings tab selected).
+ * - start on enable / tab visible again
+ * - stop on disable / unmount / hide beyond grace
+ * - heartbeat every 60 s
  */
 export function useDeviceViewing(
   installationId: string,
+  enabled = true,
 ): UseDeviceViewingReturn {
   const [showBanner, setShowBanner] = useState(false);
 
-  /**
-   * Tracks whether the server currently believes this client is an active viewer.
-   * Using a ref (not state) so that start/stop callbacks do not need to be
-   * re-created on every render.
-   */
   const isActiveRef = useRef(false);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -81,13 +72,12 @@ export function useDeviceViewing(
   }, []);
 
   const startViewing = useCallback(() => {
-    if (isActiveRef.current) return; // already active — no duplicate call
+    if (isActiveRef.current) return;
     isActiveRef.current = true;
 
     callViewingApi(installationId, "start");
     setShowBanner(true);
 
-    // Periodic heartbeat to refresh the server-side TTL
     clearHeartbeat();
     heartbeatRef.current = setInterval(() => {
       callViewingApi(installationId, "start");
@@ -95,29 +85,32 @@ export function useDeviceViewing(
   }, [installationId, clearHeartbeat]);
 
   const stopViewing = useCallback(() => {
-    if (!isActiveRef.current) return; // already inactive — no duplicate call
+    if (!isActiveRef.current) return;
     isActiveRef.current = false;
 
     callViewingApi(installationId, "stop");
     clearHeartbeat();
+    setShowBanner(false);
   }, [installationId, clearHeartbeat]);
 
   const dismissBanner = useCallback(() => setShowBanner(false), []);
 
   useEffect(() => {
-    // Page mount — begin active viewing
+    if (!enabled) {
+      clearHideTimer();
+      clearHeartbeat();
+      stopViewing();
+      return;
+    }
+
     startViewing();
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        // Tab became visible — cancel any pending stop and (re-)start viewing
         clearHideTimer();
         startViewing();
       } else {
-        // Tab hidden — wait for the grace period before stopping.
-        // If the user comes back within HIDE_GRACE_MS the timer is cancelled
-        // and viewing is never interrupted.
-        if (hideTimerRef.current !== null) return; // timer already running
+        if (hideTimerRef.current !== null) return;
         hideTimerRef.current = setTimeout(() => {
           hideTimerRef.current = null;
           stopViewing();
@@ -128,13 +121,18 @@ export function useDeviceViewing(
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      // Page unmount (navigation away, tab close, logout redirect)
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       clearHideTimer();
       clearHeartbeat();
       stopViewing();
     };
-  }, [startViewing, stopViewing, clearHideTimer, clearHeartbeat]);
+  }, [
+    enabled,
+    startViewing,
+    stopViewing,
+    clearHideTimer,
+    clearHeartbeat,
+  ]);
 
   return { showBanner, dismissBanner };
 }

@@ -389,6 +389,7 @@ export const ModelName = {
   RoleOption: 'RoleOption',
   Site: 'Site',
   Installation: 'Installation',
+  InstallationDeviceSettings: 'InstallationDeviceSettings',
   Device: 'Device',
   TelemetryRecord: 'TelemetryRecord',
   FaultEvent: 'FaultEvent',
@@ -409,7 +410,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "clientOption" | "roleOption" | "site" | "installation" | "device" | "telemetryRecord" | "faultEvent" | "moduleFaultState" | "deviceCommand"
+    modelProps: "user" | "clientOption" | "roleOption" | "site" | "installation" | "installationDeviceSettings" | "device" | "telemetryRecord" | "faultEvent" | "moduleFaultState" | "deviceCommand"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -780,6 +781,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.InstallationCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.InstallationCountAggregateOutputType> | number
+        }
+      }
+    }
+    InstallationDeviceSettings: {
+      payload: Prisma.$InstallationDeviceSettingsPayload<ExtArgs>
+      fields: Prisma.InstallationDeviceSettingsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.InstallationDeviceSettingsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationDeviceSettingsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.InstallationDeviceSettingsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationDeviceSettingsPayload>
+        }
+        findFirst: {
+          args: Prisma.InstallationDeviceSettingsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationDeviceSettingsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.InstallationDeviceSettingsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationDeviceSettingsPayload>
+        }
+        findMany: {
+          args: Prisma.InstallationDeviceSettingsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationDeviceSettingsPayload>[]
+        }
+        create: {
+          args: Prisma.InstallationDeviceSettingsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationDeviceSettingsPayload>
+        }
+        createMany: {
+          args: Prisma.InstallationDeviceSettingsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.InstallationDeviceSettingsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationDeviceSettingsPayload>[]
+        }
+        delete: {
+          args: Prisma.InstallationDeviceSettingsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationDeviceSettingsPayload>
+        }
+        update: {
+          args: Prisma.InstallationDeviceSettingsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationDeviceSettingsPayload>
+        }
+        deleteMany: {
+          args: Prisma.InstallationDeviceSettingsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.InstallationDeviceSettingsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.InstallationDeviceSettingsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationDeviceSettingsPayload>[]
+        }
+        upsert: {
+          args: Prisma.InstallationDeviceSettingsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstallationDeviceSettingsPayload>
+        }
+        aggregate: {
+          args: Prisma.InstallationDeviceSettingsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateInstallationDeviceSettings>
+        }
+        groupBy: {
+          args: Prisma.InstallationDeviceSettingsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InstallationDeviceSettingsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.InstallationDeviceSettingsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InstallationDeviceSettingsCountAggregateOutputType> | number
         }
       }
     }
@@ -1252,11 +1327,25 @@ export const InstallationScalarFieldEnum = {
   siteId: 'siteId',
   label: 'label',
   iccid: 'iccid',
+  webSettingsActive: 'webSettingsActive',
+  webSettingsHeartbeatAt: 'webSettingsHeartbeatAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type InstallationScalarFieldEnum = (typeof InstallationScalarFieldEnum)[keyof typeof InstallationScalarFieldEnum]
+
+
+export const InstallationDeviceSettingsScalarFieldEnum = {
+  installationId: 'installationId',
+  moduleType: 'moduleType',
+  numOfMods: 'numOfMods',
+  basic: 'basic',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InstallationDeviceSettingsScalarFieldEnum = (typeof InstallationDeviceSettingsScalarFieldEnum)[keyof typeof InstallationDeviceSettingsScalarFieldEnum]
 
 
 export const DeviceScalarFieldEnum = {
@@ -1395,6 +1484,7 @@ export const DeviceCommandScalarFieldEnum = {
   power: 'power',
   status: 'status',
   requestedBy: 'requestedBy',
+  fields: 'fields',
   createdAt: 'createdAt',
   sentAt: 'sentAt',
   ackedAt: 'ackedAt',
@@ -1414,6 +1504,21 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -1428,6 +1533,15 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
 
@@ -1496,6 +1610,20 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -1640,6 +1768,7 @@ export type GlobalOmitConfig = {
   roleOption?: Prisma.RoleOptionOmit
   site?: Prisma.SiteOmit
   installation?: Prisma.InstallationOmit
+  installationDeviceSettings?: Prisma.InstallationDeviceSettingsOmit
   device?: Prisma.DeviceOmit
   telemetryRecord?: Prisma.TelemetryRecordOmit
   faultEvent?: Prisma.FaultEventOmit

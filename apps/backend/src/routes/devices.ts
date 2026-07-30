@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from "fastify";
 import { deviceService } from "../services/deviceService.js";
 import { authenticate, requireAdmin } from "../middleware/authenticate.js";
 import { faultService } from "../services/faultService.js";
+import { settingsService } from "../services/settingsService.js";
 import * as viewingState from "../lib/viewingState.js";
 
 export const deviceRoutes: FastifyPluginAsync = async (server) => {
@@ -43,13 +44,73 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
     return reply.send(result);
   });
 
-  server.get("/:id", { preHandler: authenticate }, async (request, reply) => {
+  /**
+   * GET /devices/:id/settings
+   * Latest HMI basic-settings snapshot (POST /receiver/settings).
+   * Registered before GET /:id so Fastify never treats "settings" as an id suffix issue.
+   */
+  server.get("/:id/settings", { preHandler: requireAdmin }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const device = await deviceService.get({ id }, request.user);
     if (!device) {
       return reply.status(404).send({ message: "Device not found" });
     }
-    return { device };
+    const settings = await settingsService.getByInstallationId(id);
+    const webSettingsActive = await viewingState.isWebSettingsActive(id);
+    return reply.send({
+      settings,
+      webSettingsActive,
+    });
+  });
+
+  /**
+   * POST /devices/:id/viewing/start
+   * Settings 탭 진입 → Installation.webSettingsActive = true (+ heartbeat).
+   */
+  server.post("/:id/viewing/start", { preHandler: requireAdmin }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const device = await deviceService.get({ id }, request.user);
+    if (!device) {
+      return reply.status(404).send({ message: "Device not found" });
+    }
+    const { userId } = request.user;
+    await viewingState.startViewing(id, userId);
+    return reply.send({
+      ok: true,
+      installationId: id,
+      webSettingsActive: true,
+      activeViewers: await viewingState.getActiveViewerCount(id),
+    });
+  });
+
+  /**
+   * POST /devices/:id/viewing/stop
+   * Settings 탭 이탈 → Installation.webSettingsActive = false.
+   */
+  server.post("/:id/viewing/stop", { preHandler: requireAdmin }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { userId } = request.user;
+    await viewingState.stopViewing(id, userId);
+    return reply.send({
+      ok: true,
+      installationId: id,
+      webSettingsActive: await viewingState.isWebSettingsActive(id),
+      activeViewers: await viewingState.getActiveViewerCount(id),
+    });
+  });
+
+  /**
+   * GET /devices/:id/viewing/status
+   */
+  server.get("/:id/viewing/status", { preHandler: authenticate }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const webSettingsActive = await viewingState.isWebSettingsActive(id);
+    return reply.send({
+      installationId: id,
+      webSettingsActive,
+      activeViewers: await viewingState.getActiveViewerCount(id),
+      isActivelyViewed: webSettingsActive,
+    });
   });
 
   server.get("/:id/readings", { preHandler: authenticate }, async (request, reply) => {
@@ -66,49 +127,12 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
     return { readings };
   });
 
-  /**
-   * POST /devices/:id/viewing/start
-   * Called by the web UI when a user opens or returns to the device detail page.
-   * Also serves as a heartbeat — re-call every 60 s to keep the TTL fresh.
-   */
-  server.post("/:id/viewing/start", { preHandler: authenticate }, async (request, reply) => {
+  server.get("/:id", { preHandler: authenticate }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { userId } = request.user;
-    viewingState.startViewing(id, userId);
-    return reply.send({
-      ok: true,
-      installationId: id,
-      activeViewers: viewingState.getActiveViewerCount(id),
-    });
-  });
-
-  /**
-   * POST /devices/:id/viewing/stop
-   * Called by the web UI when the user navigates away, closes the tab,
-   * or the tab remains hidden beyond the grace period.
-   */
-  server.post("/:id/viewing/stop", { preHandler: authenticate }, async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const { userId } = request.user;
-    viewingState.stopViewing(id, userId);
-    return reply.send({
-      ok: true,
-      installationId: id,
-      activeViewers: viewingState.getActiveViewerCount(id),
-    });
-  });
-
-  /**
-   * GET /devices/:id/viewing/status
-   * Returns the current active viewer count for a device.
-   * Useful for admin dashboards or for the HMI to check before polling.
-   */
-  server.get("/:id/viewing/status", { preHandler: authenticate }, async (request, reply) => {
-    const { id } = request.params as { id: string };
-    return reply.send({
-      installationId: id,
-      activeViewers: viewingState.getActiveViewerCount(id),
-      isActivelyViewed: viewingState.hasActiveViewers(id),
-    });
+    const device = await deviceService.get({ id }, request.user);
+    if (!device) {
+      return reply.status(404).send({ message: "Device not found" });
+    }
+    return { device };
   });
 };

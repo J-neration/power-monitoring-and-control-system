@@ -47,6 +47,13 @@ export type Site = Prisma.SiteModel
  */
 export type Installation = Prisma.InstallationModel
 /**
+ * Model InstallationDeviceSettings
+ * =========================
+ *  * 2b) InstallationDeviceSettings (HMI basic settings 스냅샷)
+ *  * =========================
+ */
+export type InstallationDeviceSettings = Prisma.InstallationDeviceSettingsModel
+/**
  * Model Device
  * =========================
  *  * 3) Device (최신 텔레메트리)

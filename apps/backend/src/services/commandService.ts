@@ -1,5 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../../prisma/generated/client/client.js";
+import { PrismaClient, type Prisma } from "../../prisma/generated/client/client.js";
 import type {
   DeviceCommand,
   DeviceCommandPower,
@@ -21,6 +21,8 @@ type CreateInput = {
   power: string;
   requestedBy?: string | null;
   expiresAt?: Date | null;
+  /** setBasic partial field map */
+  fields?: Record<string, number | string | boolean | null> | null;
 };
 
 type AckInput = {
@@ -48,6 +50,7 @@ type CommandRepository = {
     power: DeviceCommandPower;
     requestedBy?: string | null;
     expiresAt?: Date | null;
+    fields?: Prisma.InputJsonValue | null;
   }): Promise<DeviceCommand>;
   findOldestPending(installationId: string, now: Date): Promise<DeviceCommand | null>;
   markSent(id: string, sentAt: Date): Promise<DeviceCommand>;
@@ -106,6 +109,7 @@ class PrismaCommandRepository implements CommandRepository {
     power: DeviceCommandPower;
     requestedBy?: string | null;
     expiresAt?: Date | null;
+    fields?: Prisma.InputJsonValue | null;
   }): Promise<DeviceCommand> {
     return prisma.deviceCommand.create({
       data: {
@@ -115,6 +119,7 @@ class PrismaCommandRepository implements CommandRepository {
         power: data.power,
         requestedBy: data.requestedBy ?? null,
         expiresAt: data.expiresAt ?? null,
+        fields: data.fields ?? undefined,
       },
     });
   }
@@ -172,8 +177,6 @@ class PrismaCommandRepository implements CommandRepository {
   }
 }
 
-const ALLOWED_POWER: DeviceCommandPower[] = ["on", "off", "refresh"];
-
 export const makeCommandId = () => {
   const d = new Date();
   const y = d.getFullYear();
@@ -187,8 +190,31 @@ export const makeCommandId = () => {
 };
 
 const parsePower = (power: string): DeviceCommandPower | null => {
-  const normalized = power.trim().toLowerCase() as DeviceCommandPower;
-  return ALLOWED_POWER.includes(normalized) ? normalized : null;
+  const normalized = power.trim();
+  // setBasic is camelCase; others are lowercase
+  if (normalized === "setBasic") return "setBasic";
+  const lower = normalized.toLowerCase() as DeviceCommandPower;
+  if (lower === "on" || lower === "off" || lower === "refresh") return lower;
+  return null;
+};
+
+const sanitizeFields = (
+  fields: CreateInput["fields"],
+): Prisma.InputJsonValue | null => {
+  if (!fields || typeof fields !== "object" || Array.isArray(fields)) return null;
+  const out: Record<string, number | string | boolean | null> = {};
+  for (const [key, value] of Object.entries(fields)) {
+    if (key === "mod") continue; // module comes from command.module
+    if (
+      value === null ||
+      typeof value === "number" ||
+      typeof value === "string" ||
+      typeof value === "boolean"
+    ) {
+      out[key] = value;
+    }
+  }
+  return Object.keys(out).length > 0 ? out : null;
 };
 
 export class CommandError extends Error {
@@ -231,7 +257,21 @@ export const createCommandService = (
 
       const power = parsePower(input.power);
       if (!power) {
-        throw new CommandError(400, "INVALID_POWER", "power must be 'on', 'off', or 'refresh'");
+        throw new CommandError(
+          400,
+          "INVALID_POWER",
+          "power must be 'on', 'off', 'refresh', or 'setBasic'",
+        );
+      }
+
+      const fields =
+        power === "setBasic" ? sanitizeFields(input.fields ?? null) : null;
+      if (power === "setBasic" && !fields) {
+        throw new CommandError(
+          400,
+          "INVALID_FIELDS",
+          "setBasic requires a non-empty fields object",
+        );
       }
 
       const exists = await repo.installationExists(installationId);
@@ -259,6 +299,7 @@ export const createCommandService = (
         power,
         requestedBy: input.requestedBy?.trim() || null,
         expiresAt,
+        fields,
       });
     },
 
@@ -274,7 +315,25 @@ export const createCommandService = (
         return NO_COMMAND;
       }
       const sent = await repo.markSent(cmd.id, new Date());
-      return { id: sent.id, module: sent.module, power: sent.power };
+      const payload: {
+        id: string;
+        module: number;
+        power: string;
+        fields?: Record<string, unknown>;
+      } = {
+        id: sent.id,
+        module: sent.module,
+        power: sent.power,
+      };
+      if (
+        sent.power === "setBasic" &&
+        sent.fields &&
+        typeof sent.fields === "object" &&
+        !Array.isArray(sent.fields)
+      ) {
+        payload.fields = sent.fields as Record<string, unknown>;
+      }
+      return payload;
     },
 
     async ack(input: AckInput) {

@@ -56,8 +56,6 @@ const STATUS_LABEL: Record<FaultStatus, string> = {
 
 export default function DeviceFaultHistory({ installationId, faults }: Props) {
   const router = useRouter();
-  const [refreshState, setRefreshState] = useState<"idle" | "sending" | "waiting">("idle");
-  const [refreshMsg, setRefreshMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [ackingId, setAckingId] = useState<string | null>(null);
 
   const activeFaults = faults.filter((f) => f.active);
@@ -87,38 +85,6 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
     },
     [installationId, router],
   );
-
-  const handleRefresh = useCallback(async () => {
-    setRefreshState("sending");
-    setRefreshMsg(null);
-    try {
-      const res = await fetch("/api/receiver/commands/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ installationId, module: 0, power: "refresh" }),
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        message?: string;
-        code?: string;
-      };
-      if (!res.ok) {
-        setRefreshMsg({ type: "err", text: data.message ?? data.code ?? `요청 실패 (${res.status})` });
-        setRefreshState("idle");
-        return;
-      }
-      setRefreshState("waiting");
-      setRefreshMsg({ type: "ok", text: "갱신 명령 전송됨 — 15초 후 데이터를 재조회합니다." });
-      setTimeout(() => {
-        router.refresh();
-        setRefreshState("idle");
-        setRefreshMsg(null);
-      }, 15_000);
-    } catch {
-      setRefreshMsg({ type: "err", text: "네트워크 오류" });
-      setRefreshState("idle");
-    }
-  }, [installationId, router]);
 
   return (
     <section className="device-detail-body">
@@ -150,25 +116,10 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
             )}
           </div>
 
-          <div className="fault-refresh-row">
-            <button
-              type="button"
-              className="fault-refresh-btn"
-              disabled={refreshState !== "idle"}
-              onClick={() => void handleRefresh()}
-            >
-              {refreshState === "sending"
-                ? "…"
-                : refreshState === "waiting"
-                  ? "⏳ 대기 중…"
-                  : "↻ 데이터 새로고침"}
-            </button>
-            {refreshMsg && (
-              <span className={`fault-refresh-msg fault-refresh-msg-${refreshMsg.type}`}>
-                {refreshMsg.text}
-              </span>
-            )}
-          </div>
+          <p className="fault-refresh-hint">
+            HMI 명령·데이터 갱신은 <strong>설정</strong> 탭에서만 동작합니다
+            (webSettingsActive).
+          </p>
         </div>
 
         {faults.length === 0 ? (
