@@ -6,6 +6,11 @@ COPY package.json yarn.lock ./
 COPY apps/backend/package.json apps/backend/
 COPY apps/frontend/package.json apps/frontend/
 
+# @pmcs/backend의 postinstall이 `prisma generate`를 돌리므로,
+# yarn install 이전에 schema/config가 이미 있어야 한다.
+COPY apps/backend/prisma.config.ts apps/backend/
+COPY apps/backend/prisma/ apps/backend/prisma/
+
 # Always install build tools (tsc/prisma) even if host sets NODE_ENV=production.
 RUN yarn install --frozen-lockfile --production=false
 
