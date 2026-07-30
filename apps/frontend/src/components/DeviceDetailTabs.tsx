@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import DeviceDetailChartsLazy from "./DeviceDetailChartsLazy";
 import DeviceHistoryCharts from "./DeviceHistoryCharts";
 import DeviceModulePowerPanel from "./DeviceModulePowerPanel";
+import DeviceSettingsPanel from "./DeviceSettingsPanel";
 import DeviceFaultHistory from "./DeviceFaultHistory";
 import { StatusCard } from "./StatusCard";
 import ViewingBanner from "./ViewingBanner";
@@ -14,7 +15,7 @@ import type { FaultEvent } from "../lib/api";
 import { useWsEvents } from "../hooks/useWsEvents";
 import { useDeviceViewing } from "../hooks/useDeviceViewing";
 
-type Tab = "monitor" | "analytics" | "faults";
+type Tab = "monitor" | "analytics" | "settings" | "faults";
 
 const MonitorIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -26,6 +27,13 @@ const MonitorIcon = () => (
 const AnalyticsIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M18 20V10M12 20V4M6 20v-6" />
+  </svg>
+);
+
+const SettingsIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
   </svg>
 );
 
@@ -41,7 +49,7 @@ type Props = {
   device: DeviceWithInstallation;
   readings: TelemetryReading[];
   hours: number;
-  /** ADMIN만 모듈 전원 제어 패널 + Fault 이력 표시 */
+  /** ADMIN만 설정·전원 제어 + Fault 이력 표시 */
   isAdmin?: boolean;
   /** 명령 audit용 (로그인 사용자명) */
   adminUsername?: string;
@@ -60,22 +68,22 @@ export default function DeviceDetailTabs({
   const [tab, setTab] = useState<Tab>("monitor");
   const router = useRouter();
 
-  // Notify the server that this user is actively viewing the device.
-  // This enables HMI command polling on the device side.
-  const { showBanner, dismissBanner } = useDeviceViewing(device.installationId);
+  // webSettingsActive only while Settings tab is open (admin).
+  const settingsTabActive = isAdmin && tab === "settings";
+  const { showBanner, dismissBanner } = useDeviceViewing(
+    device.installationId,
+    settingsTabActive,
+  );
 
-  // Refresh server component data when this installation's device reports in
   useWsEvents((msg) => {
     if (
-      msg.type === "device_updated" &&
+      (msg.type === "device_updated" || msg.type === "settings_updated") &&
       msg.installationId === device.installationId
     ) {
       router.refresh();
     }
   });
 
-  // 활성(미해제·미확인·자동해제 시간 미경과) fault 만 빨강 + 카운트 대상.
-  // 해제·확인된 fault 는 이력에는 남되 탭은 일반 회색으로 표시된다.
   const activeFaultCount = faults.filter((f) => f.active).length;
   const hasActiveFaults = activeFaultCount > 0;
 
@@ -102,6 +110,16 @@ export default function DeviceDetailTabs({
         {isAdmin && (
           <button
             type="button"
+            className={`device-tab-btn${tab === "settings" ? " active" : ""}`}
+            onClick={() => setTab("settings")}
+          >
+            <span className="device-tab-icon"><SettingsIcon /></span>
+            설정
+          </button>
+        )}
+        {isAdmin && (
+          <button
+            type="button"
             className={`device-tab-btn${tab === "faults" ? " active" : ""}${hasActiveFaults ? " device-tab-btn-fault" : ""}`}
             onClick={() => setTab("faults")}
           >
@@ -114,14 +132,6 @@ export default function DeviceDetailTabs({
 
       {tab === "monitor" && (
         <div className="device-monitor-layout">
-          {isAdmin ? (
-            <DeviceModulePowerPanel
-              installationId={device.installationId}
-              moduleStatus={device.moduleStatus}
-              numOfMods={device.numOfMods}
-              requestedBy={adminUsername}
-            />
-          ) : null}
           <section className="device-detail-body device-monitor-charts">
             <h2 className="scada-section-title">실시간 계측</h2>
             <DeviceDetailChartsLazy device={device} />
@@ -147,6 +157,22 @@ export default function DeviceDetailTabs({
             faults={faults}
           />
         </section>
+      )}
+
+      {tab === "settings" && isAdmin && (
+        <div className="device-settings-layout">
+          <DeviceModulePowerPanel
+            installationId={device.installationId}
+            moduleStatus={device.moduleStatus}
+            numOfMods={device.numOfMods}
+            requestedBy={adminUsername}
+          />
+          <DeviceSettingsPanel
+            installationId={device.installationId}
+            requestedBy={adminUsername}
+            numOfMods={device.numOfMods}
+          />
+        </div>
       )}
 
       {tab === "faults" && isAdmin && (

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 /** How long (ms) the banner stays visible before auto-dismissing. */
-const AUTO_DISMISS_MS = 8_000;
+const AUTO_DISMISS_MS = 10_000;
 
 type Props = {
   onDismiss: () => void;
@@ -42,8 +42,7 @@ const CloseIcon = () => (
 );
 
 /**
- * Informational banner shown when the user begins actively viewing a device.
- * Auto-dismisses after AUTO_DISMISS_MS or when the user clicks the close button.
+ * Banner shown while the Device Settings tab keeps webSettingsActive=true.
  */
 export default function ViewingBanner({ onDismiss }: Props) {
   useEffect(() => {
@@ -56,10 +55,11 @@ export default function ViewingBanner({ onDismiss }: Props) {
       <div className="viewing-banner-body">
         <InfoIcon />
         <div className="viewing-banner-text">
-          <span className="viewing-banner-title">실시간 모니터링 중</span>
+          <span className="viewing-banner-title">장치 설정 동기화 중</span>
           <span className="viewing-banner-desc">
-            장치 상태와 원격 명령은 이 화면에 반영되기까지 최대{" "}
-            <strong>60초</strong> 걸릴 수 있습니다.
+            HMI가 다음 텔레메트리 응답에서 Settings 모드를 인식한 뒤, 약{" "}
+            <strong>1분</strong> 주기로 설정·명령을 주고받습니다.
+            (최초 연결까지 최대 약 10분 소요될 수 있습니다)
           </span>
         </div>
       </div>

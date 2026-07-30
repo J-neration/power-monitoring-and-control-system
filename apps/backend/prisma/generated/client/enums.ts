@@ -21,7 +21,8 @@ export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 export const DeviceCommandPower = {
   on: 'on',
   off: 'off',
-  refresh: 'refresh'
+  refresh: 'refresh',
+  setBasic: 'setBasic'
 } as const
 
 export type DeviceCommandPower = (typeof DeviceCommandPower)[keyof typeof DeviceCommandPower]

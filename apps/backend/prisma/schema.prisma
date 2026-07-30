@@ -21,6 +21,7 @@ enum DeviceCommandPower {
   on
   off
   refresh
+  setBasic
 }
 
 enum DeviceCommandStatus {
@@ -109,17 +110,41 @@ model Installation {
   /// USIM ICCID (HMI가 보내는 값과 동일하게 정규화해 저장). 출하 전/현장에서 백엔드에 등록.
   iccid     String?  @unique
 
+  /// Device Settings 탭 열림 여부 (HMI POST /receiver 응답 webSettingsActive)
+  webSettingsActive      Boolean   @default(false)
+  /// Settings 탭 heartbeat 시각 — 이 시각 + TTL 지나면 inactive 로 간주
+  webSettingsHeartbeatAt DateTime?
+
   site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   device           Device?                     // 최신 텔레메트리 (1:1)
   telemetryRecords TelemetryRecord[]           // 시계열 이력
   commands         DeviceCommand[]
   faultEvents      FaultEvent[]               // fault 이력
   moduleFaultStates ModuleFaultState[]        // HMI /receiver/faults upsert 상태
+  deviceSettings   InstallationDeviceSettings? // HMI POST /receiver/settings 스냅샷
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([siteId])
+}
+
+/* =========================
+ * 2b) InstallationDeviceSettings (HMI basic settings 스냅샷)
+ * ========================= */
+model InstallationDeviceSettings {
+  installationId String       @id
+  installation   Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  /// HMI moduleType: "v1v2" | "v3v4" | "v5"
+  moduleType     String
+  numOfMods      Int          @default(0)
+
+  /// settings.basic[] — UI engineering units (not raw Modbus)
+  basic          Json
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 }
 
 /* =========================
@@ -340,6 +365,9 @@ model DeviceCommand {
   power          DeviceCommandPower
   status         DeviceCommandStatus @default(pending)
   requestedBy    String?
+
+  /// setBasic 부분 갱신 필드 (HMI가 JSON에서 스캔). on/off/refresh 는 null
+  fields         Json?
 
   createdAt      DateTime            @default(now())
   sentAt         DateTime?

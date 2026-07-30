@@ -6,10 +6,15 @@ import {
   resolveInstallationIdForReceiver,
 } from "../services/deviceService.js";
 import { z } from "zod";
-import { authenticate, requireAdmin } from "../middleware/authenticate.js";
+import { requireAdmin } from "../middleware/authenticate.js";
 import { commandService, CommandError } from "../services/commandService.js";
 import { faultService } from "../services/faultService.js";
+import {
+  settingsService,
+  SettingsError,
+} from "../services/settingsService.js";
 import { wsHub } from "../lib/wsHub.js";
+import * as viewingState from "../lib/viewingState.js";
 
 type ReceiverOptions = { receiverApiKey: string };
 
@@ -75,12 +80,28 @@ const createCommandSchema = z.object({
   module: z.number().int(),
   power: z.string().min(1),
   requestedBy: z.string().trim().optional().nullable(),
+  fields: z
+    .record(
+      z.string(),
+      z.union([z.number(), z.string(), z.boolean(), z.null()]),
+    )
+    .optional()
+    .nullable(),
 });
 
 const ackSchema = z.object({
   id: z.string().min(1),
   ok: z.boolean(),
   message: z.string().optional(),
+});
+
+const receiverSettingsSchema = z.object({
+  iccid: z.string().min(1),
+  moduleType: z.string().min(1),
+  numOfMods: z.coerce.number().int().optional(),
+  settings: z.object({
+    basic: z.array(z.record(z.string(), z.unknown())),
+  }),
 });
 
 /**
@@ -430,16 +451,75 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       });
     }
 
+    // Compact ACK for HMI modem buffer (~2KB). Do NOT echo the request body —
+    // echoing ~900B telemetry roughly doubles the response and truncates the read.
+    const webSettingsActive = identity.installationId
+      ? await viewingState.isWebSettingsActive(identity.installationId)
+      : false;
+
     return reply.send({
       ok: true,
+      webSettingsActive,
       received_at: new Date().toISOString(),
-      echo: body,
       identity: {
         installationId: identity.installationId,
         resolvedVia: identity.resolvedVia,
       },
-      device,
+      device: device
+        ? {
+            installationId: device.installationId,
+            model: device.model,
+            capacity: device.capacity,
+            moduleStatus: device.moduleStatus,
+            numOfMods: device.numOfMods,
+            lastSeenAt: device.lastSeenAt,
+            csq: device.csq,
+            rsrp: device.rsrp,
+          }
+        : null,
     });
+  });
+
+  /**
+   * POST /receiver/settings — HMI basic-settings snapshot (while Settings tab open).
+   * Auth: x-api-key (same as telemetry).
+   */
+  server.post("/settings", async (request, reply) => {
+    if (!authByApiKey(request, reply)) {
+      return reply.status(401).send({ message: "Unauthorized" });
+    }
+    const obj = parseJsonObject(request.body);
+    if (!obj) {
+      return reply.status(400).send({ message: "Invalid JSON body" });
+    }
+    const parsed = receiverSettingsSchema.safeParse(obj);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        message: "Invalid request body",
+        errors: parsed.error.flatten(),
+      });
+    }
+    try {
+      const { installationId } = await settingsService.upsertFromReceiver({
+        iccid: parsed.data.iccid,
+        moduleType: parsed.data.moduleType,
+        numOfMods: parsed.data.numOfMods,
+        basic: parsed.data.settings.basic,
+      });
+      wsHub.broadcast({
+        type: "settings_updated",
+        installationId,
+      });
+      return reply.send({ ok: true });
+    } catch (error) {
+      if (error instanceof SettingsError) {
+        return reply
+          .status(error.httpStatus)
+          .send({ code: error.code, message: error.message });
+      }
+      server.log.error({ error }, "Failed to upsert device settings");
+      return reply.status(500).send({ message: "Failed to save settings" });
+    }
   });
 
   // Fault 이력 조회 (Admin 전용)
@@ -469,9 +549,16 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
         module: parsed.data.module,
         power: parsed.data.power,
         requestedBy: parsed.data.requestedBy ?? request.user.username,
+        fields: parsed.data.fields ?? null,
       });
       server.log.info(
-        { commandId: cmd.id, installationId: cmd.installationId, module: cmd.module, power: cmd.power },
+        {
+          commandId: cmd.id,
+          installationId: cmd.installationId,
+          module: cmd.module,
+          power: cmd.power,
+          hasFields: !!parsed.data.fields,
+        },
         "Command created",
       );
       return reply.status(201).send({ command: cmd });

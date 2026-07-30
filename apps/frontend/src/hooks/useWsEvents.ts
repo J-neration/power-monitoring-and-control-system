@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 export type WsMessage =
   | { type: "welcome"; timestamp: number }
   | { type: "device_updated"; installationId: string }
+  | { type: "settings_updated"; installationId: string }
   | { type: "command_acked"; commandId: string; status: string; installationId: string };
 
 type Handler = (msg: WsMessage) => void;

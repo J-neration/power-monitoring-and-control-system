@@ -1,67 +1,100 @@
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../../prisma/generated/client/client.js";
+
 /**
- * In-memory active viewer registry.
+ * DB-backed Settings-tab flag (`Installation.webSettingsActive`).
  *
- * Tracks which users are currently viewing a given device page.
- * Uses a per-viewer TTL so that crashed browsers (no stop call) naturally
- * expire after VIEWER_TTL_MS. The frontend sends a heartbeat every 60 s by
- * re-calling POST /devices/:id/viewing/start, which resets the timestamp.
+ * Survives process restarts and multi-instance deploys (Railway).
+ * Heartbeat TTL (~2.5 min) clears stale true when the browser dies without stop.
  *
- * Multi-user: multiple users may view the same device simultaneously.
- * hasActiveViewers() returns true as long as at least one viewer is fresh.
+ * Do NOT expose as webDetailActive — HMI contract uses webSettingsActive only.
  */
 
-/** How long a viewer entry stays valid without a heartbeat (ms). */
-const VIEWER_TTL_MS = 90_000;
+/** How long a settings-tab session stays valid without a heartbeat (ms). */
+export const SETTINGS_TTL_MS = 150_000; // 2.5 minutes
 
-/** installationId → (userId → lastPingedAt timestamp) */
-const state = new Map<string, Map<string, number>>();
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({
+    connectionString:
+      process.env.DATABASE_URL ?? "postgresql://pmcs:pmcs@localhost:5432/pmcs",
+  }),
+});
 
-function getOrCreate(installationId: string): Map<string, number> {
-  let map = state.get(installationId);
-  if (!map) {
-    map = new Map();
-    state.set(installationId, map);
+/** Register or refresh Settings-tab session. Call on enter + heartbeat. */
+export async function startViewing(
+  installationId: string,
+  _userId?: string,
+): Promise<void> {
+  const now = new Date();
+  await prisma.installation.updateMany({
+    where: { id: installationId },
+    data: {
+      webSettingsActive: true,
+      webSettingsHeartbeatAt: now,
+    },
+  });
+}
+
+/** Clear Settings-tab session. Call on leave / unmount / logout. */
+export async function stopViewing(
+  installationId: string,
+  _userId?: string,
+): Promise<void> {
+  await prisma.installation.updateMany({
+    where: { id: installationId },
+    data: {
+      webSettingsActive: false,
+      webSettingsHeartbeatAt: null,
+    },
+  });
+}
+
+/**
+ * True if Settings tab is active and heartbeat is within TTL.
+ * Stale rows are cleared lazily.
+ */
+export async function isWebSettingsActive(
+  installationId: string,
+): Promise<boolean> {
+  if (!installationId) return false;
+  const row = await prisma.installation.findUnique({
+    where: { id: installationId },
+    select: {
+      webSettingsActive: true,
+      webSettingsHeartbeatAt: true,
+    },
+  });
+  if (!row?.webSettingsActive) return false;
+  const hb = row.webSettingsHeartbeatAt;
+  if (!hb) {
+    await prisma.installation.updateMany({
+      where: { id: installationId },
+      data: { webSettingsActive: false },
+    });
+    return false;
   }
-  return map;
-}
-
-/** Register or refresh a viewer. Call on page open and on heartbeat. */
-export function startViewing(installationId: string, userId: string): void {
-  getOrCreate(installationId).set(userId, Date.now());
-}
-
-/** Remove a viewer. Call on page close / tab hidden (after grace period). */
-export function stopViewing(installationId: string, userId: string): void {
-  const map = state.get(installationId);
-  if (!map) return;
-  map.delete(userId);
-  if (map.size === 0) state.delete(installationId);
-}
-
-/** Returns true if at least one non-stale viewer is registered. */
-export function hasActiveViewers(installationId: string): boolean {
-  return getActiveViewerCount(installationId) > 0;
-}
-
-/** Returns the count of non-stale viewers. */
-export function getActiveViewerCount(installationId: string): number {
-  const map = state.get(installationId);
-  if (!map) return 0;
-  const cutoff = Date.now() - VIEWER_TTL_MS;
-  let count = 0;
-  for (const ts of map.values()) {
-    if (ts > cutoff) count++;
+  if (Date.now() - hb.getTime() > SETTINGS_TTL_MS) {
+    await prisma.installation.updateMany({
+      where: { id: installationId },
+      data: {
+        webSettingsActive: false,
+        webSettingsHeartbeatAt: null,
+      },
+    });
+    return false;
   }
-  return count;
+  return true;
 }
 
-/** Periodic cleanup — remove entries whose TTL has expired. */
-setInterval(() => {
-  const cutoff = Date.now() - VIEWER_TTL_MS;
-  for (const [installationId, viewers] of state) {
-    for (const [userId, ts] of viewers) {
-      if (ts <= cutoff) viewers.delete(userId);
-    }
-    if (viewers.size === 0) state.delete(installationId);
-  }
-}, 60_000);
+/** Alias kept for call sites that used the old in-memory API. */
+export async function hasActiveViewers(
+  installationId: string,
+): Promise<boolean> {
+  return isWebSettingsActive(installationId);
+}
+
+export async function getActiveViewerCount(
+  installationId: string,
+): Promise<number> {
+  return (await isWebSettingsActive(installationId)) ? 1 : 0;
+}

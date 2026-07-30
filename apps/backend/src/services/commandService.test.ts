@@ -43,9 +43,10 @@ class InMemoryRepo {
     id: string;
     installationId: string;
     module: number;
-    power: "on" | "off";
+    power: "on" | "off" | "refresh" | "setBasic";
     requestedBy?: string | null;
     expiresAt?: Date | null;
+    fields?: unknown;
   }) {
     const cmd: DeviceCommand = {
       id: data.id,
@@ -54,6 +55,7 @@ class InMemoryRepo {
       power: data.power,
       status: "pending",
       requestedBy: data.requestedBy ?? null,
+      fields: (data.fields as DeviceCommand["fields"]) ?? null,
       createdAt: new Date(),
       sentAt: null,
       ackedAt: null,
@@ -171,4 +173,26 @@ test("duplicate ack is idempotent", async () => {
   const second = await service.ack({ id: created.id, ok: true, message: "queued" });
   assert.equal(second.idempotent, true);
   assert.equal(second.status, "acked");
+});
+
+test("setBasic create -> poll includes fields", async () => {
+  const repo = new InMemoryRepo();
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "setBasic",
+    fields: { ectrs: 1200, pcs: 55.5, reactiveSwitch: 1 },
+  });
+  assert.equal(created.power, "setBasic");
+
+  const polled = await service.poll("PSVG-RNDTEST5");
+  assert.equal(polled.id, created.id);
+  assert.equal(polled.power, "setBasic");
+  assert.deepEqual(polled.fields, {
+    ectrs: 1200,
+    pcs: 55.5,
+    reactiveSwitch: 1,
+  });
 });
