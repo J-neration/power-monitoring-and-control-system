@@ -1,9 +1,0 @@
-# When Railway Root Directory = apps/backend
-[build]
-builder = "NIXPACKS"
-
-[deploy]
-startCommand = "sh -c '(npx prisma migrate deploy && echo migrate_ok) || echo migrate_failed; node dist/src/index.js'"
-healthcheckPath = "/health"
-healthcheckTimeout = 60
-restartPolicyType = "ON_FAILURE"
