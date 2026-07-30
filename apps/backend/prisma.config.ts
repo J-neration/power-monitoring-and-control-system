@@ -1,10 +1,11 @@
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { config } from "dotenv";
 import { defineConfig } from "prisma/config";
 
-// prisma.config.ts는 apps/backend/ 에 위치 → __dirname 기준으로 .env 로드
+// prisma.config.ts는 apps/backend/ 에 위치 → 이 파일 기준으로 .env 로드
 // (yarn workspace나 npx prisma로 어떤 CWD에서 실행되든 동일하게 동작)
-const dir = import.meta.dirname;
+const dir = path.dirname(fileURLToPath(import.meta.url));
 const nodeEnv = process.env.NODE_ENV ?? "development";
 
 // Next.js 방식과 동일한 우선순위로 로드 (뒤에 로드될수록 높은 우선순위)
