@@ -21,6 +21,8 @@ enum DeviceCommandPower {
   on
   off
   refresh
+  /// Settings tab: basic settings snapshot + moduleStatus (not full monitor metrics intent)
+  refreshSettings
   setBasic
 }
 
@@ -110,10 +112,17 @@ model Installation {
   /// USIM ICCID (HMI가 보내는 값과 동일하게 정규화해 저장). 출하 전/현장에서 백엔드에 등록.
   iccid     String?  @unique
 
-  /// Device Settings 탭 열림 여부 (HMI POST /receiver 응답 webSettingsActive)
+  /// Legacy — HMI ignores. Always leave false; do not use for settings upload.
   webSettingsActive      Boolean   @default(false)
-  /// Settings 탭 heartbeat 시각 — 이 시각 + TTL 지나면 inactive 로 간주
+  /// Settings 탭 heartbeat 시각 (legacy, unused)
   webSettingsHeartbeatAt DateTime?
+
+  /// Admin remote UI session for this installation (HMI command-poll gate).
+  /// True while an ADMIN is on this device page with heartbeats.
+  adminSessionActive      Boolean   @default(false)
+  adminSessionHeartbeatAt DateTime?
+  /// Admin userId that last heartbeated (logout clears by this)
+  adminSessionUserId      String?
 
   site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   device           Device?                     // 최신 텔레메트리 (1:1)

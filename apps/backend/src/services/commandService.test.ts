@@ -6,9 +6,14 @@ import type { DeviceCommand } from "../../prisma/generated/client/client.js";
 class InMemoryRepo {
   commands: DeviceCommand[] = [];
   installations = new Set<string>(["PSVG-RNDTEST5"]);
+  moduleTypes = new Map<string, string>();
 
   async installationExists(installationId: string) {
     return this.installations.has(installationId);
+  }
+
+  async getModuleType(installationId: string) {
+    return this.moduleTypes.get(installationId) ?? null;
   }
 
   async expireCommands(now: Date) {
@@ -43,7 +48,7 @@ class InMemoryRepo {
     id: string;
     installationId: string;
     module: number;
-    power: "on" | "off" | "refresh" | "setBasic";
+    power: "on" | "off" | "refresh" | "refreshSettings" | "setBasic";
     requestedBy?: string | null;
     expiresAt?: Date | null;
     fields?: unknown;
@@ -194,5 +199,32 @@ test("setBasic create -> poll includes fields", async () => {
     ectrs: 1200,
     pcs: 55.5,
     reactiveSwitch: 1,
+  });
+});
+
+test("setBasic filters to v3v4 allowed keys and renames tc→tpf", async () => {
+  const repo = new InMemoryRepo();
+  repo.moduleTypes.set("PSVG-RNDTEST5", "v3v4");
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "setBasic",
+    fields: {
+      reactiveSwitch: 1,
+      k0: 100,
+      tc: 0.98,
+      ectrs: 1200, // not allowed on v3v4
+      thdup: 5, // not allowed
+    },
+  });
+
+  const polled = await service.poll("PSVG-RNDTEST5");
+  assert.equal(polled.id, created.id);
+  assert.deepEqual(polled.fields, {
+    reactiveSwitch: 1,
+    k0: 100,
+    tpf: 0.98,
   });
 });

@@ -461,13 +461,23 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
 
     // Compact ACK for HMI modem buffer (~2KB). Do NOT echo the request body —
     // echoing ~900B telemetry roughly doubles the response and truncates the read.
-    const webSettingsActive = identity.installationId
-      ? await viewingState.isWebSettingsActive(identity.installationId)
+    const adminSessionActive = identity.installationId
+      ? await viewingState.isAdminSessionActive(identity.installationId)
       : false;
+
+    // HMI just received adminSessionActive in this ACK (session signaled).
+    if (adminSessionActive && identity.installationId) {
+      wsHub.broadcast({
+        type: "admin_session_signaled",
+        installationId: identity.installationId,
+      });
+    }
 
     return reply.send({
       ok: true,
-      webSettingsActive,
+      adminSessionActive,
+      // Legacy — HMI must ignore. Never gate settings upload on this.
+      webSettingsActive: false,
       received_at: new Date().toISOString(),
       identity: {
         installationId: identity.installationId,
@@ -489,7 +499,8 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
   });
 
   /**
-   * POST /receiver/settings — HMI basic-settings snapshot (while Settings tab open).
+   * POST /receiver/settings — HMI basic-settings snapshot (on-demand).
+   * Expected after `refreshSettings` / `setBasic` (not after monitor `refresh`).
    * Auth: x-api-key (same as telemetry).
    */
   server.post("/settings", async (request, reply) => {
@@ -618,6 +629,17 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
     }
     const installationId = identity.installationId ?? "";
     try {
+      // HMI is polling commands → admin remote session is live on the device.
+      if (
+        installationId &&
+        (await viewingState.isAdminSessionActive(installationId))
+      ) {
+        wsHub.broadcast({
+          type: "admin_session_linked",
+          installationId,
+        });
+      }
+
       const command = await commandService.poll(installationId);
       if (command.id) {
         server.log.info(

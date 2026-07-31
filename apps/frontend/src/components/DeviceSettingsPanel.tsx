@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  fieldsForModuleType,
+  fieldsFromPayload,
   isModuleType,
+  migrateBasicRowKeys,
   moduleTypeLabel,
   type BasicSettingRow,
   type DeviceSettingsSnapshot,
@@ -17,6 +18,11 @@ type Props = {
   requestedBy?: string;
   /** Fallback module count from telemetry when settings snapshot missing */
   numOfMods?: number;
+  /**
+   * Incremented by parent after「설정값 갱신」ACK — reload DB snapshot
+   * (HMI should have POSTed /receiver/settings after refreshSettings).
+   */
+  pullNonce?: number;
 };
 
 type LoadState =
@@ -29,11 +35,12 @@ function toEditableRows(
   fields: SettingFieldDef[],
 ): BasicSettingRow[] {
   return basic.map((row) => {
-    const next: BasicSettingRow = { mod: row.mod ?? 0 };
+    const migrated = migrateBasicRowKeys(row);
+    const next: BasicSettingRow = { mod: migrated.mod ?? 0 };
     for (const f of fields) {
-      const v = row[f.key];
+      const v = migrated[f.key];
       if (v === undefined || v === null) {
-        next[f.key] = f.kind === "switch" ? 0 : 0;
+        next[f.key] = 0;
       } else if (typeof v === "boolean") {
         next[f.key] = v ? 1 : 0;
       } else {
@@ -63,6 +70,7 @@ export default function DeviceSettingsPanel({
   installationId,
   requestedBy,
   numOfMods,
+  pullNonce = 0,
 }: Props) {
   const [load, setLoad] = useState<LoadState>({ status: "loading" });
   const [rows, setRows] = useState<BasicSettingRow[]>([]);
@@ -80,10 +88,10 @@ export default function DeviceSettingsPanel({
       ? load.snapshot.moduleType
       : null;
 
-  const fieldDefs = useMemo(
-    () => (moduleType ? fieldsForModuleType(moduleType) : []),
-    [moduleType],
-  );
+  const fieldDefs = useMemo(() => {
+    if (!moduleType || load.status !== "ready") return [];
+    return fieldsFromPayload(moduleType, load.snapshot.basic);
+  }, [moduleType, load]);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -112,9 +120,13 @@ export default function DeviceSettingsPanel({
       const mt = isModuleType(data.settings.moduleType)
         ? data.settings.moduleType
         : "v1v2";
-      const fields = fieldsForModuleType(mt);
-      const editable = toEditableRows(data.settings.basic, fields);
-      setLoad({ status: "ready", snapshot: { ...data.settings, moduleType: mt } });
+      const migratedBasic = data.settings.basic.map(migrateBasicRowKeys);
+      const fields = fieldsFromPayload(mt, migratedBasic);
+      const editable = toEditableRows(migratedBasic, fields);
+      setLoad({
+        status: "ready",
+        snapshot: { ...data.settings, moduleType: mt, basic: migratedBasic },
+      });
       setRows(editable);
       setBaseline(editable.map((r) => ({ ...r })));
       setSelectedMod((prev) =>
@@ -131,6 +143,13 @@ export default function DeviceSettingsPanel({
   useEffect(() => {
     void fetchSettings();
   }, [fetchSettings]);
+
+  // Parent bumps after「설정값 갱신」ACK — wait briefly for HMI POST /receiver/settings.
+  useEffect(() => {
+    if (pullNonce <= 0) return;
+    const t = window.setTimeout(() => void fetchSettings(), 3_000);
+    return () => window.clearTimeout(t);
+  }, [pullNonce, fetchSettings]);
 
   useWsEvents((msg) => {
     if (
@@ -150,7 +169,7 @@ export default function DeviceSettingsPanel({
         msg.status === "acked"
           ? {
               type: "ok",
-              text: "설정 적용 완료 — 다음 스냅샷에서 반영됩니다.",
+              text: "설정 적용 완료 — 스냅샷을 다시 불러옵니다.",
             }
           : { type: "err", text: "설정 적용 실패" },
       );
@@ -259,8 +278,9 @@ export default function DeviceSettingsPanel({
           ) : null}
           <p className="device-settings-empty">
             아직 장치에서 설정 스냅샷이 도착하지 않았습니다.
-            Settings 탭을 연 상태로 두면, HMI가 다음 텔레메트리 이후 약 1분
-            주기로 설정을 전송합니다.
+            「설정값 갱신」을 누르면 HMI가 설정·모듈 상태를 한 번 전송합니다.
+            설정 적용(setBasic) 직후나 「스냅샷 새로고침」으로도 DB에 저장된
+            최신 값을 볼 수 있습니다.
             {numOfMods != null ? ` (텔레메트리 모듈 수: ${numOfMods})` : null}
           </p>
           <button
@@ -269,6 +289,32 @@ export default function DeviceSettingsPanel({
             onClick={() => void fetchSettings()}
           >
             다시 불러오기
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  if (fieldDefs.length === 0) {
+    return (
+      <section className="device-detail-body">
+        <div className="chart-card chart-card-wide device-settings-panel">
+          <h3 className="chart-title">
+            기본 설정
+            <span className="chart-title-sub">
+              {moduleTypeLabel(moduleType)} · 표시 가능 필드 없음
+            </span>
+          </h3>
+          <p className="device-settings-empty">
+            저장된 스냅샷에 이 moduleType({moduleType})용 필드가 없습니다.
+            「설정값 갱신」으로 HMI에서 최신 basic 설정을 다시 받으세요.
+          </p>
+          <button
+            type="button"
+            className="device-settings-reload"
+            onClick={() => void fetchSettings()}
+          >
+            스냅샷 새로고침
           </button>
         </div>
       </section>

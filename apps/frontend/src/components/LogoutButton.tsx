@@ -22,6 +22,15 @@ export default function LogoutButton() {
 
   async function handleConfirm() {
     setConfirming(false);
+    // Clear admin remote sessions before dropping the cookie so next HMI ACK gets false
+    try {
+      await fetch("/api/devices/admin-session/stop-all", {
+        method: "POST",
+        keepalive: true,
+      });
+    } catch {
+      // best-effort
+    }
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
     router.refresh();

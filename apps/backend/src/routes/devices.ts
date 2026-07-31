@@ -47,7 +47,6 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
   /**
    * GET /devices/:id/settings
    * Latest HMI basic-settings snapshot (POST /receiver/settings).
-   * Registered before GET /:id so Fastify never treats "settings" as an id suffix issue.
    */
   server.get("/:id/settings", { preHandler: requireAdmin }, async (request, reply) => {
     const { id } = request.params as { id: string };
@@ -56,16 +55,34 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
       return reply.status(404).send({ message: "Device not found" });
     }
     const settings = await settingsService.getByInstallationId(id);
-    const webSettingsActive = await viewingState.isWebSettingsActive(id);
+    const adminSessionActive = await viewingState.isAdminSessionActive(id);
     return reply.send({
       settings,
-      webSettingsActive,
+      adminSessionActive,
+      webSettingsActive: false,
     });
   });
 
   /**
+   * POST /devices/admin-session/stop-all
+   * Logout: clear every installation session owned by this admin.
+   * Registered before /:id so "admin-session" is never treated as an id.
+   */
+  server.post(
+    "/admin-session/stop-all",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const cleared = await viewingState.stopAllAdminSessionsForUser(
+        request.user.userId,
+      );
+      return reply.send({ ok: true, cleared });
+    },
+  );
+
+  /**
    * POST /devices/:id/viewing/start
-   * Settings 탭 진입 → Installation.webSettingsActive = true (+ heartbeat).
+   * Admin opens device remote page → Installation.adminSessionActive = true.
+   * HMI reads this from POST /receiver ACK and starts ~1min command polling.
    */
   server.post("/:id/viewing/start", { preHandler: requireAdmin }, async (request, reply) => {
     const { id } = request.params as { id: string };
@@ -74,28 +91,30 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
       return reply.status(404).send({ message: "Device not found" });
     }
     const { userId } = request.user;
-    await viewingState.startViewing(id, userId);
+    await viewingState.startAdminSession(id, userId);
     return reply.send({
       ok: true,
       installationId: id,
-      webSettingsActive: true,
+      adminSessionActive: true,
+      webSettingsActive: false,
       activeViewers: await viewingState.getActiveViewerCount(id),
     });
   });
 
   /**
    * POST /devices/:id/viewing/stop
-   * Settings 탭 이탈 → Installation.webSettingsActive = false.
+   * Admin leaves device page → adminSessionActive = false.
    */
   server.post("/:id/viewing/stop", { preHandler: requireAdmin }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const { userId } = request.user;
-    await viewingState.stopViewing(id, userId);
+    await viewingState.stopAdminSession(id, userId);
     return reply.send({
       ok: true,
       installationId: id,
-      webSettingsActive: await viewingState.isWebSettingsActive(id),
-      activeViewers: await viewingState.getActiveViewerCount(id),
+      adminSessionActive: false,
+      webSettingsActive: false,
+      activeViewers: 0,
     });
   });
 
@@ -104,12 +123,13 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
    */
   server.get("/:id/viewing/status", { preHandler: authenticate }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const webSettingsActive = await viewingState.isWebSettingsActive(id);
+    const adminSessionActive = await viewingState.isAdminSessionActive(id);
     return reply.send({
       installationId: id,
-      webSettingsActive,
-      activeViewers: await viewingState.getActiveViewerCount(id),
-      isActivelyViewed: webSettingsActive,
+      adminSessionActive,
+      webSettingsActive: false,
+      activeViewers: adminSessionActive ? 1 : 0,
+      isActivelyViewed: adminSessionActive,
     });
   });
 

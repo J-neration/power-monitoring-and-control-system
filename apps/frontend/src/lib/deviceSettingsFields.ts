@@ -24,12 +24,28 @@ export type SettingFieldDef = {
   hint?: string;
 };
 
-const COMMON_FIELDS: SettingFieldDef[] = [
+/** v3v4 (200A) — exactly these 7 keys (HMI contract). */
+const V3V4_FIELDS: SettingFieldDef[] = [
+  { key: "reactiveSwitch", label: "무효 보상", kind: "switch" },
+  { key: "harmSwitch", label: "하모닉", kind: "switch" },
+  { key: "imbSwitch", label: "불평형", kind: "switch" },
+  { key: "ectp", label: "CT 위치 (ectp)", kind: "number", step: 1 },
+  { key: "k0", label: "K0", kind: "number", step: 1 },
+  { key: "ccr", label: "CCR", kind: "number", step: 0.01 },
+  { key: "tpf", label: "TPF", kind: "number", step: 0.01 },
+];
+
+/**
+ * v1v2 / v5 common basic catalog.
+ * UI still hides keys absent from the HMI snapshot payload.
+ */
+const V1V2_V5_FIELDS: SettingFieldDef[] = [
   { key: "ectp", label: "ECTP", kind: "number", step: 1 },
   { key: "ectrs", label: "ECTRS", kind: "number", step: 1 },
+  { key: "ictrs", label: "ICTRS", kind: "number", step: 1 },
   { key: "pcs", label: "PCS", kind: "number", step: 0.1 },
   { key: "ccr", label: "CCR", kind: "number", step: 0.1 },
-  { key: "tc", label: "TC", kind: "number", step: 0.1 },
+  { key: "tpf", label: "TPF", kind: "number", step: 0.1 },
   { key: "cm", label: "CM", kind: "number", step: 1 },
   { key: "apro", label: "A PRO", kind: "number", step: 1 },
   { key: "bpro", label: "B PRO", kind: "number", step: 1 },
@@ -41,28 +57,19 @@ const COMMON_FIELDS: SettingFieldDef[] = [
   { key: "numOfMods", label: "모듈 수", kind: "number", step: 1 },
 ];
 
-const ICTRS_FIELD: SettingFieldDef = {
-  key: "ictrs",
-  label: "ICTRS",
-  kind: "number",
-  step: 1,
-};
+export const ALLOWED_KEYS_V3V4: ReadonlySet<string> = new Set(
+  V3V4_FIELDS.map((f) => f.key),
+);
 
-const V3V4_EXTRA_FIELDS: SettingFieldDef[] = [
-  { key: "k0", label: "K0", kind: "number", step: 1 },
-  { key: "thdup", label: "THD UP", kind: "number", step: 1 },
-  { key: "thermp", label: "THERM P", kind: "number", step: 1 },
-  { key: "startupSwitch", label: "Startup", kind: "switch" },
-  { key: "resonpSwitch", label: "Reson P", kind: "switch" },
-  { key: "thdupSwitch", label: "THD UP SW", kind: "switch" },
-  { key: "vbuslowSwitch", label: "Vbus Low", kind: "switch" },
-  { key: "vnetphighSwitch", label: "Vnet P High", kind: "switch" },
-  { key: "qoffset", label: "Q Offset", kind: "number", step: 1 },
-  { key: "iratemode", label: "I Rate Mode", kind: "number", step: 1 },
-  { key: "filterWave", label: "Filter Wave", kind: "number", step: 1 },
-  { key: "closedLoop", label: "Closed Loop", kind: "switch" },
-  { key: "phase", label: "Phase", kind: "number", step: 1 },
-];
+export const ALLOWED_KEYS_V1V2_V5: ReadonlySet<string> = new Set(
+  V1V2_V5_FIELDS.map((f) => f.key),
+);
+
+export function allowedKeysForModuleType(
+  moduleType: ModuleType,
+): ReadonlySet<string> {
+  return moduleType === "v3v4" ? ALLOWED_KEYS_V3V4 : ALLOWED_KEYS_V1V2_V5;
+}
 
 export function moduleTypeLabel(moduleType: ModuleType): string {
   switch (moduleType) {
@@ -77,16 +84,42 @@ export function moduleTypeLabel(moduleType: ModuleType): string {
   }
 }
 
-/** Field defs for the given moduleType (omits keys that don't apply). */
+/** Allowed field catalog for the moduleType (not yet filtered by payload). */
 export function fieldsForModuleType(moduleType: ModuleType): SettingFieldDef[] {
-  if (moduleType === "v3v4") {
-    return [...COMMON_FIELDS, ...V3V4_EXTRA_FIELDS];
+  return moduleType === "v3v4" ? [...V3V4_FIELDS] : [...V1V2_V5_FIELDS];
+}
+
+/**
+ * Catalog ∩ keys present in snapshot rows.
+ * Do not render fields HMI did not send.
+ */
+export function fieldsFromPayload(
+  moduleType: ModuleType,
+  basic: BasicSettingRow[],
+): SettingFieldDef[] {
+  const catalog = fieldsForModuleType(moduleType);
+  const present = new Set<string>();
+  for (const row of basic) {
+    for (const key of Object.keys(row)) {
+      if (key === "mod") continue;
+      // Legacy alias — treat as tpf for display filtering
+      if (key === "tc") present.add("tpf");
+      else present.add(key);
+    }
   }
-  // v1v2 / v5: include ictrs after ectrs
-  const fields = [...COMMON_FIELDS];
-  const ectrsIdx = fields.findIndex((f) => f.key === "ectrs");
-  fields.splice(ectrsIdx + 1, 0, ICTRS_FIELD);
-  return fields;
+  return catalog.filter((f) => present.has(f.key));
+}
+
+/** Migrate legacy `tc` → `tpf` on a single basic row (in place copy). */
+export function migrateBasicRowKeys(row: BasicSettingRow): BasicSettingRow {
+  const next: BasicSettingRow = { ...row };
+  if ("tc" in next) {
+    if (next.tpf === undefined || next.tpf === null) {
+      next.tpf = next.tc;
+    }
+    delete next.tc;
+  }
+  return next;
 }
 
 export function isModuleType(value: unknown): value is ModuleType {

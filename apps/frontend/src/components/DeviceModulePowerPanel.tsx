@@ -11,6 +11,8 @@ import { useWsEvents } from "../hooks/useWsEvents";
 const MODULE_SLOT_COUNT = 6;
 const COMMAND_ACK_TIMEOUT_MS = 130_000;
 
+type CommandPower = "on" | "off" | "refreshSettings";
+
 type Props = {
   installationId: string;
   /** HMI 텔레메트리 `moduleStatus[]` (없으면 슬롯별 상태는 —) */
@@ -18,6 +20,8 @@ type Props = {
   /** 장치에 연결된 모듈 개수. 없으면 6슬롯 모두 제어 가능(기존 동작). */
   numOfMods?: number;
   requestedBy?: string;
+  /** Called after successful `refreshSettings` ACK (HMI posted settings + moduleStatus). */
+  onSettingsRefreshAcked?: () => void;
 };
 
 export default function DeviceModulePowerPanel({
@@ -25,6 +29,7 @@ export default function DeviceModulePowerPanel({
   moduleStatus,
   numOfMods,
   requestedBy,
+  onSettingsRefreshAcked,
 }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{
@@ -36,6 +41,7 @@ export default function DeviceModulePowerPanel({
   const [pendingCommandLabel, setPendingCommandLabel] = useState<string | null>(
     null,
   );
+  const [pendingPower, setPendingPower] = useState<CommandPower | null>(null);
 
   // HMI 폴링 주기(60초) 고려: 최대 130초까지 ACK 대기
   useEffect(() => {
@@ -43,6 +49,7 @@ export default function DeviceModulePowerPanel({
     const timer = setTimeout(() => {
       setPendingCommandId(null);
       setPendingCommandLabel(null);
+      setPendingPower(null);
       setMessage({
         type: "err",
         text: "HMI 응답 시간 초과 (최대 130초 대기) — 명령은 등록되었을 수 있으나 실행 여부를 확인할 수 없습니다.",
@@ -51,7 +58,6 @@ export default function DeviceModulePowerPanel({
     return () => clearTimeout(timer);
   }, [pendingCommandId]);
 
-  // Update message when HMI ACKs the pending command
   useWsEvents((msg) => {
     if (
       msg.type === "command_acked" &&
@@ -60,30 +66,38 @@ export default function DeviceModulePowerPanel({
       msg.commandId === pendingCommandId
     ) {
       const label = pendingCommandLabel ?? "명령";
+      const wasSettingsRefresh = pendingPower === "refreshSettings";
       setPendingCommandId(null);
       setPendingCommandLabel(null);
+      setPendingPower(null);
       setMessage(
         msg.status === "acked"
           ? {
               type: "ok",
               text: `${label} 실행 완료`,
-              hint: "약 60~80초 후 데이터가 갱신될 수 있습니다. 잠시 기다려주세요.",
+              hint: wasSettingsRefresh
+                ? "설정 스냅샷·모듈 상태를 불러옵니다. 반영까지 수 초 걸릴 수 있습니다."
+                : "모듈 상태가 곧 갱신될 수 있습니다.",
             }
           : { type: "err", text: `${label} 실행 실패` },
       );
+      if (msg.status === "acked" && wasSettingsRefresh) {
+        onSettingsRefreshAcked?.();
+      }
     }
   });
 
-  const send = async (module: number, power: "on" | "off" | "refresh") => {
+  const send = async (module: number, power: CommandPower) => {
     const key = `${module}-${power}`;
     const label =
-      power === "refresh"
-        ? "데이터 갱신"
+      power === "refreshSettings"
+        ? "설정값 갱신"
         : `M${module + 1} 파워 ${power === "on" ? "ON" : "OFF"}`;
     setBusy(key);
     setMessage(null);
     setPendingCommandId(null);
     setPendingCommandLabel(label);
+    setPendingPower(power);
     try {
       const res = await fetch("/api/receiver/commands/create", {
         method: "POST",
@@ -103,6 +117,7 @@ export default function DeviceModulePowerPanel({
       };
       if (!res.ok) {
         setPendingCommandLabel(null);
+        setPendingPower(null);
         setMessage({
           type: "err",
           text: data.message ?? data.code ?? `요청 실패 (${res.status})`,
@@ -119,6 +134,7 @@ export default function DeviceModulePowerPanel({
       });
     } catch {
       setPendingCommandLabel(null);
+      setPendingPower(null);
       setMessage({ type: "err", text: "네트워크 오류" });
     } finally {
       setBusy(null);
@@ -130,12 +146,16 @@ export default function DeviceModulePowerPanel({
       ? MODULE_SLOT_COUNT
       : Math.min(Math.max(0, Math.trunc(numOfMods)), MODULE_SLOT_COUNT);
 
+  const refreshBusy =
+    busy === "0-refreshSettings" ||
+    (pendingCommandId !== null && pendingPower === "refreshSettings");
+
   return (
     <section className="device-detail-body">
       <div className="chart-card chart-card-wide device-module-power-panel">
         <h3 className="chart-title">
           모듈 전원 제어
-          <span className="chart-title-sub">관리자 · 장치 폴링 후 실행</span>
+          <span className="chart-title-sub">관리자 · 설정·모듈 상태</span>
         </h3>
 
         {message ? (
@@ -161,15 +181,13 @@ export default function DeviceModulePowerPanel({
             type="button"
             className="device-refresh-btn"
             disabled={busy !== null || pendingCommandId !== null}
-            aria-busy={busy === "0-refresh" || pendingCommandId !== null}
-            onClick={() => void send(0, "refresh")}
+            aria-busy={refreshBusy}
+            onClick={() => void send(0, "refreshSettings")}
           >
-            {busy === "0-refresh" || pendingCommandId !== null
-              ? "…"
-              : "↻ 데이터 갱신"}
+            {refreshBusy ? "…" : "↻ 설정값 갱신"}
           </button>
           <span className="device-refresh-hint">
-            HMI에 갱신 명령을 전송합니다
+            설정 스냅샷·모듈 상태만 다시 받습니다 (모니터 계측은 모니터 탭)
           </span>
         </div>
 
