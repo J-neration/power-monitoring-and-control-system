@@ -7,12 +7,13 @@ import { PrismaClient } from "../../prisma/generated/client/client.js";
  * HMI reads `adminSessionActive` from POST /receiver ACK and only then polls
  * GET /receiver/commands (~1 min). Survives multi-instance deploys (Railway).
  *
- * Heartbeat TTL clears stale true when the browser dies without stop.
+ * Cleared explicitly on logout / tab close. Heartbeat TTL is a long crash-safety
+ * net (browser died without pagehide) — not a short “left the tab” timeout.
  * `webSettingsActive` is legacy and must stay false (HMI ignores it).
  */
 
-/** How long an admin session stays valid without a heartbeat (ms). */
-export const ADMIN_SESSION_TTL_MS = 90_000; // 90s — leave page → false without logout
+/** Crash-safety: clear stale true if browser dies without stop (ms). */
+export const ADMIN_SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8h — align with JWT
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({
@@ -40,13 +41,31 @@ export async function startAdminSession(
   });
 }
 
-/** Clear admin session for one installation. Call on leave / unmount. */
+/** Clear admin session for one installation (tab close). */
 export async function stopAdminSession(
   installationId: string,
   _userId?: string,
+  opts?: {
+    /**
+     * Only clear if heartbeat is still at/before this instant.
+     * Prevents a late keepalive stop from wiping a newer start.
+     */
+    notAfter?: Date | string | null;
+  },
 ): Promise<void> {
+  const notAfter = opts?.notAfter ? new Date(opts.notAfter) : null;
   await prisma.installation.updateMany({
-    where: { id: installationId },
+    where: {
+      id: installationId,
+      ...(notAfter && !Number.isNaN(notAfter.getTime())
+        ? {
+            OR: [
+              { adminSessionHeartbeatAt: null },
+              { adminSessionHeartbeatAt: { lte: notAfter } },
+            ],
+          }
+        : {}),
+    },
     data: {
       adminSessionActive: false,
       adminSessionHeartbeatAt: null,

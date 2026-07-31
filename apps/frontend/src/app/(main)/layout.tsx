@@ -4,6 +4,7 @@ import Image from "next/image";
 import { cookies } from "next/headers";
 import LiveClock from "../../components/Dashboard/LiveClock";
 import LogoutButton from "../../components/LogoutButton";
+import SessionTimeoutGuard from "../../components/SessionTimeoutGuard";
 import SystemStatusBar from "../../components/SystemStatusBar";
 import { CLIENT_LABELS } from "../../data/clients";
 
@@ -84,6 +85,7 @@ export default async function MainLayout({
 
   return (
     <>
+      <SessionTimeoutGuard />
       <header className="global-header">
         <div className="global-header-left">
           <Link href="/" className="global-logo">

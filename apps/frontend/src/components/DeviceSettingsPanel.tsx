@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   fieldsFromPayload,
   isModuleType,
   migrateBasicRowKeys,
-  moduleTypeLabel,
   type BasicSettingRow,
   type DeviceSettingsSnapshot,
   type ModuleType,
@@ -16,19 +15,22 @@ import { useWsEvents } from "../hooks/useWsEvents";
 type Props = {
   installationId: string;
   requestedBy?: string;
-  /** Fallback module count from telemetry when settings snapshot missing */
   numOfMods?: number;
-  /**
-   * Incremented by parent after「설정값 갱신」ACK — reload DB snapshot
-   * (HMI should have POSTed /receiver/settings after refreshSettings).
-   */
-  pullNonce?: number;
 };
 
 type LoadState =
   | { status: "loading" }
   | { status: "empty" }
   | { status: "ready"; snapshot: DeviceSettingsSnapshot };
+
+type StatusTone = "pending" | "ok" | "err" | "info";
+
+type StatusBanner = {
+  tone: StatusTone;
+  title: string;
+  detail?: string;
+  commandId?: string;
+};
 
 function toEditableRows(
   basic: BasicSettingRow[],
@@ -66,21 +68,83 @@ function diffFields(
   return Object.keys(out).length > 0 ? out : null;
 }
 
+function formatSnapshotAbsolute(iso: string): string {
+  return new Date(iso).toLocaleString("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+}
+
+function formatSnapshotRelative(iso: string, nowMs: number): string {
+  const diff = Math.max(0, nowMs - new Date(iso).getTime());
+  const sec = Math.floor(diff / 1000);
+  if (sec < 15) return "방금";
+  if (sec < 60) return `${sec}초 전`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}분 전`;
+  const hr = Math.floor(min / 60);
+  if (hr < 48) return `${hr}시간 전`;
+  const day = Math.floor(hr / 24);
+  return `${day}일 전`;
+}
+
+function StatusCard({ status }: { status: StatusBanner }) {
+  return (
+    <div
+      className={`device-settings-status device-settings-status--${status.tone}`}
+      role="status"
+      aria-live="polite"
+      aria-busy={status.tone === "pending"}
+    >
+      <div className="device-settings-status-icon" aria-hidden>
+        {status.tone === "pending" ? (
+          <span className="device-settings-status-spinner" />
+        ) : status.tone === "ok" ? (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ) : status.tone === "err" ? (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v5M12 16h.01" strokeLinecap="round" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v4M12 16h.01" strokeLinecap="round" />
+          </svg>
+        )}
+      </div>
+      <div className="device-settings-status-body">
+        <p className="device-settings-status-title">{status.title}</p>
+        {status.detail ? (
+          <p className="device-settings-status-detail">{status.detail}</p>
+        ) : null}
+        {status.commandId ? (
+          <code className="device-settings-status-cmd">{status.commandId}</code>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export default function DeviceSettingsPanel({
   installationId,
   requestedBy,
   numOfMods,
-  pullNonce = 0,
 }: Props) {
   const [load, setLoad] = useState<LoadState>({ status: "loading" });
   const [rows, setRows] = useState<BasicSettingRow[]>([]);
   const [baseline, setBaseline] = useState<BasicSettingRow[]>([]);
   const [selectedMod, setSelectedMod] = useState(0);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<{
-    type: "ok" | "err";
-    text: string;
-  } | null>(null);
+  const [status, setStatus] = useState<StatusBanner | null>(null);
   const [pendingCommandId, setPendingCommandId] = useState<string | null>(null);
 
   const moduleType: ModuleType | null =
@@ -93,11 +157,44 @@ export default function DeviceSettingsPanel({
     return fieldsFromPayload(moduleType, load.snapshot.basic);
   }, [moduleType, load]);
 
-  const fetchSettings = useCallback(async () => {
+  const snapshotUpdatedAtRef = useRef<string | null>(null);
+  const baselineAtCommandRef = useRef<string | null>(null);
+  const settledOkRef = useRef(false);
+  const syncInFlightRef = useRef(false);
+  const syncTokenRef = useRef(0);
+  const pendingCommandIdRef = useRef<string | null>(null);
+  pendingCommandIdRef.current = pendingCommandId;
+
+  const applySnapshot = useCallback((settings: DeviceSettingsSnapshot) => {
+    const mt = isModuleType(settings.moduleType)
+      ? settings.moduleType
+      : "v1v2";
+    const migratedBasic = settings.basic.map(migrateBasicRowKeys);
+    const fields = fieldsFromPayload(mt, migratedBasic);
+    const editable = toEditableRows(migratedBasic, fields);
+    const snapshot = { ...settings, moduleType: mt, basic: migratedBasic };
+    snapshotUpdatedAtRef.current = snapshot.updatedAt;
+    setLoad({ status: "ready", snapshot });
+    setRows(editable);
+    setBaseline(editable.map((r) => ({ ...r })));
+    setSelectedMod((prev) =>
+      editable.some((r) => Number(r.mod) === prev)
+        ? prev
+        : Number(editable[0]?.mod ?? 0),
+    );
+    return snapshot;
+  }, []);
+
+  /** Returns applied snapshot, or null on empty/error. */
+  const fetchSettings = useCallback(async (): Promise<DeviceSettingsSnapshot | null> => {
     try {
       const res = await fetch(
-        `/api/devices/${encodeURIComponent(installationId)}/settings`,
-        { credentials: "same-origin" },
+        `/api/devices/${encodeURIComponent(installationId)}/settings?t=${Date.now()}`,
+        {
+          credentials: "same-origin",
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache" },
+        },
       );
       const data = (await res.json().catch(() => ({}))) as {
         settings?: DeviceSettingsSnapshot | null;
@@ -105,78 +202,138 @@ export default function DeviceSettingsPanel({
       };
       if (!res.ok) {
         setLoad({ status: "empty" });
-        setMessage({
-          type: "err",
-          text: data.message ?? `설정 조회 실패 (${res.status})`,
+        setStatus({
+          tone: "err",
+          title: "설정 조회 실패",
+          detail: data.message ?? `HTTP ${res.status}`,
         });
-        return;
+        return null;
       }
       if (!data.settings || !Array.isArray(data.settings.basic)) {
         setLoad({ status: "empty" });
         setRows([]);
         setBaseline([]);
-        return;
+        return null;
       }
-      const mt = isModuleType(data.settings.moduleType)
-        ? data.settings.moduleType
-        : "v1v2";
-      const migratedBasic = data.settings.basic.map(migrateBasicRowKeys);
-      const fields = fieldsFromPayload(mt, migratedBasic);
-      const editable = toEditableRows(migratedBasic, fields);
-      setLoad({
-        status: "ready",
-        snapshot: { ...data.settings, moduleType: mt, basic: migratedBasic },
-      });
-      setRows(editable);
-      setBaseline(editable.map((r) => ({ ...r })));
-      setSelectedMod((prev) =>
-        editable.some((r) => Number(r.mod) === prev)
-          ? prev
-          : Number(editable[0]?.mod ?? 0),
-      );
+      return applySnapshot(data.settings);
     } catch {
       setLoad({ status: "empty" });
-      setMessage({ type: "err", text: "네트워크 오류" });
+      setStatus({
+        tone: "err",
+        title: "네트워크 오류",
+        detail: "설정 스냅샷을 불러오지 못했습니다.",
+      });
+      return null;
     }
-  }, [installationId]);
+  }, [installationId, applySnapshot]);
+
+  /**
+   * Poll until DB snapshot updatedAt moves past baseline from command send time.
+   */
+  const syncSnapshotAfterCommand = useCallback(
+    async (opts: {
+      commandId: string;
+      sinceUpdatedAt: string | null;
+      token: number;
+    }) => {
+      const delaysMs = [0, 400, 1200, 2500, 5000, 8000];
+      for (let i = 0; i < delaysMs.length; i++) {
+        if (syncTokenRef.current !== opts.token || settledOkRef.current) return;
+        const wait = delaysMs[i];
+        if (wait > 0) {
+          await new Promise((r) => window.setTimeout(r, wait - (delaysMs[i - 1] ?? 0)));
+        }
+        if (syncTokenRef.current !== opts.token || settledOkRef.current) return;
+        const snap = await fetchSettings();
+        if (!snap) continue;
+        const fresh =
+          !opts.sinceUpdatedAt ||
+          new Date(snap.updatedAt).getTime() >
+            new Date(opts.sinceUpdatedAt).getTime();
+        if (fresh) {
+          settledOkRef.current = true;
+          syncInFlightRef.current = false;
+          setStatus({
+            tone: "ok",
+            title: "설정 동기화 완료",
+            detail: `스냅샷 ${formatSnapshotRelative(snap.updatedAt, Date.now())} · ${formatSnapshotAbsolute(snap.updatedAt)}`,
+            commandId: opts.commandId,
+          });
+          return;
+        }
+      }
+      if (syncTokenRef.current !== opts.token || settledOkRef.current) return;
+      syncInFlightRef.current = false;
+      setStatus({
+        tone: "err",
+        title: "스냅샷이 아직 갱신되지 않음",
+        detail:
+          "HMI setBasic 후 POST /receiver/settings 가 이 설치에 저장됐는지 확인하세요.",
+        commandId: opts.commandId,
+      });
+    },
+    [fetchSettings],
+  );
 
   useEffect(() => {
     void fetchSettings();
   }, [fetchSettings]);
-
-  // Parent bumps after「설정값 갱신」ACK — wait briefly for HMI POST /receiver/settings.
-  useEffect(() => {
-    if (pullNonce <= 0) return;
-    const t = window.setTimeout(() => void fetchSettings(), 3_000);
-    return () => window.clearTimeout(t);
-  }, [pullNonce, fetchSettings]);
 
   useWsEvents((msg) => {
     if (
       msg.type === "settings_updated" &&
       msg.installationId === installationId
     ) {
-      void fetchSettings();
+      void fetchSettings().then((snap) => {
+        if (!snap || !syncInFlightRef.current) return;
+        const baseline = baselineAtCommandRef.current;
+        const fresh =
+          !baseline ||
+          new Date(snap.updatedAt).getTime() > new Date(baseline).getTime();
+        if (!fresh) return;
+        settledOkRef.current = true;
+        syncInFlightRef.current = false;
+        setStatus({
+          tone: "ok",
+          title: "설정 동기화 완료",
+          detail: `스냅샷 ${formatSnapshotRelative(snap.updatedAt, Date.now())}`,
+        });
+      });
+      return;
     }
     if (
       msg.type === "command_acked" &&
       msg.installationId === installationId &&
-      pendingCommandId &&
-      msg.commandId === pendingCommandId
+      pendingCommandIdRef.current &&
+      msg.commandId === pendingCommandIdRef.current
     ) {
+      const cmdId = msg.commandId;
+      const since = baselineAtCommandRef.current;
       setPendingCommandId(null);
-      setMessage(
-        msg.status === "acked"
-          ? {
-              type: "ok",
-              text: "설정 적용 완료 — 스냅샷을 다시 불러옵니다.",
-            }
-          : { type: "err", text: "설정 적용 실패" },
-      );
-      if (msg.status === "acked") {
-        // Refresh snapshot after HMI posts updated settings
-        window.setTimeout(() => void fetchSettings(), 5_000);
+      if (msg.status !== "acked") {
+        syncInFlightRef.current = false;
+        settledOkRef.current = false;
+        setStatus({
+          tone: "err",
+          title: "설정 적용 실패",
+          detail: "HMI가 명령을 거절했거나 실행에 실패했습니다.",
+          commandId: cmdId,
+        });
+        return;
       }
+      if (settledOkRef.current) return;
+      const token = ++syncTokenRef.current;
+      setStatus({
+        tone: "pending",
+        title: "설정 적용 완료",
+        detail: "HMI 스냅샷 동기화 중…",
+        commandId: cmdId,
+      });
+      void syncSnapshotAfterCommand({
+        commandId: cmdId,
+        sinceUpdatedAt: since,
+        token,
+      });
     }
   });
 
@@ -196,11 +353,15 @@ export default function DeviceSettingsPanel({
     if (!currentRow || !currentBaseline || fieldDefs.length === 0) return;
     const fields = diffFields(currentBaseline, currentRow, fieldDefs);
     if (!fields) {
-      setMessage({ type: "ok", text: "변경된 항목이 없습니다." });
+      setStatus({ tone: "info", title: "변경된 항목이 없습니다." });
       return;
     }
     setBusy(true);
-    setMessage(null);
+    setStatus(null);
+    settledOkRef.current = false;
+    syncInFlightRef.current = true;
+    syncTokenRef.current += 1;
+    baselineAtCommandRef.current = snapshotUpdatedAtRef.current;
     try {
       const res = await fetch("/api/receiver/commands/create", {
         method: "POST",
@@ -220,9 +381,11 @@ export default function DeviceSettingsPanel({
         command?: { id: string };
       };
       if (!res.ok) {
-        setMessage({
-          type: "err",
-          text: data.message ?? data.code ?? `요청 실패 (${res.status})`,
+        syncInFlightRef.current = false;
+        setStatus({
+          tone: "err",
+          title: "명령 등록 실패",
+          detail: data.message ?? data.code ?? `HTTP ${res.status}`,
         });
         return;
       }
@@ -233,18 +396,21 @@ export default function DeviceSettingsPanel({
           Number(row.mod) === selectedMod ? { ...currentRow } : row,
         ),
       );
-      setMessage({
-        type: "ok",
-        text: id
-          ? `setBasic 명령 등록됨 ${id} — HMI 응답 대기 중…`
-          : "setBasic 명령이 등록되었습니다.",
+      setStatus({
+        tone: "pending",
+        title: "설정 적용 대기 중",
+        detail: "HMI가 다음 명령 폴링에서 setBasic을 받아 적용합니다.",
+        commandId: id || undefined,
       });
     } catch {
-      setMessage({ type: "err", text: "네트워크 오류" });
+      syncInFlightRef.current = false;
+      setStatus({ tone: "err", title: "네트워크 오류" });
     } finally {
       setBusy(false);
     }
   };
+
+  const commandLocked = busy || pendingCommandId !== null;
 
   if (load.status === "loading") {
     return (
@@ -261,35 +427,13 @@ export default function DeviceSettingsPanel({
     return (
       <section className="device-detail-body">
         <div className="chart-card chart-card-wide device-settings-panel">
-          <h3 className="chart-title">
-            기본 설정
-            <span className="chart-title-sub">HMI 스냅샷 대기</span>
-          </h3>
-          {message ? (
-            <p
-              className={
-                message.type === "ok"
-                  ? "device-module-power-msg device-module-power-msg-ok"
-                  : "device-module-power-msg device-module-power-msg-err"
-              }
-            >
-              {message.text}
-            </p>
-          ) : null}
+          <h3 className="chart-title">기본 설정</h3>
+          {status ? <StatusCard status={status} /> : null}
           <p className="device-settings-empty">
-            아직 장치에서 설정 스냅샷이 도착하지 않았습니다.
-            「설정값 갱신」을 누르면 HMI가 설정·모듈 상태를 한 번 전송합니다.
-            설정 적용(setBasic) 직후나 「스냅샷 새로고침」으로도 DB에 저장된
-            최신 값을 볼 수 있습니다.
+            아직 장치에서 설정 스냅샷이 도착하지 않았습니다. 위 「설정값 갱신」으로
+            HMI에서 설정·모듈 상태를 받아 오세요.
             {numOfMods != null ? ` (텔레메트리 모듈 수: ${numOfMods})` : null}
           </p>
-          <button
-            type="button"
-            className="device-settings-reload"
-            onClick={() => void fetchSettings()}
-          >
-            다시 불러오기
-          </button>
         </div>
       </section>
     );
@@ -299,23 +443,12 @@ export default function DeviceSettingsPanel({
     return (
       <section className="device-detail-body">
         <div className="chart-card chart-card-wide device-settings-panel">
-          <h3 className="chart-title">
-            기본 설정
-            <span className="chart-title-sub">
-              {moduleTypeLabel(moduleType)} · 표시 가능 필드 없음
-            </span>
-          </h3>
+          <h3 className="chart-title">기본 설정</h3>
+          {status ? <StatusCard status={status} /> : null}
           <p className="device-settings-empty">
-            저장된 스냅샷에 이 moduleType({moduleType})용 필드가 없습니다.
-            「설정값 갱신」으로 HMI에서 최신 basic 설정을 다시 받으세요.
+            저장된 스냅샷에 이 moduleType({moduleType})용 필드가 없습니다. 위
+            「설정값 갱신」으로 최신 설정을 다시 받으세요.
           </p>
-          <button
-            type="button"
-            className="device-settings-reload"
-            onClick={() => void fetchSettings()}
-          >
-            스냅샷 새로고침
-          </button>
         </div>
       </section>
     );
@@ -324,28 +457,9 @@ export default function DeviceSettingsPanel({
   return (
     <section className="device-detail-body">
       <div className="chart-card chart-card-wide device-settings-panel">
-        <h3 className="chart-title">
-          기본 설정
-          <span className="chart-title-sub">
-            {moduleTypeLabel(moduleType)} · 스냅샷{" "}
-            {new Date(load.snapshot.updatedAt).toLocaleString("ko-KR", {
-              timeZone: "Asia/Seoul",
-            })}
-          </span>
-        </h3>
+        <h3 className="chart-title">기본 설정</h3>
 
-        {message ? (
-          <p
-            className={
-              message.type === "ok"
-                ? "device-module-power-msg device-module-power-msg-ok"
-                : "device-module-power-msg device-module-power-msg-err"
-            }
-            role="status"
-          >
-            {message.text}
-          </p>
-        ) : null}
+        {status ? <StatusCard status={status} /> : null}
 
         <div className="device-settings-mod-tabs" role="tablist">
           {rows.map((row) => {
@@ -377,12 +491,43 @@ export default function DeviceSettingsPanel({
                     type="button"
                     className={`device-settings-switch${on ? " on" : ""}`}
                     aria-pressed={on}
-                    disabled={busy || pendingCommandId !== null}
+                    disabled={commandLocked}
                     onClick={() => updateField(f.key, on ? 0 : 1)}
                   >
                     {on ? "ON" : "OFF"}
                   </button>
                 </label>
+              );
+            }
+            if (f.kind === "select" && f.options?.length) {
+              const selected = f.options.some((o) => o.value === raw)
+                ? raw
+                : f.options[0]!.value;
+              return (
+                <div key={f.key} className="device-settings-field">
+                  <span className="device-settings-field-label">{f.label}</span>
+                  <div
+                    className="device-settings-segment"
+                    role="group"
+                    aria-label={f.label}
+                  >
+                    {f.options.map((o) => {
+                      const active = o.value === selected;
+                      return (
+                        <button
+                          key={o.value}
+                          type="button"
+                          className={`device-settings-segment-btn${active ? " active" : ""}`}
+                          aria-pressed={active}
+                          disabled={commandLocked}
+                          onClick={() => updateField(f.key, o.value)}
+                        >
+                          {o.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               );
             }
             return (
@@ -393,7 +538,7 @@ export default function DeviceSettingsPanel({
                   className="device-settings-input"
                   step={f.step ?? 1}
                   value={Number.isFinite(raw) ? raw : 0}
-                  disabled={busy || pendingCommandId !== null}
+                  disabled={commandLocked}
                   onChange={(e) => {
                     const n = Number(e.target.value);
                     if (Number.isFinite(n)) updateField(f.key, n);
@@ -408,18 +553,14 @@ export default function DeviceSettingsPanel({
           <button
             type="button"
             className="device-settings-save"
-            disabled={busy || pendingCommandId !== null}
+            disabled={commandLocked}
             onClick={() => void save()}
           >
-            {busy ? "저장 중…" : "변경 사항 적용 (setBasic)"}
-          </button>
-          <button
-            type="button"
-            className="device-settings-reload"
-            disabled={busy}
-            onClick={() => void fetchSettings()}
-          >
-            스냅샷 새로고침
+            {busy
+              ? "등록 중…"
+              : pendingCommandId
+                ? "HMI 응답 대기 중…"
+                : "변경 사항 적용"}
           </button>
         </div>
       </div>

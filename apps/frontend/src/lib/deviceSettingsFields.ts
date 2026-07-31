@@ -26,13 +26,31 @@ export type SettingFieldDef = {
 
 /** v3v4 (200A) — exactly these 7 keys (HMI contract). */
 const V3V4_FIELDS: SettingFieldDef[] = [
-  { key: "reactiveSwitch", label: "무효 보상", kind: "switch" },
-  { key: "harmSwitch", label: "하모닉", kind: "switch" },
-  { key: "imbSwitch", label: "불평형", kind: "switch" },
-  { key: "ectp", label: "CT 위치 (ectp)", kind: "number", step: 1 },
+  { key: "reactiveSwitch", label: "무효전력 보상", kind: "switch" },
+  { key: "harmSwitch", label: "고조파 보상", kind: "switch" },
+  { key: "imbSwitch", label: "불평형 보상", kind: "switch" },
+  {
+    key: "ectp",
+    label: "CT 위치 (ectp)",
+    kind: "select",
+    options: [
+      { value: 0, label: "Load side" },
+      { value: 1, label: "Grid side" },
+    ],
+  },
   { key: "k0", label: "K0", kind: "number", step: 1 },
-  { key: "ccr", label: "CCR", kind: "number", step: 0.01 },
-  { key: "tpf", label: "TPF", kind: "number", step: 0.01 },
+  {
+    key: "ccr",
+    label: "Capacity Compensation Ratio",
+    kind: "number",
+    step: 0.01,
+  },
+  {
+    key: "tpf",
+    label: "Target Power Factor",
+    kind: "number",
+    step: 0.01,
+  },
 ];
 
 /**
@@ -40,12 +58,30 @@ const V3V4_FIELDS: SettingFieldDef[] = [
  * UI still hides keys absent from the HMI snapshot payload.
  */
 const V1V2_V5_FIELDS: SettingFieldDef[] = [
-  { key: "ectp", label: "ECTP", kind: "number", step: 1 },
+  {
+    key: "ectp",
+    label: "CT 위치 (ectp)",
+    kind: "select",
+    options: [
+      { value: 0, label: "Load side" },
+      { value: 1, label: "Grid side" },
+    ],
+  },
   { key: "ectrs", label: "ECTRS", kind: "number", step: 1 },
   { key: "ictrs", label: "ICTRS", kind: "number", step: 1 },
   { key: "pcs", label: "PCS", kind: "number", step: 0.1 },
-  { key: "ccr", label: "CCR", kind: "number", step: 0.1 },
-  { key: "tpf", label: "TPF", kind: "number", step: 0.1 },
+  {
+    key: "ccr",
+    label: "Capacity Compensation Ratio",
+    kind: "number",
+    step: 0.1,
+  },
+  {
+    key: "tpf",
+    label: "Target Power Factor",
+    kind: "number",
+    step: 0.1,
+  },
   { key: "cm", label: "CM", kind: "number", step: 1 },
   { key: "apro", label: "A PRO", kind: "number", step: 1 },
   { key: "bpro", label: "B PRO", kind: "number", step: 1 },

@@ -529,6 +529,13 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
         type: "settings_updated",
         installationId,
       });
+      // On-demand settings upload usually follows command poll — treat as linked.
+      if (await viewingState.isAdminSessionActive(installationId)) {
+        wsHub.broadcast({
+          type: "admin_session_linked",
+          installationId,
+        });
+      }
       return reply.send({ ok: true });
     } catch (error) {
       if (error instanceof SettingsError) {

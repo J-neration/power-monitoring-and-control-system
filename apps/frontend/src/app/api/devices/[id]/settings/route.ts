@@ -36,7 +36,12 @@ export async function GET(
       },
     );
     const data = await backendRes.json().catch(() => ({}));
-    return NextResponse.json(data, { status: backendRes.status });
+    return NextResponse.json(data, {
+      status: backendRes.status,
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+      },
+    });
   } catch {
     return NextResponse.json(
       { message: "서버에 연결할 수 없습니다." },

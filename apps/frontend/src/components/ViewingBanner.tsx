@@ -10,7 +10,29 @@ type Props = {
   onDismiss?: () => void;
 };
 
-/** Digital MM:SS (or H:MM:SS) for waiting elapsed. */
+const STORAGE_PREFIX = "pmcs.remoteSession.phase:";
+
+function readStoredPhase(installationId: string): RemoteSessionPhase {
+  try {
+    const v = sessionStorage.getItem(STORAGE_PREFIX + installationId);
+    if (v === "waiting" || v === "signaled" || v === "linked") return v;
+  } catch {
+    // ignore
+  }
+  return "waiting";
+}
+
+function writeStoredPhase(
+  installationId: string,
+  phase: RemoteSessionPhase,
+): void {
+  try {
+    sessionStorage.setItem(STORAGE_PREFIX + installationId, phase);
+  } catch {
+    // ignore
+  }
+}
+
 function formatClock(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(total / 3600);
@@ -36,14 +58,33 @@ const CheckIcon = () => (
   </svg>
 );
 
+function advancePhase(
+  current: RemoteSessionPhase,
+  next: RemoteSessionPhase,
+): RemoteSessionPhase {
+  const rank = { waiting: 0, signaled: 1, linked: 2 } as const;
+  return rank[next] >= rank[current] ? next : current;
+}
+
 /**
  * Compact remote-session status for the sticky tab chrome.
- * waiting → signaled → linked; stays「연결됨」until page leave.
+ * waiting → signaled → linked. Phase is persisted so remounts / refresh
+ * do not drop back to「폴링 대기」after HMI is already linked.
  */
 export default function ViewingBanner({ installationId }: Props) {
-  const [phase, setPhase] = useState<RemoteSessionPhase>("waiting");
+  const [phase, setPhase] = useState<RemoteSessionPhase>(() =>
+    readStoredPhase(installationId),
+  );
   const [elapsedMs, setElapsedMs] = useState(0);
   const [startedAt] = useState(() => Date.now());
+
+  useEffect(() => {
+    setPhase(readStoredPhase(installationId));
+  }, [installationId]);
+
+  useEffect(() => {
+    writeStoredPhase(installationId, phase);
+  }, [installationId, phase]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -62,12 +103,19 @@ export default function ViewingBanner({ installationId }: Props) {
       return;
     }
     if (msg.installationId !== installationId) return;
+
     if (msg.type === "admin_session_linked") {
-      setPhase("linked");
+      setPhase((p) => advancePhase(p, "linked"));
       return;
     }
     if (msg.type === "admin_session_signaled") {
-      setPhase((p) => (p === "waiting" ? "signaled" : p));
+      setPhase((p) => advancePhase(p, "signaled"));
+      return;
+    }
+    // HMI executed a command ⇒ it is polling — treat as linked even if the
+    // dedicated linked WS event was missed (refresh / reconnect).
+    if (msg.type === "command_acked") {
+      setPhase((p) => advancePhase(p, "linked"));
     }
   });
 
@@ -85,7 +133,7 @@ export default function ViewingBanner({ installationId }: Props) {
     phase === "linked"
       ? "명령·설정 약 1분 간격"
       : phase === "signaled"
-        ? "HMI 명령 폴링 대기"
+        ? "HMI 명령 폴링 확인 중"
         : "최대 약 10분 · 텔레메트리 후 연결";
 
   return (
@@ -109,17 +157,15 @@ export default function ViewingBanner({ installationId }: Props) {
           <span className="remote-session-hint">{hint}</span>
         </div>
       </div>
-      {!linked ? (
-        <div className="remote-session-timer" aria-label={`경과 ${clock}`}>
-          <span className="remote-session-timer-label">경과</span>
-          <span className="remote-session-timer-value">{clock}</span>
-        </div>
-      ) : (
-        <div className="remote-session-timer remote-session-timer--live">
-          <span className="remote-session-timer-label">세션</span>
-          <span className="remote-session-timer-value">{clock}</span>
-        </div>
-      )}
+      <div
+        className={`remote-session-timer${linked ? " remote-session-timer--live" : ""}`}
+        aria-label={`경과 ${clock}`}
+      >
+        <span className="remote-session-timer-label">
+          {linked ? "세션" : "경과"}
+        </span>
+        <span className="remote-session-timer-value">{clock}</span>
+      </div>
     </div>
   );
 }

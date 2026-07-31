@@ -31,6 +31,14 @@ export default function LogoutButton() {
     } catch {
       // best-effort
     }
+    try {
+      const { clearLocalAdminSessionKeeper } = await import(
+        "../lib/adminSessionKeeper"
+      );
+      clearLocalAdminSessionKeeper();
+    } catch {
+      // best-effort
+    }
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
     router.refresh();

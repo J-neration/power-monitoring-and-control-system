@@ -7,13 +7,8 @@ type Params = { id: string; action: string };
 
 /**
  * POST /api/devices/[id]/viewing/[action]
- *
- * BFF proxy for viewing start/stop calls.
- * The browser cannot set Authorization headers directly because the JWT
- * is stored in an httpOnly cookie, so this server-side handler reads the
- * cookie and forwards the request to the backend with the correct header.
- *
- * action must be "start" or "stop".
+ * BFF: cookie JWT → backend viewing start/stop.
+ * stop may include `{ notAfter }` to avoid late-stop races.
  */
 export async function POST(
   request: NextRequest,
@@ -30,6 +25,16 @@ export async function POST(
     return NextResponse.json({ message: "Authentication required." }, { status: 401 });
   }
 
+  let bodyText: string | undefined;
+  if (action === "stop") {
+    try {
+      const json = await request.json();
+      bodyText = JSON.stringify(json ?? {});
+    } catch {
+      bodyText = "{}";
+    }
+  }
+
   try {
     const backendRes = await fetch(
       `${API_BASE}/devices/${encodeURIComponent(id)}/viewing/${action}`,
@@ -37,7 +42,9 @@ export async function POST(
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
+          ...(bodyText ? { "Content-Type": "application/json" } : {}),
         },
+        ...(bodyText ? { body: bodyText } : {}),
       },
     );
     const data = await backendRes.json().catch(() => ({}));

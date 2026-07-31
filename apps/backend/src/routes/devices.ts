@@ -103,12 +103,16 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
 
   /**
    * POST /devices/:id/viewing/stop
-   * Admin leaves device page → adminSessionActive = false.
+   * Tab close → adminSessionActive = false.
+   * Optional body `{ notAfter: ISO }` ignores the stop if a newer heartbeat exists.
    */
   server.post("/:id/viewing/stop", { preHandler: requireAdmin }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const { userId } = request.user;
-    await viewingState.stopAdminSession(id, userId);
+    const body = (request.body ?? {}) as { notAfter?: string };
+    await viewingState.stopAdminSession(id, userId, {
+      notAfter: body.notAfter ?? null,
+    });
     return reply.send({
       ok: true,
       installationId: id,

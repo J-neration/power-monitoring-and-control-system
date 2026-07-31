@@ -6,6 +6,7 @@ import DeviceDetailChartsLazy from "./DeviceDetailChartsLazy";
 import DeviceHistoryCharts from "./DeviceHistoryCharts";
 import DeviceModulePowerPanel from "./DeviceModulePowerPanel";
 import DeviceSettingsPanel from "./DeviceSettingsPanel";
+import DeviceSettingsSyncBar from "./DeviceSettingsSyncBar";
 import DeviceDataRefreshButton from "./DeviceDataRefreshButton";
 import DeviceFaultHistory from "./DeviceFaultHistory";
 import { StatusCard } from "./StatusCard";
@@ -95,12 +96,10 @@ export default function DeviceDetailTabs({
   faults = [],
 }: Props) {
   const [tab, setTab] = useState<Tab>("monitor");
-  /** Bumps when「설정값 갱신」ACK — settings panel reloads snapshot. */
-  const [settingsPullNonce, setSettingsPullNonce] = useState(0);
   const router = useRouter();
 
   // Admin on device page → adminSessionActive (HMI command-poll gate).
-  // Leave page → false; return to this page → true again.
+  // Clears only on logout / tab close (not tab hide).
   const { showBanner } = useDeviceViewing(device.installationId, isAdmin);
 
   useWsEvents((msg) => {
@@ -182,36 +181,6 @@ export default function DeviceDetailTabs({
         </div>
       </div>
 
-      {tab === "settings" && isAdmin && (
-        <div className="device-settings-help" role="note">
-          <p className="device-settings-help-title">
-            설정·모듈 상태는 자동으로 오지 않습니다
-          </p>
-          <ol className="device-settings-help-list">
-            <li>
-              이 장치 페이지에 들어와 있으면 원격 세션이 켜집니다. HMI는 다음
-              텔레메트리(최대 약 10분) 후 명령을 ~1분 간격으로 받습니다.
-            </li>
-            <li>
-              아래에서 <strong>설정값 갱신</strong>을 누르면 HMI가 설정
-              스냅샷과 모듈 상태를 한 번 올립니다.
-            </li>
-            <li>
-              모니터 계측값(전압·전류·PF 등)은 <strong>모니터</strong> 탭의{" "}
-              <strong>데이터 갱신</strong>을 사용하세요.
-            </li>
-            <li>
-              필드 수정 후 <strong>변경 사항 적용</strong>하면 setBasic 명령이
-              가고, 적용 성공 후 스냅샷이 다시 동기화됩니다.
-            </li>
-            <li>
-              <strong>스냅샷 새로고침</strong>은 서버에 저장된 마지막 설정만
-              다시 보여 줍니다. (HMI에 새 요청을 보내지 않음)
-            </li>
-          </ol>
-        </div>
-      )}
-
       {tab === "monitor" && (
         <div className="device-monitor-layout">
           {isAdmin && (
@@ -248,21 +217,49 @@ export default function DeviceDetailTabs({
       )}
 
       {tab === "settings" && isAdmin && (
-        <div className="device-settings-layout">
-          <DeviceModulePowerPanel
+        <>
+          <div className="device-settings-help" role="note">
+            <p className="device-settings-help-title">
+              설정·모듈 상태는 자동으로 업데이트 되지 않습니다.
+            </p>
+            <ol className="device-settings-help-list">
+              <li>
+                이 장치 페이지에 들어와 있으면 원격 세션이 켜집니다. HMI는 다음
+                텔레메트리(최대 약 10분) 후 명령을 ~1분 간격으로 받습니다.
+                세션은 로그아웃하거나 브라우저 탭을 닫을 때 해제됩니다.
+              </li>
+              <li>
+                아래 <strong>설정값 갱신</strong>을 누르면 HMI가 설정 스냅샷과
+                모듈 상태를 한 번 올립니다.
+              </li>
+              <li>
+                모니터 계측값(전압·전류·PF 등)은 <strong>모니터</strong> 탭의{" "}
+                <strong>데이터 갱신</strong>을 사용하세요.
+              </li>
+              <li>
+                필드 수정 후 <strong>변경 사항 적용</strong>하면 setBasic 명령이
+                가고, 적용 성공 후 스냅샷이 다시 동기화됩니다.
+              </li>
+            </ol>
+          </div>
+          <DeviceSettingsSyncBar
             installationId={device.installationId}
-            moduleStatus={device.moduleStatus}
-            numOfMods={device.numOfMods}
             requestedBy={adminUsername}
-            onSettingsRefreshAcked={() => setSettingsPullNonce((n) => n + 1)}
           />
-          <DeviceSettingsPanel
-            installationId={device.installationId}
-            requestedBy={adminUsername}
-            numOfMods={device.numOfMods}
-            pullNonce={settingsPullNonce}
-          />
-        </div>
+          <div className="device-settings-layout">
+            <DeviceModulePowerPanel
+              installationId={device.installationId}
+              moduleStatus={device.moduleStatus}
+              numOfMods={device.numOfMods}
+              requestedBy={adminUsername}
+            />
+            <DeviceSettingsPanel
+              installationId={device.installationId}
+              requestedBy={adminUsername}
+              numOfMods={device.numOfMods}
+            />
+          </div>
+        </>
       )}
 
       {tab === "faults" && isAdmin && (
