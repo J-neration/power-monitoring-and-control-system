@@ -142,6 +142,9 @@ export const InstallationScalarFieldEnum = {
   iccid: 'iccid',
   webSettingsActive: 'webSettingsActive',
   webSettingsHeartbeatAt: 'webSettingsHeartbeatAt',
+  adminSessionActive: 'adminSessionActive',
+  adminSessionHeartbeatAt: 'adminSessionHeartbeatAt',
+  adminSessionUserId: 'adminSessionUserId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

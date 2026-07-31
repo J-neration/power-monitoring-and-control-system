@@ -33,6 +33,9 @@ export type InstallationMinAggregateOutputType = {
   iccid: string | null
   webSettingsActive: boolean | null
   webSettingsHeartbeatAt: Date | null
+  adminSessionActive: boolean | null
+  adminSessionHeartbeatAt: Date | null
+  adminSessionUserId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -44,6 +47,9 @@ export type InstallationMaxAggregateOutputType = {
   iccid: string | null
   webSettingsActive: boolean | null
   webSettingsHeartbeatAt: Date | null
+  adminSessionActive: boolean | null
+  adminSessionHeartbeatAt: Date | null
+  adminSessionUserId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -55,6 +61,9 @@ export type InstallationCountAggregateOutputType = {
   iccid: number
   webSettingsActive: number
   webSettingsHeartbeatAt: number
+  adminSessionActive: number
+  adminSessionHeartbeatAt: number
+  adminSessionUserId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -68,6 +77,9 @@ export type InstallationMinAggregateInputType = {
   iccid?: true
   webSettingsActive?: true
   webSettingsHeartbeatAt?: true
+  adminSessionActive?: true
+  adminSessionHeartbeatAt?: true
+  adminSessionUserId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -79,6 +91,9 @@ export type InstallationMaxAggregateInputType = {
   iccid?: true
   webSettingsActive?: true
   webSettingsHeartbeatAt?: true
+  adminSessionActive?: true
+  adminSessionHeartbeatAt?: true
+  adminSessionUserId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -90,6 +105,9 @@ export type InstallationCountAggregateInputType = {
   iccid?: true
   webSettingsActive?: true
   webSettingsHeartbeatAt?: true
+  adminSessionActive?: true
+  adminSessionHeartbeatAt?: true
+  adminSessionUserId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -174,6 +192,9 @@ export type InstallationGroupByOutputType = {
   iccid: string | null
   webSettingsActive: boolean
   webSettingsHeartbeatAt: Date | null
+  adminSessionActive: boolean
+  adminSessionHeartbeatAt: Date | null
+  adminSessionUserId: string | null
   createdAt: Date
   updatedAt: Date
   _count: InstallationCountAggregateOutputType | null
@@ -206,6 +227,9 @@ export type InstallationWhereInput = {
   iccid?: Prisma.StringNullableFilter<"Installation"> | string | null
   webSettingsActive?: Prisma.BoolFilter<"Installation"> | boolean
   webSettingsHeartbeatAt?: Prisma.DateTimeNullableFilter<"Installation"> | Date | string | null
+  adminSessionActive?: Prisma.BoolFilter<"Installation"> | boolean
+  adminSessionHeartbeatAt?: Prisma.DateTimeNullableFilter<"Installation"> | Date | string | null
+  adminSessionUserId?: Prisma.StringNullableFilter<"Installation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Installation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Installation"> | Date | string
   site?: Prisma.XOR<Prisma.SiteScalarRelationFilter, Prisma.SiteWhereInput>
@@ -224,6 +248,9 @@ export type InstallationOrderByWithRelationInput = {
   iccid?: Prisma.SortOrderInput | Prisma.SortOrder
   webSettingsActive?: Prisma.SortOrder
   webSettingsHeartbeatAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminSessionActive?: Prisma.SortOrder
+  adminSessionHeartbeatAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminSessionUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   site?: Prisma.SiteOrderByWithRelationInput
@@ -245,6 +272,9 @@ export type InstallationWhereUniqueInput = Prisma.AtLeast<{
   label?: Prisma.StringFilter<"Installation"> | string
   webSettingsActive?: Prisma.BoolFilter<"Installation"> | boolean
   webSettingsHeartbeatAt?: Prisma.DateTimeNullableFilter<"Installation"> | Date | string | null
+  adminSessionActive?: Prisma.BoolFilter<"Installation"> | boolean
+  adminSessionHeartbeatAt?: Prisma.DateTimeNullableFilter<"Installation"> | Date | string | null
+  adminSessionUserId?: Prisma.StringNullableFilter<"Installation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Installation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Installation"> | Date | string
   site?: Prisma.XOR<Prisma.SiteScalarRelationFilter, Prisma.SiteWhereInput>
@@ -263,6 +293,9 @@ export type InstallationOrderByWithAggregationInput = {
   iccid?: Prisma.SortOrderInput | Prisma.SortOrder
   webSettingsActive?: Prisma.SortOrder
   webSettingsHeartbeatAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminSessionActive?: Prisma.SortOrder
+  adminSessionHeartbeatAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminSessionUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.InstallationCountOrderByAggregateInput
@@ -280,6 +313,9 @@ export type InstallationScalarWhereWithAggregatesInput = {
   iccid?: Prisma.StringNullableWithAggregatesFilter<"Installation"> | string | null
   webSettingsActive?: Prisma.BoolWithAggregatesFilter<"Installation"> | boolean
   webSettingsHeartbeatAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Installation"> | Date | string | null
+  adminSessionActive?: Prisma.BoolWithAggregatesFilter<"Installation"> | boolean
+  adminSessionHeartbeatAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Installation"> | Date | string | null
+  adminSessionUserId?: Prisma.StringNullableWithAggregatesFilter<"Installation"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Installation"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Installation"> | Date | string
 }
@@ -290,6 +326,9 @@ export type InstallationCreateInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   site: Prisma.SiteCreateNestedOneWithoutInstallationsInput
@@ -308,6 +347,9 @@ export type InstallationUncheckedCreateInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   device?: Prisma.DeviceUncheckedCreateNestedOneWithoutInstallationInput
@@ -324,6 +366,9 @@ export type InstallationUpdateInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   site?: Prisma.SiteUpdateOneRequiredWithoutInstallationsNestedInput
@@ -342,6 +387,9 @@ export type InstallationUncheckedUpdateInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   device?: Prisma.DeviceUncheckedUpdateOneWithoutInstallationNestedInput
@@ -359,6 +407,9 @@ export type InstallationCreateManyInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -369,6 +420,9 @@ export type InstallationUpdateManyMutationInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -380,6 +434,9 @@ export type InstallationUncheckedUpdateManyInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -401,6 +458,9 @@ export type InstallationCountOrderByAggregateInput = {
   iccid?: Prisma.SortOrder
   webSettingsActive?: Prisma.SortOrder
   webSettingsHeartbeatAt?: Prisma.SortOrder
+  adminSessionActive?: Prisma.SortOrder
+  adminSessionHeartbeatAt?: Prisma.SortOrder
+  adminSessionUserId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -412,6 +472,9 @@ export type InstallationMaxOrderByAggregateInput = {
   iccid?: Prisma.SortOrder
   webSettingsActive?: Prisma.SortOrder
   webSettingsHeartbeatAt?: Prisma.SortOrder
+  adminSessionActive?: Prisma.SortOrder
+  adminSessionHeartbeatAt?: Prisma.SortOrder
+  adminSessionUserId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -423,6 +486,9 @@ export type InstallationMinOrderByAggregateInput = {
   iccid?: Prisma.SortOrder
   webSettingsActive?: Prisma.SortOrder
   webSettingsHeartbeatAt?: Prisma.SortOrder
+  adminSessionActive?: Prisma.SortOrder
+  adminSessionHeartbeatAt?: Prisma.SortOrder
+  adminSessionUserId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -564,6 +630,9 @@ export type InstallationCreateWithoutSiteInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   device?: Prisma.DeviceCreateNestedOneWithoutInstallationInput
@@ -580,6 +649,9 @@ export type InstallationUncheckedCreateWithoutSiteInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   device?: Prisma.DeviceUncheckedCreateNestedOneWithoutInstallationInput
@@ -626,6 +698,9 @@ export type InstallationScalarWhereInput = {
   iccid?: Prisma.StringNullableFilter<"Installation"> | string | null
   webSettingsActive?: Prisma.BoolFilter<"Installation"> | boolean
   webSettingsHeartbeatAt?: Prisma.DateTimeNullableFilter<"Installation"> | Date | string | null
+  adminSessionActive?: Prisma.BoolFilter<"Installation"> | boolean
+  adminSessionHeartbeatAt?: Prisma.DateTimeNullableFilter<"Installation"> | Date | string | null
+  adminSessionUserId?: Prisma.StringNullableFilter<"Installation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Installation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Installation"> | Date | string
 }
@@ -636,6 +711,9 @@ export type InstallationCreateWithoutDeviceSettingsInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   site: Prisma.SiteCreateNestedOneWithoutInstallationsInput
@@ -653,6 +731,9 @@ export type InstallationUncheckedCreateWithoutDeviceSettingsInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   device?: Prisma.DeviceUncheckedCreateNestedOneWithoutInstallationInput
@@ -684,6 +765,9 @@ export type InstallationUpdateWithoutDeviceSettingsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   site?: Prisma.SiteUpdateOneRequiredWithoutInstallationsNestedInput
@@ -701,6 +785,9 @@ export type InstallationUncheckedUpdateWithoutDeviceSettingsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   device?: Prisma.DeviceUncheckedUpdateOneWithoutInstallationNestedInput
@@ -716,6 +803,9 @@ export type InstallationCreateWithoutDeviceInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   site: Prisma.SiteCreateNestedOneWithoutInstallationsInput
@@ -733,6 +823,9 @@ export type InstallationUncheckedCreateWithoutDeviceInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   telemetryRecords?: Prisma.TelemetryRecordUncheckedCreateNestedManyWithoutInstallationInput
@@ -764,6 +857,9 @@ export type InstallationUpdateWithoutDeviceInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   site?: Prisma.SiteUpdateOneRequiredWithoutInstallationsNestedInput
@@ -781,6 +877,9 @@ export type InstallationUncheckedUpdateWithoutDeviceInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   telemetryRecords?: Prisma.TelemetryRecordUncheckedUpdateManyWithoutInstallationNestedInput
@@ -796,6 +895,9 @@ export type InstallationCreateWithoutTelemetryRecordsInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   site: Prisma.SiteCreateNestedOneWithoutInstallationsInput
@@ -813,6 +915,9 @@ export type InstallationUncheckedCreateWithoutTelemetryRecordsInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   device?: Prisma.DeviceUncheckedCreateNestedOneWithoutInstallationInput
@@ -844,6 +949,9 @@ export type InstallationUpdateWithoutTelemetryRecordsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   site?: Prisma.SiteUpdateOneRequiredWithoutInstallationsNestedInput
@@ -861,6 +969,9 @@ export type InstallationUncheckedUpdateWithoutTelemetryRecordsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   device?: Prisma.DeviceUncheckedUpdateOneWithoutInstallationNestedInput
@@ -876,6 +987,9 @@ export type InstallationCreateWithoutFaultEventsInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   site: Prisma.SiteCreateNestedOneWithoutInstallationsInput
@@ -893,6 +1007,9 @@ export type InstallationUncheckedCreateWithoutFaultEventsInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   device?: Prisma.DeviceUncheckedCreateNestedOneWithoutInstallationInput
@@ -924,6 +1041,9 @@ export type InstallationUpdateWithoutFaultEventsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   site?: Prisma.SiteUpdateOneRequiredWithoutInstallationsNestedInput
@@ -941,6 +1061,9 @@ export type InstallationUncheckedUpdateWithoutFaultEventsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   device?: Prisma.DeviceUncheckedUpdateOneWithoutInstallationNestedInput
@@ -956,6 +1079,9 @@ export type InstallationCreateWithoutModuleFaultStatesInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   site: Prisma.SiteCreateNestedOneWithoutInstallationsInput
@@ -973,6 +1099,9 @@ export type InstallationUncheckedCreateWithoutModuleFaultStatesInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   device?: Prisma.DeviceUncheckedCreateNestedOneWithoutInstallationInput
@@ -1004,6 +1133,9 @@ export type InstallationUpdateWithoutModuleFaultStatesInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   site?: Prisma.SiteUpdateOneRequiredWithoutInstallationsNestedInput
@@ -1021,6 +1153,9 @@ export type InstallationUncheckedUpdateWithoutModuleFaultStatesInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   device?: Prisma.DeviceUncheckedUpdateOneWithoutInstallationNestedInput
@@ -1036,6 +1171,9 @@ export type InstallationCreateWithoutCommandsInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   site: Prisma.SiteCreateNestedOneWithoutInstallationsInput
@@ -1053,6 +1191,9 @@ export type InstallationUncheckedCreateWithoutCommandsInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   device?: Prisma.DeviceUncheckedCreateNestedOneWithoutInstallationInput
@@ -1084,6 +1225,9 @@ export type InstallationUpdateWithoutCommandsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   site?: Prisma.SiteUpdateOneRequiredWithoutInstallationsNestedInput
@@ -1101,6 +1245,9 @@ export type InstallationUncheckedUpdateWithoutCommandsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   device?: Prisma.DeviceUncheckedUpdateOneWithoutInstallationNestedInput
@@ -1116,6 +1263,9 @@ export type InstallationCreateManySiteInput = {
   iccid?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1126,6 +1276,9 @@ export type InstallationUpdateWithoutSiteInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   device?: Prisma.DeviceUpdateOneWithoutInstallationNestedInput
@@ -1142,6 +1295,9 @@ export type InstallationUncheckedUpdateWithoutSiteInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   device?: Prisma.DeviceUncheckedUpdateOneWithoutInstallationNestedInput
@@ -1158,6 +1314,9 @@ export type InstallationUncheckedUpdateManyWithoutSiteInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1227,6 +1386,9 @@ export type InstallationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   iccid?: boolean
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: boolean
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: boolean
+  adminSessionUserId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
@@ -1246,6 +1408,9 @@ export type InstallationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   iccid?: boolean
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: boolean
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: boolean
+  adminSessionUserId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
@@ -1258,6 +1423,9 @@ export type InstallationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   iccid?: boolean
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: boolean
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: boolean
+  adminSessionUserId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
@@ -1270,11 +1438,14 @@ export type InstallationSelectScalar = {
   iccid?: boolean
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: boolean
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: boolean
+  adminSessionUserId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type InstallationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "siteId" | "label" | "iccid" | "webSettingsActive" | "webSettingsHeartbeatAt" | "createdAt" | "updatedAt", ExtArgs["result"]["installation"]>
+export type InstallationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "siteId" | "label" | "iccid" | "webSettingsActive" | "webSettingsHeartbeatAt" | "adminSessionActive" | "adminSessionHeartbeatAt" | "adminSessionUserId" | "createdAt" | "updatedAt", ExtArgs["result"]["installation"]>
 export type InstallationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
   device?: boolean | Prisma.Installation$deviceArgs<ExtArgs>
@@ -1312,13 +1483,23 @@ export type $InstallationPayload<ExtArgs extends runtime.Types.Extensions.Intern
      */
     iccid: string | null
     /**
-     * Device Settings 탭 열림 여부 (HMI POST /receiver 응답 webSettingsActive)
+     * Legacy — HMI ignores. Always leave false; do not use for settings upload.
      */
     webSettingsActive: boolean
     /**
-     * Settings 탭 heartbeat 시각 — 이 시각 + TTL 지나면 inactive 로 간주
+     * Settings 탭 heartbeat 시각 (legacy, unused)
      */
     webSettingsHeartbeatAt: Date | null
+    /**
+     * Admin remote UI session for this installation (HMI command-poll gate).
+     * True while an ADMIN is on this device page with heartbeats.
+     */
+    adminSessionActive: boolean
+    adminSessionHeartbeatAt: Date | null
+    /**
+     * Admin userId that last heartbeated (logout clears by this)
+     */
+    adminSessionUserId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["installation"]>
@@ -1757,6 +1938,9 @@ export interface InstallationFieldRefs {
   readonly iccid: Prisma.FieldRef<"Installation", 'String'>
   readonly webSettingsActive: Prisma.FieldRef<"Installation", 'Boolean'>
   readonly webSettingsHeartbeatAt: Prisma.FieldRef<"Installation", 'DateTime'>
+  readonly adminSessionActive: Prisma.FieldRef<"Installation", 'Boolean'>
+  readonly adminSessionHeartbeatAt: Prisma.FieldRef<"Installation", 'DateTime'>
+  readonly adminSessionUserId: Prisma.FieldRef<"Installation", 'String'>
   readonly createdAt: Prisma.FieldRef<"Installation", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Installation", 'DateTime'>
 }

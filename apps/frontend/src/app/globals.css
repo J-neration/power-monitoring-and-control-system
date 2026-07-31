@@ -2589,6 +2589,20 @@ main.dashboard-full {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.device-refresh-row--flush {
+  margin-bottom: 8px;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.device-monitor-refresh-wrap {
+  margin-bottom: 8px;
+}
+
+.device-monitor-refresh .device-module-power-msg-wrap {
+  margin-top: 8px;
+}
+
 .device-refresh-btn {
   display: inline-flex;
   align-items: center;
@@ -5234,46 +5248,68 @@ body.pmcs-control-room .global-header:hover {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DEVICE DETAIL TABS
+   DEVICE DETAIL TABS + REMOTE SESSION STATUS
 ═══════════════════════════════════════════════════════════════ */
-.device-tab-bar {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0 32px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  background: #0b0d12;
+.device-remote-chrome {
   position: sticky;
   top: 48px;
   z-index: 10;
+  background: #0b0d12;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.device-tab-bar {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 12px 20px;
+  padding: 0 24px 0 20px;
+  min-height: 48px;
+  flex-wrap: wrap;
+}
+
+.device-tab-bar-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.device-tab-bar-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .device-tab-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 18px;
+  padding: 14px 16px;
   font-size: 13px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.42);
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
   cursor: pointer;
   transition:
     color 0.15s,
-    border-color 0.15s;
+    border-color 0.15s,
+    background 0.15s;
   margin-bottom: -1px;
   white-space: nowrap;
 }
 
 .device-tab-btn:hover {
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .device-tab-btn.active {
-  color: #60a5fa;
-  border-bottom-color: #60a5fa;
+  color: #7dd3fc;
+  border-bottom-color: #38bdf8;
 }
 
 .device-tab-icon {
@@ -5282,11 +5318,186 @@ body.pmcs-control-room .global-header:hover {
   justify-content: center;
   width: 16px;
   height: 16px;
+  opacity: 0.85;
 }
 
 .device-tab-icon svg {
   width: 16px;
   height: 16px;
+}
+
+/* Compact remote-session chip (right of tabs) */
+.remote-session-status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 8px 0;
+  padding: 8px 12px 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(125, 180, 230, 0.28);
+  background: linear-gradient(
+    105deg,
+    rgba(30, 70, 110, 0.45) 0%,
+    rgba(18, 28, 42, 0.9) 55%,
+    rgba(14, 20, 30, 0.95) 100%
+  );
+  flex: 0 1 auto;
+  max-width: 100%;
+  animation: remote-session-in 0.28s ease;
+}
+
+.remote-session-status--signaled {
+  border-color: rgba(250, 204, 21, 0.35);
+  background: linear-gradient(
+    105deg,
+    rgba(90, 70, 20, 0.4) 0%,
+    rgba(28, 26, 18, 0.92) 100%
+  );
+}
+
+.remote-session-status--linked {
+  border-color: rgba(74, 222, 128, 0.38);
+  background: linear-gradient(
+    105deg,
+    rgba(20, 80, 50, 0.42) 0%,
+    rgba(14, 28, 22, 0.95) 100%
+  );
+}
+
+@keyframes remote-session-in {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.remote-session-status-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.remote-session-dot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.remote-session-dot--pulse {
+  background: #38bdf8;
+  box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.55);
+  animation: remote-session-pulse 1.6s ease-out infinite;
+}
+
+.remote-session-status--signaled .remote-session-dot--pulse {
+  background: #facc15;
+  box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.5);
+}
+
+.remote-session-dot--ok {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(74, 222, 128, 0.18);
+  color: #4ade80;
+}
+
+.remote-session-dot--ok svg {
+  width: 11px;
+  height: 11px;
+}
+
+@keyframes remote-session-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(56, 189, 248, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+  }
+}
+
+.remote-session-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.remote-session-label {
+  font-size: 12.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: #e0f2fe;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.remote-session-status--signaled .remote-session-label {
+  color: #fef08a;
+}
+
+.remote-session-status--linked .remote-session-label {
+  color: #bbf7d0;
+}
+
+.remote-session-hint {
+  font-size: 11px;
+  color: rgba(226, 232, 240, 0.48);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.remote-session-timer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+  padding-left: 12px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.remote-session-timer-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.75);
+  line-height: 1.2;
+}
+
+.remote-session-timer-value {
+  font-family: "JetBrains Mono", "SF Mono", "Fira Code", ui-monospace, monospace;
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: #f8fafc;
+  line-height: 1.15;
+}
+
+.remote-session-status--signaled .remote-session-timer-value {
+  color: #fde047;
+}
+
+.remote-session-status--linked .remote-session-timer-value {
+  color: #86efac;
+  font-size: 16px;
 }
 
 .history-section-sub {
@@ -5297,14 +5508,32 @@ body.pmcs-control-room .global-header:hover {
 }
 
 @media (max-width: 768px) {
-  .device-tab-bar {
-    padding: 0 12px;
+  .device-remote-chrome {
     top: 44px;
+  }
+
+  .device-tab-bar {
+    padding: 0 12px 6px;
+    gap: 8px;
   }
 
   .device-tab-btn {
     padding: 10px 12px;
     font-size: 12px;
+  }
+
+  .remote-session-status {
+    width: 100%;
+    margin: 0 0 6px;
+    justify-content: space-between;
+  }
+
+  .remote-session-hint {
+    max-width: 160px;
+  }
+
+  .remote-session-timer-value {
+    font-size: 18px;
   }
 }
 
@@ -6795,111 +7024,9 @@ body.pmcs-control-room .global-header:hover {
   font-size: 12px;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ACTIVE VIEWING BANNER
-   Shown when a user opens the device detail page to inform them
-   about the 60-second command/status refresh latency.
-═══════════════════════════════════════════════════════════════ */
-
-.viewing-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 16px 32px 0;
-  padding: 12px 16px;
-  background: rgba(99, 102, 241, 0.08);
-  border: 1px solid rgba(99, 102, 241, 0.28);
-  border-radius: 10px;
-  animation: viewing-banner-in 0.25s ease;
-}
-
-@keyframes viewing-banner-in {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.viewing-banner-body {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  flex: 1;
-  min-width: 0;
-}
-
-.viewing-banner-icon {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  color: #818cf8;
-  margin-top: 1px;
-}
-
-.viewing-banner-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.viewing-banner-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #a5b4fc;
-  line-height: 1.4;
-}
-
-.viewing-banner-desc {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.55);
-  line-height: 1.5;
-}
-
-.viewing-banner-desc strong {
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 600;
-}
-
-.viewing-banner-close {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  background: none;
-  border: none;
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.35);
-  cursor: pointer;
-  transition:
-    color 0.15s,
-    background 0.15s;
-}
-
-.viewing-banner-close:hover {
-  color: rgba(255, 255, 255, 0.75);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.viewing-banner-close svg {
-  width: 14px;
-  height: 14px;
-}
+/* Legacy .viewing-banner replaced by .remote-session-status in tab chrome */
 
 @media (max-width: 600px) {
-  .viewing-banner {
-    margin: 12px 16px 0;
-    padding: 10px 12px;
-  }
-
   .fault-history-title-row {
     flex-direction: column;
     align-items: stretch;
@@ -7146,6 +7273,37 @@ body.pmcs-control-room .global-header:hover {
 }
 
 /* Device Settings tab */
+.device-settings-help {
+  margin: 12px 0 4px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(120, 170, 220, 0.28);
+  background: rgba(40, 80, 120, 0.22);
+}
+
+.device-settings-help-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(190, 220, 255, 0.95);
+}
+
+.device-settings-help-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: rgba(220, 230, 245, 0.78);
+}
+
+.device-settings-help-list strong {
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 600;
+}
+
 .device-settings-layout {
   display: flex;
   flex-direction: column;

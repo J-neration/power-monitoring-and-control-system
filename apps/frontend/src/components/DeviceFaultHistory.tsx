@@ -117,8 +117,8 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
           </div>
 
           <p className="fault-refresh-hint">
-            HMI 명령·데이터 갱신은 <strong>설정</strong> 탭에서만 동작합니다
-            (webSettingsActive).
+            모니터 계측은 <strong>모니터</strong> 탭 「데이터 갱신」, 설정·모듈
+            상태는 <strong>설정</strong> 탭 「설정값 갱신」에서 요청합니다.
           </p>
         </div>
 

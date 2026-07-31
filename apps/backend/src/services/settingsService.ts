@@ -7,6 +7,7 @@ import {
   ensureInstallationForIccid,
   getInstallationIdByIccid,
 } from "./deviceService.js";
+import { canonicalSettingsKey } from "../lib/deviceSettingsKeys.js";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({
@@ -52,7 +53,10 @@ const normalizeBasicRow = (raw: unknown): BasicSettingRow | null => {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const src = raw as Record<string, unknown>;
   const out: BasicSettingRow = {};
-  for (const [key, value] of Object.entries(src)) {
+  for (const [rawKey, value] of Object.entries(src)) {
+    const key = canonicalSettingsKey(rawKey);
+    // Prefer explicit tpf over legacy tc if both present
+    if (rawKey === "tc" && ("tpf" in src || "tpf" in out)) continue;
     if (value === null) {
       out[key] = null;
       continue;
@@ -76,6 +80,12 @@ const normalizeBasicRow = (raw: unknown): BasicSettingRow | null => {
   }
   return out;
 };
+
+/** Migrate legacy `tc` → `tpf` when reading stored snapshots. */
+const migrateStoredBasic = (basic: BasicSettingRow[]): BasicSettingRow[] =>
+  basic
+    .map((row) => normalizeBasicRow(row))
+    .filter((row): row is BasicSettingRow => row !== null);
 
 export const settingsService = {
   async upsertFromReceiver(input: {
@@ -132,14 +142,14 @@ export const settingsService = {
       where: { installationId },
     });
     if (!row) return null;
-    const basic = Array.isArray(row.basic)
+    const rawBasic = Array.isArray(row.basic)
       ? (row.basic as BasicSettingRow[])
       : [];
     return {
       installationId: row.installationId,
       moduleType: row.moduleType as ModuleType,
       numOfMods: row.numOfMods,
-      basic,
+      basic: migrateStoredBasic(rawBasic),
       updatedAt: row.updatedAt.toISOString(),
     };
   },

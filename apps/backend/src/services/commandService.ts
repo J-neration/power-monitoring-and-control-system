@@ -5,6 +5,10 @@ import type {
   DeviceCommandPower,
   DeviceCommandStatus,
 } from "../../prisma/generated/client/client.js";
+import {
+  allowedKeysForModuleType,
+  canonicalSettingsKey,
+} from "../lib/deviceSettingsKeys.js";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({
@@ -38,6 +42,8 @@ type HistoryInput = {
 
 type CommandRepository = {
   installationExists(installationId: string): Promise<boolean>;
+  /** Latest settings moduleType for setBasic key filtering; null if unknown. */
+  getModuleType(installationId: string): Promise<string | null>;
   expireCommands(now: Date): Promise<number>;
   findActiveByInstallationModule(
     installationId: string,
@@ -71,6 +77,14 @@ class PrismaCommandRepository implements CommandRepository {
       select: { id: true },
     });
     return !!row;
+  }
+
+  async getModuleType(installationId: string): Promise<string | null> {
+    const row = await prisma.installationDeviceSettings.findUnique({
+      where: { installationId },
+      select: { moduleType: true },
+    });
+    return row?.moduleType ?? null;
   }
 
   async expireCommands(now: Date): Promise<number> {
@@ -191,8 +205,9 @@ export const makeCommandId = () => {
 
 const parsePower = (power: string): DeviceCommandPower | null => {
   const normalized = power.trim();
-  // setBasic is camelCase; others are lowercase
+  // camelCase commands
   if (normalized === "setBasic") return "setBasic";
+  if (normalized === "refreshSettings") return "refreshSettings";
   const lower = normalized.toLowerCase() as DeviceCommandPower;
   if (lower === "on" || lower === "off" || lower === "refresh") return lower;
   return null;
@@ -200,11 +215,15 @@ const parsePower = (power: string): DeviceCommandPower | null => {
 
 const sanitizeFields = (
   fields: CreateInput["fields"],
+  moduleType?: string | null,
 ): Prisma.InputJsonValue | null => {
   if (!fields || typeof fields !== "object" || Array.isArray(fields)) return null;
+  const allowed = allowedKeysForModuleType(moduleType);
   const out: Record<string, number | string | boolean | null> = {};
-  for (const [key, value] of Object.entries(fields)) {
-    if (key === "mod") continue; // module comes from command.module
+  for (const [rawKey, value] of Object.entries(fields)) {
+    if (rawKey === "mod") continue; // module comes from command.module
+    const key = canonicalSettingsKey(rawKey);
+    if (!allowed.has(key)) continue;
     if (
       value === null ||
       typeof value === "number" ||
@@ -260,23 +279,30 @@ export const createCommandService = (
         throw new CommandError(
           400,
           "INVALID_POWER",
-          "power must be 'on', 'off', 'refresh', or 'setBasic'",
-        );
-      }
-
-      const fields =
-        power === "setBasic" ? sanitizeFields(input.fields ?? null) : null;
-      if (power === "setBasic" && !fields) {
-        throw new CommandError(
-          400,
-          "INVALID_FIELDS",
-          "setBasic requires a non-empty fields object",
+          "power must be 'on', 'off', 'refresh', 'refreshSettings', or 'setBasic'",
         );
       }
 
       const exists = await repo.installationExists(installationId);
       if (!exists) {
         throw new CommandError(404, "INSTALLATION_NOT_FOUND", "installationId not found");
+      }
+
+      let moduleType: string | null = null;
+      if (power === "setBasic") {
+        moduleType = await repo.getModuleType(installationId);
+      }
+
+      const fields =
+        power === "setBasic"
+          ? sanitizeFields(input.fields ?? null, moduleType)
+          : null;
+      if (power === "setBasic" && !fields) {
+        throw new CommandError(
+          400,
+          "INVALID_FIELDS",
+          "setBasic requires a non-empty fields object with keys allowed for this moduleType",
+        );
       }
 
       await repo.expireCommands(new Date());

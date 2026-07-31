@@ -3,49 +3,51 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 
 /**
- * How long the tab must remain hidden before we call viewing/stop.
- * A short tab-switch (< 30 s) does not cancel active settings session.
+ * How long the tab must remain hidden before we clear adminSessionActive.
+ * Short — leaving the remote UI should release the HMI poll gate without logout.
  */
-const HIDE_GRACE_MS = 30_000;
+const HIDE_GRACE_MS = 10_000;
 
 /**
- * How often to re-call viewing/start as a heartbeat.
- * Backend Settings TTL is 150 s; 60 s keeps the entry fresh.
+ * Heartbeat interval. Backend TTL is 90 s; 45 s keeps the entry fresh while on page.
  */
-const HEARTBEAT_INTERVAL_MS = 60_000;
+const HEARTBEAT_INTERVAL_MS = 45_000;
 
-async function callViewingApi(
+function callViewingApi(
   installationId: string,
   action: "start" | "stop",
-): Promise<void> {
+): void {
   try {
-    await fetch(
+    void fetch(
       `/api/devices/${encodeURIComponent(installationId)}/viewing/${action}`,
       {
         method: "POST",
-        // keepalive so the request survives page unload (stop on navigate-away)
+        // keepalive so stop survives page unload / client navigation
         keepalive: true,
       },
     );
   } catch {
-    // best-effort — network errors are acceptable here
+    // best-effort
   }
 }
 
 type UseDeviceViewingReturn = {
-  /** True while the Settings-sync banner should be visible. */
+  /** True while the remote-session banner should be visible. */
   showBanner: boolean;
-  /** Call to manually hide the banner (also called automatically after timeout). */
+  /** Hide the waiting banner only (does not end the admin session). */
   dismissBanner: () => void;
 };
 
 /**
- * Manages webSettingsActive for the Device Settings tab.
+ * Keeps Installation.adminSessionActive=true while an ADMIN is on the device page.
  *
- * Only runs while `enabled` is true (Settings tab selected).
- * - start on enable / tab visible again
- * - stop on disable / unmount / hide beyond grace
- * - heartbeat every 60 s
+ * Clears to false automatically when:
+ * - leaving the device page (unmount / client navigate)
+ * - tab/window hidden beyond grace
+ * - pagehide / beforeunload
+ * - heartbeat TTL expires on the server (no logout required)
+ *
+ * HMI learns false on the next POST /receiver ACK (up to ~10 min).
  */
 export function useDeviceViewing(
   installationId: string,
@@ -56,6 +58,8 @@ export function useDeviceViewing(
   const isActiveRef = useRef(false);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const installationIdRef = useRef(installationId);
+  installationIdRef.current = installationId;
 
   const clearHideTimer = useCallback(() => {
     if (hideTimerRef.current !== null) {
@@ -72,7 +76,11 @@ export function useDeviceViewing(
   }, []);
 
   const startViewing = useCallback(() => {
-    if (isActiveRef.current) return;
+    if (isActiveRef.current) {
+      // Refresh heartbeat even if already marked active locally
+      callViewingApi(installationId, "start");
+      return;
+    }
     isActiveRef.current = true;
 
     callViewingApi(installationId, "start");
@@ -84,14 +92,18 @@ export function useDeviceViewing(
     }, HEARTBEAT_INTERVAL_MS);
   }, [installationId, clearHeartbeat]);
 
-  const stopViewing = useCallback(() => {
-    if (!isActiveRef.current) return;
-    isActiveRef.current = false;
-
-    callViewingApi(installationId, "stop");
-    clearHeartbeat();
-    setShowBanner(false);
-  }, [installationId, clearHeartbeat]);
+  /** Always POSTs stop so DB clears even if local ref was out of sync. */
+  const stopViewing = useCallback(
+    (opts?: { force?: boolean }) => {
+      const force = opts?.force === true;
+      if (!force && !isActiveRef.current) return;
+      isActiveRef.current = false;
+      callViewingApi(installationId, "stop");
+      clearHeartbeat();
+      setShowBanner(false);
+    },
+    [installationId, clearHeartbeat],
+  );
 
   const dismissBanner = useCallback(() => setShowBanner(false), []);
 
@@ -99,7 +111,7 @@ export function useDeviceViewing(
     if (!enabled) {
       clearHideTimer();
       clearHeartbeat();
-      stopViewing();
+      stopViewing({ force: true });
       return;
     }
 
@@ -113,18 +125,31 @@ export function useDeviceViewing(
         if (hideTimerRef.current !== null) return;
         hideTimerRef.current = setTimeout(() => {
           hideTimerRef.current = null;
-          stopViewing();
+          stopViewing({ force: true });
         }, HIDE_GRACE_MS);
       }
     };
 
+    // bfcache / tab close / navigate away — clear session without logout
+    const handlePageHide = () => {
+      clearHideTimer();
+      isActiveRef.current = false;
+      clearHeartbeat();
+      callViewingApi(installationIdRef.current, "stop");
+    };
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("beforeunload", handlePageHide);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("beforeunload", handlePageHide);
       clearHideTimer();
       clearHeartbeat();
-      stopViewing();
+      // Always clear DB when leaving the device page
+      stopViewing({ force: true });
     };
   }, [
     enabled,

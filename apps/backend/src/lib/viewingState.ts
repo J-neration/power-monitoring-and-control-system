@@ -2,16 +2,17 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../prisma/generated/client/client.js";
 
 /**
- * DB-backed Settings-tab flag (`Installation.webSettingsActive`).
+ * DB-backed admin remote session (`Installation.adminSessionActive`).
  *
- * Survives process restarts and multi-instance deploys (Railway).
- * Heartbeat TTL (~2.5 min) clears stale true when the browser dies without stop.
+ * HMI reads `adminSessionActive` from POST /receiver ACK and only then polls
+ * GET /receiver/commands (~1 min). Survives multi-instance deploys (Railway).
  *
- * Do NOT expose as webDetailActive — HMI contract uses webSettingsActive only.
+ * Heartbeat TTL clears stale true when the browser dies without stop.
+ * `webSettingsActive` is legacy and must stay false (HMI ignores it).
  */
 
-/** How long a settings-tab session stays valid without a heartbeat (ms). */
-export const SETTINGS_TTL_MS = 150_000; // 2.5 minutes
+/** How long an admin session stays valid without a heartbeat (ms). */
+export const ADMIN_SESSION_TTL_MS = 90_000; // 90s — leave page → false without logout
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({
@@ -20,65 +21,97 @@ const prisma = new PrismaClient({
   }),
 });
 
-/** Register or refresh Settings-tab session. Call on enter + heartbeat. */
-export async function startViewing(
+/** Register or refresh admin remote session. Call on device-page enter + heartbeat. */
+export async function startAdminSession(
   installationId: string,
-  _userId?: string,
+  userId?: string,
 ): Promise<void> {
   const now = new Date();
   await prisma.installation.updateMany({
     where: { id: installationId },
     data: {
-      webSettingsActive: true,
-      webSettingsHeartbeatAt: now,
-    },
-  });
-}
-
-/** Clear Settings-tab session. Call on leave / unmount / logout. */
-export async function stopViewing(
-  installationId: string,
-  _userId?: string,
-): Promise<void> {
-  await prisma.installation.updateMany({
-    where: { id: installationId },
-    data: {
+      adminSessionActive: true,
+      adminSessionHeartbeatAt: now,
+      ...(userId ? { adminSessionUserId: userId } : {}),
+      // Keep legacy flag off — never reintroduce periodic settings upload
       webSettingsActive: false,
       webSettingsHeartbeatAt: null,
     },
   });
 }
 
+/** Clear admin session for one installation. Call on leave / unmount. */
+export async function stopAdminSession(
+  installationId: string,
+  _userId?: string,
+): Promise<void> {
+  await prisma.installation.updateMany({
+    where: { id: installationId },
+    data: {
+      adminSessionActive: false,
+      adminSessionHeartbeatAt: null,
+      adminSessionUserId: null,
+      webSettingsActive: false,
+      webSettingsHeartbeatAt: null,
+    },
+  });
+}
+
+/** Clear all admin sessions for a user (logout). */
+export async function stopAllAdminSessionsForUser(
+  userId: string,
+): Promise<number> {
+  if (!userId) return 0;
+  const result = await prisma.installation.updateMany({
+    where: {
+      adminSessionUserId: userId,
+      adminSessionActive: true,
+    },
+    data: {
+      adminSessionActive: false,
+      adminSessionHeartbeatAt: null,
+      adminSessionUserId: null,
+      webSettingsActive: false,
+      webSettingsHeartbeatAt: null,
+    },
+  });
+  return result.count;
+}
+
 /**
- * True if Settings tab is active and heartbeat is within TTL.
+ * True if an admin remote session is active and heartbeat is within TTL.
  * Stale rows are cleared lazily.
  */
-export async function isWebSettingsActive(
+export async function isAdminSessionActive(
   installationId: string,
 ): Promise<boolean> {
   if (!installationId) return false;
   const row = await prisma.installation.findUnique({
     where: { id: installationId },
     select: {
-      webSettingsActive: true,
-      webSettingsHeartbeatAt: true,
+      adminSessionActive: true,
+      adminSessionHeartbeatAt: true,
     },
   });
-  if (!row?.webSettingsActive) return false;
-  const hb = row.webSettingsHeartbeatAt;
+  if (!row?.adminSessionActive) return false;
+  const hb = row.adminSessionHeartbeatAt;
   if (!hb) {
     await prisma.installation.updateMany({
       where: { id: installationId },
-      data: { webSettingsActive: false },
+      data: {
+        adminSessionActive: false,
+        adminSessionUserId: null,
+      },
     });
     return false;
   }
-  if (Date.now() - hb.getTime() > SETTINGS_TTL_MS) {
+  if (Date.now() - hb.getTime() > ADMIN_SESSION_TTL_MS) {
     await prisma.installation.updateMany({
       where: { id: installationId },
       data: {
-        webSettingsActive: false,
-        webSettingsHeartbeatAt: null,
+        adminSessionActive: false,
+        adminSessionHeartbeatAt: null,
+        adminSessionUserId: null,
       },
     });
     return false;
@@ -86,15 +119,42 @@ export async function isWebSettingsActive(
   return true;
 }
 
-/** Alias kept for call sites that used the old in-memory API. */
+// ─── Legacy aliases (viewing/* routes & old call sites) ───────────────
+
+/** @deprecated Use startAdminSession */
+export async function startViewing(
+  installationId: string,
+  userId?: string,
+): Promise<void> {
+  return startAdminSession(installationId, userId);
+}
+
+/** @deprecated Use stopAdminSession */
+export async function stopViewing(
+  installationId: string,
+  userId?: string,
+): Promise<void> {
+  return stopAdminSession(installationId, userId);
+}
+
+/** @deprecated Legacy webSettingsActive — always false for HMI contract. */
+export async function isWebSettingsActive(
+  _installationId: string,
+): Promise<boolean> {
+  return false;
+}
+
 export async function hasActiveViewers(
   installationId: string,
 ): Promise<boolean> {
-  return isWebSettingsActive(installationId);
+  return isAdminSessionActive(installationId);
 }
 
 export async function getActiveViewerCount(
   installationId: string,
 ): Promise<number> {
-  return (await isWebSettingsActive(installationId)) ? 1 : 0;
+  return (await isAdminSessionActive(installationId)) ? 1 : 0;
 }
+
+/** Legacy export name kept for imports. */
+export const SETTINGS_TTL_MS = ADMIN_SESSION_TTL_MS;

@@ -22,6 +22,7 @@ export const DeviceCommandPower = {
   on: 'on',
   off: 'off',
   refresh: 'refresh',
+  refreshSettings: 'refreshSettings',
   setBasic: 'setBasic'
 } as const
 
