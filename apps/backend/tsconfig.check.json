@@ -1,0 +1,11 @@
+// 타입 검사 전용 설정 — 테스트 파일까지 포함해서 검사하되 출력물은 만들지 않는다.
+// 운영 빌드(tsconfig.json)는 테스트를 제외하므로, 테스트의 타입 에러는 여기서 잡는다.
+//   yarn typecheck        (pre-push 훅 · CI에서 실행)
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["src", "prisma/generated", "prisma/*.ts"],
+  "exclude": ["dist"]
+}

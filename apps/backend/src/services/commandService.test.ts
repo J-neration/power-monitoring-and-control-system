@@ -222,6 +222,9 @@ test("setBasic filters to v3v4 allowed keys and renames tc→tpf", async () => {
 
   const polled = await service.poll("PSVG-RNDTEST5");
   assert.equal(polled.id, created.id);
+  // poll()은 NO_COMMAND(fields 없음) | 명령 payload 유니온을 반환한다.
+  // "fields" in 으로 좁혀야 아래에서 polled.fields 에 접근할 수 있다.
+  assert.ok("fields" in polled);
   assert.deepEqual(polled.fields, {
     reactiveSwitch: 1,
     k0: 100,

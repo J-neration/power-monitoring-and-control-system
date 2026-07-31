@@ -1,0 +1,119 @@
+# Railway가 쓰는 것과 **동일한** Dockerfile로 이미지를 미리 빌드해서,
+# Railway 배포 실패를 푸시한 사람이 직접 알 수 있게 한다.
+#
+# 왜 필요한가:
+#   Railway 빌드 로그는 Railway 대시보드에서만 보인다. 그래서 백엔드 빌드가 깨지면
+#   대시보드를 보는 사람만 알게 되고, 정작 푸시한 사람은 모른 채 넘어간다.
+#   GitHub Actions는 **워크플로를 실패시킨 커밋의 작성자에게 자동으로 메일을 보낸다.**
+#   → 푸시한 사람이 Railway 계정 없이도 같은 실패 로그를 즉시 받는다.
+#
+# 받는 사람이 메일을 못 받고 있다면:
+#   GitHub → Settings → Notifications → Actions → "Send notifications for failed
+#   workflows only" 체크 + Email 활성화 (기본값이지만 꺼놨을 수 있음)
+#
+# 이 워크플로가 잡아주는 것: prisma generate 스키마 누락, COPY 대상 없음(.dockerignore
+# 오설정), lockfile 불일치, tsc 타입 에러 등 — 전부 Railway에서 터지던 것들.
+
+name: Build check (Railway · Netlify)
+
+# paths 필터를 두지 않는다. 백엔드/프론트엔드 어느 쪽이 바뀌든 이 워크플로가
+# 떠야 하고, 각 잡이 자기 몫만 검사한다. (예전에는 백엔드 경로만 걸려 있어서
+# 프론트엔드만 바뀐 푸시에서는 아무 검사도 돌지 않았다.)
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# 같은 브랜치에서 연속 푸시하면 이전 실행은 취소 (PR과 push 중복 실행도 정리)
+concurrency:
+  group: backend-docker-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # 운영 빌드(tsconfig.json)는 테스트를 제외하므로, 테스트 파일의 타입 에러는
+  # docker build가 잡지 못한다. 그 몫을 이 잡이 맡는다.
+  # (로컬에서는 .githooks/pre-push 가 푸시 전에 같은 검사를 돌린다.)
+  typecheck:
+    name: 타입 검사 (테스트 포함)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - run: yarn typecheck
+
+      - name: 실패 안내
+        if: failure()
+        run: |
+          echo "::error::타입 에러입니다. 배포는 막히지 않지만 테스트가 깨진 상태입니다."
+          {
+            echo "### ❌ 타입 검사 실패"
+            echo ""
+            echo "테스트 파일을 포함한 타입 검사에서 에러가 났습니다."
+            echo "로컬에서 \`yarn typecheck\` 으로 같은 결과를 볼 수 있습니다."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # Netlify 배포 실패도 푸시한 사람이 바로 알 수 있게 같은 빌드를 여기서 돌린다.
+  # (Netlify 체크는 "Deploy failed" 만 보여주고 원인 로그는 Netlify 대시보드에 있다.)
+  frontend:
+    name: next build (Netlify와 동일)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - run: yarn workspace @pmcs/frontend build
+
+      - name: 실패 안내
+        if: failure()
+        run: |
+          echo "::error::Netlify 배포도 같은 이유로 실패합니다."
+          {
+            echo "### ❌ 프론트엔드 빌드 실패"
+            echo ""
+            echo "Netlify에 올라가도 **같은 지점에서 실패**합니다. 머지 전에 고쳐주세요."
+            echo ""
+            echo "로컬에서 \`yarn workspace @pmcs/frontend build\` 로 같은 결과를 볼 수 있습니다."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    name: docker build (Railway와 동일)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # DATABASE_URL 불필요: prisma generate는 datasource URL 없이도 동작 (Prisma 7.2+)
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 실패 안내
+        if: failure()
+        run: |
+          echo "::error::Railway 배포도 같은 이유로 실패합니다. 위 'Build image' 단계 로그를 확인하세요."
+          {
+            echo "### ❌ 백엔드 Docker 빌드 실패"
+            echo ""
+            echo "Railway에 올라가도 **같은 지점에서 실패**합니다. 머지 전에 고쳐주세요."
+            echo ""
+            echo "위 \`Build image\` 단계의 로그가 Railway 빌드 로그와 동일합니다."
+          } >> "$GITHUB_STEP_SUMMARY"

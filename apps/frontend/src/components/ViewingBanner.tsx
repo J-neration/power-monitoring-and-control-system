@@ -53,6 +53,14 @@ export default function ViewingBanner({ installationId }: Props) {
   }, [startedAt]);
 
   useWsEvents((msg) => {
+    // WsMessage 유니온에는 installationId 가 없는 변형(welcome)이 있다.
+    // msg.type 으로 먼저 좁혀야 installationId 에 접근할 수 있다.
+    if (
+      msg.type !== "admin_session_linked" &&
+      msg.type !== "admin_session_signaled"
+    ) {
+      return;
+    }
     if (msg.installationId !== installationId) return;
     if (msg.type === "admin_session_linked") {
       setPhase("linked");
