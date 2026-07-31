@@ -11,5 +11,9 @@
     "types": ["node"],
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src", "prisma/generated"]
+  "include": ["src", "prisma/generated"],
+  // 운영 빌드 설정. 테스트는 런타임 이미지에 들어가지 않으므로 제외한다.
+  // (제외하지 않으면 테스트 파일의 타입 에러가 Railway 배포를 막는다.)
+  // 테스트까지 포함한 타입 검사는 tsconfig.check.json — `yarn typecheck`.
+  "exclude": ["dist", "**/*.test.ts"]
 }
