@@ -53,10 +53,6 @@ const V3V4_FIELDS: SettingFieldDef[] = [
   },
 ];
 
-/**
- * v1v2 / v5 common basic catalog.
- * UI still hides keys absent from the HMI snapshot payload.
- */
 const V1V2_V5_FIELDS: SettingFieldDef[] = [
   {
     key: "ectp",
