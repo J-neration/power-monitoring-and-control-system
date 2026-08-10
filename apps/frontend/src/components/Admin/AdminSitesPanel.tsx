@@ -15,14 +15,40 @@ function normalizeIccid(raw: string) {
 
 function buildClientOptions(clientOptions?: ClientOptionFromApi[]) {
   if (clientOptions && clientOptions.length > 0) {
-    return clientOptions
+    const active = clientOptions
       .filter((c) => c.isActive)
       .map((c) => ({ value: c.key, label: c.label }));
+    if (active.length > 0) return active;
   }
   return Object.entries(CLIENT_LABELS).map(([value, label]) => ({
     value,
     label,
   }));
+}
+
+function toSiteRows(initialSites: SiteListFromApi[] | null | undefined): SiteRow[] {
+  return (initialSites ?? []).flatMap((s) => {
+    if (!s || typeof s.siteId !== "string") return [];
+    return [
+      {
+        siteId: s.siteId,
+        name: s.name ?? "",
+        client: s.client ?? "",
+        region: s.region ?? "기타",
+        address: s.address ?? "",
+        installations: (s.installations ?? []).flatMap((i) => {
+          if (!i || typeof i.id !== "string") return [];
+          return [
+            {
+              installationId: i.id,
+              label: i.label ?? "",
+              iccid: typeof i.iccid === "string" ? i.iccid : "",
+            },
+          ];
+        }),
+      },
+    ];
+  });
 }
 
 function buildClientLabelMap(clientOptions?: ClientOptionFromApi[]) {
@@ -119,7 +145,12 @@ function SiteFieldsForm({
         건설사
         <select
           className="admin-sites-input"
-          value={values.client}
+          value={
+            clientOptionsList.some((c) => c.value === values.client) ||
+            values.client === "__custom__"
+              ? values.client
+              : "__custom__"
+          }
           onChange={(e) => {
             onChange({ client: e.target.value });
             if (e.target.value !== "__custom__") onCustomClientChange("");
@@ -132,13 +163,21 @@ function SiteFieldsForm({
           ))}
           <option value="__custom__">직접 입력…</option>
         </select>
-        {values.client === "__custom__" && (
+        {(values.client === "__custom__" ||
+          !clientOptionsList.some((c) => c.value === values.client)) && (
           <input
             className="admin-sites-input"
             style={{ marginTop: 6 }}
             placeholder="건설사명 입력 (예: 대우건설)"
-            value={customClient}
-            onChange={(e) => onCustomClientChange(e.target.value)}
+            value={
+              values.client === "__custom__" ? customClient : values.client
+            }
+            onChange={(e) => {
+              if (values.client !== "__custom__") {
+                onChange({ client: "__custom__" });
+              }
+              onCustomClientChange(e.target.value);
+            }}
           />
         )}
       </label>
@@ -149,6 +188,9 @@ function SiteFieldsForm({
           value={values.region}
           onChange={(e) => onChange({ region: e.target.value })}
         >
+          {!REGION_OPTIONS.includes(values.region) && values.region ? (
+            <option value={values.region}>{values.region}</option>
+          ) : null}
           {REGION_OPTIONS.map((r) => (
             <option key={r} value={r}>
               {r}
@@ -184,20 +226,7 @@ export default function AdminSitesPanel({
     () => buildClientLabelMap(clientOptions),
     [clientOptions],
   );
-  const [sites, setSites] = useState<SiteRow[]>(() =>
-    initialSites.map((s) => ({
-      siteId: s.siteId,
-      name: s.name,
-      client: s.client,
-      region: s.region,
-      address: s.address,
-      installations: s.installations.map((i) => ({
-        installationId: i.id,
-        label: i.label,
-        iccid: typeof i.iccid === "string" ? i.iccid : "",
-      })),
-    })),
-  );
+  const [sites, setSites] = useState<SiteRow[]>(() => toSiteRows(initialSites));
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [flash, setFlash] = useState<{

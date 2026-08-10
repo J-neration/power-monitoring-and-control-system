@@ -36,6 +36,12 @@ let _connectionState: WsConnectionState = {
   lastMessageAt: null,
 };
 
+/** Stable SSR/hydration snapshot — must not track live WS state. */
+const SERVER_CONNECTION_SNAPSHOT: WsConnectionState = {
+  status: "disconnected",
+  lastMessageAt: null,
+};
+
 function setConnectionState(patch: Partial<WsConnectionState>): void {
   _connectionState = { ..._connectionState, ...patch };
   _connectionListeners.forEach((l) => l());
@@ -48,6 +54,10 @@ function subscribeConnection(listener: () => void): () => void {
 
 function getConnectionSnapshot(): WsConnectionState {
   return _connectionState;
+}
+
+function getServerConnectionSnapshot(): WsConnectionState {
+  return SERVER_CONNECTION_SNAPSHOT;
 }
 
 function getWsUrl(): string {
@@ -66,8 +76,19 @@ function openConnection(): void {
     return;
   }
 
+  if (typeof WebSocket === "undefined") {
+    setConnectionState({ status: "disconnected" });
+    return;
+  }
+
   setConnectionState({ status: "connecting" });
-  _ws = new WebSocket(getWsUrl());
+  try {
+    _ws = new WebSocket(getWsUrl());
+  } catch {
+    _ws = null;
+    setConnectionState({ status: "disconnected" });
+    return;
+  }
 
   _ws.addEventListener("open", () => {
     _attempt = 0;
@@ -136,7 +157,7 @@ export function useWsConnectionState(): WsConnectionState {
   return useSyncExternalStore(
     subscribeConnection,
     getConnectionSnapshot,
-    getConnectionSnapshot,
+    getServerConnectionSnapshot,
   );
 }
 

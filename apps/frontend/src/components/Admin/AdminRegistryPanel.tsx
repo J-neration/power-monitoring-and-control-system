@@ -135,8 +135,12 @@ export default function AdminRegistryPanel({
         showFlash("err", formatApiError(res.status, data.message));
         return;
       }
+      if (!data.client) {
+        showFlash("err", "응답에 건설사 정보가 없습니다.");
+        return;
+      }
       setClients(
-        [...clients, data.client!].sort(
+        [...clients, data.client].sort(
           (a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label, "ko"),
         ),
       );
@@ -172,6 +176,10 @@ export default function AdminRegistryPanel({
         showFlash("err", formatApiError(res.status, data.message));
         return;
       }
+      if (!data.client) {
+        showFlash("err", "응답에 건설사 정보가 없습니다.");
+        return;
+      }
       setClients(clients.map((c) => (c.id === id ? data.client! : c)));
       setClientEditId(null);
       showFlash("ok", "건설사 정보가 저장되었습니다.");
@@ -196,6 +204,10 @@ export default function AdminRegistryPanel({
       };
       if (!res.ok) {
         showFlash("err", formatApiError(res.status, data.message));
+        return;
+      }
+      if (!data.client) {
+        showFlash("err", "응답에 건설사 정보가 없습니다.");
         return;
       }
       setClients(clients.map((c) => (c.id === client.id ? data.client! : c)));
@@ -253,6 +265,10 @@ export default function AdminRegistryPanel({
       };
       if (!res.ok) {
         showFlash("err", formatApiError(res.status, data.message));
+        return;
+      }
+      if (!data.role) {
+        showFlash("err", "응답에 역할 정보가 없습니다.");
         return;
       }
       setRoles(roles.map((r) => (r.key === key ? data.role! : r)));

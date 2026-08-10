@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import type { ClientOptionFromApi, RoleOptionFromApi } from "../../types/admin";
 import type { SiteListFromApi } from "../../types/admin";
 
@@ -91,13 +91,16 @@ export default function AdminUsersPanel({
     setTimeout(() => setFlash(null), 4000);
   }
 
+  const safeClientOptions = clientOptions ?? [];
+  const safeRoleOptions = roleOptions ?? [];
+  const safeSites = sites ?? [];
   const clientLabelByKey = Object.fromEntries(
-    clientOptions.map((c) => [c.key, c.label]),
+    safeClientOptions.map((c) => [c.key, c.label]),
   );
-  const activeClientOptions = clientOptions.filter((c) => c.isActive);
-  const assignableRoles = roleOptions.filter((r) => r.isAssignable);
+  const activeClientOptions = safeClientOptions.filter((c) => c.isActive);
+  const assignableRoles = safeRoleOptions.filter((r) => r.isAssignable);
   const roleLabelByKey = Object.fromEntries(
-    roleOptions.map((r) => [r.key, r.label]),
+    safeRoleOptions.map((r) => [r.key, r.label]),
   );
 
   // ── 생성 ──────────────────────────────────────────
@@ -135,6 +138,10 @@ export default function AdminUsersPanel({
       };
       if (!res.ok) {
         showFlash("err", data.message ?? `오류 (${res.status})`);
+        return;
+      }
+      if (!data.user) {
+        showFlash("err", "응답에 계정 정보가 없습니다.");
         return;
       }
 
@@ -198,6 +205,10 @@ export default function AdminUsersPanel({
       };
       if (!res.ok) {
         showFlash("err", data.message ?? `오류 (${res.status})`);
+        return;
+      }
+      if (!data.user) {
+        showFlash("err", "응답에 계정 정보가 없습니다.");
         return;
       }
       setUsers((prev) => prev.map((u) => (u.id === user.id ? data.user! : u)));
@@ -376,7 +387,7 @@ export default function AdminUsersPanel({
                   }
                 >
                   <option value="">선택하세요</option>
-                  {sites.map((s) => (
+                  {safeSites.map((s) => (
                     <option key={s.siteId} value={s.siteId}>
                       {s.name}
                     </option>
@@ -418,23 +429,20 @@ export default function AdminUsersPanel({
             </thead>
             <tbody>
               {users.map((user) => (
-                <>
-                  <tr
-                    key={user.id}
-                    className={!user.isActive ? "user-row-inactive" : ""}
-                  >
+                <Fragment key={user.id}>
+                  <tr className={!user.isActive ? "user-row-inactive" : ""}>
                     <td>
                       <code className="admin-iccid-code">{user.username}</code>
                     </td>
                     <td>
                       <span
-                        className={`user-role-badge ${ROLE_COLOR[user.role]}`}
+                        className={`user-role-badge ${ROLE_COLOR[user.role] ?? ""}`}
                       >
                         {roleLabelByKey[user.role] ?? user.role}
                       </span>
                     </td>
                     <td className="user-scope">
-                      {scopeLabel(user, sites, clientLabelByKey)}
+                      {scopeLabel(user, safeSites, clientLabelByKey)}
                     </td>
                     <td>
                       {user.isActive ? (
@@ -491,7 +499,7 @@ export default function AdminUsersPanel({
 
                   {/* 비밀번호 변경 인라인 */}
                   {pwEditId === user.id && (
-                    <tr key={`${user.id}-pw`} className="user-pw-row">
+                    <tr className="user-pw-row">
                       <td colSpan={7}>
                         <div className="user-pw-form">
                           <span className="user-pw-label">새 비밀번호</span>
@@ -526,7 +534,7 @@ export default function AdminUsersPanel({
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>
