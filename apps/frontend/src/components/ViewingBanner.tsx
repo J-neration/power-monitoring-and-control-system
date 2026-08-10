@@ -98,24 +98,20 @@ export default function ViewingBanner({ installationId }: Props) {
     // msg.type 으로 먼저 좁혀야 installationId 에 접근할 수 있다.
     if (
       msg.type !== "admin_session_linked" &&
-      msg.type !== "admin_session_signaled"
+      msg.type !== "admin_session_signaled" &&
+      msg.type !== "command_acked"
     ) {
       return;
     }
     if (msg.installationId !== installationId) return;
 
-    if (msg.type === "admin_session_linked") {
+    if (msg.type === "admin_session_linked" || msg.type === "command_acked") {
+      // command_acked: HMI 가 폴링 중이면 linked 로 간주 (linked WS 누락 대비)
       setPhase((p) => advancePhase(p, "linked"));
       return;
     }
     if (msg.type === "admin_session_signaled") {
       setPhase((p) => advancePhase(p, "signaled"));
-      return;
-    }
-    // HMI executed a command ⇒ it is polling — treat as linked even if the
-    // dedicated linked WS event was missed (refresh / reconnect).
-    if (msg.type === "command_acked") {
-      setPhase((p) => advancePhase(p, "linked"));
     }
   });
 
