@@ -13,3 +13,25 @@
 [context.dev.environment]
   NEXT_PUBLIC_API_BASE = "https://pmcsbackend-dev.up.railway.app"
   COMMAND_API_BASE = "https://pmcsbackend-dev.up.railway.app"
+
+# main 외 브랜치 배포 / PR 프리뷰도 dev 백엔드로 — 미지정 시 Netlify UI 값(prod)으로
+# 폴백해서 프리뷰가 실서비스 DB를 건드리게 된다.
+[context.branch-deploy.environment]
+  NEXT_PUBLIC_API_BASE = "https://pmcsbackend-dev.up.railway.app"
+  COMMAND_API_BASE = "https://pmcsbackend-dev.up.railway.app"
+
+[context.deploy-preview.environment]
+  NEXT_PUBLIC_API_BASE = "https://pmcsbackend-dev.up.railway.app"
+  COMMAND_API_BASE = "https://pmcsbackend-dev.up.railway.app"
+
+# 보안 헤더 (모든 경로)
+# CSP 는 인라인 스크립트/지도/3rd-party 영향이 커 별도 신중 적용 — 여기서는 제외.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+    X-DNS-Prefetch-Control = "off"

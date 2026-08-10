@@ -1,0 +1,71 @@
+#!/bin/sh
+#
+# 푸시 "직전"에 타입 검사를 돌려서, 배포가 깨질 코드가 원격에 올라가는 것을 막는다.
+#   - 백엔드 변경 → yarn typecheck  (Railway 배포가 깨지는 것을 막음)
+#   - 프론트엔드 변경 → next build  (Netlify 배포가 깨지는 것을 막음)
+# 변경된 쪽만 검사하므로, 한쪽만 건드렸다면 그만큼 빨리 끝난다.
+#
+# 왜 필요한가:
+#   Railway/Netlify 모두 푸시가 끝난 뒤에야 빌드를 시작한다. 즉 "푸시 전에
+#   원격에서 미리 빌드해보는" 방법은 원리상 존재하지 않는다. 대신 각 플랫폼이
+#   실행하는 것과 같은 검사를 로컬에서 푸시 전에 돌려 같은 효과를 낸다.
+#
+# 활성화 (클론한 사람마다 1회):
+#   yarn hooks:install       (= git config core.hooksPath .githooks)
+#
+# 급할 때 건너뛰기:
+#   git push --no-verify
+
+root=$(git rev-parse --show-toplevel)
+
+# 이번 푸시로 원격에 새로 올라가는 변경 범위를 구한다.
+range_start=$(git merge-base HEAD "@{upstream}" 2>/dev/null)
+if [ -n "$range_start" ]; then
+  changed=$(git diff --name-only "$range_start" HEAD)
+else
+  # upstream이 없는 새 브랜치 — 직전 커밋과 비교하고, 그마저 없으면 전부 검사.
+  changed=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "apps/")
+fi
+
+# 워크스페이스 공용 파일이 바뀌면 양쪽 다 영향을 받는다.
+shared='^(package\.json|yarn\.lock|\.node-version)'
+
+check_backend=0
+check_frontend=0
+echo "$changed" | grep -qE "^apps/backend/|^Dockerfile|^\.dockerignore|$shared" && check_backend=1
+echo "$changed" | grep -qE "^apps/frontend/|^netlify\.toml|$shared" && check_frontend=1
+
+if [ "$check_backend" = 0 ] && [ "$check_frontend" = 0 ]; then
+  echo "[pre-push] 코드 변경 없음 — 검사 건너뜀"
+  exit 0
+fi
+
+fail=0
+
+if [ "$check_backend" = 1 ]; then
+  echo "[pre-push] 백엔드 타입 검사 중… (건너뛰려면 git push --no-verify)"
+  if ! yarn --cwd "$root" typecheck; then
+    echo ""
+    echo "  ✖ 백엔드 타입 에러 — 이대로 푸시하면 Railway 배포가 실패합니다."
+    fail=1
+  fi
+fi
+
+if [ "$check_frontend" = 1 ]; then
+  echo "[pre-push] 프론트엔드 빌드 검사 중… (30초~1분 소요)"
+  if ! yarn --cwd "$root" workspace @pmcs/frontend build; then
+    echo ""
+    echo "  ✖ 프론트엔드 빌드 실패 — 이대로 푸시하면 Netlify 배포가 실패합니다."
+    fail=1
+  fi
+fi
+
+if [ "$fail" = 1 ]; then
+  echo ""
+  echo "    고친 뒤 다시 푸시하거나, 의도한 것이라면 git push --no-verify 로 강제 푸시하세요."
+  echo ""
+  exit 1
+fi
+
+echo "[pre-push] 통과"
+exit 0

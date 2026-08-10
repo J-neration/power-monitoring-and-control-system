@@ -1534,14 +1534,6 @@ export type DeviceCreatefanSpeedInput = {
   set: number[]
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type DeviceUpdatemoduleStatusInput = {
   set?: number[]
   push?: number | number[]

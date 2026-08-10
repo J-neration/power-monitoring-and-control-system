@@ -1,6 +1,15 @@
 import { cookies } from "next/headers";
 import type { Device, DeviceWithInstallation, Site, TelemetryReading } from "../types/site";
-import type { SiteListFromApi } from "../types/admin";
+import type {
+  ClientOptionFromApi,
+  RoleOptionFromApi,
+  SiteListFromApi,
+} from "../types/admin";
+import {
+  DEFAULT_CLIENT_OPTIONS,
+  DEFAULT_ROLE_OPTIONS,
+  withRegistryDefaults,
+} from "../data/registryDefaults";
 
 export type FaultEvent = {
   id: string;
@@ -10,6 +19,12 @@ export type FaultEvent = {
   installationId: string;
   /** ModuleFaultState 병합 행 — HMI eventName (예: Over Temperature) */
   eventName?: string | null;
+  /** 현재 활성(빨강) 여부 — RAISE 상태 + 미확인 + 자동해제 시간 미경과 */
+  active?: boolean;
+  /** CLEAR 수신 시각 (없으면 미해제) */
+  resolvedAt?: string | null;
+  /** 사용자 Acknowledge 시각 */
+  acknowledgedAt?: string | null;
 };
 
 const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
@@ -119,4 +134,44 @@ export const fetchSitesListFromApi = async (): Promise<SiteListFromApi[]> => {
   if (!response.ok) throw new Error("Failed to fetch sites");
   const data = (await response.json()) as { sites: SiteListFromApi[] };
   return data.sites ?? [];
+};
+
+export const fetchClientOptionsFromApi = async (
+  includeInactive = true,
+): Promise<ClientOptionFromApi[]> => {
+  const q = includeInactive ? "?includeInactive=1" : "";
+  try {
+    const response = await fetch(`${apiBase}/admin/registry/clients${q}`, {
+      cache: "no-store",
+      headers: authHeaders(),
+    });
+    if (response.ok) {
+      const data = (await response.json()) as {
+        clients?: ClientOptionFromApi[];
+      };
+      return withRegistryDefaults(
+        data.clients ?? [],
+        DEFAULT_CLIENT_OPTIONS,
+      );
+    }
+  } catch {
+    /* use fallback below */
+  }
+  return DEFAULT_CLIENT_OPTIONS;
+};
+
+export const fetchRoleOptionsFromApi = async (): Promise<RoleOptionFromApi[]> => {
+  try {
+    const response = await fetch(`${apiBase}/admin/registry/roles`, {
+      cache: "no-store",
+      headers: authHeaders(),
+    });
+    if (response.ok) {
+      const data = (await response.json()) as { roles?: RoleOptionFromApi[] };
+      return withRegistryDefaults(data.roles ?? [], DEFAULT_ROLE_OPTIONS);
+    }
+  } catch {
+    /* use fallback below */
+  }
+  return DEFAULT_ROLE_OPTIONS;
 };

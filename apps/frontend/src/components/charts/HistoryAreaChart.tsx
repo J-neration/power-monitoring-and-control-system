@@ -1,0 +1,134 @@
+"use client";
+
+import type { ReactNode } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import ScadaTooltip from "./ScadaTooltip";
+import FaultChartMarkers from "./FaultChartMarkers";
+import ChartThresholdLines from "./ChartThresholdLines";
+import type { FaultEvent } from "../../lib/api";
+import {
+  AXIS,
+  CHART_H,
+  GRID,
+  LEGEND,
+} from "../../lib/chartTheme";
+
+type GradDef = { id: string; color: string; opacity?: number };
+
+function Grads({ defs }: { defs: GradDef[] }) {
+  return (
+    <defs>
+      {defs.map(({ id, color, opacity = 0.3 }) => (
+        <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%" stopColor={color} stopOpacity={opacity} />
+          <stop offset="95%" stopColor={color} stopOpacity={0} />
+        </linearGradient>
+      ))}
+    </defs>
+  );
+}
+
+type Series = {
+  dataKey: string;
+  name: string;
+  stroke: string;
+  fill: string;
+  dashed?: boolean;
+  stackId?: string;
+};
+
+type Props = {
+  data: Record<string, unknown>[];
+  series: Series[];
+  grads: GradDef[];
+  yUnit?: string;
+  yDomain?: [number | string, number | string];
+  yAxisWidth?: number;
+  threshold?: "thd" | "pf";
+  faults?: FaultEvent[];
+  children?: ReactNode;
+  margin?: { top?: number; right?: number; left?: number; bottom?: number };
+};
+
+function yAxisWidthForUnit(unit?: string): number {
+  if (!unit) return 34;
+  const u = unit.trim().toLowerCase();
+  if (u === "%") return 38;
+  if (u === "°c") return 42;
+  if (u === "m/s") return 46;
+  if (u.endsWith("kvar") || u.endsWith("kva") || u.endsWith("kw") || u === "a") {
+    return 58;
+  }
+  return 44;
+}
+
+export default function HistoryAreaChart({
+  data,
+  series,
+  grads,
+  yUnit,
+  yDomain = ["auto", "auto"],
+  yAxisWidth,
+  threshold,
+  faults = [],
+  children,
+  margin,
+}: Props) {
+  const axisWidth = yAxisWidth ?? yAxisWidthForUnit(yUnit);
+  const chartMargin = {
+    top: margin?.top ?? 8,
+    right: margin?.right ?? 16,
+    left: margin?.left ?? 0,
+    bottom: margin?.bottom ?? 0,
+  };
+
+  return (
+    <ResponsiveContainer width="100%" height={CHART_H}>
+      <AreaChart data={data} margin={chartMargin}>
+        <Grads defs={grads} />
+        <CartesianGrid {...GRID} />
+        <XAxis
+          dataKey="time"
+          {...AXIS}
+          interval="preserveStartEnd"
+          tick={{ ...AXIS.tick, className: "tabular-nums" }}
+        />
+        <YAxis
+          {...AXIS}
+          width={axisWidth}
+          domain={yDomain}
+          unit={yUnit}
+          tick={{ ...AXIS.tick, className: "tabular-nums" }}
+        />
+        <Tooltip content={<ScadaTooltip />} />
+        <Legend {...LEGEND} />
+        {threshold ? <ChartThresholdLines kind={threshold} /> : null}
+        <FaultChartMarkers faults={faults} data={data as { time: string; recordedAt: string }[]} />
+        {children}
+        {series.map((s) => (
+          <Area
+            key={s.dataKey}
+            type="monotone"
+            dataKey={s.dataKey}
+            name={s.name}
+            stroke={s.stroke}
+            strokeDasharray={s.dashed ? "4 3" : undefined}
+            fill={s.fill}
+            dot={false}
+            connectNulls={false}
+            stackId={s.stackId}
+          />
+        ))}
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}

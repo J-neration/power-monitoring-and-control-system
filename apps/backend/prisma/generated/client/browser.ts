@@ -23,6 +23,16 @@ export * from './enums.js';
  */
 export type User = Prisma.UserModel
 /**
+ * Model ClientOption
+ * 유저 등록·현장 등록 시 선택 가능한 건설사 목록 (관리자 관리)
+ */
+export type ClientOption = Prisma.ClientOptionModel
+/**
+ * Model RoleOption
+ * 유저 등록 시 선택 가능한 역할 표시명·설명 (키는 UserRole enum과 동일)
+ */
+export type RoleOption = Prisma.RoleOptionModel
+/**
  * Model Site
  * =========================
  *  * 1) Site (현장 – 아파트 단지 등)
@@ -36,6 +46,13 @@ export type Site = Prisma.SiteModel
  *  * =========================
  */
 export type Installation = Prisma.InstallationModel
+/**
+ * Model InstallationDeviceSettings
+ * =========================
+ *  * 2b) InstallationDeviceSettings (HMI basic settings 스냅샷)
+ *  * =========================
+ */
+export type InstallationDeviceSettings = Prisma.InstallationDeviceSettingsModel
 /**
  * Model Device
  * =========================

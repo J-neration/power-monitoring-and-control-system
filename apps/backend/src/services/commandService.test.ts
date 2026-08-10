@@ -6,9 +6,14 @@ import type { DeviceCommand } from "../../prisma/generated/client/client.js";
 class InMemoryRepo {
   commands: DeviceCommand[] = [];
   installations = new Set<string>(["PSVG-RNDTEST5"]);
+  moduleTypes = new Map<string, string>();
 
   async installationExists(installationId: string) {
     return this.installations.has(installationId);
+  }
+
+  async getModuleType(installationId: string) {
+    return this.moduleTypes.get(installationId) ?? null;
   }
 
   async expireCommands(now: Date) {
@@ -43,9 +48,10 @@ class InMemoryRepo {
     id: string;
     installationId: string;
     module: number;
-    power: "on" | "off";
+    power: "on" | "off" | "refresh" | "refreshSettings" | "setBasic";
     requestedBy?: string | null;
     expiresAt?: Date | null;
+    fields?: unknown;
   }) {
     const cmd: DeviceCommand = {
       id: data.id,
@@ -54,6 +60,7 @@ class InMemoryRepo {
       power: data.power,
       status: "pending",
       requestedBy: data.requestedBy ?? null,
+      fields: (data.fields as DeviceCommand["fields"]) ?? null,
       createdAt: new Date(),
       sentAt: null,
       ackedAt: null,
@@ -171,4 +178,56 @@ test("duplicate ack is idempotent", async () => {
   const second = await service.ack({ id: created.id, ok: true, message: "queued" });
   assert.equal(second.idempotent, true);
   assert.equal(second.status, "acked");
+});
+
+test("setBasic create -> poll includes fields", async () => {
+  const repo = new InMemoryRepo();
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "setBasic",
+    fields: { ectrs: 1200, pcs: 55.5, reactiveSwitch: 1 },
+  });
+  assert.equal(created.power, "setBasic");
+
+  const polled = await service.poll("PSVG-RNDTEST5");
+  assert.equal(polled.id, created.id);
+  assert.equal(polled.power, "setBasic");
+  assert.deepEqual(polled.fields, {
+    ectrs: 1200,
+    pcs: 55.5,
+    reactiveSwitch: 1,
+  });
+});
+
+test("setBasic filters to v3v4 allowed keys and renames tc→tpf", async () => {
+  const repo = new InMemoryRepo();
+  repo.moduleTypes.set("PSVG-RNDTEST5", "v3v4");
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "setBasic",
+    fields: {
+      reactiveSwitch: 1,
+      k0: 100,
+      tc: 0.98,
+      ectrs: 1200, // not allowed on v3v4
+      thdup: 5, // not allowed
+    },
+  });
+
+  const polled = await service.poll("PSVG-RNDTEST5");
+  assert.equal(polled.id, created.id);
+  // poll()은 NO_COMMAND(fields 없음) | 명령 payload 유니온을 반환한다.
+  // "fields" in 으로 좁혀야 아래에서 polled.fields 에 접근할 수 있다.
+  assert.ok("fields" in polled);
+  assert.deepEqual(polled.fields, {
+    reactiveSwitch: 1,
+    k0: 100,
+    tpf: 0.98,
+  });
 });

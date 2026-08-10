@@ -1,0 +1,20 @@
+# Railway Root Directory = 저장소 루트(/)일 때 사용되는 설정.
+# 이 파일이 없으면 Railway가 Nixpacks로 폴백해서 빌드가 깨진다
+# (Nixpacks는 소스 복사 전에 yarn install을 돌려서 @pmcs/backend의
+#  postinstall `prisma generate`가 schema.prisma를 못 찾음).
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+# 백엔드/공용 매니페스트가 바뀔 때만 재배포
+watchPatterns = [
+  "apps/backend/**",
+  "package.json",
+  "yarn.lock",
+  "Dockerfile",
+  "railway.toml",
+]
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 60
+restartPolicyType = "ON_FAILURE"

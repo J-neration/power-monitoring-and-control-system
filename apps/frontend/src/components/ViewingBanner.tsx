@@ -1,32 +1,50 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useWsEvents } from "../hooks/useWsEvents";
 
-/** How long (ms) the banner stays visible before auto-dismissing. */
-const AUTO_DISMISS_MS = 8_000;
+export type RemoteSessionPhase = "waiting" | "signaled" | "linked";
 
 type Props = {
-  onDismiss: () => void;
+  installationId: string;
+  onDismiss?: () => void;
 };
 
-const InfoIcon = () => (
-  <svg
-    className="viewing-banner-icon"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <line x1="12" y1="8" x2="12" y2="12" />
-    <line x1="12" y1="16" x2="12.01" y2="16" />
-  </svg>
-);
+const STORAGE_PREFIX = "pmcs.remoteSession.phase:";
 
-const CloseIcon = () => (
+function readStoredPhase(installationId: string): RemoteSessionPhase {
+  try {
+    const v = sessionStorage.getItem(STORAGE_PREFIX + installationId);
+    if (v === "waiting" || v === "signaled" || v === "linked") return v;
+  } catch {
+    // ignore
+  }
+  return "waiting";
+}
+
+function writeStoredPhase(
+  installationId: string,
+  phase: RemoteSessionPhase,
+): void {
+  try {
+    sessionStorage.setItem(STORAGE_PREFIX + installationId, phase);
+  } catch {
+    // ignore
+  }
+}
+
+function formatClock(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const mm = String(m).padStart(2, "0");
+  const ss = String(s).padStart(2, "0");
+  if (h > 0) return `${h}:${mm}:${ss}`;
+  return `${mm}:${ss}`;
+}
+
+const CheckIcon = () => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -36,41 +54,114 @@ const CloseIcon = () => (
     strokeLinejoin="round"
     aria-hidden="true"
   >
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
+    <path d="M20 6L9 17l-5-5" />
   </svg>
 );
 
+function advancePhase(
+  current: RemoteSessionPhase,
+  next: RemoteSessionPhase,
+): RemoteSessionPhase {
+  const rank = { waiting: 0, signaled: 1, linked: 2 } as const;
+  return rank[next] >= rank[current] ? next : current;
+}
+
 /**
- * Informational banner shown when the user begins actively viewing a device.
- * Auto-dismisses after AUTO_DISMISS_MS or when the user clicks the close button.
+ * Compact remote-session status for the sticky tab chrome.
+ * waiting → signaled → linked. Phase is persisted so remounts / refresh
+ * do not drop back to「폴링 대기」after HMI is already linked.
  */
-export default function ViewingBanner({ onDismiss }: Props) {
+export default function ViewingBanner({ installationId }: Props) {
+  const [phase, setPhase] = useState<RemoteSessionPhase>(() =>
+    readStoredPhase(installationId),
+  );
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const [startedAt] = useState(() => Date.now());
+
   useEffect(() => {
-    const timer = setTimeout(onDismiss, AUTO_DISMISS_MS);
-    return () => clearTimeout(timer);
-  }, [onDismiss]);
+    setPhase(readStoredPhase(installationId));
+  }, [installationId]);
+
+  useEffect(() => {
+    writeStoredPhase(installationId, phase);
+  }, [installationId, phase]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setElapsedMs(Date.now() - startedAt);
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [startedAt]);
+
+  useWsEvents((msg) => {
+    // WsMessage 유니온에는 installationId 가 없는 변형(welcome)이 있다.
+    // msg.type 으로 먼저 좁혀야 installationId 에 접근할 수 있다.
+    if (
+      msg.type !== "admin_session_linked" &&
+      msg.type !== "admin_session_signaled" &&
+      msg.type !== "command_acked"
+    ) {
+      return;
+    }
+    if (msg.installationId !== installationId) return;
+
+    if (msg.type === "admin_session_linked" || msg.type === "command_acked") {
+      // command_acked: HMI 가 폴링 중이면 linked 로 간주 (linked WS 누락 대비)
+      setPhase((p) => advancePhase(p, "linked"));
+      return;
+    }
+    if (msg.type === "admin_session_signaled") {
+      setPhase((p) => advancePhase(p, "signaled"));
+    }
+  });
+
+  const linked = phase === "linked";
+  const clock = formatClock(elapsedMs);
+
+  const label =
+    phase === "linked"
+      ? "원격 연결됨"
+      : phase === "signaled"
+        ? "세션 전달됨"
+        : "원격 연결 대기";
+
+  const hint =
+    phase === "linked"
+      ? "명령·설정 약 1분 간격"
+      : phase === "signaled"
+        ? "HMI 명령 폴링 확인 중"
+        : "최대 약 10분 · 텔레메트리 후 연결";
 
   return (
-    <div className="viewing-banner" role="status" aria-live="polite">
-      <div className="viewing-banner-body">
-        <InfoIcon />
-        <div className="viewing-banner-text">
-          <span className="viewing-banner-title">실시간 모니터링 중</span>
-          <span className="viewing-banner-desc">
-            장치 상태와 원격 명령은 이 화면에 반영되기까지 최대{" "}
-            <strong>60초</strong> 걸릴 수 있습니다.
+    <div
+      className={`remote-session-status remote-session-status--${phase}`}
+      role="status"
+      aria-live="polite"
+      aria-busy={!linked}
+      title={hint}
+    >
+      <div className="remote-session-status-main">
+        {linked ? (
+          <span className="remote-session-dot remote-session-dot--ok" aria-hidden>
+            <CheckIcon />
           </span>
+        ) : (
+          <span className="remote-session-dot remote-session-dot--pulse" aria-hidden />
+        )}
+        <div className="remote-session-copy">
+          <span className="remote-session-label">{label}</span>
+          <span className="remote-session-hint">{hint}</span>
         </div>
       </div>
-      <button
-        type="button"
-        className="viewing-banner-close"
-        onClick={onDismiss}
-        aria-label="닫기"
+      <div
+        className={`remote-session-timer${linked ? " remote-session-timer--live" : ""}`}
+        aria-label={`경과 ${clock}`}
       >
-        <CloseIcon />
-      </button>
+        <span className="remote-session-timer-label">
+          {linked ? "세션" : "경과"}
+        </span>
+        <span className="remote-session-timer-value">{clock}</span>
+      </div>
     </div>
   );
 }

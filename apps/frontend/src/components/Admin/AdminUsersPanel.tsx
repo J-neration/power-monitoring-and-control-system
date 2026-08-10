@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CLIENT_LABELS } from "../../data/clients";
+import type { ClientOptionFromApi, RoleOptionFromApi } from "../../types/admin";
 import type { SiteListFromApi } from "../../types/admin";
 
 type UserRole = "ADMIN" | "CLIENT" | "SITE";
@@ -20,12 +20,8 @@ type AdminUser = {
 type Props = {
   initialUsers: AdminUser[];
   sites: SiteListFromApi[];
-};
-
-const ROLE_LABEL: Record<UserRole, string> = {
-  ADMIN: "관리자",
-  CLIENT: "건설사",
-  SITE: "현장",
+  clientOptions: ClientOptionFromApi[];
+  roleOptions: RoleOptionFromApi[];
 };
 
 const ROLE_COLOR: Record<UserRole, string> = {
@@ -43,18 +39,27 @@ function formatDate(iso: string | null) {
   });
 }
 
-function scopeLabel(user: AdminUser, sites: SiteListFromApi[]) {
+function scopeLabel(
+  user: AdminUser,
+  sites: SiteListFromApi[],
+  clientLabelByKey: Record<string, string>,
+) {
   if (user.role === "ADMIN") return "전체";
   if (user.role === "CLIENT") {
     return user.clientKey
-      ? (CLIENT_LABELS[user.clientKey] ?? user.clientKey)
+      ? (clientLabelByKey[user.clientKey] ?? user.clientKey)
       : "-";
   }
   const site = sites.find((s) => s.siteId === user.siteId);
   return site?.name ?? user.siteId ?? "-";
 }
 
-export default function AdminUsersPanel({ initialUsers, sites }: Props) {
+export default function AdminUsersPanel({
+  initialUsers,
+  sites,
+  clientOptions,
+  roleOptions,
+}: Props) {
   const [users, setUsers] = useState<AdminUser[]>(initialUsers);
   const [flash, setFlash] = useState<{
     type: "ok" | "err";
@@ -86,10 +91,14 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
     setTimeout(() => setFlash(null), 4000);
   }
 
-  const clientOptions = Object.entries(CLIENT_LABELS).map(([v, l]) => ({
-    value: v,
-    label: l,
-  }));
+  const clientLabelByKey = Object.fromEntries(
+    clientOptions.map((c) => [c.key, c.label]),
+  );
+  const activeClientOptions = clientOptions.filter((c) => c.isActive);
+  const assignableRoles = roleOptions.filter((r) => r.isAssignable);
+  const roleLabelByKey = Object.fromEntries(
+    roleOptions.map((r) => [r.key, r.label]),
+  );
 
   // ── 생성 ──────────────────────────────────────────
   async function handleCreate() {
@@ -327,9 +336,12 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
                   }))
                 }
               >
-                <option value="CLIENT">건설사 담당자</option>
-                <option value="SITE">현장 관리자</option>
-                <option value="ADMIN">관리자 (ADMIN)</option>
+                {assignableRoles.map((r) => (
+                  <option key={r.key} value={r.key}>
+                    {r.label}
+                    {r.description ? ` — ${r.description}` : ""}
+                  </option>
+                ))}
               </select>
             </label>
 
@@ -344,8 +356,8 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
                   }
                 >
                   <option value="">선택하세요</option>
-                  {clientOptions.map((c) => (
-                    <option key={c.value} value={c.value}>
+                  {activeClientOptions.map((c) => (
+                    <option key={c.id} value={c.key}>
                       {c.label}
                     </option>
                   ))}
@@ -418,10 +430,12 @@ export default function AdminUsersPanel({ initialUsers, sites }: Props) {
                       <span
                         className={`user-role-badge ${ROLE_COLOR[user.role]}`}
                       >
-                        {ROLE_LABEL[user.role]}
+                        {roleLabelByKey[user.role] ?? user.role}
                       </span>
                     </td>
-                    <td className="user-scope">{scopeLabel(user, sites)}</td>
+                    <td className="user-scope">
+                      {scopeLabel(user, sites, clientLabelByKey)}
+                    </td>
                     <td>
                       {user.isActive ? (
                         <span className="user-status-active">활성</span>

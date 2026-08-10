@@ -11,6 +11,7 @@ import {
 import type { MouseEvent } from "react";
 import type { Site } from "../../types/site";
 import type { DeviceStatus } from "../../types/site";
+import { STATUS_LABEL } from "../../lib/deviceStatus";
 
 const GEO_URL = "/korea-provinces.json";
 
@@ -110,14 +111,6 @@ const STATUS_DOT: Record<DeviceStatus, string> = {
   offline: "#4B5563",
 };
 
-const STATUS_LABEL: Record<DeviceStatus, string> = {
-  running: "정상",
-  standby: "대기",
-  start: "기동 중",
-  fault: "이상",
-  offline: "오프라인",
-};
-
 const CITY_COORDS: Record<string, [number, number]> = {
   // 광역시/특별시 구 단위
   송파구: [127.11, 37.51],
@@ -125,23 +118,41 @@ const CITY_COORDS: Record<string, [number, number]> = {
   종로구: [126.98, 37.57],
   마포구: [126.9, 37.55],
   서초구: [127.01, 37.48],
+  양재동: [127.04, 37.47],
+  동안구: [126.95, 37.39],
+  분당구: [127.12, 37.41],
+  야탑동: [127.13, 37.41],
   영등포구: [126.9, 37.52],
   해운대구: [129.16, 35.16],
+  마린시티: [129.14, 35.15],
+  센텀중앙로: [129.13, 35.17],
   사하구: [128.97, 35.1],
   수영구: [129.11, 35.15],
   연수구: [126.68, 37.41],
+  송도동: [126.66, 37.39],
+  테크노파크로: [126.70, 37.42],
   서구: [126.68, 37.53],
   남동구: [126.73, 37.45],
+  남구: [126.90, 35.13],
+  북구: [126.88, 35.19],
+  상암동: [126.88, 37.58],
+  신수로: [126.92, 37.54],
   유성구: [127.34, 36.36],
+  "테크노4로 77": [127.38, 36.38],
+  "테크노4로 17": [127.32, 36.34],
   동구: [127.46, 36.31],
   중구: [127.42, 36.33],
+  수성구: [128.63, 35.85],
+  달서구: [128.53, 35.83],
   // 경기도 시 단위
-  안양시: [126.95, 37.39],
+  안양시: [126.92, 37.40],
   수원시: [127.0, 37.26],
   성남시: [127.13, 37.42],
-  화성시: [127.07, 37.2],
+  화성시: [127.10, 37.18],
+  동탄: [127.07, 37.20],
   용인시: [127.18, 37.24],
-  고양시: [126.83, 37.66],
+  고양시: [126.77, 37.66],
+  일산: [126.77, 37.68],
   평택시: [127.09, 36.99],
   파주시: [126.78, 37.76],
   김포시: [126.72, 37.62],
@@ -210,14 +221,16 @@ function resolveCoords(
   const parts = address
     .replace(/특별시|광역시|특별자치시|특별자치도/g, "")
     .split(/\s+/);
+  // 1) 부분 매칭 — 주소 전체에서 가장 긴 키를 먼저 선택 (더 구체적인 지역 우선)
+  const allKeys = Object.keys(CITY_COORDS).sort(
+    (a, b) => b.length - a.length,
+  );
+  for (const key of allKeys) {
+    if (address.includes(key)) return CITY_COORDS[key];
+  }
+  // 2) part별 정확 매칭 폴백
   for (const part of parts) {
     if (CITY_COORDS[part]) return CITY_COORDS[part];
-  }
-  for (const part of parts) {
-    const match = Object.keys(CITY_COORDS).find(
-      (k) => part.includes(k) || k.includes(part),
-    );
-    if (match) return CITY_COORDS[match];
   }
   return CITY_COORDS[region] ?? null;
 }
@@ -464,9 +477,12 @@ export default function KoreaMap({
                       default: {
                         fill,
                         stroke: colors.stroke,
-                        strokeWidth: isSelected ? 1.45 : 1.05,
+                        strokeWidth: isSelected ? 2.4 : 1.05,
                         outline: "none",
                         cursor: "pointer",
+                        filter: isSelected
+                          ? "drop-shadow(0 0 6px rgba(0, 212, 170, 0.65))"
+                          : undefined,
                       },
                       hover: {
                         fill: colors.fillSelected,
@@ -484,13 +500,21 @@ export default function KoreaMap({
           </Geographies>
 
           {/* Site markers — one dot per site, worst status */}
-          {siteMarkers.map((marker, idx) => {
+          {[...siteMarkers]
+            .sort((a, b) => {
+              if (a.siteId === selectedSiteId) return 1;
+              if (b.siteId === selectedSiteId) return -1;
+              return 0;
+            })
+            .map((marker, idx) => {
             const isFault = marker.status === "fault";
             const isSelected = marker.siteId === selectedSiteId;
             const isLinked = marker.status !== "offline";
+            const isDimmed = Boolean(selectedSiteId) && !isSelected;
             const color = STATUS_DOT[marker.status];
-            const innerR = (isSelected ? 4 : 3) / zoom;
-            const outerR = (isSelected ? 9 : 7) / zoom;
+            const sizeBoost = isSelected ? 1.55 : 1;
+            const innerR = (3 / zoom) * sizeBoost;
+            const outerR = (7 / zoom) * sizeBoost;
             return (
               <Marker
                 key={marker.siteId}
@@ -507,8 +531,36 @@ export default function KoreaMap({
                   })
                 }
                 onMouseLeave={() => setTooltip(null)}
-                style={{ cursor: "pointer" }}
+                className={isSelected ? "map-marker-selected" : undefined}
+                style={{
+                  cursor: "pointer",
+                  opacity: isDimmed ? 0.22 : 1,
+                  transition: "opacity 0.25s ease",
+                }}
               >
+                {isSelected && (
+                  <>
+                    <circle
+                      r={outerR * 2}
+                      fill="none"
+                      stroke="var(--pmcs-accent)"
+                      strokeWidth={1.4 / zoom}
+                      className="marker-selection-halo marker-selection-halo--outer"
+                    />
+                    <circle
+                      r={outerR * 1.45}
+                      fill="none"
+                      stroke="var(--pmcs-accent-bright)"
+                      strokeWidth={1.1 / zoom}
+                      className="marker-selection-halo marker-selection-halo--inner"
+                    />
+                    <circle
+                      r={outerR * 1.12}
+                      fill="var(--pmcs-accent)"
+                      opacity={0.2}
+                    />
+                  </>
+                )}
                 {isLinked && !isSelected && (
                   <circle
                     r={outerR * 1.8}
@@ -528,28 +580,18 @@ export default function KoreaMap({
                     className="marker-pulse-ring"
                   />
                 )}
-                {isSelected && (
-                  <circle
-                    r={outerR * 1.6}
-                    fill="none"
-                    stroke="#ffffff"
-                    strokeWidth={1.5 / zoom}
-                    opacity={0.7}
-                    className="marker-selected-ring"
-                  />
-                )}
                 <circle
                   r={outerR}
                   fill={color}
                   opacity={isSelected ? 0.35 : 0.2}
-                  stroke={color}
-                  strokeWidth={0.8 / zoom}
+                  stroke={isSelected ? "var(--pmcs-accent-bright)" : color}
+                  strokeWidth={(isSelected ? 1.3 : 0.8) / zoom}
                 />
                 <circle
                   r={innerR}
-                  fill={color}
-                  stroke={isSelected ? "#ffffff" : "#0b0d12"}
-                  strokeWidth={(isSelected ? 1.2 : 0.8) / zoom}
+                  fill={isSelected ? "#ffffff" : color}
+                  stroke={isSelected ? color : "#0b0d12"}
+                  strokeWidth={(isSelected ? 1.4 : 0.8) / zoom}
                 />
               </Marker>
             );

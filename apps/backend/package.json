@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx watch src/index.ts",
+    "postinstall": "prisma generate || echo \"[postinstall] prisma generate skipped (schema not available yet — build step will generate it)\"",
     "build": "prisma generate && tsc -p tsconfig.json",
-    "start": "cross-env NODE_ENV=production node dist/src/index.js",
+    "typecheck": "prisma generate && tsc -p tsconfig.check.json",
+    "start": "node dist/src/index.js",
     "lint": "echo \"No linter configured\"",
     "test": "node --test --import tsx \"src/**/*.test.ts\"",
 
@@ -14,6 +16,7 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "cross-env NODE_ENV=development tsx prisma/seed.ts",
     "db:seed:telemetry": "cross-env NODE_ENV=development tsx prisma/seedTelemetry.ts",
+    "db:seed:exhibition": "cross-env NODE_ENV=development tsx prisma/seedExhibition.ts",
     "db:reset": "cross-env NODE_ENV=development prisma migrate reset",
     "db:studio": "cross-env NODE_ENV=development prisma studio"
   },
@@ -29,13 +32,13 @@
     "fastify": "4.26.2",
     "pg": "^8.18.0",
     "pino": "8.17.2",
+    "prisma": "7.3.0",
     "zod": "latest"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "22.15.2",
     "pino-pretty": "10.2.3",
-    "prisma": "7.3.0",
     "tsx": "latest",
     "typescript": "latest"
   }

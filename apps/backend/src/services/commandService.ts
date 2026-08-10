@@ -1,10 +1,14 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../../prisma/generated/client/client.js";
+import { PrismaClient, type Prisma } from "../../prisma/generated/client/client.js";
 import type {
   DeviceCommand,
   DeviceCommandPower,
   DeviceCommandStatus,
 } from "../../prisma/generated/client/client.js";
+import {
+  allowedKeysForModuleType,
+  canonicalSettingsKey,
+} from "../lib/deviceSettingsKeys.js";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({
@@ -21,6 +25,8 @@ type CreateInput = {
   power: string;
   requestedBy?: string | null;
   expiresAt?: Date | null;
+  /** setBasic partial field map */
+  fields?: Record<string, number | string | boolean | null> | null;
 };
 
 type AckInput = {
@@ -36,6 +42,8 @@ type HistoryInput = {
 
 type CommandRepository = {
   installationExists(installationId: string): Promise<boolean>;
+  /** Latest settings moduleType for setBasic key filtering; null if unknown. */
+  getModuleType(installationId: string): Promise<string | null>;
   expireCommands(now: Date): Promise<number>;
   findActiveByInstallationModule(
     installationId: string,
@@ -48,6 +56,7 @@ type CommandRepository = {
     power: DeviceCommandPower;
     requestedBy?: string | null;
     expiresAt?: Date | null;
+    fields?: Prisma.InputJsonValue | null;
   }): Promise<DeviceCommand>;
   findOldestPending(installationId: string, now: Date): Promise<DeviceCommand | null>;
   markSent(id: string, sentAt: Date): Promise<DeviceCommand>;
@@ -68,6 +77,14 @@ class PrismaCommandRepository implements CommandRepository {
       select: { id: true },
     });
     return !!row;
+  }
+
+  async getModuleType(installationId: string): Promise<string | null> {
+    const row = await prisma.installationDeviceSettings.findUnique({
+      where: { installationId },
+      select: { moduleType: true },
+    });
+    return row?.moduleType ?? null;
   }
 
   async expireCommands(now: Date): Promise<number> {
@@ -106,6 +123,7 @@ class PrismaCommandRepository implements CommandRepository {
     power: DeviceCommandPower;
     requestedBy?: string | null;
     expiresAt?: Date | null;
+    fields?: Prisma.InputJsonValue | null;
   }): Promise<DeviceCommand> {
     return prisma.deviceCommand.create({
       data: {
@@ -115,6 +133,7 @@ class PrismaCommandRepository implements CommandRepository {
         power: data.power,
         requestedBy: data.requestedBy ?? null,
         expiresAt: data.expiresAt ?? null,
+        fields: data.fields ?? undefined,
       },
     });
   }
@@ -172,8 +191,6 @@ class PrismaCommandRepository implements CommandRepository {
   }
 }
 
-const ALLOWED_POWER: DeviceCommandPower[] = ["on", "off", "refresh"];
-
 export const makeCommandId = () => {
   const d = new Date();
   const y = d.getFullYear();
@@ -187,8 +204,36 @@ export const makeCommandId = () => {
 };
 
 const parsePower = (power: string): DeviceCommandPower | null => {
-  const normalized = power.trim().toLowerCase() as DeviceCommandPower;
-  return ALLOWED_POWER.includes(normalized) ? normalized : null;
+  const normalized = power.trim();
+  // camelCase commands
+  if (normalized === "setBasic") return "setBasic";
+  if (normalized === "refreshSettings") return "refreshSettings";
+  const lower = normalized.toLowerCase() as DeviceCommandPower;
+  if (lower === "on" || lower === "off" || lower === "refresh") return lower;
+  return null;
+};
+
+const sanitizeFields = (
+  fields: CreateInput["fields"],
+  moduleType?: string | null,
+): Prisma.InputJsonValue | null => {
+  if (!fields || typeof fields !== "object" || Array.isArray(fields)) return null;
+  const allowed = allowedKeysForModuleType(moduleType);
+  const out: Record<string, number | string | boolean | null> = {};
+  for (const [rawKey, value] of Object.entries(fields)) {
+    if (rawKey === "mod") continue; // module comes from command.module
+    const key = canonicalSettingsKey(rawKey);
+    if (!allowed.has(key)) continue;
+    if (
+      value === null ||
+      typeof value === "number" ||
+      typeof value === "string" ||
+      typeof value === "boolean"
+    ) {
+      out[key] = value;
+    }
+  }
+  return Object.keys(out).length > 0 ? out : null;
 };
 
 export class CommandError extends Error {
@@ -231,12 +276,33 @@ export const createCommandService = (
 
       const power = parsePower(input.power);
       if (!power) {
-        throw new CommandError(400, "INVALID_POWER", "power must be 'on', 'off', or 'refresh'");
+        throw new CommandError(
+          400,
+          "INVALID_POWER",
+          "power must be 'on', 'off', 'refresh', 'refreshSettings', or 'setBasic'",
+        );
       }
 
       const exists = await repo.installationExists(installationId);
       if (!exists) {
         throw new CommandError(404, "INSTALLATION_NOT_FOUND", "installationId not found");
+      }
+
+      let moduleType: string | null = null;
+      if (power === "setBasic") {
+        moduleType = await repo.getModuleType(installationId);
+      }
+
+      const fields =
+        power === "setBasic"
+          ? sanitizeFields(input.fields ?? null, moduleType)
+          : null;
+      if (power === "setBasic" && !fields) {
+        throw new CommandError(
+          400,
+          "INVALID_FIELDS",
+          "setBasic requires a non-empty fields object with keys allowed for this moduleType",
+        );
       }
 
       await repo.expireCommands(new Date());
@@ -259,6 +325,7 @@ export const createCommandService = (
         power,
         requestedBy: input.requestedBy?.trim() || null,
         expiresAt,
+        fields,
       });
     },
 
@@ -274,7 +341,25 @@ export const createCommandService = (
         return NO_COMMAND;
       }
       const sent = await repo.markSent(cmd.id, new Date());
-      return { id: sent.id, module: sent.module, power: sent.power };
+      const payload: {
+        id: string;
+        module: number;
+        power: string;
+        fields?: Record<string, unknown>;
+      } = {
+        id: sent.id,
+        module: sent.module,
+        power: sent.power,
+      };
+      if (
+        sent.power === "setBasic" &&
+        sent.fields &&
+        typeof sent.fields === "object" &&
+        !Array.isArray(sent.fields)
+      ) {
+        payload.fields = sent.fields as Record<string, unknown>;
+      }
+      return payload;
     },
 
     async ack(input: AckInput) {

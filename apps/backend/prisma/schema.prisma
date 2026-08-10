@@ -21,6 +21,9 @@ enum DeviceCommandPower {
   on
   off
   refresh
+  /// Settings tab: basic settings snapshot + moduleStatus (not full monitor metrics intent)
+  refreshSettings
+  setBasic
 }
 
 enum DeviceCommandStatus {
@@ -55,6 +58,32 @@ model User {
   @@index([username])
 }
 
+/// 유저 등록·현장 등록 시 선택 가능한 건설사 목록 (관리자 관리)
+model ClientOption {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  label     String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+/// 유저 등록 시 선택 가능한 역할 표시명·설명 (키는 UserRole enum과 동일)
+model RoleOption {
+  key           String   @id
+  label         String
+  description   String?
+  sortOrder     Int      @default(0)
+  isAssignable  Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isAssignable, sortOrder])
+}
+
 /* =========================
  * 1) Site (현장 – 아파트 단지 등)
  * ========================= */
@@ -83,17 +112,48 @@ model Installation {
   /// USIM ICCID (HMI가 보내는 값과 동일하게 정규화해 저장). 출하 전/현장에서 백엔드에 등록.
   iccid     String?  @unique
 
+  /// Legacy — HMI ignores. Always leave false; do not use for settings upload.
+  webSettingsActive      Boolean   @default(false)
+  /// Settings 탭 heartbeat 시각 (legacy, unused)
+  webSettingsHeartbeatAt DateTime?
+
+  /// Admin remote UI session for this installation (HMI command-poll gate).
+  /// True while an ADMIN is on this device page with heartbeats.
+  adminSessionActive      Boolean   @default(false)
+  adminSessionHeartbeatAt DateTime?
+  /// Admin userId that last heartbeated (logout clears by this)
+  adminSessionUserId      String?
+
   site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   device           Device?                     // 최신 텔레메트리 (1:1)
   telemetryRecords TelemetryRecord[]           // 시계열 이력
   commands         DeviceCommand[]
   faultEvents      FaultEvent[]               // fault 이력
   moduleFaultStates ModuleFaultState[]        // HMI /receiver/faults upsert 상태
+  deviceSettings   InstallationDeviceSettings? // HMI POST /receiver/settings 스냅샷
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([siteId])
+}
+
+/* =========================
+ * 2b) InstallationDeviceSettings (HMI basic settings 스냅샷)
+ * ========================= */
+model InstallationDeviceSettings {
+  installationId String       @id
+  installation   Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  /// HMI moduleType: "v1v2" | "v3v4" | "v5"
+  moduleType     String
+  numOfMods      Int          @default(0)
+
+  /// settings.basic[] — UI engineering units (not raw Modbus)
+  basic          Json
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 }
 
 /* =========================
@@ -293,6 +353,11 @@ model ModuleFaultState {
   /// HMI 가 보낸 사람이 읽을 수 있는 이벤트 이름 (예: Over Temperature)
   eventName        String?      @db.VarChar(64)
 
+  /// 사용자(Admin)가 확인(Acknowledge)한 시각 — 설정되면 활성 fault에서 제외
+  acknowledgedAt   DateTime?
+  /// 확인한 사용자명 (audit)
+  acknowledgedBy   String?      @db.VarChar(64)
+
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
@@ -309,6 +374,9 @@ model DeviceCommand {
   power          DeviceCommandPower
   status         DeviceCommandStatus @default(pending)
   requestedBy    String?
+
+  /// setBasic 부분 갱신 필드 (HMI가 JSON에서 스캔). on/off/refresh 는 null
+  fields         Json?
 
   createdAt      DateTime            @default(now())
   sentAt         DateTime?

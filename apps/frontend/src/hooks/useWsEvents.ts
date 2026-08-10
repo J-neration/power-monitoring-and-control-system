@@ -1,13 +1,23 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 export type WsMessage =
   | { type: "welcome"; timestamp: number }
   | { type: "device_updated"; installationId: string }
-  | { type: "command_acked"; commandId: string; status: string; installationId: string };
+  | { type: "settings_updated"; installationId: string }
+  | { type: "command_acked"; commandId: string; status: string; installationId: string }
+  | { type: "admin_session_signaled"; installationId: string }
+  | { type: "admin_session_linked"; installationId: string };
 
 type Handler = (msg: WsMessage) => void;
+
+export type WsConnectionStatus = "connecting" | "connected" | "disconnected";
+
+export type WsConnectionState = {
+  status: WsConnectionStatus;
+  lastMessageAt: number | null;
+};
 
 // ── Module-level singleton ─────────────────────────────────────────────────
 // All components share a single WebSocket connection. The connection is
@@ -19,6 +29,26 @@ let _ws: WebSocket | null = null;
 let _attempt = 0;
 let _reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 const _handlers = new Set<Handler>();
+const _connectionListeners = new Set<() => void>();
+
+let _connectionState: WsConnectionState = {
+  status: "disconnected",
+  lastMessageAt: null,
+};
+
+function setConnectionState(patch: Partial<WsConnectionState>): void {
+  _connectionState = { ..._connectionState, ...patch };
+  _connectionListeners.forEach((l) => l());
+}
+
+function subscribeConnection(listener: () => void): () => void {
+  _connectionListeners.add(listener);
+  return () => _connectionListeners.delete(listener);
+}
+
+function getConnectionSnapshot(): WsConnectionState {
+  return _connectionState;
+}
 
 function getWsUrl(): string {
   const base =
@@ -36,15 +66,18 @@ function openConnection(): void {
     return;
   }
 
+  setConnectionState({ status: "connecting" });
   _ws = new WebSocket(getWsUrl());
 
   _ws.addEventListener("open", () => {
     _attempt = 0;
+    setConnectionState({ status: "connected" });
   });
 
   _ws.addEventListener("message", (event) => {
     try {
       const msg = JSON.parse(event.data as string) as WsMessage;
+      setConnectionState({ lastMessageAt: Date.now() });
       _handlers.forEach((h) => h(msg));
     } catch {
       // ignore malformed frames
@@ -53,6 +86,7 @@ function openConnection(): void {
 
   _ws.addEventListener("close", () => {
     _ws = null;
+    setConnectionState({ status: "disconnected" });
     if (_handlers.size === 0) return;
     const delay =
       RECONNECT_DELAYS_MS[Math.min(_attempt, RECONNECT_DELAYS_MS.length - 1)];
@@ -95,4 +129,32 @@ export function useWsEvents(onMessage: Handler): void {
       _handlers.delete(stable);
     };
   }, []);
+}
+
+/** Shared WebSocket connection status for header / status bar UI. */
+export function useWsConnectionState(): WsConnectionState {
+  return useSyncExternalStore(
+    subscribeConnection,
+    getConnectionSnapshot,
+    getConnectionSnapshot,
+  );
+}
+
+/** Relative time since last WebSocket message (updates every second). */
+export function useWsLastEventAge(): string {
+  const { lastMessageAt } = useWsConnectionState();
+  const [, tick] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => tick((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!lastMessageAt) return "-";
+  const sec = Math.floor((Date.now() - lastMessageAt) / 1000);
+  if (sec < 5) return "방금";
+  if (sec < 60) return `${sec}초 전`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}분 전`;
+  return `${Math.floor(min / 60)}시간 전`;
 }

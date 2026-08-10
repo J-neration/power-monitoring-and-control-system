@@ -1,67 +1,179 @@
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../../prisma/generated/client/client.js";
+
 /**
- * In-memory active viewer registry.
+ * DB-backed admin remote session (`Installation.adminSessionActive`).
  *
- * Tracks which users are currently viewing a given device page.
- * Uses a per-viewer TTL so that crashed browsers (no stop call) naturally
- * expire after VIEWER_TTL_MS. The frontend sends a heartbeat every 60 s by
- * re-calling POST /devices/:id/viewing/start, which resets the timestamp.
+ * HMI reads `adminSessionActive` from POST /receiver ACK and only then polls
+ * GET /receiver/commands (~1 min). Survives multi-instance deploys (Railway).
  *
- * Multi-user: multiple users may view the same device simultaneously.
- * hasActiveViewers() returns true as long as at least one viewer is fresh.
+ * Cleared explicitly on logout / tab close. Heartbeat TTL is a long crash-safety
+ * net (browser died without pagehide) — not a short “left the tab” timeout.
+ * `webSettingsActive` is legacy and must stay false (HMI ignores it).
  */
 
-/** How long a viewer entry stays valid without a heartbeat (ms). */
-const VIEWER_TTL_MS = 90_000;
+/** Crash-safety: clear stale true if browser dies without stop (ms). */
+export const ADMIN_SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8h — align with JWT
 
-/** installationId → (userId → lastPingedAt timestamp) */
-const state = new Map<string, Map<string, number>>();
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({
+    connectionString:
+      process.env.DATABASE_URL ?? "postgresql://pmcs:pmcs@localhost:5432/pmcs",
+  }),
+});
 
-function getOrCreate(installationId: string): Map<string, number> {
-  let map = state.get(installationId);
-  if (!map) {
-    map = new Map();
-    state.set(installationId, map);
+/** Register or refresh admin remote session. Call on device-page enter + heartbeat. */
+export async function startAdminSession(
+  installationId: string,
+  userId?: string,
+): Promise<void> {
+  const now = new Date();
+  await prisma.installation.updateMany({
+    where: { id: installationId },
+    data: {
+      adminSessionActive: true,
+      adminSessionHeartbeatAt: now,
+      ...(userId ? { adminSessionUserId: userId } : {}),
+      // Keep legacy flag off — never reintroduce periodic settings upload
+      webSettingsActive: false,
+      webSettingsHeartbeatAt: null,
+    },
+  });
+}
+
+/** Clear admin session for one installation (tab close). */
+export async function stopAdminSession(
+  installationId: string,
+  _userId?: string,
+  opts?: {
+    /**
+     * Only clear if heartbeat is still at/before this instant.
+     * Prevents a late keepalive stop from wiping a newer start.
+     */
+    notAfter?: Date | string | null;
+  },
+): Promise<void> {
+  const notAfter = opts?.notAfter ? new Date(opts.notAfter) : null;
+  await prisma.installation.updateMany({
+    where: {
+      id: installationId,
+      ...(notAfter && !Number.isNaN(notAfter.getTime())
+        ? {
+            OR: [
+              { adminSessionHeartbeatAt: null },
+              { adminSessionHeartbeatAt: { lte: notAfter } },
+            ],
+          }
+        : {}),
+    },
+    data: {
+      adminSessionActive: false,
+      adminSessionHeartbeatAt: null,
+      adminSessionUserId: null,
+      webSettingsActive: false,
+      webSettingsHeartbeatAt: null,
+    },
+  });
+}
+
+/** Clear all admin sessions for a user (logout). */
+export async function stopAllAdminSessionsForUser(
+  userId: string,
+): Promise<number> {
+  if (!userId) return 0;
+  const result = await prisma.installation.updateMany({
+    where: {
+      adminSessionUserId: userId,
+      adminSessionActive: true,
+    },
+    data: {
+      adminSessionActive: false,
+      adminSessionHeartbeatAt: null,
+      adminSessionUserId: null,
+      webSettingsActive: false,
+      webSettingsHeartbeatAt: null,
+    },
+  });
+  return result.count;
+}
+
+/**
+ * True if an admin remote session is active and heartbeat is within TTL.
+ * Stale rows are cleared lazily.
+ */
+export async function isAdminSessionActive(
+  installationId: string,
+): Promise<boolean> {
+  if (!installationId) return false;
+  const row = await prisma.installation.findUnique({
+    where: { id: installationId },
+    select: {
+      adminSessionActive: true,
+      adminSessionHeartbeatAt: true,
+    },
+  });
+  if (!row?.adminSessionActive) return false;
+  const hb = row.adminSessionHeartbeatAt;
+  if (!hb) {
+    await prisma.installation.updateMany({
+      where: { id: installationId },
+      data: {
+        adminSessionActive: false,
+        adminSessionUserId: null,
+      },
+    });
+    return false;
   }
-  return map;
-}
-
-/** Register or refresh a viewer. Call on page open and on heartbeat. */
-export function startViewing(installationId: string, userId: string): void {
-  getOrCreate(installationId).set(userId, Date.now());
-}
-
-/** Remove a viewer. Call on page close / tab hidden (after grace period). */
-export function stopViewing(installationId: string, userId: string): void {
-  const map = state.get(installationId);
-  if (!map) return;
-  map.delete(userId);
-  if (map.size === 0) state.delete(installationId);
-}
-
-/** Returns true if at least one non-stale viewer is registered. */
-export function hasActiveViewers(installationId: string): boolean {
-  return getActiveViewerCount(installationId) > 0;
-}
-
-/** Returns the count of non-stale viewers. */
-export function getActiveViewerCount(installationId: string): number {
-  const map = state.get(installationId);
-  if (!map) return 0;
-  const cutoff = Date.now() - VIEWER_TTL_MS;
-  let count = 0;
-  for (const ts of map.values()) {
-    if (ts > cutoff) count++;
+  if (Date.now() - hb.getTime() > ADMIN_SESSION_TTL_MS) {
+    await prisma.installation.updateMany({
+      where: { id: installationId },
+      data: {
+        adminSessionActive: false,
+        adminSessionHeartbeatAt: null,
+        adminSessionUserId: null,
+      },
+    });
+    return false;
   }
-  return count;
+  return true;
 }
 
-/** Periodic cleanup — remove entries whose TTL has expired. */
-setInterval(() => {
-  const cutoff = Date.now() - VIEWER_TTL_MS;
-  for (const [installationId, viewers] of state) {
-    for (const [userId, ts] of viewers) {
-      if (ts <= cutoff) viewers.delete(userId);
-    }
-    if (viewers.size === 0) state.delete(installationId);
-  }
-}, 60_000);
+// ─── Legacy aliases (viewing/* routes & old call sites) ───────────────
+
+/** @deprecated Use startAdminSession */
+export async function startViewing(
+  installationId: string,
+  userId?: string,
+): Promise<void> {
+  return startAdminSession(installationId, userId);
+}
+
+/** @deprecated Use stopAdminSession */
+export async function stopViewing(
+  installationId: string,
+  userId?: string,
+): Promise<void> {
+  return stopAdminSession(installationId, userId);
+}
+
+/** @deprecated Legacy webSettingsActive — always false for HMI contract. */
+export async function isWebSettingsActive(
+  _installationId: string,
+): Promise<boolean> {
+  return false;
+}
+
+export async function hasActiveViewers(
+  installationId: string,
+): Promise<boolean> {
+  return isAdminSessionActive(installationId);
+}
+
+export async function getActiveViewerCount(
+  installationId: string,
+): Promise<number> {
+  return (await isAdminSessionActive(installationId)) ? 1 : 0;
+}
+
+/** Legacy export name kept for imports. */
+export const SETTINGS_TTL_MS = ADMIN_SESSION_TTL_MS;

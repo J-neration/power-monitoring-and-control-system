@@ -89,6 +89,24 @@ export const siteService = {
     return prisma.site.create({ data });
   },
 
+  /* ─── 현장 수정 ────────────────────────────────── */
+  update: async (
+    siteId: string,
+    data: {
+      name: string;
+      client: string;
+      region: string;
+      address: string;
+    },
+  ) => {
+    const site = await prisma.site.findUnique({ where: { id: siteId } });
+    if (!site) return null;
+    return prisma.site.update({
+      where: { id: siteId },
+      data,
+    });
+  },
+
   /* ─── 현장 삭제 (Installation/Device/Telemetry cascade) ─ */
   delete: async (siteId: string) => {
     const site = await prisma.site.findUnique({ where: { id: siteId } });
@@ -97,7 +115,7 @@ export const siteService = {
     return true;
   },
 
-  /* ─── 설치지점 생성 ─────────────────────────────── */
+  /* ─── 설치지점 생성 (빈 Device도 함께 생성) ──────── */
   createInstallation: async (data: {
     id?: string;
     siteId: string;
@@ -105,9 +123,13 @@ export const siteService = {
   }) => {
     const id = data.id?.trim();
     if (!id) throw new Error("Installation id is required");
-    return prisma.installation.create({
+    const installation = await prisma.installation.create({
       data: { id, siteId: data.siteId, label: data.label },
     });
+    await prisma.device.create({
+      data: { installationId: id, lastIp: "unknown" },
+    });
+    return installation;
   },
 
   /* ─── 설치지점 삭제 (Device/Telemetry cascade) ─── */

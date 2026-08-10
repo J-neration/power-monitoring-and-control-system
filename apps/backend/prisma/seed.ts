@@ -244,32 +244,27 @@ const seed = async () => {
 
   console.log(`\nSeeded ${siteRegistry.length} sites successfully.`);
 
-  // ── 초기 ADMIN 계정 ──────────────────────────────
-  const adminUsername = "admin";
-  const existing = await prisma.user.findUnique({
-    where: { username: adminUsername },
-  });
-  if (!existing) {
-    const passwordHash = await bcrypt.hash("abc123", 12);
-    await prisma.user.create({
-      data: { username: adminUsername, passwordHash, role: "ADMIN" },
-    });
-    console.log(`ADMIN 계정 생성: ${adminUsername} / abc123  ← 변경 필요`);
-  } else {
-    console.log(`ADMIN 계정 이미 존재: ${adminUsername} — 스킵`);
-  }
+  const { registryService } = await import("../src/services/registryService.js");
+  await registryService.ensureDefaults();
+  console.log("Registry options (clients & roles) ensured.");
 
-  // ── DEV 테스트 계정 ───────────────────────────────
-  type DevUser = { username: string; password: string; role: "CLIENT" | "SITE" | "ADMIN"; clientKey?: string; siteId?: string };
-  const devUsers: DevUser[] = [
-    { username: "datacenteradmin", password: "test1234", role: "CLIENT", clientKey: "datacenter" },
-    { username: "lotte",           password: "test1234", role: "CLIENT", clientKey: "lotte" },
+  // ── 계정 시드 ─────────────────────────────────────
+  // username 기준으로 항상 동기화한다(비밀번호·role·clientKey 포함).
+  // 기존 계정도 재시드 시 아래 값으로 강제 갱신되므로, 비밀번호 변경이 반영된다.
+  type SeedUser = { username: string; password: string; role: "CLIENT" | "SITE" | "ADMIN"; clientKey?: string; siteId?: string };
+  const seedUsers: SeedUser[] = [
+    { username: "admin",           password: "primernd1!", role: "ADMIN" },
+    { username: "lotte",           password: "lttadmin1!", role: "CLIENT", clientKey: "lotte" },
+    // coupang: CLIENT 계정 — clientKey=coupang, 아래 3개 현장(AYG1/YAT/SCH1) 조회
+    { username: "coupang",         password: "cpngadmin1!", role: "CLIENT", clientKey: "coupang" },
+    // 기존 DEV 테스트 계정 유지
+    { username: "datacenteradmin", password: "test1234",   role: "CLIENT", clientKey: "datacenter" },
   ];
 
-  for (const u of devUsers) {
+  for (const u of seedUsers) {
+    const passwordHash = await bcrypt.hash(u.password, 12);
     const found = await prisma.user.findUnique({ where: { username: u.username } });
     if (!found) {
-      const passwordHash = await bcrypt.hash(u.password, 12);
       await prisma.user.create({
         data: {
           username: u.username,
@@ -279,18 +274,19 @@ const seed = async () => {
           siteId: u.siteId ?? null,
         },
       });
-      console.log(`DEV 계정 생성: ${u.username} / ${u.password}  (${u.role}, clientKey=${u.clientKey ?? "-"})`);
+      console.log(`계정 생성: ${u.username}  (${u.role}, clientKey=${u.clientKey ?? "-"})`);
     } else {
-      // role·clientKey 등이 잘못 설정된 경우를 대비해 항상 동기화
+      // 비밀번호·role·clientKey 를 항상 동기화 (잘못된 설정/구 비밀번호 교정)
       await prisma.user.update({
         where: { username: u.username },
         data: {
+          passwordHash,
           role: u.role,
           clientKey: u.clientKey ?? null,
           siteId: u.siteId ?? null,
         },
       });
-      console.log(`DEV 계정 동기화: ${u.username}  (${u.role}, clientKey=${u.clientKey ?? "-"})`);
+      console.log(`계정 동기화: ${u.username}  (${u.role}, clientKey=${u.clientKey ?? "-"})`);
     }
   }
 };

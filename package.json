@@ -5,16 +5,21 @@
     "apps/*"
   ],
   "scripts": {
+    "predev": "node scripts/free-port.mjs 4000",
     "dev": "cross-env NODE_ENV=development concurrently --names \"frontend,backend\" --prefix-colors \"cyan,green\" --prefix \"[{name}]\" \"yarn workspace @pmcs/frontend dev\" \"yarn workspace @pmcs/backend dev\"",
+    "dev:free-port": "node scripts/free-port.mjs 4000",
     "dev:frontend": "cross-env NODE_ENV=development yarn workspace @pmcs/frontend dev",
     "dev:backend": "cross-env NODE_ENV=development yarn workspace @pmcs/backend dev",
     "build": "yarn workspace @pmcs/frontend build && yarn workspace @pmcs/backend build",
     "lint": "yarn workspace @pmcs/frontend lint && yarn workspace @pmcs/backend lint",
+    "typecheck": "yarn workspace @pmcs/backend typecheck",
+    "hooks:install": "git config core.hooksPath .githooks && echo '[hooks] pre-push 훅 활성화됨 (.githooks)'",
 
     "db:start": "docker compose up -d postgres",
     "db:stop": "docker compose down",
     "db:migrate:dev": "cross-env NODE_ENV=development yarn workspace @pmcs/backend db:migrate:dev",
     "db:migrate:deploy": "yarn workspace @pmcs/backend db:migrate:deploy",
+    "db:migrate:prod": "cross-env NODE_ENV=production yarn workspace @pmcs/backend db:migrate:deploy",
     "db:seed": "cross-env NODE_ENV=development yarn workspace @pmcs/backend db:seed",
     "db:seed:telemetry": "cross-env NODE_ENV=development yarn workspace @pmcs/backend db:seed:telemetry",
     "db:reset": "cross-env NODE_ENV=development yarn workspace @pmcs/backend db:reset",

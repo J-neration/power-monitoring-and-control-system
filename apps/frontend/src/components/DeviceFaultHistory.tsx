@@ -38,44 +38,53 @@ function relativeTime(iso: string): string {
   return `${Math.floor(diffMin / 1440)}일 전`;
 }
 
+type FaultStatus = "active" | "acknowledged" | "resolved" | "history";
+
+function faultStatus(f: FaultEvent): FaultStatus {
+  if (f.active) return "active";
+  if (f.acknowledgedAt) return "acknowledged";
+  if (f.resolvedAt) return "resolved";
+  return "history";
+}
+
+const STATUS_LABEL: Record<FaultStatus, string> = {
+  active: "활성",
+  acknowledged: "확인됨",
+  resolved: "해제됨",
+  history: "이력",
+};
+
 export default function DeviceFaultHistory({ installationId, faults }: Props) {
   const router = useRouter();
-  const [refreshState, setRefreshState] = useState<"idle" | "sending" | "waiting">("idle");
-  const [refreshMsg, setRefreshMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [ackingId, setAckingId] = useState<string | null>(null);
 
-  const latestFault = faults[0] ?? null;
+  const activeFaults = faults.filter((f) => f.active);
+  const latestFault = activeFaults[0] ?? faults[0] ?? null;
 
-  const handleRefresh = useCallback(async () => {
-    setRefreshState("sending");
-    setRefreshMsg(null);
-    try {
-      const res = await fetch("/api/receiver/commands/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ installationId, module: 0, power: "refresh" }),
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        message?: string;
-        code?: string;
-      };
-      if (!res.ok) {
-        setRefreshMsg({ type: "err", text: data.message ?? data.code ?? `요청 실패 (${res.status})` });
-        setRefreshState("idle");
-        return;
+  const handleAck = useCallback(
+    async (f: FaultEvent) => {
+      setAckingId(f.id);
+      try {
+        const res = await fetch(
+          `/api/devices/${encodeURIComponent(installationId)}/faults/ack`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({ module: f.module }),
+          },
+        );
+        if (res.ok) {
+          router.refresh();
+        }
+      } catch {
+        /* 무시 — 사용자가 다시 시도 가능 */
+      } finally {
+        setAckingId(null);
       }
-      setRefreshState("waiting");
-      setRefreshMsg({ type: "ok", text: "갱신 명령 전송됨 — 15초 후 데이터를 재조회합니다." });
-      setTimeout(() => {
-        router.refresh();
-        setRefreshState("idle");
-        setRefreshMsg(null);
-      }, 15_000);
-    } catch {
-      setRefreshMsg({ type: "err", text: "네트워크 오류" });
-      setRefreshState("idle");
-    }
-  }, [installationId, router]);
+    },
+    [installationId, router],
+  );
 
   return (
     <section className="device-detail-body">
@@ -86,36 +95,31 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
               Fault 이력
               <span className="chart-title-sub">최근 50건 · Admin</span>
             </h3>
-            {latestFault && (
+            {activeFaults.length > 0 ? (
               <span className="fault-latest-badge">
                 <span className="fault-badge-dot" />
-                마지막 fault:{" "}
-                <strong>{relativeTime(latestFault.occurredAt)}</strong>
-                {" — "}
-                {moduleLabel(latestFault.module)} {faultLabel(latestFault)}
+                활성 fault {activeFaults.length}건
+                {latestFault && (
+                  <>
+                    {" — "}
+                    {moduleLabel(latestFault.module)} {faultLabel(latestFault)}
+                    {" ("}
+                    {relativeTime(latestFault.occurredAt)}
+                    {")"}
+                  </>
+                )}
+              </span>
+            ) : (
+              <span className="fault-latest-badge fault-latest-badge-clear">
+                활성 fault 없음
               </span>
             )}
           </div>
 
-          <div className="fault-refresh-row">
-            <button
-              type="button"
-              className="fault-refresh-btn"
-              disabled={refreshState !== "idle"}
-              onClick={() => void handleRefresh()}
-            >
-              {refreshState === "sending"
-                ? "…"
-                : refreshState === "waiting"
-                  ? "⏳ 대기 중…"
-                  : "↻ 데이터 새로고침"}
-            </button>
-            {refreshMsg && (
-              <span className={`fault-refresh-msg fault-refresh-msg-${refreshMsg.type}`}>
-                {refreshMsg.text}
-              </span>
-            )}
-          </div>
+          <p className="fault-refresh-hint">
+            모니터 계측은 <strong>모니터</strong> 탭 「데이터 갱신」, 설정·모듈
+            상태는 <strong>설정</strong> 탭 「설정값 갱신」에서 요청합니다.
+          </p>
         </div>
 
         {faults.length === 0 ? (
@@ -128,25 +132,47 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
                   <th>발생시각</th>
                   <th>모듈</th>
                   <th>이벤트</th>
+                  <th>상태</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
-                {faults.map((f) => (
-                  <tr key={f.id}>
-                    <td className="fault-time">
-                      <span className="fault-time-abs">
-                        {new Date(f.occurredAt).toLocaleString("ko-KR", {
-                          timeZone: "Asia/Seoul",
-                        })}
-                      </span>
-                      <span className="fault-time-rel">{relativeTime(f.occurredAt)}</span>
-                    </td>
-                    <td>
-                      <span className="fault-module-badge">{moduleLabel(f.module)}</span>
-                    </td>
-                    <td className="fault-event-name">{faultLabel(f)}</td>
-                  </tr>
-                ))}
+                {faults.map((f) => {
+                  const status = faultStatus(f);
+                  return (
+                    <tr key={f.id} className={status === "active" ? "fault-row-active" : ""}>
+                      <td className="fault-time">
+                        <span className="fault-time-abs">
+                          {new Date(f.occurredAt).toLocaleString("ko-KR", {
+                            timeZone: "Asia/Seoul",
+                          })}
+                        </span>
+                        <span className="fault-time-rel">{relativeTime(f.occurredAt)}</span>
+                      </td>
+                      <td>
+                        <span className="fault-module-badge">{moduleLabel(f.module)}</span>
+                      </td>
+                      <td className="fault-event-name">{faultLabel(f)}</td>
+                      <td>
+                        <span className={`fault-status-chip fault-status-${status}`}>
+                          {STATUS_LABEL[status]}
+                        </span>
+                      </td>
+                      <td>
+                        {status === "active" && (
+                          <button
+                            type="button"
+                            className="fault-ack-btn"
+                            disabled={ackingId === f.id}
+                            onClick={() => void handleAck(f)}
+                          >
+                            {ackingId === f.id ? "…" : "확인"}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -9,9 +9,10 @@
  *   .env → .env.local → .env.{NODE_ENV} → .env.{NODE_ENV}.local
  */
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { config } from "dotenv";
 
-const appDir = path.resolve(import.meta.dirname, "../..");
+const appDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const nodeEnv = process.env.NODE_ENV ?? "development";
 
 for (const file of [
