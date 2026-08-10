@@ -4,9 +4,25 @@
   command = "yarn build"
   publish = ".next"
 
-# NEXT_PUBLIC_API_BASE / COMMAND_API_BASE 는 Netlify 대시보드 Environment variables 에서
-# Production / Branch deploys(dev) / Deploy Previews context 별로 관리합니다.
-# (미지정 시 대시보드 기본값이 Prod를 가리키면 프리뷰가 실서비스 DB를 칠 수 있음)
+# Production 환경변수 (main 브랜치)
+[context.production.environment]
+  NEXT_PUBLIC_API_BASE = "https://pmcsbackend-production.up.railway.app"
+  COMMAND_API_BASE = "https://pmcsbackend-production.up.railway.app"
+
+# Dev 환경변수 (dev 브랜치)
+[context.dev.environment]
+  NEXT_PUBLIC_API_BASE = "https://pmcsbackend-dev.up.railway.app"
+  COMMAND_API_BASE = "https://pmcsbackend-dev.up.railway.app"
+
+# main 외 브랜치 배포 / PR 프리뷰도 dev 백엔드로 — 미지정 시 Netlify UI 값(prod)으로
+# 폴백해서 프리뷰가 실서비스 DB를 건드리게 된다.
+[context.branch-deploy.environment]
+  NEXT_PUBLIC_API_BASE = "https://pmcsbackend-dev.up.railway.app"
+  COMMAND_API_BASE = "https://pmcsbackend-dev.up.railway.app"
+
+[context.deploy-preview.environment]
+  NEXT_PUBLIC_API_BASE = "https://pmcsbackend-dev.up.railway.app"
+  COMMAND_API_BASE = "https://pmcsbackend-dev.up.railway.app"
 
 # 보안 헤더 (모든 경로)
 # CSP 는 인라인 스크립트/지도/3rd-party 영향이 커 별도 신중 적용 — 여기서는 제외.
