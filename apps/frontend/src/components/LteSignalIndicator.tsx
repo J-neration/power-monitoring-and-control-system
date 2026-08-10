@@ -41,6 +41,14 @@ export default function LteSignalIndicator({
           />
         ))}
       </span>
+      <span className="lte-signal-label">{info.label}</span>
+      {variant === "detail" && (detail || lastSeen) && (
+        <span className="lte-signal-meta">
+          {[detail, lastSeen ? `마지막 수신 ${lastSeen}` : null]
+            .filter(Boolean)
+            .join(" · ")}
+        </span>
+      )}
     </div>
   );
 }
