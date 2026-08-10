@@ -1,15 +1,7 @@
 import AdminRegistryPanel from "../../../../components/Admin/AdminRegistryPanel";
-import {
-  fetchClientOptionsFromApi,
-  fetchRoleOptionsFromApi,
-} from "../../../../lib/api";
 
-export default async function AdminRegistryPage() {
-  const [clients, roles] = await Promise.all([
-    fetchClientOptionsFromApi().catch(() => []),
-    fetchRoleOptionsFromApi().catch(() => []),
-  ]);
-
+/** 데이터는 AdminRegistryPanel 마운트 시 클라이언트에서 로드 (SSR 스트림 단절 방지) */
+export default function AdminRegistryPage() {
   return (
     <main className="admin-iccid-page">
       <div className="admin-iccid-header">
@@ -18,7 +10,7 @@ export default async function AdminRegistryPage() {
           관리자 전용 · 건설사·역할 목록 관리 (유저·현장 등록 옵션)
         </p>
       </div>
-      <AdminRegistryPanel initialClients={clients} initialRoles={roles} />
+      <AdminRegistryPanel initialClients={[]} initialRoles={[]} />
     </main>
   );
 }

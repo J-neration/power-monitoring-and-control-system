@@ -2,6 +2,27 @@ import { NextRequest, NextResponse } from "next/server";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
 
+export async function GET(request: NextRequest) {
+  const token = request.cookies.get("pmcs_token")?.value;
+  if (!token) {
+    return NextResponse.json({ message: "인증이 필요합니다." }, { status: 401 });
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/sites`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    const data = await res.json().catch(() => ({}));
+    return NextResponse.json(data, { status: res.status });
+  } catch {
+    return NextResponse.json(
+      { message: "서버에 연결할 수 없습니다." },
+      { status: 503 },
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   const token = request.cookies.get("pmcs_token")?.value;
   if (!token) return NextResponse.json({ message: "인증이 필요합니다." }, { status: 401 });
