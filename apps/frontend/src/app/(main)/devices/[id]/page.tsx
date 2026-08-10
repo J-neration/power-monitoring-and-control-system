@@ -9,7 +9,6 @@ import LteSignalIndicator from "../../../../components/LteSignalIndicator";
 import PageLiveRefresh from "../../../../components/PageLiveRefresh";
 import { STATUS_LABEL } from "../../../../lib/deviceStatus";
 import type { DeviceWithInstallation } from "../../../../types/site";
-
 type Props = {
   params: { id: string };
 };
@@ -35,6 +34,8 @@ export default async function DeviceDetailPage({ params }: Props) {
   ]);
 
   if (!device) {
+    // If a non-installation id is entered on /devices, prefer sending
+    // the user to the site route instead of a hard 404.
     redirect(`/sites/${encodeURIComponent(id)}`);
   }
 
