@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AdminLoadingState from "./AdminLoadingState";
 import AdminSitesPanel from "./AdminSitesPanel";
 import type { ClientOptionFromApi, SiteListFromApi } from "../../types/admin";
 import {
@@ -59,11 +60,7 @@ export default function AdminSitesLoader() {
   }, []);
 
   if (load.status === "loading") {
-    return (
-      <div className="admin-iccid-empty" aria-busy="true">
-        현장 목록 불러오는 중…
-      </div>
-    );
+    return <AdminLoadingState label="현장 목록 불러오는 중…" />;
   }
 
   if (load.status === "error") {

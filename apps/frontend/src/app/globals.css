@@ -6134,6 +6134,32 @@ body.pmcs-control-room .global-header:hover {
   color: rgba(255, 255, 255, 0.45);
 }
 
+.admin-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: min(420px, 55vh);
+  padding: 48px 16px;
+}
+
+.admin-loading-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(165, 180, 252, 0.22);
+  border-top-color: #a5b4fc;
+  animation: spin 0.7s linear infinite;
+}
+
+.admin-loading-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.01em;
+}
+
 .admin-iccid-table-wrap {
   overflow-x: auto;
   border: 1px solid rgba(255, 255, 255, 0.08);
