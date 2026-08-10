@@ -16,6 +16,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // /admin 인덱스 → sites (loading.tsx + page redirect() 무한 로딩 회피)
+  if (pathname === "/admin" || pathname === "/admin/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/admin/sites";
+    return NextResponse.redirect(url);
+  }
+
   const token = request.cookies.get("pmcs_token")?.value;
   const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
 
