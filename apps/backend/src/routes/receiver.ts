@@ -194,17 +194,12 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
   opts,
 ) => {
   const apiKey = opts.receiverApiKey;
-  const authByApiKey = (
-    request: { headers: Record<string, unknown> },
-    reply: { status: (code: number) => { send: (body: unknown) => unknown } },
-  ) => {
+  /** 응답은 호출자가 보낸다 — 여기서도 보내면 이중 send 로 ERR_HTTP_HEADERS_SENT 가 터져
+   *  프로세스가 죽는다(잘못된 키 요청 한 번으로 서버 다운). */
+  const hasValidApiKey = (request: { headers: Record<string, unknown> }) => {
     const providedKey =
       (request.headers["x-api-key"] as string | undefined) ?? "";
-    if (providedKey !== apiKey) {
-      reply.status(401).send({ message: "Unauthorized" });
-      return false;
-    }
-    return true;
+    return providedKey === apiKey;
   };
 
   const notifyCriticalFault = (payload: {
@@ -240,7 +235,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
 
   /* 더 구체적인 경로를 먼저 등록 (POST /faults 가 /faults/critical 을 가리지 않도록) */
   server.post("/faults/critical", async (request, reply) => {
-    if (!authByApiKey(request, reply)) {
+    if (!hasValidApiKey(request)) {
       return reply.status(401).send({ message: "Unauthorized" });
     }
     const obj = parseJsonObject(request.body);
@@ -285,7 +280,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
   });
 
   server.post("/faults", async (request, reply) => {
-    if (!authByApiKey(request, reply)) {
+    if (!hasValidApiKey(request)) {
       return reply.status(401).send({ message: "Unauthorized" });
     }
     const obj = parseJsonObject(request.body);
@@ -324,7 +319,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
 
   server.post("/", async (request, reply) => {
     // API Key 검증
-    if (!authByApiKey(request, reply)) {
+    if (!hasValidApiKey(request)) {
       return reply.status(401).send({ message: "Unauthorized" });
     }
 
@@ -510,7 +505,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
    * Auth: x-api-key (same as telemetry).
    */
   server.post("/settings", async (request, reply) => {
-    if (!authByApiKey(request, reply)) {
+    if (!hasValidApiKey(request)) {
       return reply.status(401).send({ message: "Unauthorized" });
     }
     const obj = parseJsonObject(request.body);
@@ -619,7 +614,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
 
   // Device polling -> oldest pending command
   server.get("/commands", async (request, reply) => {
-    if (!authByApiKey(request, reply)) {
+    if (!hasValidApiKey(request)) {
       return reply.status(401).send({ message: "Unauthorized" });
     }
     const q = request.query as { installationId?: string; iccid?: string };
@@ -682,7 +677,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
 
   // Device ACK
   server.post("/commands/ack", async (request, reply) => {
-    if (!authByApiKey(request, reply)) {
+    if (!hasValidApiKey(request)) {
       return reply.status(401).send({ message: "Unauthorized" });
     }
     const parsed = ackSchema.safeParse(request.body);
