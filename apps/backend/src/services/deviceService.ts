@@ -261,7 +261,7 @@ export type ReceiverIdentityResolution = {
  */
 /**
  * ICCID로 Installation·Device 보장 (미등록 시 unknown 사이트에 자동 생성).
- * POST /receiver/faults* 전용 — API 키 없이 ICCID만으로 수신할 때 사용.
+ * POST /receiver/faults* — 미등록 ICCID 자동 프로비저닝용 (수신 라우트는 x-api-key 필수).
  */
 export const getInstallationIdByIccid = async (
   iccidRaw: string,
