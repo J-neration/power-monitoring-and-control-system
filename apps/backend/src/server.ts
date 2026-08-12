@@ -91,7 +91,10 @@ export const parseEnv = (env: Record<string, string | undefined>) => {
   const deployed = isDeployedEnv(env);
   const fallbacksUsed: SecretName[] = [];
 
-  const requireSecret = (name: SecretName): string => {
+  const readRequired = (
+    name: SecretName,
+    rejectFallbackValue: boolean,
+  ): string => {
     const value = env[name]?.trim() ?? "";
     if (!deployed) {
       if (value) return value;
@@ -103,7 +106,7 @@ export const parseEnv = (env: Record<string, string | undefined>) => {
         `${name} 가 비어 있습니다 — 배포 환경에서는 필수입니다.\n${MISSING_ENV_HINT}`,
       );
     }
-    if (value === devFallbacks[name]) {
+    if (rejectFallbackValue && value === devFallbacks[name]) {
       throw new EnvConfigError(
         `${name} 가 개발용 기본값 그대로입니다 — 저장소에 공개된 값이라 인증이 없는 것과 같습니다.\n${MISSING_ENV_HINT}`,
       );
@@ -111,13 +114,18 @@ export const parseEnv = (env: Record<string, string | undefined>) => {
     return value;
   };
 
+  const requireSecret = (name: SecretName) => readRequired(name, true);
+  /** 시크릿이 아니므로 값 자체는 검사하지 않는다 — dev 백엔드가 localhost 를 허용 origin 으로
+   *  두는 것은 정상 설정이다. 누락만 잡는다. */
+  const requireConfig = (name: SecretName) => readRequired(name, false);
+
   const parsed = envSchema.parse({
     PORT: Number(env.PORT ?? "4000"),
     HOST: env.HOST ?? "0.0.0.0",
     DATABASE_URL: requireSecret("DATABASE_URL"),
     JWT_SECRET: requireSecret("JWT_SECRET"),
     RECEIVER_API_KEY: requireSecret("RECEIVER_API_KEY"),
-    FRONTEND_ORIGIN: requireSecret("FRONTEND_ORIGIN"),
+    FRONTEND_ORIGIN: requireConfig("FRONTEND_ORIGIN"),
   });
 
   if (fallbacksUsed.length > 0) {
