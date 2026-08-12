@@ -53,16 +53,100 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
+export class EnvConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "EnvConfigError";
+  }
+}
+
+/** 로컬 개발 편의용 폴백. 저장소에 공개된 값이므로 배포 환경에서는 사용을 금지한다. */
+const devFallbacks = {
+  DATABASE_URL: "postgresql://pmcs:pmcs@localhost:5432/pmcs",
+  JWT_SECRET: "change-me-in-production-min-32-chars!!",
+  RECEIVER_API_KEY: "receiver-dev-key",
+  FRONTEND_ORIGIN: "http://localhost:3000",
+} as const;
+
+type SecretName = keyof typeof devFallbacks;
+
+/** Railway 는 NODE_ENV 를 자동 주입하지 않는다 — NODE_ENV 만 보면 변수를 빼먹은 배포가
+ *  폴백값으로 조용히 떠버려 가드가 무력해지므로, Railway 주입 변수로도 배포를 판별한다. */
+const isDeployedEnv = (env: Record<string, string | undefined>) =>
+  env.NODE_ENV === "production" ||
+  Boolean(
+    env.RAILWAY_ENVIRONMENT ??
+      env.RAILWAY_ENVIRONMENT_NAME ??
+      env.RAILWAY_PROJECT_ID ??
+      env.RAILWAY_SERVICE_ID,
+  );
+
+/** 대시보드에는 변수가 보이는데 프로세스에는 없는 가장 흔한 원인 — 이름에 공백·탭이 섞여
+ *  `RECEIVER_API_KEY\t` 로 저장된 경우. UI 에서는 정상으로 보여 찾는 데 오래 걸린다. */
+const findWhitespacePaddedName = (
+  env: Record<string, string | undefined>,
+  name: string,
+) => Object.keys(env).find((key) => key !== name && key.trim() === name);
+
+const MISSING_ENV_HINT =
+  "  Railway → 해당 서비스 → Variables 에 설정하세요.\n" +
+  "  · dev/production 은 서비스가 분리돼 있으니 두 서비스를 모두 확인할 것\n" +
+  "  · project Shared Variables 에만 넣었다면 서비스에서 ${{shared.NAME}} 로 참조해야 적용됨\n" +
+  "  · 시크릿 생성: openssl rand -hex 24";
+
 export const parseEnv = (env: Record<string, string | undefined>) => {
-  return envSchema.parse({
+  const deployed = isDeployedEnv(env);
+  const fallbacksUsed: SecretName[] = [];
+
+  const readRequired = (
+    name: SecretName,
+    rejectFallbackValue: boolean,
+  ): string => {
+    const value = env[name]?.trim() ?? "";
+    if (!deployed) {
+      if (value) return value;
+      fallbacksUsed.push(name);
+      return devFallbacks[name];
+    }
+    if (!value) {
+      const paddedName = findWhitespacePaddedName(env, name);
+      throw new EnvConfigError(
+        `${name} 가 비어 있습니다 — 배포 환경에서는 필수입니다.\n` +
+          (paddedName
+            ? `  이름에 공백/탭이 섞인 ${JSON.stringify(paddedName)} 가 대신 설정돼 있습니다.\n` +
+              `  대시보드에서는 똑같아 보이니 해당 변수를 지우고 이름을 다시 입력하세요.`
+            : MISSING_ENV_HINT),
+      );
+    }
+    if (rejectFallbackValue && value === devFallbacks[name]) {
+      throw new EnvConfigError(
+        `${name} 가 개발용 기본값 그대로입니다 — 저장소에 공개된 값이라 인증이 없는 것과 같습니다.\n${MISSING_ENV_HINT}`,
+      );
+    }
+    return value;
+  };
+
+  const requireSecret = (name: SecretName) => readRequired(name, true);
+  /** 시크릿이 아니므로 값 자체는 검사하지 않는다 — dev 백엔드가 localhost 를 허용 origin 으로
+   *  두는 것은 정상 설정이다. 누락만 잡는다. */
+  const requireConfig = (name: SecretName) => readRequired(name, false);
+
+  const parsed = envSchema.parse({
     PORT: Number(env.PORT ?? "4000"),
     HOST: env.HOST ?? "0.0.0.0",
-    DATABASE_URL:
-      env.DATABASE_URL ?? "postgresql://pmcs:pmcs@localhost:5432/pmcs",
-    JWT_SECRET: env.JWT_SECRET ?? "change-me-in-production-min-32-chars!!",
-    RECEIVER_API_KEY: env.RECEIVER_API_KEY ?? "receiver-dev-key",
-    FRONTEND_ORIGIN: env.FRONTEND_ORIGIN ?? "http://localhost:3000",
+    DATABASE_URL: requireSecret("DATABASE_URL"),
+    JWT_SECRET: requireSecret("JWT_SECRET"),
+    RECEIVER_API_KEY: requireSecret("RECEIVER_API_KEY"),
+    FRONTEND_ORIGIN: requireConfig("FRONTEND_ORIGIN"),
   });
+
+  if (fallbacksUsed.length > 0) {
+    console.warn(
+      `⚠️  개발용 폴백값 사용 중 (로컬 전용): ${fallbacksUsed.join(", ")}`,
+    );
+  }
+
+  return parsed;
 };
 
 export const buildServer = async (env: Env) => {

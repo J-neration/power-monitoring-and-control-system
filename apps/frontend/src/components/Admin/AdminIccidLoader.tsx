@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AdminLoadingState from "./AdminLoadingState";
 import AdminInstallationIccidPanel from "./AdminInstallationIccidPanel";
 import type { SiteListFromApi } from "../../types/admin";
 
@@ -42,11 +43,7 @@ export default function AdminIccidLoader() {
   }, []);
 
   if (load.status === "loading") {
-    return (
-      <div className="admin-iccid-empty" aria-busy="true">
-        ICCID 목록 불러오는 중…
-      </div>
-    );
+    return <AdminLoadingState label="ICCID 목록 불러오는 중…" />;
   }
 
   if (load.status === "error") {

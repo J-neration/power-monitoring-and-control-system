@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AdminLoadingState from "./AdminLoadingState";
 import AdminUsersPanel from "./AdminUsersPanel";
 import type {
   ClientOptionFromApi,
@@ -94,11 +95,7 @@ export default function AdminUsersLoader() {
   }, []);
 
   if (load.status === "loading") {
-    return (
-      <div className="admin-iccid-empty" aria-busy="true">
-        계정 목록 불러오는 중…
-      </div>
-    );
+    return <AdminLoadingState label="계정 목록 불러오는 중…" />;
   }
 
   if (load.status === "error") {
