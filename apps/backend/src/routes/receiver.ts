@@ -240,6 +240,9 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
 
   /* 더 구체적인 경로를 먼저 등록 (POST /faults 가 /faults/critical 을 가리지 않도록) */
   server.post("/faults/critical", async (request, reply) => {
+    if (!authByApiKey(request, reply)) {
+      return reply.status(401).send({ message: "Unauthorized" });
+    }
     const obj = parseJsonObject(request.body);
     if (!obj) {
       return reply.status(400).send({ message: "Invalid JSON body" });
@@ -282,6 +285,9 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
   });
 
   server.post("/faults", async (request, reply) => {
+    if (!authByApiKey(request, reply)) {
+      return reply.status(401).send({ message: "Unauthorized" });
+    }
     const obj = parseJsonObject(request.body);
     if (!obj) {
       return reply.status(400).send({ message: "Invalid JSON body" });

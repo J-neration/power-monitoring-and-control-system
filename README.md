@@ -155,6 +155,8 @@ STM32 + Quectel LTE 장비의 다운링크 명령 제어는 아래 4개 API로 �
 
 아래 장비 엔드포인트는 `x-api-key: <RECEIVER_API_KEY>` 필수:
 - `POST /receiver`
+- `POST /receiver/faults`
+- `POST /receiver/faults/critical`
 - `GET /receiver/commands`
 - `POST /receiver/commands/ack`
 
