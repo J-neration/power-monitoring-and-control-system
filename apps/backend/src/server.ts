@@ -81,6 +81,13 @@ const isDeployedEnv = (env: Record<string, string | undefined>) =>
       env.RAILWAY_SERVICE_ID,
   );
 
+/** 대시보드에는 변수가 보이는데 프로세스에는 없는 가장 흔한 원인 — 이름에 공백·탭이 섞여
+ *  `RECEIVER_API_KEY\t` 로 저장된 경우. UI 에서는 정상으로 보여 찾는 데 오래 걸린다. */
+const findWhitespacePaddedName = (
+  env: Record<string, string | undefined>,
+  name: string,
+) => Object.keys(env).find((key) => key !== name && key.trim() === name);
+
 const MISSING_ENV_HINT =
   "  Railway → 해당 서비스 → Variables 에 설정하세요.\n" +
   "  · dev/production 은 서비스가 분리돼 있으니 두 서비스를 모두 확인할 것\n" +
@@ -102,8 +109,13 @@ export const parseEnv = (env: Record<string, string | undefined>) => {
       return devFallbacks[name];
     }
     if (!value) {
+      const paddedName = findWhitespacePaddedName(env, name);
       throw new EnvConfigError(
-        `${name} 가 비어 있습니다 — 배포 환경에서는 필수입니다.\n${MISSING_ENV_HINT}`,
+        `${name} 가 비어 있습니다 — 배포 환경에서는 필수입니다.\n` +
+          (paddedName
+            ? `  이름에 공백/탭이 섞인 ${JSON.stringify(paddedName)} 가 대신 설정돼 있습니다.\n` +
+              `  대시보드에서는 똑같아 보이니 해당 변수를 지우고 이름을 다시 입력하세요.`
+            : MISSING_ENV_HINT),
       );
     }
     if (rejectFallbackValue && value === devFallbacks[name]) {
