@@ -91,6 +91,8 @@ export default function AdminInstallationIccidPanel({ sites }: Props) {
       <p className="admin-iccid-hint">
         HMI는 모뎀에서 읽은 <strong>ICCID</strong>만내면 됩니다. 각 설치지점(변전실·전기실 등)에
         USIM ICCID를 아래에 맞춰 등록하세요. 공백·하이픈은 저장 시 자동으로 제거됩니다.
+        유심 케이스 <strong>19자리</strong>와 HMI 로그 <strong>20자리</strong>(끝 Luhn 체크섬)는
+        서로 매칭됩니다.
       </p>
       {message ? (
         <p

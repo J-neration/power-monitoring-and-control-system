@@ -573,7 +573,7 @@ export type DeviceGroupByOutputType = {
   capacity: number
   moduleStatus: number[]
   numOfMods: number
-  lastSeenAt: Date
+  lastSeenAt: Date | null
   lastValue: number | null
   lastIp: string | null
   csq: number | null
@@ -645,7 +645,7 @@ export type DeviceWhereInput = {
   capacity?: Prisma.IntFilter<"Device"> | number
   moduleStatus?: Prisma.IntNullableListFilter<"Device">
   numOfMods?: Prisma.IntFilter<"Device"> | number
-  lastSeenAt?: Prisma.DateTimeFilter<"Device"> | Date | string
+  lastSeenAt?: Prisma.DateTimeNullableFilter<"Device"> | Date | string | null
   lastValue?: Prisma.FloatNullableFilter<"Device"> | number | null
   lastIp?: Prisma.StringNullableFilter<"Device"> | string | null
   csq?: Prisma.IntNullableFilter<"Device"> | number | null
@@ -695,7 +695,7 @@ export type DeviceOrderByWithRelationInput = {
   capacity?: Prisma.SortOrder
   moduleStatus?: Prisma.SortOrder
   numOfMods?: Prisma.SortOrder
-  lastSeenAt?: Prisma.SortOrder
+  lastSeenAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastValue?: Prisma.SortOrderInput | Prisma.SortOrder
   lastIp?: Prisma.SortOrderInput | Prisma.SortOrder
   csq?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -748,7 +748,7 @@ export type DeviceWhereUniqueInput = Prisma.AtLeast<{
   capacity?: Prisma.IntFilter<"Device"> | number
   moduleStatus?: Prisma.IntNullableListFilter<"Device">
   numOfMods?: Prisma.IntFilter<"Device"> | number
-  lastSeenAt?: Prisma.DateTimeFilter<"Device"> | Date | string
+  lastSeenAt?: Prisma.DateTimeNullableFilter<"Device"> | Date | string | null
   lastValue?: Prisma.FloatNullableFilter<"Device"> | number | null
   lastIp?: Prisma.StringNullableFilter<"Device"> | string | null
   csq?: Prisma.IntNullableFilter<"Device"> | number | null
@@ -798,7 +798,7 @@ export type DeviceOrderByWithAggregationInput = {
   capacity?: Prisma.SortOrder
   moduleStatus?: Prisma.SortOrder
   numOfMods?: Prisma.SortOrder
-  lastSeenAt?: Prisma.SortOrder
+  lastSeenAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastValue?: Prisma.SortOrderInput | Prisma.SortOrder
   lastIp?: Prisma.SortOrderInput | Prisma.SortOrder
   csq?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -855,7 +855,7 @@ export type DeviceScalarWhereWithAggregatesInput = {
   capacity?: Prisma.IntWithAggregatesFilter<"Device"> | number
   moduleStatus?: Prisma.IntNullableListFilter<"Device">
   numOfMods?: Prisma.IntWithAggregatesFilter<"Device"> | number
-  lastSeenAt?: Prisma.DateTimeWithAggregatesFilter<"Device"> | Date | string
+  lastSeenAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Device"> | Date | string | null
   lastValue?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
   lastIp?: Prisma.StringNullableWithAggregatesFilter<"Device"> | string | null
   csq?: Prisma.IntNullableWithAggregatesFilter<"Device"> | number | null
@@ -903,7 +903,7 @@ export type DeviceCreateInput = {
   capacity?: number
   moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
   numOfMods?: number
-  lastSeenAt?: Date | string
+  lastSeenAt?: Date | string | null
   lastValue?: number | null
   lastIp?: string | null
   csq?: number | null
@@ -953,7 +953,7 @@ export type DeviceUncheckedCreateInput = {
   capacity?: number
   moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
   numOfMods?: number
-  lastSeenAt?: Date | string
+  lastSeenAt?: Date | string | null
   lastValue?: number | null
   lastIp?: string | null
   csq?: number | null
@@ -1001,7 +1001,7 @@ export type DeviceUpdateInput = {
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
   moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
   numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
-  lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1051,7 +1051,7 @@ export type DeviceUncheckedUpdateInput = {
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
   moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
   numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
-  lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1100,7 +1100,7 @@ export type DeviceCreateManyInput = {
   capacity?: number
   moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
   numOfMods?: number
-  lastSeenAt?: Date | string
+  lastSeenAt?: Date | string | null
   lastValue?: number | null
   lastIp?: string | null
   csq?: number | null
@@ -1148,7 +1148,7 @@ export type DeviceUpdateManyMutationInput = {
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
   moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
   numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
-  lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1197,7 +1197,7 @@ export type DeviceUncheckedUpdateManyInput = {
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
   moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
   numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
-  lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1575,7 +1575,7 @@ export type DeviceCreateWithoutInstallationInput = {
   capacity?: number
   moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
   numOfMods?: number
-  lastSeenAt?: Date | string
+  lastSeenAt?: Date | string | null
   lastValue?: number | null
   lastIp?: string | null
   csq?: number | null
@@ -1623,7 +1623,7 @@ export type DeviceUncheckedCreateWithoutInstallationInput = {
   capacity?: number
   moduleStatus?: Prisma.DeviceCreatemoduleStatusInput | number[]
   numOfMods?: number
-  lastSeenAt?: Date | string
+  lastSeenAt?: Date | string | null
   lastValue?: number | null
   lastIp?: string | null
   csq?: number | null
@@ -1687,7 +1687,7 @@ export type DeviceUpdateWithoutInstallationInput = {
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
   moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
   numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
-  lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1735,7 +1735,7 @@ export type DeviceUncheckedUpdateWithoutInstallationInput = {
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
   moduleStatus?: Prisma.DeviceUpdatemoduleStatusInput | number[]
   numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
-  lastSeenAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastValue?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -2001,7 +2001,10 @@ export type $DevicePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     capacity: number
     moduleStatus: number[]
     numOfMods: number
-    lastSeenAt: Date
+    /**
+     * 실제 텔레메트리/수신이 온 시각. 설치만 하고 미통신이면 null
+     */
+    lastSeenAt: Date | null
     lastValue: number | null
     lastIp: string | null
     /**

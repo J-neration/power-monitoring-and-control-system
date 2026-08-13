@@ -1,6 +1,5 @@
 import type { Site } from "../types/site";
 import { STATUS_LABEL } from "./deviceStatus";
-import { formatLastSeen } from "./lteSignal";
 
 export type AlarmItem = {
   id: string;
@@ -8,7 +7,10 @@ export type AlarmItem = {
   siteName: string;
   instLabel: string;
   status: "fault" | "offline";
+  /** 상대시각 없이 고정된 문구 (hydration 안전) */
   detail: string;
+  /** 오프라인일 때 마지막 수신 — UI에서 마운트 후 상대시각으로 표시 */
+  lastSeenAt: string | null;
   sortKey: number;
   ackKey: string;
 };
@@ -34,10 +36,10 @@ export function buildAlarms(sites: Site[]): AlarmItem[] {
       const maxThd = thdParts.length ? Math.max(...thdParts) : null;
 
       let detail = STATUS_LABEL[status];
+      let lastSeenAt: string | null = null;
       if (status === "offline") {
-        detail += d?.lastSeenAt
-          ? ` · ${formatLastSeen(d.lastSeenAt)}`
-          : " · 수신 없음";
+        lastSeenAt = d?.lastSeenAt ?? null;
+        if (!lastSeenAt) detail += " · 수신 없음";
       } else if (maxThd != null) {
         detail += ` · Grid THD 최대 ${maxThd.toFixed(1)}%`;
       }
@@ -49,6 +51,7 @@ export function buildAlarms(sites: Site[]): AlarmItem[] {
         instLabel: inst.label,
         status,
         detail,
+        lastSeenAt,
         ackKey: alarmAckKey(inst.id, status),
         sortKey:
           (status === "fault" ? 2 : 1) * 1e15 +

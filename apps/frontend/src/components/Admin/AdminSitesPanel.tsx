@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import type { ClientOptionFromApi, SiteListFromApi } from "../../types/admin";
 import { CLIENT_LABELS, isTestClient } from "../../data/clients";
 
@@ -233,6 +233,10 @@ export default function AdminSitesPanel({
     type: "ok" | "err";
     text: string;
   } | null>(null);
+  const flashClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rowFeedbackTimers = useRef<
+    Record<string, ReturnType<typeof setTimeout>>
+  >({});
 
   // 새 현장 폼
   const [showAddSite, setShowAddSite] = useState(false);
@@ -250,9 +254,17 @@ export default function AdminSitesPanel({
   const [addInstFor, setAddInstFor] = useState<string | null>(null);
   const [newInst, setNewInst] = useState({ id: "", label: "" });
   const [addingInst, setAddingInst] = useState(false);
+  /** siteId → 설치지점 추가 직후 인라인 피드백 */
+  const [instAddFeedback, setInstAddFeedback] = useState<
+    Record<string, { type: "ok" | "err"; text: string }>
+  >({});
 
   // ICCID 저장 중인 installationId
   const [savingIccid, setSavingIccid] = useState<string | null>(null);
+  /** installationId → ICCID 저장 결과 (버튼 옆 ✓/✕) */
+  const [iccidFeedback, setIccidFeedback] = useState<
+    Record<string, { type: "ok" | "err"; text: string }>
+  >({});
   const [deletingSite, setDeletingSite] = useState<string | null>(null);
   const [deletingInst, setDeletingInst] = useState<string | null>(null);
 
@@ -267,8 +279,39 @@ export default function AdminSitesPanel({
   const [savingSite, setSavingSite] = useState<string | null>(null);
 
   function showFlash(type: "ok" | "err", text: string) {
-    setFlash({ type, text });
-    setTimeout(() => setFlash(null), 3500);
+    const withMark =
+      type === "ok"
+        ? text.startsWith("✓")
+          ? text
+          : `✓ ${text}`
+        : text.startsWith("✕")
+          ? text
+          : `✕ ${text}`;
+    setFlash({ type, text: withMark });
+    if (flashClearTimer.current) clearTimeout(flashClearTimer.current);
+    flashClearTimer.current = setTimeout(() => setFlash(null), 4000);
+  }
+
+  function setTimedFeedback(
+    key: string,
+    type: "ok" | "err",
+    text: string,
+    setter: Dispatch<
+      SetStateAction<Record<string, { type: "ok" | "err"; text: string }>>
+    >,
+  ) {
+    setter((prev) => ({ ...prev, [key]: { type, text } }));
+    if (rowFeedbackTimers.current[key]) {
+      clearTimeout(rowFeedbackTimers.current[key]);
+    }
+    rowFeedbackTimers.current[key] = setTimeout(() => {
+      setter((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      delete rowFeedbackTimers.current[key];
+    }, 3500);
   }
 
   function toggleExpand(siteId: string) {
@@ -446,7 +489,9 @@ export default function AdminSitesPanel({
         installation?: { id: string; label: string };
       };
       if (!res.ok) {
-        showFlash("err", data.message ?? `오류 (${res.status})`);
+        const msg = data.message ?? `오류 (${res.status})`;
+        setTimedFeedback(siteId, "err", msg, setInstAddFeedback);
+        showFlash("err", msg);
         return;
       }
       const created = data.installation!;
@@ -469,8 +514,15 @@ export default function AdminSitesPanel({
       );
       setNewInst({ id: "", label: "" });
       setAddInstFor(null);
+      setTimedFeedback(
+        siteId,
+        "ok",
+        "설치지점 추가 완료",
+        setInstAddFeedback,
+      );
       showFlash("ok", "설치지점이 추가되었습니다.");
     } catch {
+      setTimedFeedback(siteId, "err", "네트워크 오류", setInstAddFeedback);
       showFlash("err", "네트워크 오류");
     } finally {
       setAddingInst(false);
@@ -537,11 +589,15 @@ export default function AdminSitesPanel({
       );
       const data = (await res.json().catch(() => ({}))) as { message?: string };
       if (!res.ok) {
-        showFlash("err", data.message ?? `저장 실패 (${res.status})`);
+        const msg = data.message ?? `저장 실패 (${res.status})`;
+        setTimedFeedback(instId, "err", msg, setIccidFeedback);
+        showFlash("err", msg);
         return;
       }
+      setTimedFeedback(instId, "ok", "저장 완료", setIccidFeedback);
       showFlash("ok", "ICCID가 저장되었습니다.");
     } catch {
+      setTimedFeedback(instId, "err", "네트워크 오류", setIccidFeedback);
       showFlash("err", "네트워크 오류");
     } finally {
       setSavingIccid(null);
@@ -549,6 +605,12 @@ export default function AdminSitesPanel({
   }
 
   function updateIccid(siteId: string, instId: string, value: string) {
+    setIccidFeedback((prev) => {
+      if (!prev[instId]) return prev;
+      const next = { ...prev };
+      delete next[instId];
+      return next;
+    });
     setSites((prev) =>
       prev.map((s) =>
         s.siteId === siteId
@@ -566,7 +628,11 @@ export default function AdminSitesPanel({
   return (
     <div className="admin-sites-wrap">
       {flash && (
-        <p className={`admin-iccid-flash ${flash.type}`} role="status">
+        <p
+          className={`admin-iccid-flash admin-sites-flash ${flash.type}`}
+          role="status"
+          aria-live="polite"
+        >
           {flash.text}
         </p>
       )}
@@ -821,21 +887,46 @@ export default function AdminSitesPanel({
                                 />
                               </td>
                               <td>
-                                <button
-                                  type="button"
-                                  className="admin-iccid-save"
-                                  disabled={savingIccid === inst.installationId}
-                                  onClick={() =>
-                                    handleSaveIccid(
-                                      inst.installationId,
-                                      inst.iccid,
-                                    )
-                                  }
-                                >
-                                  {savingIccid === inst.installationId
-                                    ? "저장 중…"
-                                    : "저장"}
-                                </button>
+                                <div className="admin-sites-inline-actions">
+                                  <button
+                                    type="button"
+                                    className={`admin-iccid-save${
+                                      iccidFeedback[inst.installationId]
+                                        ?.type === "ok"
+                                        ? " admin-iccid-save--ok"
+                                        : iccidFeedback[inst.installationId]
+                                              ?.type === "err"
+                                          ? " admin-iccid-save--err"
+                                          : ""
+                                    }`}
+                                    disabled={
+                                      savingIccid === inst.installationId
+                                    }
+                                    onClick={() =>
+                                      handleSaveIccid(
+                                        inst.installationId,
+                                        inst.iccid,
+                                      )
+                                    }
+                                  >
+                                    {savingIccid === inst.installationId
+                                      ? "저장 중…"
+                                      : iccidFeedback[inst.installationId]
+                                            ?.type === "ok"
+                                        ? "✓ 완료"
+                                        : iccidFeedback[inst.installationId]
+                                              ?.type === "err"
+                                          ? "✕ 실패"
+                                          : "저장"}
+                                  </button>
+                                  {iccidFeedback[inst.installationId] ? (
+                                    <span
+                                      className={`admin-sites-inline-status ${iccidFeedback[inst.installationId].type}`}
+                                    >
+                                      {iccidFeedback[inst.installationId].text}
+                                    </span>
+                                  ) : null}
+                                </div>
                               </td>
                               <td>
                                 <button
@@ -900,18 +991,35 @@ export default function AdminSitesPanel({
                         >
                           취소
                         </button>
+                        {instAddFeedback[site.siteId]?.type === "err" ? (
+                          <span className="admin-sites-inline-status err">
+                            ✕ {instAddFeedback[site.siteId].text}
+                          </span>
+                        ) : null}
                       </div>
                     ) : (
-                      <button
-                        type="button"
-                        className="admin-sites-add-inst-btn"
-                        onClick={() => {
-                          setAddInstFor(site.siteId);
-                          setNewInst({ id: "", label: "" });
-                        }}
-                      >
-                        + 설치지점 추가
-                      </button>
+                      <div className="admin-sites-add-inst-row">
+                        <button
+                          type="button"
+                          className="admin-sites-add-inst-btn"
+                          onClick={() => {
+                            setAddInstFor(site.siteId);
+                            setNewInst({ id: "", label: "" });
+                          }}
+                        >
+                          + 설치지점 추가
+                        </button>
+                        {instAddFeedback[site.siteId] ? (
+                          <span
+                            className={`admin-sites-inline-status ${instAddFeedback[site.siteId].type}`}
+                          >
+                            {instAddFeedback[site.siteId].type === "ok"
+                              ? "✓ "
+                              : "✕ "}
+                            {instAddFeedback[site.siteId].text}
+                          </span>
+                        ) : null}
+                      </div>
                     )}
                   </div>
                 )}

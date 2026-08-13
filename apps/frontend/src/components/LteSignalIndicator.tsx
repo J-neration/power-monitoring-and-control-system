@@ -1,9 +1,12 @@
+"use client";
+
 import type { Device } from "../types/site";
 import {
   formatLastSeen,
   formatLteSignalDetail,
   getLteSignalInfo,
 } from "../lib/lteSignal";
+import { useHasMounted } from "../hooks/useHasMounted";
 
 type Props = {
   device?: Device | null;
@@ -16,10 +19,11 @@ export default function LteSignalIndicator({
   variant = "compact",
   className = "",
 }: Props) {
+  const mounted = useHasMounted();
   const offline = !device || device.status === "offline";
   const info = getLteSignalInfo(device?.rsrp, device?.csq, offline);
   const detail = formatLteSignalDetail(info);
-  const lastSeen = formatLastSeen(device?.lastSeenAt);
+  const lastSeen = mounted ? formatLastSeen(device?.lastSeenAt) : null;
   const title = [
     info.label,
     detail,
