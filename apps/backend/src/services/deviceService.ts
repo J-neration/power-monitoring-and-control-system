@@ -668,7 +668,7 @@ export const deviceService = {
       iccid === null || iccid === undefined || String(iccid).trim() === ""
         ? null
         : normalizeIccid(iccid);
-    if (norm === "") {
+    if (!norm) {
       await prisma.installation.update({
         where: { id: installationId },
         data: { iccid: null },
