@@ -1,0 +1,82 @@
+# main 에 merge/push 되면 GitHub Release 를 만들고
+# 직전 릴리즈 이후 PR/커밋 기준으로 Release notes 를 자동 생성한다.
+#
+# 결과 확인: GitHub → Releases
+# 수동 실행: Actions → Release on main → Run workflow
+
+name: Release on main
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-on-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute next tag
+        id: tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+
+          latest="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1 || true)"
+          if [ -z "${latest}" ]; then
+            next="v1.0.0"
+          else
+            ver="${latest#v}"
+            IFS=. read -r major minor patch <<<"${ver}"
+            next="v${major}.${minor}.$((patch + 1))"
+          fi
+
+          if git rev-parse -q --verify "refs/tags/${next}" >/dev/null; then
+            echo "Tag ${next} already exists; skipping release create."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "latest=${latest}" >> "$GITHUB_OUTPUT"
+          echo "next=${next}" >> "$GITHUB_OUTPUT"
+          echo "Next release tag: ${next} (previous: ${latest:-none})"
+
+      - name: Create release with notes
+        if: steps.tag.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.tag.outputs.next }}"
+          PREV="${{ steps.tag.outputs.latest }}"
+
+          args=(
+            release create "${TAG}"
+            --repo "${{ github.repository }}"
+            --target "${{ github.sha }}"
+            --title "${TAG}"
+            --generate-notes
+          )
+
+          # 이전 태그가 있으면 그 이후 변경만 노트로 묶음
+          if [ -n "${PREV}" ]; then
+            args+=(--notes-start-tag "${PREV}")
+          fi
+
+          gh "${args[@]}"
+          echo "Created https://github.com/${{ github.repository }}/releases/tag/${TAG}"
