@@ -168,7 +168,8 @@ model Device {
   moduleStatus   Int[]    @default([])
   numOfMods      Int      @default(0)
 
-  lastSeenAt     DateTime @default(now())
+  /// 실제 텔레메트리/수신이 온 시각. 설치만 하고 미통신이면 null
+  lastSeenAt     DateTime?
   lastValue      Float?
   lastIp         String?  @default("unknown")
 

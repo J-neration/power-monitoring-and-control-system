@@ -9,6 +9,7 @@ import SiteInstTrends from "../SiteInstTrends";
 import LteSignalIndicator from "../LteSignalIndicator";
 import PageLiveRefresh from "../PageLiveRefresh";
 import ModuleSlotGrid from "../ModuleSlotGrid";
+import { useHasMounted } from "../../hooks/useHasMounted";
 import {
   deriveSiteStatus,
   installationMatchesFilter,
@@ -38,10 +39,12 @@ function countStatuses(installations: { device: Device | null }[]) {
 }
 
 function formatLastSeen(
-  installations: { device: { lastSeenAt: string } | null }[],
+  installations: { device: { lastSeenAt: string | null } | null }[],
 ) {
   const latest = installations
-    .map((x) => (x.device ? Date.parse(x.device.lastSeenAt) : NaN))
+    .map((x) =>
+      x.device?.lastSeenAt ? Date.parse(x.device.lastSeenAt) : NaN,
+    )
     .filter((v) => Number.isFinite(v))
     .reduce((max, v) => (v > max ? v : max), 0);
   if (!latest) return "-";
@@ -67,6 +70,7 @@ function instPriority(status: DeviceStatus): number {
 
 export default function SitePageView({ site }: { site: Site }) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const mounted = useHasMounted();
 
   const siteStatus = deriveSiteStatus(site);
   const stats = countStatuses(site.installations);
@@ -112,7 +116,8 @@ export default function SitePageView({ site }: { site: Site }) {
             {site.address}
           </p>
           <p className="site-header-meta">
-            마지막 수신 {formatLastSeen(site.installations)}
+            마지막 수신{" "}
+            {mounted ? formatLastSeen(site.installations) : "-"}
           </p>
         </div>
 

@@ -2,6 +2,14 @@ import { siteRegistry } from "../data/deviceRegistry.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, type Device } from "../../prisma/generated/client/client.js";
 import type { UserContext } from "../modules/auth/auth.types.js";
+import {
+  iccidConflictWhere,
+  iccidLookupCandidates,
+  normalizeIccid,
+  pickPreferredIccidMatch,
+} from "../lib/iccid.js";
+
+export { normalizeIccid, iccidLookupCandidates } from "../lib/iccid.js";
 
 export type DeviceStatus =
   | "standby"
@@ -243,10 +251,38 @@ const canAccessDevice = (
   return siteId === ctx.siteId;
 };
 
-/** USIM ICCID 정규화 (공백·하이픈 제거). HMI 페이로드와 DB 저장 시 동일 규칙 사용 */
-export const normalizeIccid = (value: unknown): string => {
-  if (typeof value !== "string") return "";
-  return value.trim().replace(/[\s-]/g, "");
+const findInstallationIdByIccidCandidates = async (
+  iccidNorm: string,
+): Promise<string | null> => {
+  const exact = iccidLookupCandidates(iccidNorm);
+  if (exact.length === 0) return null;
+
+  const orFilters: Array<{ iccid: { in: string[] } | { startsWith: string } }> =
+    [{ iccid: { in: exact } }];
+
+  // DB에 20자리(또는 …F), 조회키가 19자리인 경우
+  if (/^\d{19}$/.test(iccidNorm)) {
+    orFilters.push({ iccid: { startsWith: iccidNorm } });
+  }
+
+  const rows = await prisma.installation.findMany({
+    where: { OR: orFilters },
+    select: { id: true, iccid: true, siteId: true },
+  });
+
+  const filtered = rows.filter((r) => {
+    if (!r.iccid) return false;
+    if (exact.includes(r.iccid)) return true;
+    if (!/^\d{19}$/.test(iccidNorm)) return false;
+    if (r.iccid.length > 20) return false;
+    return (
+      r.iccid === iccidNorm ||
+      r.iccid.startsWith(iccidNorm) ||
+      (/^\d{19}F$/i.test(r.iccid) && r.iccid.slice(0, 19) === iccidNorm)
+    );
+  });
+
+  return pickPreferredIccidMatch(filtered)?.id ?? null;
 };
 
 export type ReceiverIdentityResolution = {
@@ -268,11 +304,7 @@ export const getInstallationIdByIccid = async (
 ): Promise<string | null> => {
   const iccid = normalizeIccid(iccidRaw);
   if (!iccid) return null;
-  const row = await prisma.installation.findUnique({
-    where: { iccid },
-    select: { id: true },
-  });
-  return row?.id ?? null;
+  return findInstallationIdByIccidCandidates(iccid);
 };
 
 export const ensureInstallationForIccid = async (
@@ -284,10 +316,19 @@ export const ensureInstallationForIccid = async (
   const iccid = normalizeIccid(iccidRaw);
   if (!iccid) return { ok: false, error: "INVALID_ICCID" };
 
-  const existing = await prisma.installation.findUnique({
-    where: { iccid },
-    select: { id: true },
-  });
+  const existingId = await findInstallationIdByIccidCandidates(iccid);
+  if (existingId) {
+    await prisma.device.upsert({
+      where: { installationId: existingId },
+      update: {},
+      create: {
+        installationId: existingId,
+        lastIp: "unknown",
+        lastSeenAt: null,
+      },
+    });
+    return { ok: true, installationId: existingId, created: false };
+  }
 
   await prisma.site.upsert({
     where: { id: "unknown" },
@@ -295,10 +336,8 @@ export const ensureInstallationForIccid = async (
     create: { id: "unknown", name: "Unknown", client: "unknown", region: "기타", address: "Unknown" },
   });
 
-  const inst = await prisma.installation.upsert({
-    where: { iccid },
-    update: {},
-    create: {
+  const inst = await prisma.installation.create({
+    data: {
       id: `lte-${iccid}`,
       siteId: "unknown",
       label: `Auto (ICCID …${iccid.slice(-4)})`,
@@ -310,13 +349,17 @@ export const ensureInstallationForIccid = async (
   await prisma.device.upsert({
     where: { installationId: inst.id },
     update: {},
-    create: { installationId: inst.id, lastIp: "unknown" },
+    create: {
+      installationId: inst.id,
+      lastIp: "unknown",
+      lastSeenAt: null,
+    },
   });
 
   return {
     ok: true,
     installationId: inst.id,
-    created: !existing,
+    created: true,
   };
 };
 
@@ -327,11 +370,8 @@ export const resolveInstallationIdForReceiver = async (input: {
 }): Promise<ReceiverIdentityResolution> => {
   const iccidNorm = normalizeIccid(input.iccid);
   if (iccidNorm) {
-    const row = await prisma.installation.findUnique({
-      where: { iccid: iccidNorm },
-      select: { id: true },
-    });
-    if (row) return { installationId: row.id, resolvedVia: "iccid" };
+    const id = await findInstallationIdByIccidCandidates(iccidNorm);
+    if (id) return { installationId: id, resolvedVia: "iccid" };
   }
   const explicit =
     (typeof input.device_id === "string" ? input.device_id.trim() : "") ||
@@ -637,7 +677,10 @@ export const deviceService = {
     }
 
     const conflict = await prisma.installation.findFirst({
-      where: { iccid: norm, NOT: { id: installationId } },
+      where: {
+        NOT: { id: installationId },
+        ...iccidConflictWhere(norm),
+      },
       select: { id: true },
     });
     if (conflict) return { ok: false, error: "ICCID_IN_USE" };
