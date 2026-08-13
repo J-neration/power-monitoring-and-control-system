@@ -6247,6 +6247,50 @@ body.pmcs-control-room .global-header:hover {
   cursor: not-allowed;
 }
 
+.admin-iccid-save--ok {
+  background: linear-gradient(180deg, #22c55e, #16a34a);
+}
+
+.admin-iccid-save--err {
+  background: linear-gradient(180deg, #ef4444, #dc2626);
+}
+
+.admin-sites-inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-sites-inline-status {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-sites-inline-status.ok {
+  color: #86efac;
+}
+
+.admin-sites-inline-status.err {
+  color: #fca5a5;
+}
+
+.admin-sites-add-inst-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.admin-sites-flash {
+  position: sticky;
+  top: 8px;
+  z-index: 20;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
 /* ── 현장 관리 (AdminSitesPanel) ───────────────────── */
 .admin-sites-wrap {
   display: flex;

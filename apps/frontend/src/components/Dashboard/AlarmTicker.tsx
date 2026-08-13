@@ -2,7 +2,10 @@
 
 import { useMemo } from "react";
 import type { Site } from "../../types/site";
+import type { AlarmItem } from "../../lib/alarms";
 import { buildAlarms } from "../../lib/alarms";
+import { formatLastSeen } from "../../lib/lteSignal";
+import { useHasMounted } from "../../hooks/useHasMounted";
 
 type Props = {
   sites: Site[];
@@ -12,6 +15,12 @@ type Props = {
   onAckAll?: () => void;
 };
 
+function alarmDetailText(item: AlarmItem, mounted: boolean): string {
+  if (!mounted || !item.lastSeenAt) return item.detail;
+  const relative = formatLastSeen(item.lastSeenAt);
+  return relative ? `${item.detail} · ${relative}` : item.detail;
+}
+
 export default function AlarmTicker({
   sites,
   unackedCount = 0,
@@ -19,6 +28,7 @@ export default function AlarmTicker({
   onToggleSound,
   onAckAll,
 }: Props) {
+  const mounted = useHasMounted();
   const alarms = useMemo(() => buildAlarms(sites), [sites]);
 
   if (alarms.length === 0) {
@@ -71,7 +81,7 @@ export default function AlarmTicker({
               <span className="alarm-ticker-sep">·</span>
               {item.instLabel}
               <span className="alarm-ticker-sep">·</span>
-              {item.detail}
+              {alarmDetailText(item, mounted)}
             </span>
           ))}
         </div>

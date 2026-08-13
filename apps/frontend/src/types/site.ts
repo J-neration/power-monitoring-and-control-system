@@ -12,7 +12,7 @@ export type Device = {
   status: DeviceStatus;
   model?: string;
   capacity?: number;
-  lastSeenAt: string;
+  lastSeenAt: string | null;
   lastValue?: number | null;
   lastIp?: string | null;
 

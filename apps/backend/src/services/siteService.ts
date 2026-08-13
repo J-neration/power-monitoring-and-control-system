@@ -127,7 +127,11 @@ export const siteService = {
       data: { id, siteId: data.siteId, label: data.label },
     });
     await prisma.device.create({
-      data: { installationId: id, lastIp: "unknown" },
+      data: {
+        installationId: id,
+        lastIp: "unknown",
+        lastSeenAt: null,
+      },
     });
     return installation;
   },

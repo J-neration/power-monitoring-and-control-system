@@ -1,6 +1,8 @@
 "use client";
 
 import type { AlarmItem } from "../../lib/alarms";
+import { formatLastSeen } from "../../lib/lteSignal";
+import { useHasMounted } from "../../hooks/useHasMounted";
 
 type Props = {
   alarms: AlarmItem[];
@@ -14,6 +16,12 @@ type Props = {
   selectedSiteId?: string;
 };
 
+function alarmDetailText(item: AlarmItem, mounted: boolean): string {
+  if (!mounted || !item.lastSeenAt) return item.detail;
+  const relative = formatLastSeen(item.lastSeenAt);
+  return relative ? `${item.detail} · ${relative}` : item.detail;
+}
+
 export default function AlarmPanel({
   alarms,
   unackedCount,
@@ -25,6 +33,8 @@ export default function AlarmPanel({
   onSelectSite,
   selectedSiteId,
 }: Props) {
+  const mounted = useHasMounted();
+
   if (alarms.length === 0) {
     return (
       <div className="alarm-panel alarm-panel--empty">
@@ -78,7 +88,9 @@ export default function AlarmPanel({
                 <strong>{item.siteName}</strong>
                 <span className="alarm-panel-sep">·</span>
                 {item.instLabel}
-                <p className="alarm-panel-detail">{item.detail}</p>
+                <p className="alarm-panel-detail">
+                  {alarmDetailText(item, mounted)}
+                </p>
               </button>
               {!acked && (
                 <button
