@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 import { config } from "dotenv";
 
 const appDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const nodeEnv = process.env.NODE_ENV ?? "development";
+const nodeEnv = (process.env.NODE_ENV ?? "development").trim().replace(/^["']|["']$/g, "") || "development";
 
 for (const file of [
   ".env",

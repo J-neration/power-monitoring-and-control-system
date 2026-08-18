@@ -4,7 +4,7 @@ import "./lib/loadEnvFiles.js";
 import { buildServer } from "./server.js";
 import { loadEnv } from "./lib/env.js";
 
-const nodeEnv = process.env.NODE_ENV ?? "development";
+const nodeEnv = (process.env.NODE_ENV ?? "development").trim().replace(/^["']|["']$/g, "");
 const env = loadEnv();
 
 // 🚨 안전 가드: Neon main(production) 브랜치를 비프로덕션 환경에서 실수로 사용하는 것 방지
@@ -12,12 +12,13 @@ const env = loadEnv();
 // NEON_BRANCH=dev   → dev 브랜치 (development에서 사용 가능)
 // NEON_BRANCH 미설정 → neon.tech URL이 있으면 경고
 if (env.DATABASE_URL.includes("neon.tech") && nodeEnv !== "production") {
-  const neonBranch = process.env.NEON_BRANCH ?? "";
+  const neonBranch = (process.env.NEON_BRANCH ?? "").trim().replace(/^["']|["']$/g, "");
   if (neonBranch === "main" || neonBranch === "production") {
     console.error(
       "\n🚨 SAFETY ERROR: Neon main(Production) 브랜치를 development 환경에서 사용할 수 없습니다!" +
-      "\n   .env.development에 NEON_BRANCH=dev 와 dev 브랜치 URL을 설정하거나" +
-      "\n   로컬 Docker Postgres를 사용하세요: docker compose up -d postgres\n",
+      `\n   현재 NODE_ENV=${JSON.stringify(process.env.NODE_ENV)} (정규화: ${nodeEnv}), NEON_BRANCH=${JSON.stringify(process.env.NEON_BRANCH)}` +
+      "\n   Railway production 서비스에 NODE_ENV=production 을 따옴표 없이 넣거나" +
+      "\n   .env.development에 NEON_BRANCH=dev 와 dev 브랜치 URL을 설정하세요.\n",
     );
     process.exit(1);
   }
