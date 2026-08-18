@@ -10,7 +10,7 @@ node_modules
 .env.test.local
 .env.production
 .env.production.local
-# .env.*.example 파일은 커밋 가능 (템플릿 전용, 실제 값 없음)
+# example 템플릿은 사용하지 않음. 운영 값은 Railway / Netlify 대시보드.
 
 # ── 빌드 아티팩트 ─────────────────────────────────────────────────────
 .next

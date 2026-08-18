@@ -30,20 +30,11 @@ PostgreSQL이 `localhost:5432`에서 실행됩니다.
 | Password | `pmcs` |
 | Database | `pmcs` |
 
-### 로컬 `.env` 설정
+### 로컬 환경변수
 
-`apps/backend/.env` 파일을 생성합니다:
+`apps/backend/.env.development` (gitignore). 로컬 백엔드는 Neon **dev**를 씁니다.
 
-```env
-DATABASE_URL=postgresql://pmcs:pmcs@localhost:5432/pmcs
-JWT_SECRET=local-dev-secret-change-in-production
-RECEIVER_API_KEY=local-dev-key
-FRONTEND_ORIGIN=http://localhost:3000
-PORT=4000
-HOST=0.0.0.0
-LOG_LEVEL=debug
-```
-
+Docker Postgres를 쓸 때만 `DATABASE_URL=postgresql://pmcs:pmcs@localhost:5432/pmcs` 로 바꿉니다.
 ### 초기 세팅 (최초 1회)
 
 ```bash

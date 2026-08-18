@@ -27,14 +27,15 @@ docker-compose.yml  # 로컬 개발용 PostgreSQL (선택사항)
 npm install
 ```
 
-### 2. 환경변수 설정 (최초 1회)
+### 2. 환경변수 (로컬만, gitignore)
 
-```bash
-cp apps/backend/.env.example apps/backend/.env
-cp apps/frontend/.env.example apps/frontend/.env.local
-```
+| 파일 | 용도 |
+|------|------|
+| `apps/backend/.env.development` | 로컬 백엔드 · Neon **dev** |
+| `apps/frontend/.env.local` | 로컬 프론트 · API 주소 |
+| `apps/backend/.env.local` | (선택) `db:pull-prod` 용 |
 
-`apps/backend/.env`의 `DATABASE_URL`을 팀 공유 Neon 연결 문자열로 교체합니다 (팀원에게 문의).
+운영 값은 파일에 넣지 않습니다. Railway / Netlify 대시보드에서만 관리합니다. 자세한 내용은 `docs/env-setup.md`를 보세요.
 
 ### 3. Prisma 초기화 (최초 1회)
 
@@ -70,7 +71,7 @@ npm run dev
 |------------|---------------------------------------------------|
 | 종류       | PostgreSQL (Neon 클라우드)                        |
 | Region     | Asia Pacific (Singapore)                          |
-| Connection | `apps/backend/.env`의 `DATABASE_URL` 참고         |
+| Connection | `apps/backend/.env.development`의 `DATABASE_URL` |
 
 > `.env` 파일은 gitignore 처리되어 있습니다. 연결 문자열을 팀 내에서 안전하게 공유하세요 (Slack DM, 1Password 등).
 
@@ -125,10 +126,10 @@ Site (고객사/현장)
 
 ## 환경변수
 
-| 파일                        | 주요 항목                                           |
-|-----------------------------|-----------------------------------------------------|
-| `apps/backend/.env`         | `PORT`, `HOST`, `DATABASE_URL` (Neon), `LOG_LEVEL` |
-| `apps/frontend/.env.local`  | `NEXT_PUBLIC_API_BASE`                              |
+| 파일 | 주요 항목 |
+|------|-----------|
+| `apps/backend/.env.development` | `DATABASE_URL` (Neon dev), `JWT_SECRET`, `RECEIVER_API_KEY` |
+| `apps/frontend/.env.local` | `NEXT_PUBLIC_API_BASE`, `COMMAND_API_BASE` |
 
 ---
 
