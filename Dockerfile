@@ -18,5 +18,10 @@ COPY apps/backend/ apps/backend/
 
 RUN yarn workspace @pmcs/backend build
 
+# Railway는 NODE_ENV를 자동 주입하지 않는다. 비어 있으면 아래 가드가
+# NEON_BRANCH=main 을 development로 오인해 process.exit(1) → healthcheck 실패.
+# Railway dev 서비스는 Variables에서 NODE_ENV=development 로 덮어쓴다.
+ENV NODE_ENV=production
+
 # Soft-fail migrate so a schema hiccup does not keep serving a stale image without Settings routes.
 CMD ["sh", "-c", "cd apps/backend && echo '[boot] prisma migrate deploy…' && (npx prisma migrate deploy && echo '[boot] migrate ok') || echo '[boot] MIGRATE FAILED — check Railway DATABASE_URL / logs' && echo '[boot] starting API…' && cd /app && exec node apps/backend/dist/src/index.js"]

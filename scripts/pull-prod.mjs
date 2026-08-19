@@ -21,8 +21,6 @@ const root = resolve(__dirname, "..");
 
 // apps/backend/.env.local 에서 PROD_DATABASE_URL 로드 (gitignore됨 - 안전)
 config({ path: resolve(root, "apps/backend/.env.local") });
-// .env.local 없으면 .env 폴백
-config({ path: resolve(root, "apps/backend/.env"), override: false });
 
 const prodUrl = process.env.PROD_DATABASE_URL;
 if (!prodUrl) {

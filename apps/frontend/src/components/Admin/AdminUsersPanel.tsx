@@ -3,6 +3,7 @@
 import { Fragment, useState } from "react";
 import type { ClientOptionFromApi, RoleOptionFromApi } from "../../types/admin";
 import type { SiteListFromApi } from "../../types/admin";
+import { validatePassword } from "../../lib/passwordPolicy";
 
 type UserRole = "ADMIN" | "CLIENT" | "SITE";
 
@@ -109,6 +110,13 @@ export default function AdminUsersPanel({
       showFlash("err", "아이디와 비밀번호는 필수입니다.");
       return;
     }
+    const createdPw = validatePassword(form.password, {
+      username: form.username,
+    });
+    if (!createdPw.ok) {
+      showFlash("err", createdPw.message);
+      return;
+    }
     if (form.role === "CLIENT" && !form.clientKey) {
       showFlash("err", "건설사를 선택해주세요.");
       return;
@@ -164,8 +172,9 @@ export default function AdminUsersPanel({
 
   // ── 비밀번호 변경 ─────────────────────────────────
   async function handleSavePw(userId: string) {
-    if (newPw.length < 4) {
-      showFlash("err", "비밀번호는 4자 이상이어야 합니다.");
+    const pwCheck = validatePassword(newPw);
+    if (!pwCheck.ok) {
+      showFlash("err", pwCheck.message);
       return;
     }
     setSavingPw(true);
@@ -322,11 +331,14 @@ export default function AdminUsersPanel({
               />
             </label>
             <label className="admin-sites-form-label">
-              초기 비밀번호
+              초기 비밀번호{" "}
+              <span className="admin-sites-form-hint">
+                (8자 이상, 흔한 비밀번호 불가)
+              </span>
               <input
                 className="admin-sites-input"
                 type="text"
-                placeholder="4자 이상"
+                placeholder="8자 이상"
                 value={form.password}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, password: e.target.value }))
@@ -507,7 +519,7 @@ export default function AdminUsersPanel({
                             type="text"
                             className="admin-sites-input"
                             style={{ width: 200 }}
-                            placeholder="4자 이상"
+                            placeholder="8자 이상"
                             value={newPw}
                             onChange={(e) => setNewPw(e.target.value)}
                             autoFocus

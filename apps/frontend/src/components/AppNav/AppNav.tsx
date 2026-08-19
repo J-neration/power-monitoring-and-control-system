@@ -66,10 +66,7 @@ export default function AppNav() {
             priority
           />
         </div>
-        <span className="app-nav-logo-text">
-          PrimeSolution
-          <span className="app-nav-beta-badge">BETA</span>
-        </span>
+        <span className="app-nav-logo-text">PrimeSolution</span>
       </Link>
 
       {/* Main nav items */}

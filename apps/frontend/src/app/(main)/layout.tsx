@@ -97,7 +97,6 @@ export default async function MainLayout({
               priority
             />
             <span className="global-logo-text">PRIMESOLUTION</span>
-            <span className="global-logo-text-beta">BETA</span>
           </Link>
         </div>
 

@@ -26,7 +26,7 @@ main 브랜치 push
 
 - Neon에 `dev` 브랜치 생성 완료 (Production DB의 copy-on-write 사본)
 - Fake dataset 시드 스크립트 작성 (`prisma/seed.ts` + `src/data/deviceRegistry.ts`)
-- 환경변수 분리 구조 정립 (`.env.example`, `.env.development.example`, `.env.production.example`)
+- 환경변수 분리: 로컬은 `.env.development` / `.env.local`, 운영은 대시보드
 - `loadEnvFiles.ts`를 통한 NODE_ENV 기반 env 파일 자동 로딩
 - 루트 `package.json`에 dev/prod 구분 스크립트 추가
 

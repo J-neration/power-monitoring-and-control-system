@@ -2,6 +2,10 @@ import bcrypt from "bcryptjs";
 import { PrismaClient } from "../../../prisma/generated/client/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import type { JwtPayload, UserContext } from "./auth.types.js";
+import { assertValidPassword } from "./passwordPolicy.js";
+
+export const LOGIN_INVALID_MESSAGE =
+  "아이디 또는 비밀번호가 올바르지 않습니다.";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
@@ -17,7 +21,7 @@ export const login = async (username: string, password: string) => {
   const user = await prisma.user.findUnique({ where: { username } });
 
   // 사용자 미존재 / 비활성화 / 비밀번호 불일치 모두 동일 메시지 (정보 노출 방지)
-  const INVALID_MSG = "아이디 또는 비밀번호가 올바르지 않습니다.";
+  const INVALID_MSG = LOGIN_INVALID_MESSAGE;
 
   if (!user || !user.isActive) throw new Error(INVALID_MSG);
 
@@ -95,9 +99,10 @@ export const userManagementService = {
     role: "ADMIN" | "CLIENT" | "SITE";
     clientKey?: string;
     siteId?: string;
-    initialPassword?: string;
+    initialPassword: string;
   }) => {
-    const passwordHash = await hashPassword(data.initialPassword ?? "abc123");
+    assertValidPassword(data.initialPassword, { username: data.username });
+    const passwordHash = await hashPassword(data.initialPassword);
     return prisma.user.create({
       data: {
         username: data.username,
@@ -127,6 +132,9 @@ export const userManagementService = {
       siteId?: string | null;
     }
   ) => {
+    if (data.newPassword) {
+      assertValidPassword(data.newPassword);
+    }
     return prisma.user.update({
       where: { id },
       data: {

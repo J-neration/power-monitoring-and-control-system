@@ -5,21 +5,50 @@ import { requireAdmin } from "../middleware/authenticate.js";
 import { deviceService } from "../services/deviceService.js";
 import { siteService } from "../services/siteService.js";
 import { registryService } from "../services/registryService.js";
+import { validatePassword } from "../modules/auth/passwordPolicy.js";
 
-const createUserSchema = z.object({
-  username: z.string().min(2),
-  role: z.enum(["ADMIN", "CLIENT", "SITE"]),
-  clientKey: z.string().optional(),
-  siteId: z.string().optional(),
-  initialPassword: z.string().optional(),
-});
+const firstZodMessage = (error: z.ZodError) =>
+  error.issues[0]?.message ?? "입력값이 올바르지 않습니다.";
 
-const updateUserSchema = z.object({
-  isActive: z.boolean().optional(),
-  newPassword: z.string().min(4).optional(),
-  clientKey: z.string().nullable().optional(),
-  siteId: z.string().nullable().optional(),
-});
+const createUserSchema = z
+  .object({
+    username: z.string().min(2),
+    role: z.enum(["ADMIN", "CLIENT", "SITE"]),
+    clientKey: z.string().optional(),
+    siteId: z.string().optional(),
+    initialPassword: z.string().min(1, "비밀번호를 입력해주세요."),
+  })
+  .superRefine((data, ctx) => {
+    const result = validatePassword(data.initialPassword, {
+      username: data.username,
+    });
+    if (!result.ok) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["initialPassword"],
+        message: result.message,
+      });
+    }
+  });
+
+const updateUserSchema = z
+  .object({
+    isActive: z.boolean().optional(),
+    newPassword: z.string().optional(),
+    clientKey: z.string().nullable().optional(),
+    siteId: z.string().nullable().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.newPassword === undefined) return;
+    const result = validatePassword(data.newPassword);
+    if (!result.ok) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["newPassword"],
+        message: result.message,
+      });
+    }
+  });
 
 const setInstallationIccidSchema = z.object({
   /** null 이면 ICCID 매핑 제거 */
@@ -75,7 +104,10 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
   server.post("/users", { preHandler: requireAdmin }, async (request, reply) => {
     const parsed = createUserSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.status(400).send({ message: "입력값이 올바르지 않습니다.", errors: parsed.error.flatten() });
+      return reply.status(400).send({
+        message: firstZodMessage(parsed.error),
+        errors: parsed.error.flatten(),
+      });
     }
     if (!(await registryService.isAssignableRole(parsed.data.role))) {
       return reply.status(400).send({ message: "사용할 수 없는 역할입니다." });
@@ -88,8 +120,15 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
         return reply.status(400).send({ message: "유효한 건설사를 선택해주세요." });
       }
     }
-    const user = await userManagementService.create(parsed.data);
-    return reply.status(201).send({ user });
+    try {
+      const user = await userManagementService.create(parsed.data);
+      return reply.status(201).send({ user });
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("비밀번호")) {
+        return reply.status(400).send({ message: err.message });
+      }
+      throw err;
+    }
   });
 
   /* ── PATCH /admin/users/:id ────────────────────── */
@@ -97,12 +136,18 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
     const { id } = request.params as { id: string };
     const parsed = updateUserSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.status(400).send({ message: "입력값이 올바르지 않습니다.", errors: parsed.error.flatten() });
+      return reply.status(400).send({
+        message: firstZodMessage(parsed.error),
+        errors: parsed.error.flatten(),
+      });
     }
     try {
       const user = await userManagementService.update(id, parsed.data);
       return reply.send({ user });
-    } catch {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("비밀번호")) {
+        return reply.status(400).send({ message: err.message });
+      }
       return reply.status(404).send({ message: "사용자를 찾을 수 없습니다." });
     }
   });
