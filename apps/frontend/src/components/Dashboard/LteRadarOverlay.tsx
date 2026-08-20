@@ -23,19 +23,6 @@ export default function LteRadarOverlay() {
         <span className="lte-monitor-badge-sub">관제 감지 중</span>
         <span className="lte-monitor-dot lte-monitor-dot--live" />
       </div>
-
-      <div className="lte-monitor-footer">
-        <svg
-          className="lte-monitor-wave"
-          viewBox="0 0 160 20"
-          preserveAspectRatio="none"
-        >
-          <path
-            className="lte-monitor-wave-path"
-            d="M0 10 C20 10 20 4 40 4 S60 16 80 16 100 4 120 4 140 16 160 16"
-          />
-        </svg>
-      </div>
     </div>
   );
 }

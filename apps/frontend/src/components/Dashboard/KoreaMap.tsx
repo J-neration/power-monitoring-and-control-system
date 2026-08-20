@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ComposableMap,
   Geographies,
@@ -11,7 +11,7 @@ import {
 import type { MouseEvent } from "react";
 import type { Site } from "../../types/site";
 import type { DeviceStatus } from "../../types/site";
-import { STATUS_LABEL } from "../../lib/deviceStatus";
+import { STATUS_LABEL, STATUS_PRIORITY } from "../../lib/deviceStatus";
 
 const GEO_URL = "/korea-provinces.json";
 
@@ -75,9 +75,11 @@ function regionHealthColors(stats: RegionStats): {
 
   const okRatio = (counts.running ?? 0) / total;
   const faultRatio = (counts.fault ?? 0) / total;
+  const standbyRatio =
+    ((counts.standby ?? 0) + (counts.start ?? 0)) / total;
+  const offlineRatio = (counts.offline ?? 0) / total;
 
-  // 100% running → pure green, 100% fault → pure red, mix → blend
-  // standby/offline pulls toward amber/grey
+  // 100% running → green, any fault → red blend
   if (faultRatio > 0) {
     const fill = lerpColor("#0a2e14", "#2d0a0a", Math.min(faultRatio * 3, 1));
     const fillSel = lerpColor(
@@ -100,6 +102,10 @@ function regionHealthColors(stats: RegionStats): {
     const stroke = lerpColor("#5ee986", "#fcd34d", 1 - okRatio);
     return { fill, fillSelected: fillSel, stroke };
   }
+  // 가동 절반 미만: 오프라인이 대기보다 많으면 회색, 아니면 노랑
+  if (offlineRatio >= standbyRatio) {
+    return { fill: "#161e2c", fillSelected: "#1e2840", stroke: "#9ca3af" };
+  }
   return { fill: "#2a1e00", fillSelected: "#3d2c00", stroke: "#fcd34d" };
 }
 
@@ -110,6 +116,74 @@ const STATUS_DOT: Record<DeviceStatus, string> = {
   fault: "#EF4444",
   offline: "#4B5563",
 };
+
+type SiteMarker = {
+  siteId: string;
+  siteName: string;
+  instCount: number;
+  firstInstId: string;
+  coordinates: [number, number];
+  status: DeviceStatus;
+};
+
+type MarkerCluster = {
+  id: string;
+  center: [number, number];
+  members: SiteMarker[];
+  status: DeviceStatus;
+};
+
+function worstStatus(members: SiteMarker[]): DeviceStatus {
+  let worst: DeviceStatus = "running";
+  for (const m of members) {
+    if (STATUS_PRIORITY[m.status] > STATUS_PRIORITY[worst]) worst = m.status;
+  }
+  return worst;
+}
+
+function clusterMarkers(markers: SiteMarker[], zoom: number): MarkerCluster[] {
+  const cell = 0.09 / Math.max(zoom, 1);
+  const buckets = new Map<string, SiteMarker[]>();
+  for (const m of markers) {
+    const [lng, lat] = m.coordinates;
+    const key = `${Math.round(lng / cell)}_${Math.round(lat / cell)}`;
+    const arr = buckets.get(key) ?? [];
+    arr.push(m);
+    buckets.set(key, arr);
+  }
+  return [...buckets.values()].map((members) => {
+    const lng =
+      members.reduce((sum, m) => sum + m.coordinates[0], 0) / members.length;
+    const lat =
+      members.reduce((sum, m) => sum + m.coordinates[1], 0) / members.length;
+    return {
+      id: members
+        .map((m) => m.siteId)
+        .sort()
+        .join("|"),
+      center: [lng, lat] as [number, number],
+      members,
+      status: worstStatus(members),
+    };
+  });
+}
+
+function spiderfyOffsets(
+  center: [number, number],
+  count: number,
+  zoom: number,
+): [number, number][] {
+  if (count <= 1) return [center];
+  const radius = (0.15 + 0.028 * count) / Math.max(zoom, 1);
+  const latScale = Math.cos((center[1] * Math.PI) / 180) || 1;
+  return Array.from({ length: count }, (_, i) => {
+    const a = (2 * Math.PI * i) / count - Math.PI / 2;
+    return [
+      center[0] + (radius * Math.cos(a)) / latScale,
+      center[1] + radius * Math.sin(a),
+    ];
+  });
+}
 
 const CITY_COORDS: Record<string, [number, number]> = {
   // 광역시/특별시 구 단위
@@ -131,17 +205,12 @@ const CITY_COORDS: Record<string, [number, number]> = {
   연수구: [126.68, 37.41],
   송도동: [126.66, 37.39],
   테크노파크로: [126.70, 37.42],
-  서구: [126.68, 37.53],
   남동구: [126.73, 37.45],
-  남구: [126.90, 35.13],
-  북구: [126.88, 35.19],
   상암동: [126.88, 37.58],
   신수로: [126.92, 37.54],
   유성구: [127.34, 36.36],
   "테크노4로 77": [127.38, 36.38],
   "테크노4로 17": [127.32, 36.34],
-  동구: [127.46, 36.31],
-  중구: [127.42, 36.33],
   수성구: [128.63, 35.85],
   달서구: [128.53, 35.83],
   // 경기도 시 단위
@@ -158,6 +227,7 @@ const CITY_COORDS: Record<string, [number, number]> = {
   김포시: [126.72, 37.62],
   시흥시: [126.8, 37.38],
   광명시: [126.87, 37.47],
+  광주시: [127.26, 37.43],
   하남시: [127.21, 37.54],
   // 경상북도 시 단위
   구미시: [128.34, 36.12],
@@ -214,21 +284,94 @@ const CITY_COORDS: Record<string, [number, number]> = {
   제주특별자치도: [126.57, 33.38],
 };
 
+// 남구/북구/서구/동구/중구는 여러 도시에 있어서 지역별로만 매칭한다.
+const REGION_DISTRICT_COORDS: Record<string, Record<string, [number, number]>> =
+  {
+    서울: { 중구: [126.997, 37.564] },
+    부산: {
+      중구: [129.034, 35.106],
+      서구: [129.024, 35.098],
+      동구: [129.047, 35.129],
+      남구: [129.084, 35.136],
+      북구: [129.011, 35.198],
+    },
+    대구: {
+      중구: [128.608, 35.869],
+      동구: [128.635, 35.887],
+      서구: [128.559, 35.872],
+      남구: [128.598, 35.846],
+      북구: [128.583, 35.886],
+    },
+    인천: {
+      중구: [126.618, 37.474],
+      동구: [126.643, 37.474],
+      서구: [126.676, 37.545],
+    },
+    광주: {
+      동구: [126.923, 35.146],
+      서구: [126.89, 35.152],
+      남구: [126.903, 35.133],
+      북구: [126.882, 35.174],
+      광산구: [126.793, 35.14],
+    },
+    대전: {
+      동구: [127.455, 36.329],
+      중구: [127.421, 36.325],
+      서구: [127.384, 36.355],
+      대덕구: [127.416, 36.347],
+    },
+    울산: {
+      중구: [129.333, 35.569],
+      남구: [129.33, 35.544],
+      동구: [129.417, 35.505],
+      북구: [129.361, 35.582],
+      울주군: [129.242, 35.522],
+    },
+  };
+
+const METRO_FALLBACKS = new Set([
+  "서울",
+  "부산",
+  "대구",
+  "인천",
+  "광주",
+  "대전",
+  "울산",
+  "세종",
+]);
+
+function matchLongestKey(
+  address: string,
+  table: Record<string, [number, number]>,
+): [number, number] | null {
+  const keys = Object.keys(table).sort((a, b) => b.length - a.length);
+  for (const key of keys) {
+    if (address.includes(key)) return table[key];
+  }
+  return null;
+}
+
 function resolveCoords(
   address: string,
   region: string,
 ): [number, number] | null {
+  const districtHit = matchLongestKey(
+    address,
+    REGION_DISTRICT_COORDS[region] ?? {},
+  );
+  if (districtHit) return districtHit;
+
   const parts = address
     .replace(/특별시|광역시|특별자치시|특별자치도/g, "")
     .split(/\s+/);
-  // 1) 부분 매칭 — 주소 전체에서 가장 긴 키를 먼저 선택 (더 구체적인 지역 우선)
   const allKeys = Object.keys(CITY_COORDS).sort(
     (a, b) => b.length - a.length,
   );
   for (const key of allKeys) {
-    if (address.includes(key)) return CITY_COORDS[key];
+    if (!address.includes(key)) continue;
+    if (METRO_FALLBACKS.has(key) && region !== key) continue;
+    return CITY_COORDS[key];
   }
-  // 2) part별 정확 매칭 폴백
   for (const part of parts) {
     if (CITY_COORDS[part]) return CITY_COORDS[part];
   }
@@ -254,6 +397,7 @@ type Props = {
   selectedSiteId: string;
   deriveSiteStatus: (site: Site) => DeviceStatus;
   onSelect: (siteId: string) => void;
+  onSelectRegion?: (region: string, siteId?: string) => void;
 };
 
 type Tooltip = { lines: string[]; x: number; y: number };
@@ -263,10 +407,15 @@ export default function KoreaMap({
   selectedSiteId,
   deriveSiteStatus,
   onSelect,
+  onSelectRegion,
 }: Props) {
   const [zoom, setZoom] = useState(INITIAL_ZOOM);
   const [center, setCenter] = useState<[number, number]>(INITIAL_CENTER);
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
+  const [expandedClusterId, setExpandedClusterId] = useState<string | null>(
+    null,
+  );
+  const prevSelectedSiteId = useRef(selectedSiteId);
 
   const regionStats = useMemo(() => {
     const map = new Map<string, RegionStats>();
@@ -317,15 +466,24 @@ export default function KoreaMap({
           status,
         };
       })
-      .filter(Boolean) as {
-      siteId: string;
-      siteName: string;
-      instCount: number;
-      firstInstId: string;
-      coordinates: [number, number];
-      status: DeviceStatus;
-    }[];
+      .filter(Boolean) as SiteMarker[];
   }, [allSites, deriveSiteStatus]);
+
+  const clusters = useMemo(
+    () => clusterMarkers(siteMarkers, zoom),
+    [siteMarkers, zoom],
+  );
+
+  useEffect(() => {
+    if (prevSelectedSiteId.current === selectedSiteId) return;
+    prevSelectedSiteId.current = selectedSiteId;
+    const cluster = clusters.find((c) =>
+      c.members.some((m) => m.siteId === selectedSiteId),
+    );
+    setExpandedClusterId(
+      cluster && cluster.members.length > 1 ? cluster.id : null,
+    );
+  }, [selectedSiteId, clusters]);
 
   const handleZoomIn = () => setZoom((z) => Math.min(z * ZOOM_STEP, MAX_ZOOM));
   const handleZoomOut = () => setZoom((z) => Math.max(z / ZOOM_STEP, MIN_ZOOM));
@@ -463,7 +621,14 @@ export default function KoreaMap({
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
-                    onClick={() => firstSite && onSelect(firstSite.id)}
+                    onClick={() => {
+                      setExpandedClusterId(null);
+                      if (onSelectRegion) {
+                        onSelectRegion(regionKey, firstSite?.id);
+                      } else if (firstSite) {
+                        onSelect(firstSite.id);
+                      }
+                    }}
                     onMouseEnter={(evt) =>
                       setTooltip({
                         lines: makeTooltipLines(),
@@ -499,101 +664,190 @@ export default function KoreaMap({
             }
           </Geographies>
 
-          {/* Site markers — one dot per site, worst status */}
-          {[...siteMarkers]
-            .sort((a, b) => {
+          {/* Site markers — nearby/overlapping sites are clustered */}
+          {clusters.map((cluster, idx) => {
+            const isExpanded = expandedClusterId === cluster.id;
+            const hasSelected = cluster.members.some(
+              (m) => m.siteId === selectedSiteId,
+            );
+
+            if (cluster.members.length > 1 && !isExpanded) {
+              const color = STATUS_DOT[cluster.status];
+              const innerR = 6.2 / zoom;
+              const outerR = 9.4 / zoom;
+              const names = cluster.members
+                .slice(0, 5)
+                .map((m) => m.siteName);
+              const extra = cluster.members.length - names.length;
+              return (
+                <Marker
+                  key={cluster.id}
+                  coordinates={cluster.center}
+                  onClick={() => {
+                    if (zoom < 2.3) {
+                      setCenter(cluster.center);
+                      setZoom((z) => Math.min(z * 1.7, MAX_ZOOM));
+                    }
+                    setExpandedClusterId(cluster.id);
+                  }}
+                  style={{ cursor: "pointer" }}
+                  onMouseEnter={(evt) =>
+                    setTooltip({
+                      lines: [
+                        `${cluster.members.length}개 현장 · 클릭해서 펼치기`,
+                        extra > 0
+                          ? `${names.join(", ")} 외 ${extra}곳`
+                          : names.join(", "),
+                      ],
+                      x: evt.clientX,
+                      y: evt.clientY,
+                    })
+                  }
+                  onMouseLeave={() => setTooltip(null)}
+                >
+                  <circle r={outerR * 1.6} fill="transparent" />
+                  <circle
+                    r={outerR}
+                    fill={color}
+                    opacity={0.22}
+                    stroke={hasSelected ? "var(--pmcs-accent-bright)" : color}
+                    strokeWidth={(hasSelected ? 1.3 : 0.8) / zoom}
+                  />
+                  <circle
+                    r={innerR}
+                    fill={color}
+                    stroke="#0b0d12"
+                    strokeWidth={0.85 / zoom}
+                  />
+                  <text
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill="#0b0d12"
+                    fontSize={7.4 / zoom}
+                    fontWeight={800}
+                    style={{ pointerEvents: "none" }}
+                  >
+                    {cluster.members.length}
+                  </text>
+                </Marker>
+              );
+            }
+
+            const members = [...cluster.members].sort((a, b) => {
               if (a.siteId === selectedSiteId) return 1;
               if (b.siteId === selectedSiteId) return -1;
               return 0;
-            })
-            .map((marker, idx) => {
-            const isFault = marker.status === "fault";
-            const isSelected = marker.siteId === selectedSiteId;
-            const isLinked = marker.status !== "offline";
-            const isDimmed = Boolean(selectedSiteId) && !isSelected;
-            const color = STATUS_DOT[marker.status];
-            const sizeBoost = isSelected ? 1.55 : 1;
-            const innerR = (3 / zoom) * sizeBoost;
-            const outerR = (7 / zoom) * sizeBoost;
+            });
+            const offsets =
+              cluster.members.length > 1
+                ? spiderfyOffsets(cluster.center, cluster.members.length, zoom)
+                : null;
+
             return (
-              <Marker
-                key={marker.siteId}
-                coordinates={marker.coordinates}
-                onClick={() => onSelect(marker.siteId)}
-                onMouseEnter={(evt) =>
-                  setTooltip({
-                    lines: [
-                      marker.siteName,
-                      `${marker.instCount}개 설치지점 · ${STATUS_LABEL[marker.status]}`,
-                    ],
-                    x: evt.clientX,
-                    y: evt.clientY,
-                  })
-                }
-                onMouseLeave={() => setTooltip(null)}
-                className={isSelected ? "map-marker-selected" : undefined}
-                style={{
-                  cursor: "pointer",
-                  opacity: isDimmed ? 0.22 : 1,
-                  transition: "opacity 0.25s ease",
-                }}
-              >
-                {isSelected && (
-                  <>
+              <g key={cluster.id}>
+                {members.map((marker, mIdx) => {
+              const sourceIdx = cluster.members.findIndex(
+                (m) => m.siteId === marker.siteId,
+              );
+              const coordinates =
+                offsets?.[sourceIdx] ?? marker.coordinates;
+              const isFault = marker.status === "fault";
+              const isSelected = marker.siteId === selectedSiteId;
+              const isLinked = marker.status !== "offline";
+              const isDimmed = Boolean(selectedSiteId) && !isSelected;
+              const color = STATUS_DOT[marker.status];
+              const sizeBoost = isSelected ? 1.55 : 1;
+              const innerR = (3 / zoom) * sizeBoost;
+              const outerR = (7 / zoom) * sizeBoost;
+              return (
+                <Marker
+                  key={marker.siteId}
+                  coordinates={coordinates}
+                  onClick={() => onSelect(marker.siteId)}
+                  onMouseEnter={(evt) =>
+                    setTooltip({
+                      lines: [
+                        marker.siteName,
+                        `${marker.instCount}개 설치지점 · ${STATUS_LABEL[marker.status]}`,
+                      ],
+                      x: evt.clientX,
+                      y: evt.clientY,
+                    })
+                  }
+                  onMouseLeave={() => setTooltip(null)}
+                  className={isSelected ? "map-marker-selected" : undefined}
+                  style={{
+                    cursor: "pointer",
+                    opacity: isDimmed ? 0.22 : 1,
+                    transition: "opacity 0.25s ease",
+                  }}
+                >
+                  {isSelected && (
+                    <>
+                      <circle
+                        r={outerR * 2}
+                        fill="none"
+                        stroke="var(--pmcs-accent)"
+                        strokeWidth={1.4 / zoom}
+                        className="marker-selection-halo marker-selection-halo--outer"
+                        style={{ pointerEvents: "none" }}
+                      />
+                      <circle
+                        r={outerR * 1.45}
+                        fill="none"
+                        stroke="var(--pmcs-accent-bright)"
+                        strokeWidth={1.1 / zoom}
+                        className="marker-selection-halo marker-selection-halo--inner"
+                        style={{ pointerEvents: "none" }}
+                      />
+                      <circle
+                        r={outerR * 1.12}
+                        fill="var(--pmcs-accent)"
+                        opacity={0.2}
+                        style={{ pointerEvents: "none" }}
+                      />
+                    </>
+                  )}
+                  {isLinked && !isSelected && (
                     <circle
-                      r={outerR * 2}
+                      r={outerR * 1.8}
                       fill="none"
-                      stroke="var(--pmcs-accent)"
-                      strokeWidth={1.4 / zoom}
-                      className="marker-selection-halo marker-selection-halo--outer"
+                      stroke={color}
+                      strokeWidth={0.55 / zoom}
+                      opacity={0}
+                      className="marker-lte-ping"
+                      style={{
+                        pointerEvents: "none",
+                        animationDelay: `${((idx + mIdx) % 5) * 1.1}s`,
+                      }}
                     />
+                  )}
+                  {isFault && !isSelected && (
                     <circle
-                      r={outerR * 1.45}
-                      fill="none"
-                      stroke="var(--pmcs-accent-bright)"
-                      strokeWidth={1.1 / zoom}
-                      className="marker-selection-halo marker-selection-halo--inner"
+                      r={outerR * 1.8}
+                      fill={color}
+                      opacity={0}
+                      className="marker-pulse-ring"
+                      style={{ pointerEvents: "none" }}
                     />
-                    <circle
-                      r={outerR * 1.12}
-                      fill="var(--pmcs-accent)"
-                      opacity={0.2}
-                    />
-                  </>
-                )}
-                {isLinked && !isSelected && (
+                  )}
                   <circle
-                    r={outerR * 1.8}
-                    fill="none"
-                    stroke={color}
-                    strokeWidth={0.55 / zoom}
-                    opacity={0}
-                    className="marker-lte-ping"
-                    style={{ animationDelay: `${(idx % 5) * 1.1}s` }}
-                  />
-                )}
-                {isFault && !isSelected && (
-                  <circle
-                    r={outerR * 1.8}
+                    r={outerR}
                     fill={color}
-                    opacity={0}
-                    className="marker-pulse-ring"
+                    opacity={isSelected ? 0.35 : 0.2}
+                    stroke={isSelected ? "var(--pmcs-accent-bright)" : color}
+                    strokeWidth={(isSelected ? 1.3 : 0.8) / zoom}
                   />
-                )}
-                <circle
-                  r={outerR}
-                  fill={color}
-                  opacity={isSelected ? 0.35 : 0.2}
-                  stroke={isSelected ? "var(--pmcs-accent-bright)" : color}
-                  strokeWidth={(isSelected ? 1.3 : 0.8) / zoom}
-                />
-                <circle
-                  r={innerR}
-                  fill={isSelected ? "#ffffff" : color}
-                  stroke={isSelected ? color : "#0b0d12"}
-                  strokeWidth={(isSelected ? 1.4 : 0.8) / zoom}
-                />
-              </Marker>
+                  <circle
+                    r={innerR}
+                    fill={isSelected ? "#ffffff" : color}
+                    stroke={isSelected ? color : "#0b0d12"}
+                    strokeWidth={(isSelected ? 1.4 : 0.8) / zoom}
+                  />
+                </Marker>
+              );
+                })}
+              </g>
             );
           })}
         </ZoomableGroup>
