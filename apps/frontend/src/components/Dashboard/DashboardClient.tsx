@@ -26,10 +26,12 @@ import { useEventLog } from "../../hooks/useEventLog";
 import { buildAlarms } from "../../lib/alarms";
 import { siteMatchesSearch } from "../../lib/siteSearch";
 import {
+  compareKoNumeric,
   deriveSiteStatus,
   installationMatchesFilter,
   siteMatchesFilter,
-  sortSitesByPriority,
+  sortSitesByName,
+  sortByLabel,
   STATUS_LABEL,
   type StatusFilter,
 } from "../../lib/deviceStatus";
@@ -92,14 +94,23 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
   const [selectedSiteId, setSelectedSiteId] = useState<string>(
     sites[0]?.id ?? "",
   );
+  const [selectedInstallationId, setSelectedInstallationId] = useState<
+    string | null
+  >(null);
+  const [focusSeq, setFocusSeq] = useState(0);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [countdown, setCountdown] = useState(REFRESH_SEC);
   const countdownRef = useRef(REFRESH_SEC);
 
-  const handleSelectSite = useCallback((siteId: string) => {
-    setSelectedSiteId(siteId);
-  }, []);
+  const handleSelectSite = useCallback(
+    (siteId: string, installationId?: string) => {
+      setSelectedSiteId(siteId);
+      setSelectedInstallationId(installationId ?? null);
+      setFocusSeq((n) => n + 1);
+    },
+    [],
+  );
 
   const {
     layout,
@@ -174,10 +185,10 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
       map.set(site.region, arr);
     }
     return Array.from(map.entries())
-      .sort(([a], [b]) => a.localeCompare(b, "ko"))
+      .sort(([a], [b]) => compareKoNumeric(a, b))
       .map(([region, regionSites]) => [
         region,
-        sortSitesByPriority(regionSites),
+        sortSitesByName(regionSites),
       ] as const);
   }, [sites, statusFilter, searchQuery]);
 
@@ -269,7 +280,12 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                 selectedSiteId={selectedSiteId}
               />
             </div>
-            <SiteSummaryPanel site={selectedSite} showSparklines />
+            <SiteSummaryPanel
+              site={selectedSite}
+              showSparklines
+              selectedInstallationId={selectedInstallationId}
+              focusSeq={focusSeq}
+            />
           </>
         ) : (
           <>
@@ -363,14 +379,15 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                           {regionSites.map((site) => {
                             const siteStatus = deriveSiteStatus(site);
                             const isSiteSelected = site.id === selectedSiteId;
-                            const visibleInstallations =
+                            const visibleInstallations = sortByLabel(
                               site.installations.filter((inst) =>
                                 installationMatchesFilter(
                                   (inst.device?.status as DeviceStatus) ??
                                     "offline",
                                   statusFilter,
                                 ),
-                              );
+                              ),
+                            );
 
                             if (visibleInstallations.length === 0) return null;
 
@@ -420,10 +437,12 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                       <button
                                         key={inst.id}
                                         type="button"
-                                        className={`inst-card inst-card--${instStatus}`}
-                                        onClick={() =>
-                                          handleSelectSite(site.id)
-                                        }
+                                        className={`inst-card inst-card--${instStatus}${selectedInstallationId === inst.id ? " selected" : ""}`}
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          handleSelectSite(site.id, inst.id);
+                                        }}
                                       >
                                         <div
                                           className={`inst-card-dot ${instStatus}`}
@@ -473,7 +492,12 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
               <LteRadarOverlay />
             </div>
 
-            <SiteSummaryPanel site={selectedSite} showSparklines />
+            <SiteSummaryPanel
+              site={selectedSite}
+              showSparklines
+              selectedInstallationId={selectedInstallationId}
+              focusSeq={focusSeq}
+            />
           </>
         )}
       </div>

@@ -16,6 +16,16 @@ export const STATUS_LABEL: Record<DeviceStatus, string> = {
   offline: "오프라인",
 };
 
+/** 한글 가나다 + 숫자 인식 (1, 2, 10 순). 목록 위치는 상태와 무관하게 고정. */
+const KO_NUMERIC = new Intl.Collator("ko", {
+  numeric: true,
+  sensitivity: "base",
+});
+
+export function compareKoNumeric(a: string, b: string): number {
+  return KO_NUMERIC.compare(a, b);
+}
+
 export function deriveSiteStatus(site: Site): DeviceStatus {
   let worst: DeviceStatus = "running";
   for (const inst of site.installations) {
@@ -25,13 +35,22 @@ export function deriveSiteStatus(site: Site): DeviceStatus {
   return worst;
 }
 
+export function sortSitesByName(sites: Site[]): Site[] {
+  return [...sites].sort((a, b) => compareKoNumeric(a.name, b.name));
+}
+
+export function sortByLabel<T extends { label: string }>(items: T[]): T[] {
+  return [...items].sort((a, b) => compareKoNumeric(a.label, b.label));
+}
+
+/** 관제 자동 순회용: 이상 현장부터 방문. 목록 UI에는 쓰지 않음. */
 export function sortSitesByPriority(sites: Site[]): Site[] {
   return [...sites].sort((a, b) => {
     const diff =
       STATUS_PRIORITY[deriveSiteStatus(b)] -
       STATUS_PRIORITY[deriveSiteStatus(a)];
     if (diff !== 0) return diff;
-    return a.name.localeCompare(b.name, "ko");
+    return compareKoNumeric(a.name, b.name);
   });
 }
 

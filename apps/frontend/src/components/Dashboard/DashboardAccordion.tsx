@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef } from "react";
 import type { Site } from "../../types/site";
 import type { DeviceStatus } from "../../types/site";
 import { isTestClient } from "../../data/clients";
+import { compareKoNumeric } from "../../lib/deviceStatus";
 
 type Props = {
   regionEntries: [string, Site[]][];
@@ -107,7 +108,7 @@ export default function DashboardAccordion({ regionEntries, selectedRegion }: Pr
               <div className="region-device-cards">
                 {regionSites
                   .slice()
-                  .sort((a, b) => a.name.localeCompare(b.name, "ko"))
+                  .sort((a, b) => compareKoNumeric(a.name, b.name))
                   .map((site) => {
                     const siteStatus = deriveSiteStatus(site);
                     return (
