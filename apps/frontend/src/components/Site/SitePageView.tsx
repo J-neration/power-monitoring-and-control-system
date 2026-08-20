@@ -13,6 +13,7 @@ import { useHasMounted } from "../../hooks/useHasMounted";
 import {
   deriveSiteStatus,
   installationMatchesFilter,
+  sortByLabel,
   STATUS_LABEL,
   type StatusFilter,
 } from "../../lib/deviceStatus";
@@ -57,17 +58,6 @@ function formatLastSeen(
   return `${Math.floor(hrs / 24)}일 전`;
 }
 
-function instPriority(status: DeviceStatus): number {
-  const order: Record<DeviceStatus, number> = {
-    fault: 4,
-    offline: 3,
-    start: 2,
-    standby: 2,
-    running: 1,
-  };
-  return order[status];
-}
-
 export default function SitePageView({ site }: { site: Site }) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const mounted = useHasMounted();
@@ -83,13 +73,7 @@ export default function SitePageView({ site }: { site: Site }) {
         statusFilter,
       ),
     );
-    return [...filtered].sort((a, b) => {
-      const sa = (a.device?.status as DeviceStatus) ?? "offline";
-      const sb = (b.device?.status as DeviceStatus) ?? "offline";
-      const diff = instPriority(sb) - instPriority(sa);
-      if (diff !== 0) return diff;
-      return a.label.localeCompare(b.label, "ko");
-    });
+    return sortByLabel(filtered);
   }, [site.installations, statusFilter]);
 
   return (
