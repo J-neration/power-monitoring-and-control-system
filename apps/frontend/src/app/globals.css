@@ -1027,14 +1027,17 @@ a.breadcrumb-item:hover {
 main.dashboard-full {
   padding: 0;
   gap: 0;
-  height: 100%;
+  /* 부모 높이에 의존하지 않고 뷰포트에 고정. 오른쪽 패널이 길어도 페이지가 늘어나지 않음 */
+  height: calc(100dvh - 48px);
+  max-height: calc(100dvh - 48px);
   overflow: hidden;
 }
 
 .new-dashboard {
-  display: grid;
-  grid-template-rows: auto auto auto 1fr;
+  display: flex;
+  flex-direction: column;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
   background: var(--pmcs-bg);
 }
@@ -1096,8 +1099,17 @@ main.dashboard-full {
 .dash-body {
   position: relative;
   display: grid;
-  grid-template-columns: 280px 1fr 320px;
+  grid-template-columns: 280px minmax(0, 1fr) 320px;
+  grid-template-rows: minmax(0, 1fr);
+  flex: 1 1 0;
+  min-height: 0;
+  height: 0;
   overflow: hidden;
+}
+
+.dash-body > * {
+  min-height: 0;
+  max-height: 100%;
 }
 
 /* ── Left sidebar ────────────────────────────────────────────── */
@@ -1443,12 +1455,15 @@ main.dashboard-full {
 /* ── Center map ──────────────────────────────────────────────── */
 .dash-map-panel {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
   overflow: hidden;
-  padding: 24px 16px;
+  padding: 8px 4px;
   position: relative;
   isolation: isolate;
+  min-height: 0;
+  height: 100%;
 }
 
 .dash-map-mobile-header {
@@ -1456,14 +1471,10 @@ main.dashboard-full {
 }
 
 /* ── Center map (continued) ── */
-/* 지도가 컨테이너를 100% 채우므로, 대형 모니터(예: 32")에서 패널이 커지면
- * 지도도 과도하게 커진다. 최대 크기를 캡하고 가운데 정렬해 적정 크기를 유지.
- * (3:4 세로 비율. 작은 화면에선 패널보다 캡이 커서 영향 없음) */
 .korea-map-loading {
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  height: 100%;
-  max-width: 1400px;
-  max-height: 1440px;
 }
 
 /* ── Map markers (new) ───────────────────────────────────────── */
@@ -1586,10 +1597,14 @@ main.dashboard-full {
   border-left: 1px solid var(--pmcs-panel-border);
   box-shadow: inset 1px 0 0 rgba(0, 212, 170, 0.04);
   overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 16px;
+  height: 100%;
+  max-height: 100%;
 }
 .dash-detail::-webkit-scrollbar {
   width: 4px;
@@ -2039,15 +2054,20 @@ main.dashboard-full {
 /* ── Korea Map wrapper ───────────────────────────────────────── */
 .korea-map-wrapper {
   position: relative;
+  flex: 1 1 0;
+  min-height: 0;
   width: 100%;
   height: 100%;
-  /* 대형 화면에서 지도가 과도하게 커지지 않도록 상한 + 가운데 정렬 */
-  max-width: 1080px;
-  max-height: 1440px;
-  margin: auto;
+  margin: 0;
   display: flex;
   align-items: stretch;
   z-index: 1;
+}
+
+.korea-map-wrapper svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .map-zoom-controls {
@@ -4697,11 +4717,37 @@ body.pmcs-control-room .global-header:hover {
   }
 
   /* ── Dashboard layout: stack vertically ── */
+  main.dashboard-full {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
   .new-dashboard {
     height: auto;
     min-height: calc(100dvh - 44px);
     overflow: visible;
-    grid-template-rows: auto auto auto 1fr;
+  }
+
+  .dash-body {
+    height: auto;
+    flex: none;
+    max-height: none;
+  }
+
+  .dash-body > * {
+    max-height: none;
+  }
+
+  .dash-map-panel {
+    position: relative;
+    height: auto;
+    max-height: none;
+  }
+
+  .dash-detail {
+    height: auto;
+    max-height: none;
   }
 
   .global-header-center {
