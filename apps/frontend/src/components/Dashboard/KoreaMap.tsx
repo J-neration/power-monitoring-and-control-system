@@ -235,8 +235,8 @@ function resolveCoords(
   return CITY_COORDS[region] ?? null;
 }
 
-const INITIAL_CENTER: [number, number] = [127.8, 35.52];
-const INITIAL_ZOOM = 1;
+const INITIAL_CENTER: [number, number] = [127.8, 36.45];
+const INITIAL_ZOOM = 1.4;
 const ZOOM_STEP = 1.6;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 10;
@@ -350,7 +350,7 @@ export default function KoreaMap({
         <button className="zoom-btn" onClick={handleZoomOut} title="축소">
           −
         </button>
-        {zoom > 1.05 && (
+        {Math.abs(zoom - INITIAL_ZOOM) > 0.08 && (
           <button
             className="zoom-btn zoom-btn-reset"
             onClick={handleReset}
@@ -362,8 +362,8 @@ export default function KoreaMap({
       </div>
 
       {/* Hint */}
-      <div className={`map-zoom-hint${zoom > 1.05 ? " active" : ""}`}>
-        {zoom > 1.05
+      <div className={`map-zoom-hint${zoom > INITIAL_ZOOM * 1.05 ? " active" : ""}`}>
+        {zoom > INITIAL_ZOOM * 1.05
           ? "드래그로 이동 · 스크롤로 확대/축소"
           : "스크롤로 확대 · 드래그로 이동"}
       </div>
