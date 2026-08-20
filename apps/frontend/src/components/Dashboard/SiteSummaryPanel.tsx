@@ -1,20 +1,54 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import type { Site, DeviceStatus } from "../../types/site";
 import { CLIENT_LABELS, isTestClient } from "../../data/clients";
 import LteSignalIndicator from "../LteSignalIndicator";
 import MetricValue from "../MetricValue";
 import InstallationSparkline from "../InstallationSparkline";
-import { deriveSiteStatus, STATUS_LABEL } from "../../lib/deviceStatus";
+import {
+  deriveSiteStatus,
+  sortByLabel,
+  STATUS_LABEL,
+} from "../../lib/deviceStatus";
 
 export default function SiteSummaryPanel({
   site,
   showSparklines = false,
+  selectedInstallationId = null,
+  focusSeq = 0,
 }: {
   site: Site | null;
   showSparklines?: boolean;
+  selectedInstallationId?: string | null;
+  focusSeq?: number;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!site || focusSeq === 0) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    if (selectedInstallationId) {
+      const card = panel.querySelector<HTMLElement>(
+        `[data-inst-id="${CSS.escape(selectedInstallationId)}"]`,
+      );
+      if (!card) return;
+      const panelRect = panel.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      const offset =
+        cardRect.top -
+        panelRect.top -
+        panel.clientHeight / 2 +
+        cardRect.height / 2;
+      panel.scrollTo({ top: panel.scrollTop + offset, behavior: "smooth" });
+    } else {
+      panel.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [site, selectedInstallationId, focusSeq]);
+
   if (!site) {
     return (
       <div className="dash-detail dash-detail-empty">
@@ -39,9 +73,10 @@ export default function SiteSummaryPanel({
   );
 
   const siteHref = `/sites/${encodeURIComponent(site.id)}`;
+  const installations = sortByLabel(site.installations);
 
   return (
-    <div className="dash-detail">
+    <div ref={panelRef} className="dash-detail">
       {/* Site header */}
       <div className="detail-site-top">
         <div className={`detail-status-dot ${siteStatus}`} />
@@ -62,11 +97,12 @@ export default function SiteSummaryPanel({
           <span className={`detail-status-badge ${siteStatus}`}>
             {STATUS_LABEL[siteStatus]}
           </span>
-          <Link href={siteHref} target="_blank" className="detail-site-open">
-            상세보기
-          </Link>
         </div>
       </div>
+
+      <Link href={siteHref} target="_blank" className="detail-site-open">
+        현장 상세보기 →
+      </Link>
 
       {/* Summary stats */}
       <div className="summary-stats-row">
@@ -92,20 +128,25 @@ export default function SiteSummaryPanel({
 
       {/* Installation cards */}
       <div className="summary-inst-grid">
-        {site.installations.map((inst) => {
+        {installations.map((inst) => {
           const instStatus = (inst.device?.status as DeviceStatus) ?? "offline";
           const d = inst.device;
+          const isSelected = selectedInstallationId === inst.id;
 
           return (
             <Link
               key={inst.id}
               href={`/devices/${encodeURIComponent(inst.id)}`}
               target="_blank"
-              className="summary-inst-card"
+              data-inst-id={inst.id}
+              className={`summary-inst-card${isSelected ? " selected" : ""}`}
             >
               <div className="summary-inst-header">
                 <div className={`inst-card-dot ${instStatus}`} />
                 <span className="summary-inst-label">{inst.label}</span>
+                {isSelected ? (
+                  <span className="site-group-selected-tag">선택</span>
+                ) : null}
                 <span className={`site-card-badge ${instStatus}`}>
                   {STATUS_LABEL[instStatus]}
                 </span>
