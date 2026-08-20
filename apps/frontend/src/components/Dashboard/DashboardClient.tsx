@@ -98,19 +98,65 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
     string | null
   >(null);
   const [focusSeq, setFocusSeq] = useState(0);
+  const [openRegion, setOpenRegion] = useState<string | null>(
+    sites[0]?.region ?? null,
+  );
+  const [scrollToRegion, setScrollToRegion] = useState<string | null>(null);
+  const sidebarListRef = useRef<HTMLDivElement>(null);
+  const regionElRefs = useRef(new Map<string, HTMLElement>());
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [countdown, setCountdown] = useState(REFRESH_SEC);
   const countdownRef = useRef(REFRESH_SEC);
+  const sitesRef = useRef(sites);
+  sitesRef.current = sites;
+
+  const scrollRegionIntoView = useCallback((region: string) => {
+    const list = sidebarListRef.current;
+    const el = regionElRefs.current.get(region);
+    if (!list || !el) return;
+    const listRect = list.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const delta = elRect.top - listRect.top - 8;
+    if (Math.abs(delta) < 2) return;
+    list.scrollTo({
+      top: list.scrollTop + delta,
+      behavior: "smooth",
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!scrollToRegion) return;
+    const region = scrollToRegion;
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scrollRegionIntoView(region);
+        setScrollToRegion(null);
+      });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [scrollToRegion, openRegion, scrollRegionIntoView]);
 
   const handleSelectSite = useCallback(
     (siteId: string, installationId?: string) => {
       setSelectedSiteId(siteId);
       setSelectedInstallationId(installationId ?? null);
       setFocusSeq((n) => n + 1);
+      const site = sitesRef.current.find((s) => s.id === siteId);
+      if (site?.region) setOpenRegion(site.region);
     },
     [],
   );
+
+  const handleSelectRegion = useCallback((region: string, siteId?: string) => {
+    setOpenRegion(region);
+    if (siteId) {
+      setSelectedSiteId(siteId);
+      setSelectedInstallationId(null);
+      setFocusSeq((n) => n + 1);
+    }
+    setScrollToRegion(region);
+  }, []);
 
   const {
     layout,
@@ -336,7 +382,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                   ))}
                 </div>
               </div>
-              <div className="sidebar-list">
+              <div className="sidebar-list" ref={sidebarListRef}>
                 {regionGroups.length === 0 ? (
                   <p className="sidebar-empty">
                     {searchQuery
@@ -357,15 +403,28 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                         ).length,
                       0,
                     );
-                    const hasSelected = regionSites.some(
-                      (s) => s.id === selectedSiteId,
-                    );
+                    const regionOpen =
+                      openRegion === region ||
+                      statusFilter !== "all" ||
+                      !!searchQuery.trim();
 
                     return (
                       <details
                         key={region}
+                        ref={(node) => {
+                          if (node) regionElRefs.current.set(region, node);
+                          else regionElRefs.current.delete(region);
+                        }}
                         className="region-group"
-                        open={hasSelected || statusFilter !== "all" || !!searchQuery.trim()}
+                        open={regionOpen}
+                        onToggle={(e) => {
+                          if (statusFilter !== "all" || searchQuery.trim())
+                            return;
+                          const nextOpen = (e.currentTarget as HTMLDetailsElement)
+                            .open;
+                          if (nextOpen) setOpenRegion(region);
+                          else if (openRegion === region) setOpenRegion(null);
+                        }}
                       >
                         <summary className="region-group-summary">
                           <span className="region-group-name">{region}</span>
@@ -488,6 +547,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                 selectedSiteId={selectedSite?.id ?? ""}
                 deriveSiteStatus={deriveSiteStatus}
                 onSelect={handleSelectSite}
+                onSelectRegion={handleSelectRegion}
               />
               <LteRadarOverlay />
             </div>
