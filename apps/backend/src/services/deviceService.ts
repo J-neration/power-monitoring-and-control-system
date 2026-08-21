@@ -8,6 +8,7 @@ import {
   normalizeIccid,
   pickPreferredIccidMatch,
 } from "../lib/iccid.js";
+import { isCommLost } from "../lib/commStatus.js";
 
 export { normalizeIccid, iccidLookupCandidates } from "../lib/iccid.js";
 
@@ -233,6 +234,14 @@ export const deriveDeviceStatus = (moduleStatus?: number[]): DeviceStatus | unde
   return toStatus(worst) ?? "offline";
 };
 
+const withLiveFields = <T extends { moduleStatus: number[] | null; lastSeenAt: Date | null }>(
+  d: T,
+) => ({
+  ...d,
+  status: deriveDeviceStatus(d.moduleStatus ?? undefined) ?? "offline",
+  commLost: isCommLost(d.lastSeenAt),
+});
+
 /* ─── 권한별 Device WHERE 필터 (site 경로로) ─────── */
 const deviceWhereFilter = (ctx: UserContext) => {
   if (ctx.role === "ADMIN") return {};
@@ -392,10 +401,7 @@ export const deviceService = {
       orderBy: { installationId: "asc" },
       include: { installation: { include: { site: true } } },
     });
-    return rows.map((d) => ({
-      ...d,
-      status: deriveDeviceStatus(d.moduleStatus) ?? "offline",
-    }));
+    return rows.map((d) => withLiveFields(d));
   },
 
   get: async ({ id }: { id: string }, ctx: UserContext) => {
@@ -406,7 +412,7 @@ export const deviceService = {
     if (!d) return null;
     if (!canAccessDevice(ctx, d.installation.site.client, d.installation.siteId))
       return null;
-    return { ...d, status: deriveDeviceStatus(d.moduleStatus) ?? "offline" };
+    return withLiveFields(d);
   },
 
   /* =====================================================

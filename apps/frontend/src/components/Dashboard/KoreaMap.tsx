@@ -12,6 +12,7 @@ import type { MouseEvent } from "react";
 import type { Site } from "../../types/site";
 import type { DeviceStatus } from "../../types/site";
 import { STATUS_LABEL, STATUS_PRIORITY } from "../../lib/deviceStatus";
+import { isCommLost } from "../../lib/commStatus";
 
 const GEO_URL = "/korea-provinces.json";
 
@@ -124,6 +125,7 @@ type SiteMarker = {
   firstInstId: string;
   coordinates: [number, number];
   status: DeviceStatus;
+  commLost: boolean;
 };
 
 type MarkerCluster = {
@@ -457,6 +459,9 @@ export default function KoreaMap({
         const coords = resolveCoords(site.address, site.region);
         if (!coords) return null;
         const status = deriveSiteStatus(site);
+        const commLost = site.installations.some((inst) =>
+          isCommLost(inst.device?.lastSeenAt),
+        );
         return {
           siteId: site.id,
           siteName: site.name,
@@ -464,6 +469,7 @@ export default function KoreaMap({
           firstInstId: site.installations[0]?.id ?? site.id,
           coordinates: coords,
           status,
+          commLost,
         };
       })
       .filter(Boolean) as SiteMarker[];
@@ -679,6 +685,9 @@ export default function KoreaMap({
                 .slice(0, 5)
                 .map((m) => m.siteName);
               const extra = cluster.members.length - names.length;
+              const commLostCount = cluster.members.filter(
+                (m) => m.commLost,
+              ).length;
               return (
                 <Marker
                   key={cluster.id}
@@ -698,6 +707,9 @@ export default function KoreaMap({
                         extra > 0
                           ? `${names.join(", ")} 외 ${extra}곳`
                           : names.join(", "),
+                        ...(commLostCount > 0
+                          ? [`통신 끊김 ${commLostCount}곳`]
+                          : []),
                       ],
                       x: evt.clientX,
                       y: evt.clientY,
@@ -712,6 +724,11 @@ export default function KoreaMap({
                     opacity={0.22}
                     stroke={hasSelected ? "var(--pmcs-accent-bright)" : color}
                     strokeWidth={(hasSelected ? 1.3 : 0.8) / zoom}
+                    strokeDasharray={
+                      commLostCount > 0
+                        ? `${2.2 / zoom} ${1.6 / zoom}`
+                        : undefined
+                    }
                   />
                   <circle
                     r={innerR}
@@ -753,7 +770,7 @@ export default function KoreaMap({
                 offsets?.[sourceIdx] ?? marker.coordinates;
               const isFault = marker.status === "fault";
               const isSelected = marker.siteId === selectedSiteId;
-              const isLinked = marker.status !== "offline";
+              const isLinked = marker.status !== "offline" && !marker.commLost;
               const isDimmed = Boolean(selectedSiteId) && !isSelected;
               const color = STATUS_DOT[marker.status];
               const sizeBoost = isSelected ? 1.55 : 1;
@@ -768,7 +785,9 @@ export default function KoreaMap({
                     setTooltip({
                       lines: [
                         marker.siteName,
-                        `${marker.instCount}개 설치지점 · ${STATUS_LABEL[marker.status]}`,
+                        `${marker.instCount}개 설치지점 · ${STATUS_LABEL[marker.status]}${
+                          marker.commLost ? " · 통신 끊김" : ""
+                        }`,
                       ],
                       x: evt.clientX,
                       y: evt.clientY,
@@ -844,6 +863,16 @@ export default function KoreaMap({
                     stroke={isSelected ? color : "#0b0d12"}
                     strokeWidth={(isSelected ? 1.4 : 0.8) / zoom}
                   />
+                  {marker.commLost && (
+                    <circle
+                      r={outerR * 1.35}
+                      fill="none"
+                      stroke="#9ca3af"
+                      strokeWidth={1.1 / zoom}
+                      strokeDasharray={`${1.8 / zoom} ${1.4 / zoom}`}
+                      style={{ pointerEvents: "none" }}
+                    />
+                  )}
                 </Marker>
               );
                 })}

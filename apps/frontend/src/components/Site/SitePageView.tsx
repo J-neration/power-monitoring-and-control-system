@@ -7,6 +7,7 @@ import { CLIENT_LABELS } from "../../data/clients";
 import MetricValue from "../MetricValue";
 import SiteInstTrends from "../SiteInstTrends";
 import LteSignalIndicator from "../LteSignalIndicator";
+import CommLostBadge from "../CommLostBadge";
 import PageLiveRefresh from "../PageLiveRefresh";
 import ModuleSlotGrid from "../ModuleSlotGrid";
 import { useHasMounted } from "../../hooks/useHasMounted";
@@ -17,26 +18,30 @@ import {
   STATUS_LABEL,
   type StatusFilter,
 } from "../../lib/deviceStatus";
+import { isCommLost } from "../../lib/commStatus";
 
 const FILTER_OPTIONS: { id: StatusFilter; label: string }[] = [
   { id: "all", label: "전체" },
   { id: "fault", label: "이상" },
   { id: "offline", label: "오프라인" },
+  { id: "comm_lost", label: "통신 끊김" },
 ];
 
 function countStatuses(installations: { device: Device | null }[]) {
   let running = 0,
     standby = 0,
     fault = 0,
-    offline = 0;
+    offline = 0,
+    commLost = 0;
   for (const inst of installations) {
     const s = inst.device?.status ?? "offline";
     if (s === "running") running++;
     else if (s === "fault") fault++;
     else if (s === "standby" || s === "start") standby++;
     else offline++;
+    if (isCommLost(inst.device?.lastSeenAt)) commLost++;
   }
-  return { total: installations.length, running, standby, fault, offline };
+  return { total: installations.length, running, standby, fault, offline, commLost };
 }
 
 function formatLastSeen(
@@ -71,6 +76,7 @@ export default function SitePageView({ site }: { site: Site }) {
       installationMatchesFilter(
         (inst.device?.status as DeviceStatus) ?? "offline",
         statusFilter,
+        isCommLost(inst.device?.lastSeenAt),
       ),
     );
     return sortByLabel(filtered);
@@ -94,6 +100,7 @@ export default function SitePageView({ site }: { site: Site }) {
             <span className={`detail-status-badge ${siteStatus}`}>
               {STATUS_LABEL[siteStatus]}
             </span>
+            {stats.commLost > 0 ? <CommLostBadge /> : null}
           </div>
           <p className="site-header-meta">
             {CLIENT_LABELS[site.client] ?? site.client} · {site.region} ·{" "}
@@ -126,6 +133,10 @@ export default function SitePageView({ site }: { site: Site }) {
               </span>
               <span className="site-stat-lbl">이상</span>
             </div>
+            <div className="site-stat site-stat-comm">
+              <span className="site-stat-val">{stats.commLost}</span>
+              <span className="site-stat-lbl">통신 끊김</span>
+            </div>
           </div>
         </div>
       </header>
@@ -136,7 +147,7 @@ export default function SitePageView({ site }: { site: Site }) {
             <button
               key={opt.id}
               type="button"
-              className={`sidebar-filter-chip${statusFilter === opt.id ? " active" : ""}${opt.id === "fault" ? " sidebar-filter-chip--fault" : ""}${opt.id === "offline" ? " sidebar-filter-chip--offline" : ""}`}
+              className={`sidebar-filter-chip${statusFilter === opt.id ? " active" : ""}${opt.id === "fault" ? " sidebar-filter-chip--fault" : ""}${opt.id === "offline" ? " sidebar-filter-chip--offline" : ""}${opt.id === "comm_lost" ? " sidebar-filter-chip--comm-lost" : ""}`}
               onClick={() => setStatusFilter(opt.id)}
             >
               {opt.label}
@@ -152,6 +163,7 @@ export default function SitePageView({ site }: { site: Site }) {
           installations.map((inst) => {
             const d = inst.device;
             const instStatus = (d?.status as DeviceStatus) ?? "offline";
+            const commLost = isCommLost(d?.lastSeenAt);
 
             return (
               <Link
@@ -159,7 +171,7 @@ export default function SitePageView({ site }: { site: Site }) {
                 href={`/devices/${encodeURIComponent(inst.id)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`site-inst-card site-inst-card--${instStatus}`}
+                className={`site-inst-card site-inst-card--${instStatus}${commLost ? " site-inst-card--comm-lost" : ""}`}
               >
                 <div className="site-inst-top">
                   <div className={`site-inst-dot ${instStatus}`} />
@@ -168,6 +180,7 @@ export default function SitePageView({ site }: { site: Site }) {
                   <span className={`detail-status-badge ${instStatus}`}>
                     {STATUS_LABEL[instStatus]}
                   </span>
+                  {commLost ? <CommLostBadge /> : null}
                 </div>
 
                 <div className="site-inst-meta-row">

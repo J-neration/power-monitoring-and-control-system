@@ -8,6 +8,8 @@ import DeviceKpiStrip from "../../../../components/DeviceKpiStrip";
 import LteSignalIndicator from "../../../../components/LteSignalIndicator";
 import PageLiveRefresh from "../../../../components/PageLiveRefresh";
 import { STATUS_LABEL } from "../../../../lib/deviceStatus";
+import { isCommLost } from "../../../../lib/commStatus";
+import CommLostBadge from "../../../../components/CommLostBadge";
 import type { DeviceWithInstallation } from "../../../../types/site";
 type Props = {
   params: { id: string };
@@ -42,6 +44,7 @@ export default async function DeviceDetailPage({ params }: Props) {
   const site = device.installation?.site;
   const siteId = site?.id;
   const deviceLabel = device.installation?.label ?? "Installation";
+  const commLost = isCommLost(device.lastSeenAt);
 
   return (
     <main
@@ -50,6 +53,12 @@ export default async function DeviceDetailPage({ params }: Props) {
       {device.status === "fault" && (
         <div className="page-fault-banner" role="alert">
           <strong>이상 상태</strong> — 장비 점검이 필요합니다
+        </div>
+      )}
+      {commLost && (
+        <div className="page-comm-lost-banner" role="status">
+          <strong>통신 끊김</strong> — 마지막 수신 이후 30분이 지났습니다.
+          모듈 상태({STATUS_LABEL[device.status]})와 측정값은 그때의 스냅샷입니다.
         </div>
       )}
 
@@ -84,6 +93,7 @@ export default async function DeviceDetailPage({ params }: Props) {
               <span className={`detail-status-badge ${device.status}`}>
                 {STATUS_LABEL[device.status]}
               </span>
+              {commLost ? <CommLostBadge /> : null}
             </div>
 
             <p className="detail-subtitle">

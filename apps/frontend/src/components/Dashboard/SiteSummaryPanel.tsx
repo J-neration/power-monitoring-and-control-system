@@ -5,13 +5,16 @@ import Link from "next/link";
 import type { Site, DeviceStatus } from "../../types/site";
 import { CLIENT_LABELS, isTestClient } from "../../data/clients";
 import LteSignalIndicator from "../LteSignalIndicator";
+import CommLostBadge from "../CommLostBadge";
 import MetricValue from "../MetricValue";
 import InstallationSparkline from "../InstallationSparkline";
 import {
   deriveSiteStatus,
+  siteHasCommLost,
   sortByLabel,
   STATUS_LABEL,
 } from "../../lib/deviceStatus";
+import { isCommLost } from "../../lib/commStatus";
 
 export default function SiteSummaryPanel({
   site,
@@ -67,9 +70,10 @@ export default function SiteSummaryPanel({
       else if (s === "fault") acc.fault++;
       else if (s === "standby" || s === "start") acc.standby++;
       else acc.offline++;
+      if (isCommLost(inst.device?.lastSeenAt)) acc.commLost++;
       return acc;
     },
-    { total: 0, running: 0, fault: 0, standby: 0, offline: 0 },
+    { total: 0, running: 0, fault: 0, standby: 0, offline: 0, commLost: 0 },
   );
 
   const siteHref = `/sites/${encodeURIComponent(site.id)}`;
@@ -97,6 +101,7 @@ export default function SiteSummaryPanel({
           <span className={`detail-status-badge ${siteStatus}`}>
             {STATUS_LABEL[siteStatus]}
           </span>
+          {siteHasCommLost(site) ? <CommLostBadge /> : null}
         </div>
       </div>
 
@@ -124,6 +129,10 @@ export default function SiteSummaryPanel({
           </span>
           <span className="summary-stat-label">이상</span>
         </div>
+        <div className="summary-stat summary-stat-comm">
+          <span className="summary-stat-value">{stats.commLost}</span>
+          <span className="summary-stat-label">통신 끊김</span>
+        </div>
       </div>
 
       {/* Installation cards */}
@@ -132,6 +141,7 @@ export default function SiteSummaryPanel({
           const instStatus = (inst.device?.status as DeviceStatus) ?? "offline";
           const d = inst.device;
           const isSelected = selectedInstallationId === inst.id;
+          const commLost = isCommLost(d?.lastSeenAt);
 
           return (
             <Link
@@ -139,7 +149,7 @@ export default function SiteSummaryPanel({
               href={`/devices/${encodeURIComponent(inst.id)}`}
               target="_blank"
               data-inst-id={inst.id}
-              className={`summary-inst-card${isSelected ? " selected" : ""}`}
+              className={`summary-inst-card${isSelected ? " selected" : ""}${commLost ? " summary-inst-card--comm-lost" : ""}`}
             >
               <div className="summary-inst-header">
                 <div className={`inst-card-dot ${instStatus}`} />
@@ -150,6 +160,7 @@ export default function SiteSummaryPanel({
                 <span className={`site-card-badge ${instStatus}`}>
                   {STATUS_LABEL[instStatus]}
                 </span>
+                {commLost ? <CommLostBadge /> : null}
               </div>
               <div className="summary-inst-lte">
                 <span className="summary-inst-lte-title">LTE 신호</span>

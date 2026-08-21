@@ -1,6 +1,7 @@
 import { PrismaClient } from "../../prisma/generated/client/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { deriveDeviceStatus } from "./deviceService.js";
+import { isCommLost } from "../lib/commStatus.js";
 import type { UserContext } from "../modules/auth/auth.types.js";
 
 const prisma = new PrismaClient({
@@ -51,6 +52,7 @@ export const siteService = {
             ? {
                 ...inst.device,
                 status: deriveDeviceStatus(inst.device.moduleStatus) ?? "offline",
+                commLost: isCommLost(inst.device.lastSeenAt),
               }
             : null;
         return {
@@ -169,6 +171,7 @@ export const siteService = {
             ? {
                 ...inst.device,
                 status: deriveDeviceStatus(inst.device.moduleStatus) ?? "offline",
+                commLost: isCommLost(inst.device.lastSeenAt),
               }
             : inst.device,
         };
