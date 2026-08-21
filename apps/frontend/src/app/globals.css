@@ -1083,6 +1083,9 @@ main.dashboard-full {
 .kpi-offline .kpi-value {
   color: #6b7280;
 }
+.kpi-comm_lost .kpi-value {
+  color: #9ca3af;
+}
 .kpi-default .kpi-value {
   color: #f5f6f7;
 }
@@ -1258,6 +1261,19 @@ main.dashboard-full {
 .site-card-badge.offline {
   color: #6b7280;
   background: rgba(107, 114, 128, 0.12);
+}
+
+.comm-lost-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  color: #d1d5db;
+  background: rgba(107, 114, 128, 0.16);
+  border: 1px dashed rgba(156, 163, 175, 0.45);
+  white-space: nowrap;
 }
 
 .sidebar-footer {
@@ -1687,8 +1703,10 @@ main.dashboard-full {
 
 .detail-site-actions {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
   gap: 6px;
   flex-shrink: 0;
 }
@@ -2078,6 +2096,12 @@ main.dashboard-full {
   display: block;
 }
 
+.korea-map-wrapper--moving .marker-lte-ping,
+.korea-map-wrapper--moving .marker-pulse-ring,
+.korea-map-wrapper--moving .marker-selection-halo {
+  animation: none !important;
+}
+
 .map-zoom-controls {
   position: absolute;
   top: 12px;
@@ -2164,7 +2188,7 @@ main.dashboard-full {
 
 .summary-stats-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 6px;
 }
 
@@ -2199,6 +2223,9 @@ main.dashboard-full {
 }
 .summary-stat-fault .summary-stat-value {
   color: #ef4444;
+}
+.summary-stat-comm .summary-stat-value {
+  color: #9ca3af;
 }
 
 /* Module health bar */
@@ -2543,6 +2570,7 @@ main.dashboard-full {
 .device-detail-title-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
@@ -3278,6 +3306,9 @@ main.dashboard-full {
 .site-stat-err .site-stat-val {
   color: #ef4444;
 }
+.site-stat-comm .site-stat-val {
+  color: #9ca3af;
+}
 
 /* Card grid */
 .site-card-grid {
@@ -3325,6 +3356,10 @@ main.dashboard-full {
   opacity: 0.85;
 }
 
+.site-inst-card--comm-lost {
+  border-color: rgba(156, 163, 175, 0.4);
+}
+
 .site-header-right {
   display: flex;
   flex-direction: column;
@@ -3341,7 +3376,7 @@ main.dashboard-full {
 .site-toolbar .sidebar-filters {
   padding: 0;
   width: 100%;
-  max-width: 320px;
+  max-width: 440px;
 }
 
 .scada-panel {
@@ -3367,6 +3402,16 @@ main.dashboard-full {
   color: #fca5a5;
   font-size: 13px;
   animation: kpi-fault-urgent 1.2s ease-in-out infinite;
+}
+
+.page-comm-lost-banner {
+  margin-bottom: 12px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: rgba(107, 114, 128, 0.12);
+  border: 1px dashed rgba(156, 163, 175, 0.45);
+  color: #d1d5db;
+  font-size: 13px;
 }
 
 .page-kpi-strip {
@@ -3819,6 +3864,10 @@ main.dashboard-full {
   color: rgba(255, 255, 255, 0.65);
 }
 
+.alarm-ticker-item--comm_lost strong {
+  color: #d1d5db;
+}
+
 .alarm-ticker-sep {
   margin: 0 6px;
   opacity: 0.35;
@@ -4033,6 +4082,12 @@ main.dashboard-full {
   color: #d1d5db;
 }
 
+.sidebar-filter-chip--comm-lost.active {
+  background: rgba(107, 114, 128, 0.18);
+  border-color: rgba(156, 163, 175, 0.45);
+  color: #d1d5db;
+}
+
 .sidebar-empty {
   padding: 24px 16px;
   font-size: 12px;
@@ -4049,6 +4104,14 @@ main.dashboard-full {
 .site-group--offline > .site-group-summary .site-group-name,
 .inst-card--offline .inst-card-label {
   color: rgba(255, 255, 255, 0.45);
+}
+
+.inst-card--comm-lost {
+  box-shadow: inset 3px 0 0 #9ca3af;
+}
+
+.summary-inst-card--comm-lost {
+  border-color: rgba(156, 163, 175, 0.4);
 }
 
 .site-group--fault > .site-group-summary .site-group-dot,
@@ -4296,6 +4359,11 @@ body.pmcs-control-room .global-header:hover {
   border-color: rgba(107, 114, 128, 0.25);
 }
 
+.alarm-panel-item--comm_lost {
+  border-color: rgba(156, 163, 175, 0.35);
+  background: rgba(107, 114, 128, 0.08);
+}
+
 .alarm-panel-item.acked {
   opacity: 0.45;
 }
@@ -4337,6 +4405,11 @@ body.pmcs-control-room .global-header:hover {
 
 .alarm-panel-item--offline .alarm-panel-status {
   background: rgba(107, 114, 128, 0.2);
+  color: #d1d5db;
+}
+
+.alarm-panel-item--comm_lost .alarm-panel-status {
+  background: rgba(107, 114, 128, 0.25);
   color: #d1d5db;
 }
 

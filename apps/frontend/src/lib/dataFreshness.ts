@@ -1,5 +1,7 @@
-/** 5분 이상 미수신 시 관제 경고 */
-export const DATA_STALE_MS = 5 * 60 * 1000;
+import { COMM_LOST_AFTER_MS } from "./commStatus";
+
+/** @deprecated 통신 끊김은 COMM_LOST_AFTER_MS(30분) 사용 */
+export const DATA_STALE_MS = COMM_LOST_AFTER_MS;
 
 export function dataFreshness(lastSeenAt?: string | null): {
   text: string;

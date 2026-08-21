@@ -1,7 +1,7 @@
 import type { DeviceStatus, Site } from "../types/site";
 import { CLIENT_LABELS } from "../data/clients";
 
-export type StatusFilter = "all" | "fault" | "offline";
+export type StatusFilter = "all" | "fault" | "offline" | "comm_lost";
 
 export function siteMatchesSearch(site: Site, query: string): boolean {
   const q = query.trim().toLowerCase();

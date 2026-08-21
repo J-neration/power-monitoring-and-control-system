@@ -15,6 +15,7 @@ const KoreaMap = dynamic(() => import("./KoreaMap"), {
 });
 import LteRadarOverlay from "./LteRadarOverlay";
 import LteSignalIndicator from "../LteSignalIndicator";
+import CommLostBadge from "../CommLostBadge";
 import AlarmTicker from "./AlarmTicker";
 import AlarmPanel from "./AlarmPanel";
 import ControlRoomToolbar from "./ControlRoomToolbar";
@@ -30,11 +31,13 @@ import {
   deriveSiteStatus,
   installationMatchesFilter,
   siteMatchesFilter,
+  siteHasCommLost,
   sortSitesByName,
   sortByLabel,
   STATUS_LABEL,
   type StatusFilter,
 } from "../../lib/deviceStatus";
+import { isCommLost } from "../../lib/commStatus";
 
 const REFRESH_SEC = 30;
 
@@ -42,6 +45,7 @@ const FILTER_OPTIONS: { id: StatusFilter; label: string }[] = [
   { id: "all", label: "전체" },
   { id: "fault", label: "이상" },
   { id: "offline", label: "오프라인" },
+  { id: "comm_lost", label: "통신 끊김" },
 ];
 
 function KpiBadge({
@@ -52,7 +56,7 @@ function KpiBadge({
 }: {
   label: string;
   value: number;
-  variant: "default" | DeviceStatus;
+  variant: "default" | DeviceStatus | "comm_lost";
   urgent?: boolean;
 }) {
   return (
@@ -63,11 +67,26 @@ function KpiBadge({
   );
 }
 
-function LiveIndicator({ countdown }: { countdown: number }) {
-  const pct = (countdown / REFRESH_SEC) * 100;
+function LiveIndicator({
+  refreshSec,
+  refreshEpoch,
+}: {
+  refreshSec: number;
+  refreshEpoch: number;
+}) {
+  const [countdown, setCountdown] = useState(refreshSec);
+  const pct = (countdown / refreshSec) * 100;
   const r = 7;
   const circ = 2 * Math.PI * r;
   const dash = (pct / 100) * circ;
+
+  useEffect(() => {
+    setCountdown(refreshSec);
+    const tick = setInterval(() => {
+      setCountdown((c) => Math.max(0, c - 1));
+    }, 1000);
+    return () => clearInterval(tick);
+  }, [refreshSec, refreshEpoch]);
 
   return (
     <div className="live-indicator">
@@ -106,8 +125,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
   const regionElRefs = useRef(new Map<string, HTMLElement>());
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [countdown, setCountdown] = useState(REFRESH_SEC);
-  const countdownRef = useRef(REFRESH_SEC);
+  const [refreshEpoch, setRefreshEpoch] = useState(0);
   const sitesRef = useRef(sites);
   sitesRef.current = sites;
 
@@ -181,21 +199,14 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
   const eventLogEntries = useEventLog(sites);
 
   const triggerRefresh = useCallback(() => {
-    countdownRef.current = REFRESH_SEC;
-    setCountdown(REFRESH_SEC);
+    setRefreshEpoch((n) => n + 1);
     router.refresh();
   }, [router]);
 
   useEffect(() => {
-    countdownRef.current = REFRESH_SEC;
-    setCountdown(REFRESH_SEC);
     const tick = setInterval(() => {
-      countdownRef.current -= 1;
-      setCountdown(countdownRef.current);
-      if (countdownRef.current <= 0) {
-        triggerRefresh();
-      }
-    }, 1000);
+      triggerRefresh();
+    }, REFRESH_SEC * 1000);
     return () => clearInterval(tick);
   }, [triggerRefresh]);
 
@@ -249,7 +260,8 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
       running = 0,
       fault = 0,
       standby = 0,
-      offline = 0;
+      offline = 0,
+      commLost = 0;
     for (const site of sites) {
       for (const inst of site.installations) {
         total++;
@@ -258,9 +270,10 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
         else if (s === "fault") fault++;
         else if (s === "standby" || s === "start") standby++;
         else offline++;
+        if (isCommLost(inst.device?.lastSeenAt)) commLost++;
       }
     }
-    return { total, running, fault, standby, offline };
+    return { total, running, fault, standby, offline, commLost };
   }, [sites]);
 
   const dashClass = [
@@ -274,7 +287,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
   return (
     <div className={dashClass}>
       <div className="dash-kpi-strip">
-        <LiveIndicator countdown={countdown} />
+        <LiveIndicator refreshSec={REFRESH_SEC} refreshEpoch={refreshEpoch} />
         <div className="kpi-divider" />
         <KpiBadge label="장비 전체" value={kpis.total} variant="default" />
         <KpiBadge label="가동" value={kpis.running} variant="running" />
@@ -286,6 +299,11 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
           urgent={kpis.fault > 0}
         />
         <KpiBadge label="오프라인" value={kpis.offline} variant="offline" />
+        <KpiBadge
+          label="통신 끊김"
+          value={kpis.commLost}
+          variant="comm_lost"
+        />
         <div className="kpi-strip-spacer" />
         <ControlRoomToolbar
           layout={layout}
@@ -374,7 +392,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                     <button
                       key={opt.id}
                       type="button"
-                      className={`sidebar-filter-chip${statusFilter === opt.id ? " active" : ""}${opt.id === "fault" ? " sidebar-filter-chip--fault" : ""}${opt.id === "offline" ? " sidebar-filter-chip--offline" : ""}`}
+                      className={`sidebar-filter-chip${statusFilter === opt.id ? " active" : ""}${opt.id === "fault" ? " sidebar-filter-chip--fault" : ""}${opt.id === "offline" ? " sidebar-filter-chip--offline" : ""}${opt.id === "comm_lost" ? " sidebar-filter-chip--comm-lost" : ""}`}
                       onClick={() => setStatusFilter(opt.id)}
                     >
                       {opt.label}
@@ -399,6 +417,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                             (inst.device?.status as DeviceStatus) ??
                               "offline",
                             statusFilter,
+                            isCommLost(inst.device?.lastSeenAt),
                           ),
                         ).length,
                       0,
@@ -444,6 +463,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                   (inst.device?.status as DeviceStatus) ??
                                     "offline",
                                   statusFilter,
+                                  isCommLost(inst.device?.lastSeenAt),
                                 ),
                               ),
                             );
@@ -479,6 +499,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                   >
                                     {STATUS_LABEL[siteStatus]}
                                   </span>
+                                  {siteHasCommLost(site) ? <CommLostBadge /> : null}
                                   {isSiteSelected && (
                                     <span className="site-group-selected-tag">
                                       선택
@@ -491,12 +512,15 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                     const instStatus =
                                       (inst.device?.status as DeviceStatus) ??
                                       "offline";
+                                    const commLost = isCommLost(
+                                      inst.device?.lastSeenAt,
+                                    );
 
                                     return (
                                       <button
                                         key={inst.id}
                                         type="button"
-                                        className={`inst-card inst-card--${instStatus}${selectedInstallationId === inst.id ? " selected" : ""}`}
+                                        className={`inst-card inst-card--${instStatus}${commLost ? " inst-card--comm-lost" : ""}${selectedInstallationId === inst.id ? " selected" : ""}`}
                                         onClick={(e) => {
                                           e.preventDefault();
                                           e.stopPropagation();
@@ -520,6 +544,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                         >
                                           {STATUS_LABEL[instStatus]}
                                         </span>
+                                        {commLost ? <CommLostBadge /> : null}
                                       </button>
                                     );
                                   })}

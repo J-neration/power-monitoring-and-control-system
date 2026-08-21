@@ -10,6 +10,8 @@ export type DeviceStatus =
 export type Device = {
   installationId: string;
   status: DeviceStatus;
+  /** 마지막 수신 후 30분 이상 미수신. 모듈 status와 별개 */
+  commLost?: boolean;
   model?: string;
   capacity?: number;
   lastSeenAt: string | null;

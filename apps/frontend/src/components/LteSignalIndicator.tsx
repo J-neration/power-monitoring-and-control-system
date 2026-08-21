@@ -6,6 +6,7 @@ import {
   formatLteSignalDetail,
   getLteSignalInfo,
 } from "../lib/lteSignal";
+import { isCommLost } from "../lib/commStatus";
 import { useHasMounted } from "../hooks/useHasMounted";
 
 type Props = {
@@ -20,7 +21,8 @@ export default function LteSignalIndicator({
   className = "",
 }: Props) {
   const mounted = useHasMounted();
-  const offline = !device || device.status === "offline";
+  const commLost = isCommLost(device?.lastSeenAt);
+  const offline = !device || device.status === "offline" || commLost;
   const info = getLteSignalInfo(device?.rsrp, device?.csq, offline);
   const detail = formatLteSignalDetail(info);
   const lastSeen = mounted ? formatLastSeen(device?.lastSeenAt) : null;

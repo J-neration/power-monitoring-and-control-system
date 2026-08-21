@@ -1,6 +1,6 @@
 "use client";
 
-import type { AlarmItem } from "../../lib/alarms";
+import { ALARM_STATUS_LABEL, type AlarmItem } from "../../lib/alarms";
 import { formatLastSeen } from "../../lib/lteSignal";
 import { useHasMounted } from "../../hooks/useHasMounted";
 
@@ -83,7 +83,7 @@ export default function AlarmPanel({
                 onClick={() => onSelectSite?.(item.siteId)}
               >
                 <span className="alarm-panel-status">
-                  {item.status === "fault" ? "이상" : "오프라인"}
+                  {ALARM_STATUS_LABEL[item.status]}
                 </span>
                 <strong>{item.siteName}</strong>
                 <span className="alarm-panel-sep">·</span>

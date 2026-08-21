@@ -38,7 +38,7 @@ export default function AlarmTicker({
           ✓
         </span>
         <span className="alarm-ticker-clear-text">
-          현재 이상·오프라인 알람 없음 — 전체 정상 모니터링 중
+          현재 이상·오프라인·통신 끊김 알람 없음 — 전체 정상 모니터링 중
         </span>
         {onToggleSound && (
           <button

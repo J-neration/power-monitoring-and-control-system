@@ -1,4 +1,5 @@
 import type { DeviceStatus, Site } from "../types/site";
+import { isCommLost } from "./commStatus";
 
 export const STATUS_PRIORITY: Record<DeviceStatus, number> = {
   fault: 4,
@@ -54,7 +55,7 @@ export function sortSitesByPriority(sites: Site[]): Site[] {
   });
 }
 
-export type StatusFilter = "all" | "fault" | "offline";
+export type StatusFilter = "all" | "fault" | "offline" | "comm_lost";
 
 export function siteMatchesFilter(
   site: Site,
@@ -65,6 +66,7 @@ export function siteMatchesFilter(
     const s = inst.device?.status ?? "offline";
     if (filter === "fault" && s === "fault") return true;
     if (filter === "offline" && s === "offline") return true;
+    if (filter === "comm_lost" && isCommLost(inst.device?.lastSeenAt)) return true;
   }
   return false;
 }
@@ -72,9 +74,15 @@ export function siteMatchesFilter(
 export function installationMatchesFilter(
   status: DeviceStatus,
   filter: StatusFilter,
+  commLost = false,
 ): boolean {
   if (filter === "all") return true;
   if (filter === "fault") return status === "fault";
   if (filter === "offline") return status === "offline";
+  if (filter === "comm_lost") return commLost;
   return true;
+}
+
+export function siteHasCommLost(site: Site): boolean {
+  return site.installations.some((inst) => isCommLost(inst.device?.lastSeenAt));
 }
