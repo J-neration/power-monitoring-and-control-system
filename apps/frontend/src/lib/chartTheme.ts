@@ -13,9 +13,19 @@ export const CHART_COLORS = {
   pink: "#ec4899",
 } as const;
 
+/** TPF = Q+H, DPF = Q. 전력 차트와 게이지가 같은 색을 쓴다. */
+export const PF_QTY = {
+  q: "#38bdf8",
+  h: "#a78bfa",
+  qDim: "rgba(56, 189, 248, 0.38)",
+  hDim: "rgba(167, 139, 250, 0.38)",
+  other: "#94a3b8",
+  otherDim: "rgba(148, 163, 184, 0.35)",
+} as const;
+
 export const TEMP_THRESHOLDS = {
-  areaWarn: 30,
-  areaAlarm: 38,
+  areaWarn: 35,
+  areaAlarm: 40,
   moduleWarn: 40,
   moduleAlarm: 90,
 } as const;

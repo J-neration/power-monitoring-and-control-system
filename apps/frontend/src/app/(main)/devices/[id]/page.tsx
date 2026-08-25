@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { fetchDevice, fetchReadings, fetchFaults } from "../../../../lib/api";
 import { getSessionUser } from "../../../../lib/auth-server";
 import DeviceDetailTabs from "../../../../components/DeviceDetailTabs";
-import DeviceKpiStrip from "../../../../components/DeviceKpiStrip";
 import LteSignalIndicator from "../../../../components/LteSignalIndicator";
 import PageLiveRefresh from "../../../../components/PageLiveRefresh";
 import { STATUS_LABEL } from "../../../../lib/deviceStatus";
@@ -62,7 +61,7 @@ export default async function DeviceDetailPage({ params }: Props) {
         </div>
       )}
 
-      <section className="device-detail-header scada-panel">
+      <section className="device-detail-header device-detail-header--compact scada-panel">
         <div className="device-detail-header-inner">
           <div className="device-detail-header-main">
             <nav className="device-breadcrumb page-breadcrumb">
@@ -94,12 +93,6 @@ export default async function DeviceDetailPage({ params }: Props) {
                 {STATUS_LABEL[device.status]}
               </span>
               {commLost ? <CommLostBadge /> : null}
-            </div>
-
-            <p className="detail-subtitle">
-              {site?.region ?? "-"} {site?.address ?? ""}
-            </p>
-            <p className="detail-subtitle">
               {device.model ? (
                 <span className="device-model-badge">
                   {device.model.toUpperCase()}
@@ -107,36 +100,33 @@ export default async function DeviceDetailPage({ params }: Props) {
               ) : null}
               {device.capacity != null ? (
                 <span className="device-capacity-badge">
-                  {device.capacity}{" "}
-                  {device.model === "paf" ? "A" : "kVAR"}
+                  {device.capacity} {device.model === "paf" ? "A" : "kVAR"}
                 </span>
-              ) : null}{" "}
-              ID: {device.installationId}
-            </p>
+              ) : null}
+              <span className="device-detail-id">
+                {site?.region ?? "-"} · {device.installationId}
+              </span>
+            </div>
           </div>
 
           <div className="device-detail-aside">
             <PageLiveRefresh installationIds={[device.installationId]} />
             <div className="device-detail-lte">
-              <span className="device-detail-lte-title">LTE 신호</span>
+              <span className="device-detail-lte-title">LTE</span>
               <LteSignalIndicator device={device} variant="detail" />
             </div>
             <div className="device-detail-received">
               <p>
-                마지막 수신{" "}
                 {device.lastSeenAt
                   ? new Date(device.lastSeenAt).toLocaleString("ko-KR", {
                       timeZone: "Asia/Seoul",
                     })
                   : "-"}
               </p>
-              {device.lastIp ? <p>IP {device.lastIp}</p> : null}
             </div>
           </div>
         </div>
       </section>
-
-      <DeviceKpiStrip device={device} />
 
       <DeviceDetailTabs
         device={device}

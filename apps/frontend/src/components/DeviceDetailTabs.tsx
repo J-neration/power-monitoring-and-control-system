@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import DeviceDetailChartsLazy from "./DeviceDetailChartsLazy";
 import DeviceHistoryCharts from "./DeviceHistoryCharts";
+import DeviceMonitorBoard from "./DeviceMonitorBoard";
 import DeviceModulePowerPanel from "./DeviceModulePowerPanel";
 import DeviceSettingsPanel from "./DeviceSettingsPanel";
 import DeviceSettingsSyncBar from "./DeviceSettingsSyncBar";
 import DeviceDataRefreshButton from "./DeviceDataRefreshButton";
 import DeviceFaultHistory from "./DeviceFaultHistory";
-import { StatusCard } from "./StatusCard";
 import ViewingBanner from "./ViewingBanner";
 import type { DeviceWithInstallation } from "../types/site";
 import type { TelemetryReading } from "../types/site";
@@ -115,7 +114,7 @@ export default function DeviceDetailTabs({
   const hasActiveFaults = activeFaultCount > 0;
 
   return (
-    <>
+    <div className="device-detail-tabs">
       <div className="device-remote-chrome">
         <div className="device-tab-bar">
           <div className="device-tab-bar-tabs" role="tablist">
@@ -175,31 +174,24 @@ export default function DeviceDetailTabs({
               </button>
             )}
           </div>
-          {isAdmin && showBanner ? (
-            <ViewingBanner installationId={device.installationId} />
-          ) : null}
-        </div>
-      </div>
-
-      {tab === "monitor" && (
-        <div className="device-monitor-layout">
           {isAdmin && (
-            <div className="device-monitor-refresh-wrap">
+            <div className="device-tab-bar-actions">
               <DeviceDataRefreshButton
                 installationId={device.installationId}
                 requestedBy={adminUsername}
+                compact
               />
+              {showBanner ? (
+                <ViewingBanner installationId={device.installationId} />
+              ) : null}
             </div>
           )}
-          <section className="device-detail-body device-monitor-charts">
-            <h2 className="scada-section-title">실시간 계측</h2>
-            <DeviceDetailChartsLazy device={device} />
-          </section>
-          <section className="device-detail-body device-monitor-metrics">
-            <h2 className="scada-section-title">Load / Grid 상세</h2>
-            <StatusCard device={device} />
-          </section>
         </div>
+      </div>
+
+      <div className={`device-detail-tab-body${tab === "monitor" ? " device-detail-tab-body--fit" : ""}`}>
+      {tab === "monitor" && (
+        <DeviceMonitorBoard device={device} readings={readings} />
       )}
 
       {tab === "analytics" && (
@@ -233,7 +225,7 @@ export default function DeviceDetailTabs({
                 모듈 상태를 한 번 올립니다.
               </li>
               <li>
-                모니터 계측값(전압·전류·PF 등)은 <strong>모니터</strong> 탭의{" "}
+                모니터 계측값(전압·전류·PF 등)은 <strong>모니터</strong> 화면의{" "}
                 <strong>데이터 갱신</strong>을 사용하세요.
               </li>
               <li>
@@ -268,6 +260,7 @@ export default function DeviceDetailTabs({
           faults={faults}
         />
       )}
-    </>
+      </div>
+    </div>
   );
 }
