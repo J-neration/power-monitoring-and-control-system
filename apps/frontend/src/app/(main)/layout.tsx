@@ -91,12 +91,12 @@ export default async function MainLayout({
           <Link href="/" className="global-logo">
             <Image
               src="/logo.png"
-              alt="PrimeSolution"
+              alt="Power Quality Monitoring System"
               width={32}
               height={15}
               priority
             />
-            <span className="global-logo-text">PRIMESOLUTION</span>
+            <span className="global-logo-text">Power Quality Monitoring System</span>
           </Link>
         </div>
 

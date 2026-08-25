@@ -8,16 +8,9 @@ export default function LiveClock() {
   useEffect(() => {
     const update = () => {
       const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
       setTime(
-        now.toLocaleString("ko-KR", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false,
-        })
+        `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}  ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`,
       );
     };
     update();

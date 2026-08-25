@@ -2,11 +2,46 @@ import type { ReactNode } from "react";
 import type { DeviceWithInstallation } from "../types/site";
 import MetricValue from "./MetricValue";
 import ModuleSlotGrid from "./ModuleSlotGrid";
+import { TEMP_THRESHOLDS } from "../lib/chartTheme";
 
 type StatusCardProps = {
   device: DeviceWithInstallation;
   compact?: boolean;
 };
+
+function maxOf(values?: number[] | null): number | null {
+  const xs = (values ?? []).filter((v) => Number.isFinite(v));
+  return xs.length ? Math.max(...xs) : null;
+}
+
+function HealthCell({
+  label,
+  value,
+  suffix,
+  warn,
+  alarm,
+}: {
+  label: string;
+  value: number | null;
+  suffix: string;
+  warn?: number;
+  alarm?: number;
+}) {
+  const tone =
+    value != null && alarm != null && value >= alarm
+      ? "danger"
+      : value != null && warn != null && value >= warn
+        ? "warn"
+        : "ok";
+  return (
+    <div className={`device-health-cell device-health-cell--${tone}`}>
+      <span className="device-health-label">{label}</span>
+      <span className="device-health-value">
+        {value != null ? `${value.toFixed(0)}${suffix}` : "—"}
+      </span>
+    </div>
+  );
+}
 
 function MetricCell({
   label,
@@ -161,6 +196,35 @@ export function StatusCard({ device, compact = false }: StatusCardProps) {
             <MetricValue value={device.vL3} kind="voltage" />
           </strong>
         </div>
+      </div>
+
+      <div className="device-health-strip" aria-label="설비 상태">
+        <HealthCell
+          label="주위"
+          value={maxOf(device.areaTemp)}
+          suffix="°"
+          warn={TEMP_THRESHOLDS.areaWarn}
+          alarm={TEMP_THRESHOLDS.areaAlarm}
+        />
+        <HealthCell
+          label="모듈"
+          value={maxOf(device.moduleTemp)}
+          suffix="°"
+          warn={TEMP_THRESHOLDS.moduleWarn}
+          alarm={TEMP_THRESHOLDS.moduleAlarm}
+        />
+        <HealthCell
+          label="팬"
+          value={maxOf(device.fanSpeed)}
+          suffix=" m/s"
+        />
+        <HealthCell
+          label="용량"
+          value={
+            device.operatingCapacity ?? device.totalCapacity ?? device.capacity ?? null
+          }
+          suffix={device.model === "paf" ? "A" : "kvar"}
+        />
       </div>
 
       <ModuleSlotGrid

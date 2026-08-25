@@ -8,6 +8,7 @@ const COMMAND_ACK_TIMEOUT_MS = 130_000;
 type Props = {
   installationId: string;
   requestedBy?: string;
+  compact?: boolean;
 };
 
 type StatusTone = "pending" | "ok" | "err";
@@ -61,6 +62,7 @@ function RefreshStatusCard({ status }: { status: StatusBanner }) {
 export default function DeviceDataRefreshButton({
   installationId,
   requestedBy,
+  compact = false,
 }: Props) {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<StatusBanner | null>(null);
@@ -158,6 +160,30 @@ export default function DeviceDataRefreshButton({
   };
 
   const locked = busy || pendingCommandId !== null;
+
+  if (compact) {
+    return (
+      <div className="device-monitor-refresh device-monitor-refresh--compact">
+        <button
+          type="button"
+          className="device-settings-sync-btn device-settings-sync-btn--compact"
+          disabled={locked}
+          aria-busy={locked}
+          onClick={() => void send()}
+        >
+          {locked ? "갱신 중…" : "↻ 데이터 갱신"}
+        </button>
+        {status ? (
+          <span
+            className={`device-refresh-inline device-refresh-inline--${status.tone}`}
+            role="status"
+          >
+            {status.title}
+          </span>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div className="device-monitor-refresh">

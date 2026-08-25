@@ -15,7 +15,14 @@ export default function SystemStatusBar() {
   const connecting = status === "connecting";
 
   return (
-    <div className="system-status-bar" role="status" aria-live="polite">
+    <div
+      className="system-status-bar"
+      role="status"
+      aria-live="polite"
+      aria-label={
+        connected ? "실시간 연결" : connecting ? "연결 중" : "연결 끊김"
+      }
+    >
       <span
         className={`system-status-dot system-status-dot--${status}`}
         aria-hidden
@@ -28,7 +35,7 @@ export default function SystemStatusBar() {
       </span>
       <span className="system-status-sync">
         마지막 수신{" "}
-        <strong>{connected ? lastEventAge : "-"}</strong>
+        <strong>{connected ? lastEventAge : "—"}</strong>
       </span>
     </div>
   );

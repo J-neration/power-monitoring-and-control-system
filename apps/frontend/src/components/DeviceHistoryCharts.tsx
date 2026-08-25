@@ -372,7 +372,7 @@ export default function DeviceHistoryCharts({
 
         {subTab === "temp" && (
           <>
-            <ChartCard title="구역 온도 (°C)" subtitle={`— ${hoursLabel}`} wide>
+            <ChartCard title="주위 온도 (°C)" subtitle={`— ${hoursLabel}`} wide>
               <HistoryAreaChart
                 data={data}
                 grads={Array.from({ length: maxAreaSensors }, (_, i) => ({
@@ -381,7 +381,7 @@ export default function DeviceHistoryCharts({
                 }))}
                 series={Array.from({ length: maxAreaSensors }, (_, i) => ({
                   dataKey: `area${i}`,
-                  name: `구역 ${i + 1}`,
+                  name: `주위 ${i + 1}`,
                   stroke: TEMP_COLORS[i % TEMP_COLORS.length],
                   fill: `url(#ga${i})`,
                 }))}

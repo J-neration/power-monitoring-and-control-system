@@ -171,7 +171,7 @@ export function useWsLastEventAge(): string {
     return () => clearInterval(id);
   }, []);
 
-  if (!lastMessageAt) return "-";
+  if (!lastMessageAt) return "—";
   const sec = Math.floor((Date.now() - lastMessageAt) / 1000);
   if (sec < 5) return "방금";
   if (sec < 60) return `${sec}초 전`;

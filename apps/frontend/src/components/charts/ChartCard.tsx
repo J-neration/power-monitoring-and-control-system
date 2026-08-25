@@ -6,6 +6,7 @@ type Props = {
   badge?: string;
   wide?: boolean;
   large?: boolean;
+  fill?: boolean;
   legend?: ReactNode;
   children: ReactNode;
 };
@@ -16,12 +17,13 @@ export default function ChartCard({
   badge,
   wide,
   large,
+  fill,
   legend,
   children,
 }: Props) {
   return (
     <div
-      className={`chart-card scada-chart-card${wide ? " chart-card-wide" : ""}${large ? " chart-card-lg" : ""}`}
+      className={`chart-card scada-chart-card${wide ? " chart-card-wide" : ""}${large ? " chart-card-lg" : ""}${fill ? " chart-card-fill" : ""}`}
     >
       <div className="scada-chart-card-head">
         <div className="scada-chart-card-titles">
