@@ -1,11 +1,6 @@
 :root {
   color-scheme: dark;
-  font-family:
-    "Inter",
-    "Segoe UI",
-    "Malgun Gothic",
-    system-ui,
-    sans-serif;
+  font-family: "Inter", "Segoe UI", "Malgun Gothic", system-ui, sans-serif;
 
   /* 관제실 팔레트 */
   --pmcs-bg: #07090e;
@@ -20,7 +15,8 @@
   --pmcs-accent-glow: rgba(45, 212, 191, 0.22);
   --pmcs-panel-border: rgba(148, 163, 184, 0.14);
   --pmcs-divider: rgba(148, 163, 184, 0.1);
-  --pmcs-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "Consolas", monospace;
+  --pmcs-font-mono:
+    ui-monospace, "SF Mono", "Cascadia Mono", "Consolas", monospace;
   --pmcs-radius: 3px;
   --pmcs-hmi-inset: #080b11;
 
@@ -2501,10 +2497,6 @@ main.dashboard-full {
   max-height: calc(100dvh - 44px);
   overflow: hidden;
   gap: 8px;
-  background-image:
-    linear-gradient(rgba(148, 163, 184, 0.028) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.028) 1px, transparent 1px);
-  background-size: 40px 40px;
 }
 
 .device-detail-page > .page-fault-banner,
@@ -2556,6 +2548,7 @@ main.dashboard-full {
 }
 
 .device-detail-id {
+  white-space: nowrap;
   font-size: 12px;
   color: rgba(148, 163, 184, 0.75);
   font-weight: 500;
@@ -2603,8 +2596,13 @@ main.dashboard-full {
   padding: 12px 14px 12px 16px;
   border-radius: var(--pmcs-radius);
   min-width: 0;
-  background: var(--pmcs-hmi-inset);
-  border: 1px solid var(--pmcs-panel-border);
+  background: linear-gradient(
+    165deg,
+    var(--ops-fill-hi, rgba(148, 163, 184, 0.1)) 0%,
+    var(--ops-fill, rgba(148, 163, 184, 0.05)) 52%,
+    var(--pmcs-hmi-inset) 100%
+  );
+  border: 1px solid var(--ops-border, var(--pmcs-panel-border));
   box-shadow: inset 3px 0 0 var(--ops-tone, rgba(148, 163, 184, 0.4));
 }
 
@@ -2616,7 +2614,7 @@ main.dashboard-full {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--ops-icon-fill, rgba(255, 255, 255, 0.04));
 }
 
 .ops-stat-icon svg {
@@ -2735,6 +2733,10 @@ main.dashboard-full {
 
 .ops-stat--energy {
   --ops-tone: #38bdf8;
+  --ops-fill-hi: rgba(56, 189, 248, 0.24);
+  --ops-fill: rgba(56, 189, 248, 0.1);
+  --ops-border: rgba(56, 189, 248, 0.34);
+  --ops-icon-fill: rgba(56, 189, 248, 0.22);
 }
 
 .ops-stat--energy .ops-stat-icon {
@@ -2772,6 +2774,10 @@ main.dashboard-full {
 
 .ops-stat--carbon {
   --ops-tone: #4ade80;
+  --ops-fill-hi: rgba(74, 222, 128, 0.22);
+  --ops-fill: rgba(74, 222, 128, 0.09);
+  --ops-border: rgba(74, 222, 128, 0.32);
+  --ops-icon-fill: rgba(74, 222, 128, 0.2);
 }
 
 .ops-stat--carbon .ops-stat-icon {
@@ -2809,6 +2815,10 @@ main.dashboard-full {
 
 .ops-stat--cost {
   --ops-tone: #fbbf24;
+  --ops-fill-hi: rgba(251, 191, 36, 0.22);
+  --ops-fill: rgba(251, 191, 36, 0.09);
+  --ops-border: rgba(251, 191, 36, 0.34);
+  --ops-icon-fill: rgba(251, 191, 36, 0.2);
 }
 
 .ops-stat--cost .ops-stat-icon {
@@ -2846,6 +2856,10 @@ main.dashboard-full {
 
 .ops-stat--quality {
   --ops-tone: #a78bfa;
+  --ops-fill-hi: rgba(167, 139, 250, 0.24);
+  --ops-fill: rgba(167, 139, 250, 0.1);
+  --ops-border: rgba(167, 139, 250, 0.34);
+  --ops-icon-fill: rgba(167, 139, 250, 0.22);
 }
 
 .ops-stat--quality .ops-stat-icon {
@@ -2924,12 +2938,12 @@ main.dashboard-full {
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
 }
 
-.ops-stat:nth-child(-n+2) .ops-info-pop {
+.ops-stat:nth-child(-n + 2) .ops-info-pop {
   right: auto;
   left: 0;
 }
 
-.ops-stat:nth-child(n+3) .ops-info-pop {
+.ops-stat:nth-child(n + 3) .ops-info-pop {
   left: auto;
   right: 0;
 }
@@ -3071,7 +3085,33 @@ main.dashboard-full {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px 12px;
+  width: 100%;
+}
+
+.device-spec-pair {
+  display: inline-flex;
+  align-items: stretch;
+  flex-shrink: 0;
+}
+
+.device-spec-pair .device-model-badge {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+}
+
+.device-spec-pair .device-capacity-badge {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.device-detail-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 20px;
+  padding-left: 22px;
 }
 
 .device-detail-title-row h1 {
@@ -3471,58 +3511,11 @@ main.dashboard-full {
   grid-column: 1 / -1;
 }
 
-/* Power factor gauges */
 .pf-gauge-row {
   display: flex;
   gap: 32px;
   justify-content: center;
   flex-wrap: wrap;
-}
-
-.pf-gauge {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 180px;
-  flex: 1;
-  max-width: 280px;
-}
-
-.pf-gauge-labels {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  margin-top: -32px;
-}
-
-.pf-gauge-title {
-  font-size: 13px;
-  font-weight: 700;
-  opacity: 0.6;
-}
-
-.pf-gauge-values {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-variant-numeric: tabular-nums;
-}
-
-.pf-gauge-before {
-  font-size: 14px;
-  color: #64748b;
-  font-weight: 600;
-}
-
-.pf-gauge-arrow {
-  font-size: 12px;
-  opacity: 0.35;
-}
-
-.pf-gauge-after {
-  font-size: 18px;
-  font-weight: 700;
 }
 
 /* ── New chart helpers ───────────────────────────────────────── */
@@ -4002,24 +3995,16 @@ main.dashboard-full {
   gap: 10px;
   flex-shrink: 0;
   margin: 0 0 10px;
-  min-height: 0;
-}
-
-.monitor-view-nav-label {
-  flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: rgba(226, 232, 240, 0.45);
-  padding-right: 10px;
-  border-right: 1px solid rgba(148, 163, 184, 0.16);
+  min-height: 32px;
 }
 
 .monitor-view-chips {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 0;
   min-width: 0;
+  height: 32px;
   padding: 2px;
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(148, 163, 184, 0.14);
@@ -4027,14 +4012,19 @@ main.dashboard-full {
 }
 
 .monitor-view-chip {
-  padding: 5px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 12px;
   border-radius: 2px;
   border: none;
   background: transparent;
   color: rgba(226, 232, 240, 0.5);
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
+  line-height: 1;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -4048,6 +4038,328 @@ main.dashboard-full {
   color: #5eead4;
   background: rgba(45, 212, 191, 0.14);
   box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.32);
+}
+
+.module-slot-grid--nav {
+  margin: 0 0 0 auto;
+  padding: 0;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.module-slot-grid--nav .module-slot-grid-title {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.module-slot-grid--nav .module-slot-grid-cells {
+  flex-wrap: nowrap;
+}
+
+.module-slot-grid--nav .module-slot {
+  flex-direction: row;
+  gap: 4px;
+  min-width: 0;
+  padding: 3px 7px;
+  border-radius: var(--pmcs-radius);
+}
+
+.module-slot-grid--nav .module-slot-id {
+  font-size: 10px;
+  opacity: 0.55;
+}
+
+.module-slot-grid--nav .module-slot-state {
+  font-size: 11px;
+  line-height: 1;
+}
+
+.device-monitor-data {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.device-compare-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px 12px;
+  border-radius: var(--pmcs-radius);
+  background: var(--pmcs-hmi-inset);
+  border: 1px solid var(--pmcs-panel-border);
+  overflow: hidden;
+}
+
+.hmi-compare-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.hmi-compare-ch {
+  font-family: var(--pmcs-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--pmcs-accent-bright);
+  opacity: 0.7;
+}
+
+.hmi-compare-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(226, 232, 240, 0.78);
+}
+
+.hmi-compare-flow {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(226, 232, 240, 0.4);
+}
+
+.hmi-compare-flow span {
+  color: var(--pmcs-accent-bright);
+  opacity: 0.7;
+}
+
+.hmi-compare-bays {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.hmi-compare-bay {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px 12px;
+  border-radius: var(--pmcs-radius);
+  background: #070a10;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  overflow: auto;
+}
+
+.hmi-compare-bay--load {
+  border-top: 2px solid #f59e0b;
+}
+
+.hmi-compare-bay--grid {
+  border-top: 2px solid #2dd4bf;
+}
+
+.hmi-compare-bay-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.hmi-compare-kicker {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.hmi-compare-bay--load .hmi-compare-kicker {
+  color: #fbbf24;
+}
+
+.hmi-compare-bay--grid .hmi-compare-kicker {
+  color: #5eead4;
+}
+
+.hmi-compare-bay-head h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(226, 232, 240, 0.88);
+}
+
+.hmi-compare-cols,
+.hmi-compare-row {
+  display: grid;
+  grid-template-columns: minmax(72px, 0.9fr) repeat(3, minmax(0, 1fr));
+  align-items: baseline;
+  gap: 8px;
+}
+
+.hmi-compare-cols {
+  padding: 0 0 6px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(148, 163, 184, 0.45);
+}
+
+.hmi-compare-cols span:not(:first-child) {
+  text-align: right;
+}
+
+.hmi-compare-row {
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.hmi-compare-row .metric-value {
+  font-size: 18px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.hmi-compare-tag {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(226, 232, 240, 0.55);
+}
+
+.hmi-compare-unit {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(148, 163, 184, 0.42);
+}
+
+.hmi-compare-rule {
+  height: 1px;
+  margin: 4px 0;
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.hmi-compare-row--total {
+  grid-template-columns: minmax(72px, 0.9fr) minmax(0, 3fr);
+}
+
+.hmi-compare-total {
+  text-align: right;
+}
+
+.hmi-compare-total .metric-value {
+  font-size: 20px;
+}
+
+.hmi-compare-spine {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 6px;
+  border-radius: var(--pmcs-radius);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px dashed rgba(148, 163, 184, 0.18);
+}
+
+.hmi-delta-head {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: rgba(148, 163, 184, 0.45);
+}
+
+.hmi-delta-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 2px;
+  border-radius: 2px;
+}
+
+.hmi-delta-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(148, 163, 184, 0.5);
+}
+
+.hmi-delta-value {
+  font-family: var(--pmcs-font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgba(226, 232, 240, 0.72);
+  text-align: center;
+}
+
+.hmi-delta-unit {
+  margin-left: 2px;
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(148, 163, 184, 0.45);
+}
+
+.hmi-delta-cell.is-better .hmi-delta-value {
+  color: #5eead4;
+}
+
+.hmi-delta-cell--empty .hmi-delta-value {
+  color: rgba(148, 163, 184, 0.35);
+}
+
+.hmi-compare-bus {
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  padding: 8px 12px;
+  border-radius: var(--pmcs-radius);
+  background: #070a10;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.hmi-compare-bus-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(148, 163, 184, 0.5);
+}
+
+.hmi-compare-bus .metric-value {
+  font-size: 16px;
+}
+
+.hmi-compare-bus-unit {
+  margin-left: 4px;
+  font-size: 11px;
+  color: rgba(148, 163, 184, 0.45);
+}
+
+@media (max-width: 1100px) {
+  .hmi-compare-bays {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .hmi-compare-spine {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-around;
+  }
 }
 
 .hmi-rail {
@@ -4176,7 +4488,8 @@ main.dashboard-full {
   border-top: 1px solid rgba(45, 212, 191, 0.32);
 }
 
-.ring-gauge--pf {
+.ring-gauge--pf,
+.ring-gauge--dpf {
   border-top-color: rgba(56, 189, 248, 0.45);
 }
 
@@ -4228,19 +4541,168 @@ main.dashboard-full {
 }
 
 .device-monitor-overview .ring-gauge-values {
-  padding-top: 0;
+  padding-top: 2px;
+  gap: 8px;
+}
+
+.device-monitor-overview .ring-gauge-before {
+  font-size: 16px;
+}
+
+.device-monitor-overview .ring-gauge-arrow {
+  font-size: 15px;
 }
 
 .device-monitor-overview .ring-gauge-after {
-  font-size: 14px;
+  font-size: 22px;
 }
 
 .pf-needle-gauge {
-  padding-bottom: 4px;
-  border-top-color: rgba(56, 189, 248, 0.45);
+  border-top-color: rgba(167, 232, 216, 0.18);
 }
 
-.pf-needle-plot {
+.pf-needle-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.pf-needle-qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pf-tab-gauges {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.pf-gauge-col {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pf-gauge-col .pf-needle-gauge {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.pf-qty-mix {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 10px 9px;
+  border-radius: var(--pmcs-radius);
+  background: rgba(8, 12, 18, 0.45);
+  border: 1px solid var(--pmcs-panel-border);
+}
+
+.pf-qty-mix--empty {
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 12px;
+}
+
+.pf-qty-mix-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pf-qty-mix-formula {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.pf-qty-mix-eq {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(226, 232, 240, 0.45);
+}
+
+.pf-qty-mix-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.pf-qty-mix-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(226, 232, 240, 0.55);
+}
+
+.pf-qty-mix-track {
+  display: flex;
+  height: 22px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pf-qty-mix-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-qty-mix-seg--q {
+  background: #38bdf8;
+  color: #082f49;
+}
+
+.pf-qty-mix-seg--q-dim {
+  background: rgba(56, 189, 248, 0.4);
+  color: #bae6fd;
+}
+
+.pf-qty-mix-seg--h {
+  background: #a78bfa;
+  color: #1e1b4b;
+}
+
+.pf-qty-mix-seg--h-dim {
+  background: rgba(167, 139, 250, 0.4);
+  color: #ddd6fe;
+}
+
+.pf-qty-mix-share {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgba(226, 232, 240, 0.62);
+  white-space: nowrap;
+  text-align: right;
+}
+
+.pf-qty-mix-unit {
+  margin-left: 4px;
+  font-size: 10px;
+  font-weight: 650;
+  color: rgba(226, 232, 240, 0.42);
+}
+
+.pf-needle-plot,
+.thd-arc-plot {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -4248,15 +4710,12 @@ main.dashboard-full {
   justify-content: center;
 }
 
-.pf-needle-plot svg {
+.pf-needle-plot svg,
+.thd-arc-plot svg {
   width: 100%;
   height: 100%;
   max-height: none;
   overflow: visible;
-}
-
-.pf-needle-plot svg text {
-  font-family: inherit;
 }
 
 .pf-needle-gauge--empty {
@@ -4264,35 +4723,40 @@ main.dashboard-full {
   justify-content: center;
 }
 
-.pf-compare-gauge {
-  padding-bottom: 8px;
-}
-
-.pf-compare-head {
+.pf-needle-legend {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 8px;
-  flex-shrink: 0;
-  padding: 2px 4px 0;
+  gap: 14px;
+  margin-top: -2px;
 }
 
-.pf-compare-gauge--tpf {
-  border-top-color: transparent;
-  background-image: linear-gradient(
-    90deg,
-    #38bdf8 0%,
-    #38bdf8 50%,
-    #a78bfa 50%,
-    #a78bfa 100%
-  );
-  background-size: 100% 3px;
-  background-repeat: no-repeat;
-  background-position: top left;
+.pf-needle-leg {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(226, 232, 240, 0.62);
 }
 
-.pf-compare-gauge--dpf {
-  border-top-color: #38bdf8;
+.pf-needle-leg::before {
+  content: "";
+  width: 16px;
+  height: 0;
+  border-top: 2px solid #cbd5e1;
+}
+
+.pf-needle-leg--before::before {
+  border-top-style: dashed;
+}
+
+.pf-needle-leg--after {
+  color: #2dd4bf;
+}
+
+.pf-needle-leg--after::before {
+  border-top: 3px solid #2dd4bf;
+  border-top-style: solid;
 }
 
 .pf-power-legend {
@@ -4350,147 +4814,6 @@ main.dashboard-full {
   color: rgba(255, 255, 255, 0.4);
 }
 
-.pf-qty-block {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 2px 6px 2px;
-}
-
-.pf-qty-bar {
-  display: flex;
-  height: 6px;
-  overflow: hidden;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.pf-qty-seg--q {
-  background: #38bdf8;
-}
-
-.pf-qty-seg--h {
-  background: #a78bfa;
-}
-
-.pf-qty-lines {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.pf-qty-line {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-variant-numeric: tabular-nums;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.pf-qty-pair {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  color: rgba(226, 232, 240, 0.88);
-}
-
-.pf-qty-arrow {
-  color: rgba(148, 163, 184, 0.55);
-  font-weight: 500;
-}
-
-.device-monitor-overview .pf-qty-line {
-  font-size: 11px;
-}
-
-.pf-compare-readout {
-  flex-shrink: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: stretch;
-  gap: 6px;
-  padding: 0 4px 2px;
-}
-
-.pf-compare-chip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1px;
-  min-width: 0;
-  padding: 6px 4px 5px;
-  border-radius: 3px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  background: rgba(0, 0, 0, 0.28);
-}
-
-.pf-compare-chip-tag {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  opacity: 0.62;
-}
-
-.pf-compare-chip-val {
-  font-size: 18px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-}
-
-.pf-compare-chip-side {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  opacity: 0.5;
-}
-
-.pf-compare-chip--before .pf-compare-chip-val {
-  color: #cbd5e1;
-}
-
-.pf-compare-chip--after {
-  border-color: rgba(45, 212, 191, 0.4);
-  background: rgba(45, 212, 191, 0.1);
-}
-
-.pf-compare-chip--after .pf-compare-chip-tag,
-.pf-compare-chip--after .pf-compare-chip-val {
-  color: #5eead4;
-}
-
-.pf-compare-arrow {
-  align-self: center;
-  font-size: 16px;
-  font-weight: 700;
-  color: #2dd4bf;
-  opacity: 0.85;
-}
-
-.pf-compare-delta {
-  flex-shrink: 0;
-  margin: 0;
-  padding: 0 4px;
-  text-align: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: #5eead4;
-  opacity: 0.85;
-}
-
-.device-monitor-overview .pf-compare-chip-val {
-  font-size: 16px;
-}
-
-.device-monitor-overview .pf-compare-chip {
-  padding: 4px 2px 3px;
-}
-
 .device-monitor-overview-cap {
   flex: 0 0 auto;
   margin-top: 4px;
@@ -4529,18 +4852,18 @@ main.dashboard-full {
 }
 
 .ring-gauge-before {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 650;
   color: #94a3b8;
 }
 
 .ring-gauge-arrow {
-  font-size: 11px;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.28);
 }
 
 .ring-gauge-after {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 800;
 }
 
@@ -4680,15 +5003,6 @@ main.dashboard-full {
   align-items: stretch;
 }
 
-.device-charts-grid--compact .pf-gauge {
-  min-width: 0;
-  max-width: none;
-}
-
-.device-charts-grid--compact .pf-gauge-labels {
-  margin-top: -18px;
-}
-
 .device-health-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -4791,9 +5105,142 @@ main.dashboard-full {
   padding-top: 12px;
 }
 
-.device-monitor-metrics .scada-metrics-panel {
+.device-monitor-metrics .thermal-summary {
+  flex: 1;
+  min-height: 0;
   overflow: auto;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border-radius: var(--pmcs-radius);
+  background: var(--pmcs-hmi-inset);
+  border: 1px solid var(--pmcs-panel-border);
+}
+
+.thermal-summary-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.thermal-summary-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(226, 232, 240, 0.78);
+}
+
+.thermal-summary-window {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 650;
+  color: rgba(148, 163, 184, 0.55);
+}
+
+.thermal-stat {
+  padding: 10px 12px 11px;
+  border-radius: var(--pmcs-radius);
+  background: #070a10;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-top: 2px solid rgba(45, 212, 191, 0.45);
+}
+
+.thermal-stat--warn {
+  border-top-color: #f59e0b;
+}
+
+.thermal-stat--danger {
+  border-top-color: #f87171;
+}
+
+.thermal-stat-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.thermal-stat-head h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(226, 232, 240, 0.82);
+}
+
+.thermal-stat-unit {
+  font-size: 11px;
+  font-weight: 650;
+  color: rgba(148, 163, 184, 0.5);
+}
+
+.thermal-stat-now {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0 10px;
+}
+
+.thermal-stat-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(148, 163, 184, 0.5);
+}
+
+.thermal-stat-now strong {
+  font-family: var(--pmcs-font-mono);
+  font-size: 28px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  color: #e2e8f0;
+  line-height: 1;
+}
+
+.thermal-stat--warn .thermal-stat-now strong {
+  color: #fbbf24;
+}
+
+.thermal-stat--danger .thermal-stat-now strong {
+  color: #f87171;
+}
+
+.thermal-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 10px;
+  margin: 0;
+}
+
+.thermal-stat-grid .thermal-stat-max {
+  grid-column: 1 / -1;
+}
+
+.thermal-stat-grid dt {
+  font-size: 11px;
+  font-weight: 650;
+  color: rgba(148, 163, 184, 0.5);
+}
+
+.thermal-stat-grid dd {
+  margin: 2px 0 0;
+  font-family: var(--pmcs-font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgba(226, 232, 240, 0.88);
+}
+
+.thermal-stat-note,
+.thermal-stat-limit {
+  margin: 8px 0 0;
+  font-size: 11px;
+  font-weight: 650;
+  color: rgba(148, 163, 184, 0.5);
+}
+
+.thermal-stat-limit {
+  color: rgba(148, 163, 184, 0.4);
 }
 
 .device-monitor-metrics .scada-metrics-grid {
@@ -6106,7 +6553,6 @@ body.pmcs-control-room .global-header:hover {
     height: auto;
     min-height: 220px;
     max-height: none;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .device-monitor-overview .ops-stat {
@@ -6153,10 +6599,10 @@ body.pmcs-control-room .global-header:hover {
 
   .monitor-gauge-grid {
     flex: none;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     height: auto;
     min-height: 0;
     max-height: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .device-monitor-overview .ring-gauge {
@@ -6701,6 +7147,9 @@ body.pmcs-control-room .global-header:hover {
   .pf-gauge-row {
     flex-direction: column;
     align-items: center;
+  }
+  .pf-tab-gauges {
+    grid-template-columns: 1fr;
   }
   .chart-card-wide {
     grid-column: 1;
@@ -7331,7 +7780,8 @@ body.pmcs-control-room .global-header:hover {
 }
 
 .remote-session-timer-value {
-  font-family: "JetBrains Mono", "SF Mono", "Fira Code", ui-monospace, monospace;
+  font-family:
+    "JetBrains Mono", "SF Mono", "Fira Code", ui-monospace, monospace;
   font-size: 20px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;

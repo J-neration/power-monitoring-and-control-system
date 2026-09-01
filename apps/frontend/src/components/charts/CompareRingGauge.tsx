@@ -79,12 +79,12 @@ export default function CompareRingGauge({
   const beforeVal = b ?? a ?? 0;
   const afterColor = colorOf(kind, Math.abs(afterVal));
   const data = [
-    { name: "after", value: toArc(kind, afterVal), fill: afterColor },
     {
       name: "before",
       value: toArc(kind, beforeVal),
       fill: CHART_COLORS.gridMuted,
     },
+    { name: "after", value: toArc(kind, afterVal), fill: afterColor },
   ];
 
   const fmt = (v: number) => `${v.toFixed(1)}%`;

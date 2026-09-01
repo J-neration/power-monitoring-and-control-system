@@ -264,7 +264,6 @@ export default function DeviceHistoryCharts({
                 ]}
                 series={beforeAfter("tpfBefore", "tpfAfter", CHART_COLORS.gridMuted, CHART_COLORS.accent, "tpfB", "tpfA")}
                 yUnit="%"
-                threshold="pf"
                 faults={faults}
               />
             </ChartCard>
@@ -277,7 +276,6 @@ export default function DeviceHistoryCharts({
                 ]}
                 series={beforeAfter("dpfBefore", "dpfAfter", CHART_COLORS.gridMuted, CHART_COLORS.purple, "dpfB", "dpfA")}
                 yUnit="%"
-                threshold="pf"
                 faults={faults}
               />
             </ChartCard>
@@ -312,7 +310,6 @@ export default function DeviceHistoryCharts({
                     gradA,
                   )}
                   yUnit="%"
-                  threshold="thd"
                   faults={faults}
                 />
               </ChartCard>

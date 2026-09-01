@@ -1,8 +1,9 @@
 /**
  * 테스트용 TelemetryRecord 시계열 데이터 생성 스크립트
- * 최근 24시간, 30분 간격 (48포인트) 를 대상 장치에 INSERT 합니다.
+ * 경기도 설치지점에만 최근 24시간, 15분 간격 (96포인트) INSERT.
+ * 그 외 지역 이력은 삭제한다.
  *
- * 사용법: npm run db:seed:telemetry
+ * 사용법: yarn db:seed:telemetry
  */
 import path from "node:path";
 import { config } from "dotenv";
@@ -31,21 +32,57 @@ const prisma = new PrismaClient({
   }),
 });
 
-// 난수 생성 (기준값 ± 진폭 범위 내에서 부드러운 사인파 + 노이즈)
-function wave(base: number, amp: number, phase: number, noise: number, t: number) {
-  const sin = Math.sin((t / 48) * 2 * Math.PI + phase);
-  const rand = (Math.random() - 0.5) * 2 * noise;
-  return Math.round((base + sin * amp + rand) * 10) / 10;
-}
+const INTERVAL_MINUTES = 15;
+const TOTAL_POINTS = 96; // 24시간
 
-// 역률은 0~1 범위로 클램핑
-function pfWave(base: number, amp: number, phase: number, t: number) {
-  const v = base + Math.sin((t / 48) * 2 * Math.PI + phase) * amp;
-  return Math.round(Math.min(1, Math.max(0, v)) * 1000) / 1000;
-}
+/** 레지스트리에 계측값이 없는 장치(R&D 등)도 이력 차트가 채워지도록 */
+const DEFAULT_BASE: DeviceTelemetry = {
+  model: "psvg",
+  capacity: 200,
+  moduleStatus: [2, 2, 2, 2, 2, 2],
+  numOfMods: 6,
+  vL1: 220.3,
+  vL2: 221.1,
+  vL3: 219.8,
+  gridCurrentL1: 45.1,
+  gridCurrentL2: 44.8,
+  gridCurrentL3: 45.3,
+  loadCurrentL1: 48.2,
+  loadCurrentL2: 47.9,
+  loadCurrentL3: 48.5,
+  loadCurrentTHDL1: 27.8,
+  loadCurrentTHDL2: 28.3,
+  loadCurrentTHDL3: 27.7,
+  gridCurrentTHDL1: 1.8,
+  gridCurrentTHDL2: 1.8,
+  gridCurrentTHDL3: 1.7,
+  tpf1: 76,
+  tpf2: 99,
+  dpf1: 78,
+  dpf2: 99,
+  uncompP: 59,
+  compP: 58,
+  uncompQ: 93,
+  compQ: 17,
+  uncompS: 70,
+  compS: 55,
+  uncompH: 47,
+  compH: 5,
+};
 
 function registryWave(hour: number, phase: number, amp: number): number {
   return 1 + amp * Math.sin((hour / 24) * 2 * Math.PI + phase);
+}
+
+/** 야간 저부하 ~ 오후 피크 */
+function loadFactor(hour: number): number {
+  if (hour >= 0 && hour < 6) return 0.58;
+  if (hour >= 6 && hour < 9) return 0.72 + (hour - 6) * 0.08;
+  if (hour >= 9 && hour < 12) return 0.96;
+  if (hour >= 12 && hour < 15) return 1.08;
+  if (hour >= 15 && hour < 18) return 1.0;
+  if (hour >= 18 && hour < 22) return 0.86 - (hour - 18) * 0.03;
+  return 0.65;
 }
 
 function devicePhase(id: string): number {
@@ -55,33 +92,8 @@ function devicePhase(id: string): number {
 const r = (v: number, decimals = 2) =>
   Math.round(v * Math.pow(10, decimals)) / Math.pow(10, decimals);
 
-function capacityAndThermalAtHour(
-  installationId: string,
-  d: DeviceTelemetry,
-  h: number,
-) {
-  const phase = devicePhase(installationId);
-  const totalCap = d.capacity ?? 200;
-  const wTemp = registryWave(h, phase + 3.0, 0.04);
-  const areaBase = [34, 36, 35, 33];
-  const modBase = [40, 44, 42, 39, 43, 41];
-  const fanBase = [7.5, 8.8];
-  const opRatio =
-    0.6 + 0.3 * Math.abs(Math.sin((h / 24) * 2 * Math.PI + phase));
-  const opCap = r(totalCap * opRatio, 1);
-  const rpRatio =
-    0.65 + 0.2 * Math.abs(Math.sin((h / 24) * 2 * Math.PI + phase + 1));
-  const rpCap = r(opCap * rpRatio, 1);
-  const margin = r(totalCap - opCap, 1);
-  return {
-    areaTemp: areaBase.map((b) => r(b * wTemp, 1)),
-    moduleTemp: modBase.map((b) => r(b * wTemp, 1)),
-    fanSpeed: fanBase.map((b) => r(b * wTemp, 1)),
-    totalCapacity: totalCap,
-    operatingCapacity: opCap,
-    reactivePowerCapacity: rpCap,
-    availableMargin: margin,
-  };
+function clamp(v: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, v));
 }
 
 function findRegistryDevice(installationId: string): DeviceTelemetry | null {
@@ -92,69 +104,128 @@ function findRegistryDevice(installationId: string): DeviceTelemetry | null {
   return null;
 }
 
-function buildRegistryRecords(
+function mergeBase(d: DeviceTelemetry | null): DeviceTelemetry {
+  if (!d) return { ...DEFAULT_BASE };
+  return {
+    ...DEFAULT_BASE,
+    ...d,
+    vL1: d.vL1 ?? DEFAULT_BASE.vL1,
+    vL2: d.vL2 ?? DEFAULT_BASE.vL2,
+    vL3: d.vL3 ?? DEFAULT_BASE.vL3,
+    gridCurrentL1: d.gridCurrentL1 ?? DEFAULT_BASE.gridCurrentL1,
+    gridCurrentL2: d.gridCurrentL2 ?? DEFAULT_BASE.gridCurrentL2,
+    gridCurrentL3: d.gridCurrentL3 ?? DEFAULT_BASE.gridCurrentL3,
+    loadCurrentL1: d.loadCurrentL1 ?? DEFAULT_BASE.loadCurrentL1,
+    loadCurrentL2: d.loadCurrentL2 ?? DEFAULT_BASE.loadCurrentL2,
+    loadCurrentL3: d.loadCurrentL3 ?? DEFAULT_BASE.loadCurrentL3,
+    loadCurrentTHDL1: d.loadCurrentTHDL1 ?? DEFAULT_BASE.loadCurrentTHDL1,
+    loadCurrentTHDL2: d.loadCurrentTHDL2 ?? DEFAULT_BASE.loadCurrentTHDL2,
+    loadCurrentTHDL3: d.loadCurrentTHDL3 ?? DEFAULT_BASE.loadCurrentTHDL3,
+    gridCurrentTHDL1: d.gridCurrentTHDL1 ?? DEFAULT_BASE.gridCurrentTHDL1,
+    gridCurrentTHDL2: d.gridCurrentTHDL2 ?? DEFAULT_BASE.gridCurrentTHDL2,
+    gridCurrentTHDL3: d.gridCurrentTHDL3 ?? DEFAULT_BASE.gridCurrentTHDL3,
+    tpf1: d.tpf1 ?? DEFAULT_BASE.tpf1,
+    tpf2: d.tpf2 ?? DEFAULT_BASE.tpf2,
+    dpf1: d.dpf1 ?? DEFAULT_BASE.dpf1,
+    dpf2: d.dpf2 ?? DEFAULT_BASE.dpf2,
+    uncompP: d.uncompP ?? DEFAULT_BASE.uncompP,
+    compP: d.compP ?? DEFAULT_BASE.compP,
+    uncompQ: d.uncompQ ?? DEFAULT_BASE.uncompQ,
+    compQ: d.compQ ?? DEFAULT_BASE.compQ,
+    uncompS: d.uncompS ?? DEFAULT_BASE.uncompS,
+    compS: d.compS ?? DEFAULT_BASE.compS,
+    uncompH: d.uncompH ?? DEFAULT_BASE.uncompH,
+    compH: d.compH ?? DEFAULT_BASE.compH,
+    capacity: d.capacity ?? DEFAULT_BASE.capacity,
+    moduleStatus:
+      d.moduleStatus?.length ? d.moduleStatus : DEFAULT_BASE.moduleStatus,
+    numOfMods: d.numOfMods || DEFAULT_BASE.numOfMods,
+  };
+}
+
+function capacityAndThermalAtHour(
   installationId: string,
-  d: DeviceTelemetry,
+  totalCap: number,
+  h: number,
+  lf: number,
+) {
+  const phase = devicePhase(installationId);
+  // 오후 피크에 주위 온도가 주의선(35°C)을 넘고, 모듈은 주의선(40°C) 근처까지
+  const diurnal = 0.92 + 0.12 * lf;
+  const wTemp = registryWave(h, phase + 3.0, 0.05) * diurnal;
+  const areaBase = [32.4, 34.8, 33.6, 31.8];
+  const modBase = [38, 42, 40, 37, 41, 39];
+  const fanBase = [7.2, 8.6];
+  const opRatio = clamp(0.55 + 0.38 * lf, 0.4, 0.95);
+  const opCap = r(totalCap * opRatio, 1);
+  const rpRatio = clamp(0.62 + 0.22 * lf, 0.45, 0.92);
+  const rpCap = r(opCap * rpRatio, 1);
+  const margin = r(totalCap - opCap, 1);
+  return {
+    areaTemp: areaBase.map((b) => r(b * wTemp, 1)),
+    moduleTemp: modBase.map((b) => r(b * wTemp, 1)),
+    fanSpeed: fanBase.map((b) => r(b * (0.85 + 0.25 * lf), 1)),
+    totalCapacity: totalCap,
+    operatingCapacity: opCap,
+    reactivePowerCapacity: rpCap,
+    availableMargin: margin,
+  };
+}
+
+function buildRecords(
+  installationId: string,
+  registryDevice: DeviceTelemetry | null,
 ): TelemetryRecordCreateManyInput[] {
+  const d = mergeBase(registryDevice);
   const now = Date.now();
   const phase = devicePhase(installationId);
   const records: TelemetryRecordCreateManyInput[] = [];
+  const totalCap = d.capacity ?? 200;
 
   for (let i = 0; i < TOTAL_POINTS; i++) {
     const minutesAgo = (TOTAL_POINTS - 1 - i) * INTERVAL_MINUTES;
     const recordedAt = new Date(now - minutesAgo * 60 * 1000);
-    const h = (i / TOTAL_POINTS) * 24;
+    const h = recordedAt.getHours() + recordedAt.getMinutes() / 60;
+    const lf = loadFactor(h);
 
-    const wV = registryWave(h, phase, 0.01);
-    const wI = registryWave(h, phase + 1.0, 0.06);
-    const wTHD = registryWave(h, phase + 2.0, 0.08);
-    const wPF = registryWave(h, phase + 0.5, 0.015);
-    const thermalCap = capacityAndThermalAtHour(installationId, d, h);
+    const wV = registryWave(h, phase, 0.008);
+    const wI = registryWave(h, phase + 1.0, 0.05) * lf;
+    const wTHD = registryWave(h, phase + 2.0, 0.1) * (0.85 + 0.2 * lf);
+    const wPF = registryWave(h, phase + 0.5, 0.02);
+    const thermalCap = capacityAndThermalAtHour(installationId, totalCap, h, lf);
 
     records.push({
       installationId,
       recordedAt,
       moduleStatus: d.moduleStatus ?? [],
       numOfMods: d.numOfMods ?? 0,
-      vL1: d.vL1 != null ? r(d.vL1 * wV) : null,
-      vL2: d.vL2 != null ? r(d.vL2 * wV) : null,
-      vL3: d.vL3 != null ? r(d.vL3 * wV) : null,
-      gridCurrentL1:
-        d.gridCurrentL1 != null ? r(d.gridCurrentL1 * wI) : null,
-      gridCurrentL2:
-        d.gridCurrentL2 != null ? r(d.gridCurrentL2 * wI) : null,
-      gridCurrentL3:
-        d.gridCurrentL3 != null ? r(d.gridCurrentL3 * wI) : null,
-      loadCurrentL1:
-        d.loadCurrentL1 != null ? r(d.loadCurrentL1 * wI) : null,
-      loadCurrentL2:
-        d.loadCurrentL2 != null ? r(d.loadCurrentL2 * wI) : null,
-      loadCurrentL3:
-        d.loadCurrentL3 != null ? r(d.loadCurrentL3 * wI) : null,
-      loadCurrentTHDL1:
-        d.loadCurrentTHDL1 != null ? r(d.loadCurrentTHDL1 * wTHD) : null,
-      loadCurrentTHDL2:
-        d.loadCurrentTHDL2 != null ? r(d.loadCurrentTHDL2 * wTHD) : null,
-      loadCurrentTHDL3:
-        d.loadCurrentTHDL3 != null ? r(d.loadCurrentTHDL3 * wTHD) : null,
-      gridCurrentTHDL1:
-        d.gridCurrentTHDL1 != null ? r(d.gridCurrentTHDL1 * wTHD) : null,
-      gridCurrentTHDL2:
-        d.gridCurrentTHDL2 != null ? r(d.gridCurrentTHDL2 * wTHD) : null,
-      gridCurrentTHDL3:
-        d.gridCurrentTHDL3 != null ? r(d.gridCurrentTHDL3 * wTHD) : null,
-      tpf1: d.tpf1 != null ? Math.min(100, r(d.tpf1 * wPF, 4)) : null,
-      tpf2: d.tpf2 != null ? Math.min(100, r(d.tpf2 * wPF, 4)) : null,
-      dpf1: d.dpf1 != null ? Math.min(100, r(d.dpf1 * wPF, 4)) : null,
-      dpf2: d.dpf2 != null ? Math.min(100, r(d.dpf2 * wPF, 4)) : null,
-      uncompP: d.uncompP != null ? r(d.uncompP * wI, 0) : null,
-      compP: d.compP != null ? r(d.compP * wI, 0) : null,
-      uncompQ: d.uncompQ != null ? r(d.uncompQ * wI, 0) : null,
-      compQ: d.compQ != null ? r(d.compQ * wI, 0) : null,
-      uncompS: d.uncompS != null ? r(d.uncompS * wI, 0) : null,
-      compS: d.compS != null ? r(d.compS * wI, 0) : null,
-      uncompH: d.uncompH != null ? r(d.uncompH * wI, 0) : null,
-      compH: d.compH != null ? r(d.compH * wI, 0) : null,
+      vL1: r((d.vL1 ?? 220) * wV),
+      vL2: r((d.vL2 ?? 221) * wV),
+      vL3: r((d.vL3 ?? 219) * wV),
+      gridCurrentL1: r((d.gridCurrentL1 ?? 45) * wI),
+      gridCurrentL2: r((d.gridCurrentL2 ?? 45) * wI),
+      gridCurrentL3: r((d.gridCurrentL3 ?? 45) * wI),
+      loadCurrentL1: r((d.loadCurrentL1 ?? 48) * wI),
+      loadCurrentL2: r((d.loadCurrentL2 ?? 48) * wI),
+      loadCurrentL3: r((d.loadCurrentL3 ?? 48) * wI),
+      loadCurrentTHDL1: r((d.loadCurrentTHDL1 ?? 28) * wTHD),
+      loadCurrentTHDL2: r((d.loadCurrentTHDL2 ?? 28) * wTHD),
+      loadCurrentTHDL3: r((d.loadCurrentTHDL3 ?? 28) * wTHD),
+      gridCurrentTHDL1: r((d.gridCurrentTHDL1 ?? 1.8) * wTHD),
+      gridCurrentTHDL2: r((d.gridCurrentTHDL2 ?? 1.8) * wTHD),
+      gridCurrentTHDL3: r((d.gridCurrentTHDL3 ?? 1.7) * wTHD),
+      tpf1: clamp(r((d.tpf1 ?? 76) * wPF, 1), 55, 99),
+      tpf2: clamp(r((d.tpf2 ?? 99) * wPF, 1), 90, 100),
+      dpf1: clamp(r((d.dpf1 ?? 78) * wPF, 1), 55, 99),
+      dpf2: clamp(r((d.dpf2 ?? 99) * wPF, 1), 90, 100),
+      uncompP: r((d.uncompP ?? 59) * wI, 0),
+      compP: r((d.compP ?? 58) * wI, 0),
+      uncompQ: r((d.uncompQ ?? 93) * wI, 0),
+      compQ: r((d.compQ ?? 17) * wI, 0),
+      uncompS: r((d.uncompS ?? 70) * wI, 0),
+      compS: r((d.compS ?? 55) * wI, 0),
+      uncompH: r((d.uncompH ?? 47) * wI, 0),
+      compH: r((d.compH ?? 5) * wI, 0),
       ...thermalCap,
     });
   }
@@ -162,123 +233,34 @@ function buildRegistryRecords(
   return records;
 }
 
-// 테스트 데이터를 넣을 installationId 목록
-const TARGETS = [
-  "PSVG-SONGDO01",
-  "PSVG-SONGDO02",
-  "PSVG-RNDTEST5",
-  "PSVG-CPN-AYG1-01",
-];
-
-const INTERVAL_MINUTES = 30;
-const TOTAL_POINTS = 48; // 24시간
-
-/** moduleStatus: 0=STANDBY 2=RUNNING 3=FAULT — 대부분 RUNNING, 약간 STANDBY, fault는 드물게 */
-const TELEM_MODULE_PATTERNS: number[][] = [
-  [2, 2, 2, 2, 2, 2],
-  [2, 2, 2, 2, 2, 0],
-  [2, 2, 2, 2, 0, 2],
-  [2, 2, 2, 2, 2, 2],
-  [2, 2, 0, 2, 2, 2],
-  [2, 2, 2, 2, 2, 2],
-  [2, 2, 2, 2, 2, 0],
-  [2, 2, 2, 2, 2, 3], // 타깃 중 하나만 이 패턴(간헐 fault 1슬롯)
-];
-
-function buildLegacyRecords(installationId: string): TelemetryRecordCreateManyInput[] {
-  const now = Date.now();
-  const records: TelemetryRecordCreateManyInput[] = [];
-
-  for (let i = 0; i < TOTAL_POINTS; i++) {
-    const recordedAt = new Date(now - (TOTAL_POINTS - i) * INTERVAL_MINUTES * 60 * 1000);
-
-    const isRnd = installationId.startsWith("PSVG-RND");
-    const vBase = isRnd ? 218 : 220.3;
-    const iBase = isRnd ? 30 : 47;
-    const thdBase = isRnd ? 8 : 3.2;
-    const qBase = isRnd ? 45 : 60;
-
-    const hour = recordedAt.getHours();
-    const nightFactor = hour >= 0 && hour < 6 ? 0.6 : 1.0;
-
-    const loadCurrentL1 = wave(iBase * nightFactor, 5, 0, 1, i);
-    const loadCurrentL2 = wave(iBase * nightFactor, 4, 0.5, 1, i);
-    const loadCurrentL3 = wave(iBase * nightFactor, 6, 1.0, 1, i);
-
-    const gridCurrentL1 = wave(iBase * nightFactor + 2, 5, 0.1, 0.8, i);
-    const gridCurrentL2 = wave(iBase * nightFactor + 1.5, 4, 0.6, 0.8, i);
-    const gridCurrentL3 = wave(iBase * nightFactor + 2.5, 5.5, 1.1, 0.8, i);
-
-    const loadCurrentTHDL1 = wave(thdBase, 1.5, 0, 0.3, i);
-    const loadCurrentTHDL2 = wave(thdBase + 0.3, 1.2, 0.7, 0.3, i);
-    const loadCurrentTHDL3 = wave(thdBase - 0.2, 1.4, 1.4, 0.3, i);
-
-    const gridCurrentTHDL1 = wave(thdBase * 0.65, 0.8, 0.2, 0.2, i);
-    const gridCurrentTHDL2 = wave(thdBase * 0.65 + 0.2, 0.7, 0.9, 0.2, i);
-    const gridCurrentTHDL3 = wave(thdBase * 0.65 - 0.1, 0.9, 1.6, 0.2, i);
-
-    const uncompQ = wave(qBase * nightFactor, 10, 0, 2, i);
-    const compQ = wave(Math.max(15, uncompQ * 0.28), 4, 0.3, 1, i);
-
-    const tpf1 = pfWave(0.84, 0.04, 0, i);
-    const tpf2 = pfWave(0.97, 0.02, 0.2, i);
-    const dpf1 = pfWave(0.85, 0.04, 0.1, i);
-    const dpf2 = pfWave(0.98, 0.01, 0.3, i);
-
-    const uncompS = wave(72 * nightFactor, 12, 0, 3, i);
-    const compS = wave(64 * nightFactor, 10, 0.2, 2.5, i);
-    const uncompP = wave(58 * nightFactor, 10, 0, 2.5, i);
-    const compP = wave(55 * nightFactor, 9, 0.1, 2, i);
-    const uncompH = wave(38 * nightFactor, 8, 0.5, 2, i);
-    const compH = wave(26 * nightFactor, 3, 0.6, 1, i);
-
-    records.push({
-      installationId,
-      recordedAt,
-      moduleStatus: isRnd
-        ? []
-        : TELEM_MODULE_PATTERNS[TARGETS.indexOf(installationId) % TELEM_MODULE_PATTERNS.length],
-      numOfMods: isRnd ? 0 : 6,
-      vL1: wave(vBase, 1.5, 0, 0.3, i),
-      vL2: wave(vBase + 0.8, 1.2, 0.5, 0.3, i),
-      vL3: wave(vBase - 0.5, 1.3, 1.0, 0.3, i),
-      loadCurrentL1,
-      loadCurrentL2,
-      loadCurrentL3,
-      gridCurrentL1,
-      gridCurrentL2,
-      gridCurrentL3,
-      loadCurrentTHDL1,
-      loadCurrentTHDL2,
-      loadCurrentTHDL3,
-      gridCurrentTHDL1,
-      gridCurrentTHDL2,
-      gridCurrentTHDL3,
-      tpf1,
-      tpf2,
-      dpf1,
-      dpf2,
-      uncompQ,
-      compQ,
-      uncompS,
-      compS,
-      uncompP,
-      compP,
-      uncompH,
-      compH,
-    });
-  }
-
-  return records;
-}
+const GYEONGGI_INSTALLATION_IDS = siteRegistry
+  .filter((site) => site.region === "경기도")
+  .flatMap((site) => site.installations.map((inst) => inst.id));
 
 async function main() {
-  for (const installationId of TARGETS) {
+  if (GYEONGGI_INSTALLATION_IDS.length === 0) {
+    console.warn("⚠ 경기도 설치지점이 레지스트리에 없습니다");
+    return;
+  }
+
+  const others = await prisma.telemetryRecord.deleteMany({
+    where: { installationId: { notIn: GYEONGGI_INSTALLATION_IDS } },
+  });
+  if (others.count > 0) {
+    console.log(`경기도 외 이력 ${others.count}개 삭제\n`);
+  }
+
+  console.log(
+    `경기도 24시간 이력 시드: ${GYEONGGI_INSTALLATION_IDS.length}개 설치지점, ${TOTAL_POINTS}포인트/${INTERVAL_MINUTES}분\n`,
+  );
+
+  for (const installationId of GYEONGGI_INSTALLATION_IDS) {
     const inst = await prisma.installation.findUnique({
       where: { id: installationId },
+      select: { id: true },
     });
     if (!inst) {
-      console.warn(`⚠ [${installationId}] Installation 없음 — seed.ts 먼저 실행하세요`);
+      console.warn(`⚠ [${installationId}] Installation 없음 — 건너뜀`);
       continue;
     }
 
@@ -289,16 +271,15 @@ async function main() {
       console.log(`  [${installationId}] 기존 ${deleted.count}개 삭제`);
     }
 
-    const registryDevice = findRegistryDevice(installationId);
-    const records = registryDevice
-      ? buildRegistryRecords(installationId, registryDevice)
-      : buildLegacyRecords(installationId);
-
+    const records = buildRecords(
+      installationId,
+      findRegistryDevice(installationId),
+    );
     await prisma.telemetryRecord.createMany({ data: records });
-    console.log(`✓ [${installationId}] ${records.length}개 레코드 삽입 완료`);
+    console.log(`✓ [${installationId}] ${records.length}개 삽입`);
   }
 
-  console.log("\n시계열 테스트 데이터 삽입 완료!");
+  console.log("\n경기도 시계열 테스트 데이터 삽입 완료!");
 }
 
 main()

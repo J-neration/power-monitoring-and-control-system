@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import type { DeviceWithInstallation } from "../types/site";
 import MetricValue from "./MetricValue";
-import ModuleSlotGrid from "./ModuleSlotGrid";
 import { TEMP_THRESHOLDS } from "../lib/chartTheme";
 
 type StatusCardProps = {
@@ -226,11 +225,6 @@ export function StatusCard({ device, compact = false }: StatusCardProps) {
           suffix={device.model === "paf" ? "A" : "kvar"}
         />
       </div>
-
-      <ModuleSlotGrid
-        moduleStatus={device.moduleStatus}
-        numOfMods={device.numOfMods}
-      />
     </article>
   );
 }

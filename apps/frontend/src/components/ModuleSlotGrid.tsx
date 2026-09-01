@@ -12,12 +12,14 @@ type Props = {
   moduleStatus?: number[];
   numOfMods?: number;
   compact?: boolean;
+  className?: string;
 };
 
 export default function ModuleSlotGrid({
   moduleStatus = [],
   numOfMods,
   compact = false,
+  className = "",
 }: Props) {
   const sliced =
     numOfMods != null && numOfMods > 0 && numOfMods <= moduleStatus.length
@@ -27,7 +29,9 @@ export default function ModuleSlotGrid({
   if (sliced.filter((c) => c !== 4).length === 0) return null;
 
   return (
-    <div className={`module-slot-grid${compact ? " module-slot-grid--compact" : ""}`}>
+    <div
+      className={`module-slot-grid${compact ? " module-slot-grid--compact" : ""}${className ? ` ${className}` : ""}`}
+    >
       <span className="module-slot-grid-title">모듈</span>
       <div className="module-slot-grid-cells">
         {sliced.map((code, index) => {

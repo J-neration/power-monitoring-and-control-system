@@ -166,8 +166,9 @@ const seed = async () => {
         create: { installationId: inst.id, ...deviceData },
       });
 
-      // ── 24h TelemetryRecord 시드 ────────────────────────────────
+      // ── 24h TelemetryRecord 시드 (경기도만) ─────────────────────
       if (!d) continue;
+      if (site.region !== "경기도") continue;
 
       // 이미 시드 데이터가 있으면 스킵
       const existingCount = await prisma.telemetryRecord.count({
