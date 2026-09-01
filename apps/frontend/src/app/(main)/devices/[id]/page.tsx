@@ -92,17 +92,23 @@ export default async function DeviceDetailPage({ params }: Props) {
               <span className={`detail-status-badge ${device.status}`}>
                 {STATUS_LABEL[device.status]}
               </span>
+              {device.model || device.capacity != null ? (
+                <span className="device-spec-pair">
+                  {device.model ? (
+                    <span className="device-model-badge">
+                      {device.model.toUpperCase()}
+                    </span>
+                  ) : null}
+                  {device.capacity != null ? (
+                    <span className="device-capacity-badge">
+                      {device.capacity} {device.model === "paf" ? "A" : "kVAR"}
+                    </span>
+                  ) : null}
+                </span>
+              ) : null}
+            </div>
+            <div className="device-detail-meta-row">
               {commLost ? <CommLostBadge /> : null}
-              {device.model ? (
-                <span className="device-model-badge">
-                  {device.model.toUpperCase()}
-                </span>
-              ) : null}
-              {device.capacity != null ? (
-                <span className="device-capacity-badge">
-                  {device.capacity} {device.model === "paf" ? "A" : "kVAR"}
-                </span>
-              ) : null}
               <span className="device-detail-id">
                 {site?.region ?? "-"} · {device.installationId}
               </span>

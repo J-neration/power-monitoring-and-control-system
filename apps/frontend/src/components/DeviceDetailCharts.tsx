@@ -37,6 +37,8 @@ import {
 } from "../lib/chartTheme";
 import CompareRingGauge from "./charts/CompareRingGauge";
 import PfNeedleGauge from "./charts/PfNeedleGauge";
+import PfQtyMix from "./charts/PfQtyMix";
+import ThdArcGauge from "./charts/ThdArcGauge";
 import CapacitySnapshot from "./CapacitySnapshot";
 
 export type DeviceChartSection = "pf" | "thd" | "unbalance" | "thermal";
@@ -325,531 +327,544 @@ export default function DeviceDetailCharts({
       className={`device-charts-grid${compactMode ? " device-charts-grid--compact" : ""}${section ? ` device-charts-grid--section device-charts-grid--${section}` : ""}`}
     >
       {show(["unbalance"]) && (
-      <ChartCard title="상별 계측값" subtitle="— 디지털 패널" wide={!compactMode && section !== "unbalance"} fill={fill}>
-        <DigitalPhasePanel
-          rows={[
-            {
-              label: "전압 (V)",
-              l1: device.vL1,
-              l2: device.vL2,
-              l3: device.vL3,
-              kind: "voltage",
-              suffix: " V",
-            },
-            {
-              label: "전류 Load (A)",
-              l1: device.loadCurrentL1,
-              l2: device.loadCurrentL2,
-              l3: device.loadCurrentL3,
-              suffix: " A",
-            },
-            {
-              label: "전류 Grid (A)",
-              l1: device.gridCurrentL1,
-              l2: device.gridCurrentL2,
-              l3: device.gridCurrentL3,
-              suffix: " A",
-            },
-            {
-              label: "THD Load (%)",
-              l1: device.loadCurrentTHDL1,
-              l2: device.loadCurrentTHDL2,
-              l3: device.loadCurrentTHDL3,
-              kind: "thd",
-              suffix: "%",
-            },
-            {
-              label: "THD Grid (%)",
-              l1: device.gridCurrentTHDL1,
-              l2: device.gridCurrentTHDL2,
-              l3: device.gridCurrentTHDL3,
-              kind: "thd",
-              suffix: "%",
-            },
-          ]}
-        />
-      </ChartCard>
+        <ChartCard
+          title="상별 계측값"
+          subtitle="— 디지털 패널"
+          wide={!compactMode && section !== "unbalance"}
+          fill={fill}
+        >
+          <DigitalPhasePanel
+            rows={[
+              {
+                label: "전압 (V)",
+                l1: device.vL1,
+                l2: device.vL2,
+                l3: device.vL3,
+                kind: "voltage",
+                suffix: " V",
+              },
+              {
+                label: "전류 Load (A)",
+                l1: device.loadCurrentL1,
+                l2: device.loadCurrentL2,
+                l3: device.loadCurrentL3,
+                suffix: " A",
+              },
+              {
+                label: "전류 Grid (A)",
+                l1: device.gridCurrentL1,
+                l2: device.gridCurrentL2,
+                l3: device.gridCurrentL3,
+                suffix: " A",
+              },
+              {
+                label: "THD Load (%)",
+                l1: device.loadCurrentTHDL1,
+                l2: device.loadCurrentTHDL2,
+                l3: device.loadCurrentTHDL3,
+                kind: "thd",
+                suffix: "%",
+              },
+              {
+                label: "THD Grid (%)",
+                l1: device.gridCurrentTHDL1,
+                l2: device.gridCurrentTHDL2,
+                l3: device.gridCurrentTHDL3,
+                kind: "thd",
+                suffix: "%",
+              },
+            ]}
+          />
+        </ChartCard>
       )}
 
       {section === "unbalance" && (
-      <ChartCard
-        title="불평형 (%)"
-        subtitle="— 전압 LVUR · 전류 불평형"
-        fill
-      >
-        <div className="pf-gauge-row monitor-pf-row">
-          <CompareRingGauge
-            label="전압 불평형"
-            after={vUnbalance}
-            kind="unbalance"
-          />
-          <CompareRingGauge
-            label="전류 불평형"
-            before={iLoadUnbalance}
-            after={iGridUnbalance}
-            kind="unbalance"
-          />
-        </div>
-      </ChartCard>
+        <ChartCard title="불평형 (%)" subtitle="— 전압 LVUR · 전류 불평형" fill>
+          <div className="pf-gauge-row monitor-pf-row">
+            <CompareRingGauge
+              label="전압 불평형"
+              after={vUnbalance}
+              kind="unbalance"
+            />
+            <CompareRingGauge
+              label="전류 불평형"
+              before={iLoadUnbalance}
+              after={iGridUnbalance}
+              kind="unbalance"
+            />
+          </div>
+        </ChartCard>
       )}
 
       {show(["unbalance"]) && !compactMode && (
-      <>
-      <ChartCard title="전압 (V)" large fill={fill}>
-        {hasVoltage(device) ? (
-          <div className={fill ? "chart-card-plot" : undefined}>
-          <ResponsiveContainer width="100%" height={plotH}>
-            <BarChart
-              data={voltageData}
-              margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
-            >
-              <CartesianGrid {...GRID} />
-              <XAxis dataKey="phase" {...AXIS} />
-              <YAxis
-                {...AXIS}
-                allowDecimals={false}
-                domain={yDomainWithPadding}
-              />
-              <Tooltip
-                contentStyle={TOOLTIP_STYLE}
-                labelStyle={TOOLTIP_LABEL_STYLE}
-                itemStyle={TOOLTIP_ITEM_STYLE}
-                cursor={TOOLTIP_CURSOR}
-              />
-              <ReferenceLine
-                y={VOLTAGE_NOMINAL}
-                stroke={CHART_COLORS.accent}
-                strokeDasharray="4 3"
-                label={{
-                  value: `${VOLTAGE_NOMINAL}V`,
-                  fill: CHART_COLORS.accent,
-                  fontSize: 10,
-                  position: "insideTopRight",
-                }}
-              />
-              <Bar
-                dataKey="전압"
-                fill={CHART_COLORS.blue}
-                radius={[4, 4, 0, 0]}
-                barSize={36}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-          </div>
-        ) : (
-          <ChartEmpty />
-        )}
-      </ChartCard>
+        <>
+          <ChartCard title="전압 (V)" large fill={fill}>
+            {hasVoltage(device) ? (
+              <div className={fill ? "chart-card-plot" : undefined}>
+                <ResponsiveContainer width="100%" height={plotH}>
+                  <BarChart
+                    data={voltageData}
+                    margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
+                  >
+                    <CartesianGrid {...GRID} />
+                    <XAxis dataKey="phase" {...AXIS} />
+                    <YAxis
+                      {...AXIS}
+                      allowDecimals={false}
+                      domain={yDomainWithPadding}
+                    />
+                    <Tooltip
+                      contentStyle={TOOLTIP_STYLE}
+                      labelStyle={TOOLTIP_LABEL_STYLE}
+                      itemStyle={TOOLTIP_ITEM_STYLE}
+                      cursor={TOOLTIP_CURSOR}
+                    />
+                    <ReferenceLine
+                      y={VOLTAGE_NOMINAL}
+                      stroke={CHART_COLORS.accent}
+                      strokeDasharray="4 3"
+                      label={{
+                        value: `${VOLTAGE_NOMINAL}V`,
+                        fill: CHART_COLORS.accent,
+                        fontSize: 10,
+                        position: "insideTopRight",
+                      }}
+                    />
+                    <Bar
+                      dataKey="전압"
+                      fill={CHART_COLORS.blue}
+                      radius={[4, 4, 0, 0]}
+                      barSize={36}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <ChartEmpty />
+            )}
+          </ChartCard>
 
-      <ChartCard title="전류 (A)" subtitle="— 보상 전후" large fill={fill}>
-        {hasCurrent(device) ? (
-          <div className={fill ? "chart-card-plot" : undefined}>
-          <ResponsiveContainer width="100%" height={plotH}>
-            <BarChart
-              data={currentData}
-              margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
-            >
-              <CartesianGrid {...GRID} />
-              <XAxis dataKey="phase" {...AXIS} />
-              <YAxis
-                {...AXIS}
-                allowDecimals={false}
-                domain={yDomainWithPadding}
-              />
-              <Tooltip
-                contentStyle={TOOLTIP_STYLE}
-                labelStyle={TOOLTIP_LABEL_STYLE}
-                itemStyle={TOOLTIP_ITEM_STYLE}
-                cursor={TOOLTIP_CURSOR}
-              />
-              <Legend {...LEGEND} />
-              <Bar
-                dataKey="보상전"
-                fill={CHART_COLORS.load}
-                radius={[4, 4, 0, 0]}
-                barSize={28}
-              />
-              <Bar
-                dataKey="보상후"
-                fill={CHART_COLORS.grid}
-                radius={[4, 4, 0, 0]}
-                barSize={28}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-          </div>
-        ) : (
-          <ChartEmpty />
-        )}
-      </ChartCard>
-      </>
+          <ChartCard title="전류 (A)" subtitle="— 보상 전후" large fill={fill}>
+            {hasCurrent(device) ? (
+              <div className={fill ? "chart-card-plot" : undefined}>
+                <ResponsiveContainer width="100%" height={plotH}>
+                  <BarChart
+                    data={currentData}
+                    margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
+                  >
+                    <CartesianGrid {...GRID} />
+                    <XAxis dataKey="phase" {...AXIS} />
+                    <YAxis
+                      {...AXIS}
+                      allowDecimals={false}
+                      domain={yDomainWithPadding}
+                    />
+                    <Tooltip
+                      contentStyle={TOOLTIP_STYLE}
+                      labelStyle={TOOLTIP_LABEL_STYLE}
+                      itemStyle={TOOLTIP_ITEM_STYLE}
+                      cursor={TOOLTIP_CURSOR}
+                    />
+                    <Legend {...LEGEND} />
+                    <Bar
+                      dataKey="보상전"
+                      fill={CHART_COLORS.load}
+                      radius={[4, 4, 0, 0]}
+                      barSize={28}
+                    />
+                    <Bar
+                      dataKey="보상후"
+                      fill={CHART_COLORS.grid}
+                      radius={[4, 4, 0, 0]}
+                      barSize={28}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <ChartEmpty />
+            )}
+          </ChartCard>
+        </>
       )}
 
       {section === "thd" && (
-      <ChartCard title="상별 THDi" subtitle="— 보상 전후" fill>
-        <div className="pf-gauge-row monitor-pf-row">
-          <CompareRingGauge
-            label="THDi L1"
-            before={device.loadCurrentTHDL1}
-            after={device.gridCurrentTHDL1}
-            kind="thd"
-          />
-          <CompareRingGauge
-            label="THDi L2"
-            before={device.loadCurrentTHDL2}
-            after={device.gridCurrentTHDL2}
-            kind="thd"
-          />
-          <CompareRingGauge
-            label="THDi L3"
-            before={device.loadCurrentTHDL3}
-            after={device.gridCurrentTHDL3}
-            kind="thd"
-          />
-        </div>
-      </ChartCard>
+        <ChartCard title="상별 THDi" subtitle="— 보상 전후" fill>
+          <div className="pf-gauge-row monitor-pf-row">
+            <ThdArcGauge
+              label="THDi L1"
+              before={device.loadCurrentTHDL1}
+              after={device.gridCurrentTHDL1}
+            />
+            <ThdArcGauge
+              label="THDi L2"
+              before={device.loadCurrentTHDL2}
+              after={device.gridCurrentTHDL2}
+            />
+            <ThdArcGauge
+              label="THDi L3"
+              before={device.loadCurrentTHDL3}
+              after={device.gridCurrentTHDL3}
+            />
+          </div>
+        </ChartCard>
       )}
 
       {show(["thd"]) && (
-      <ChartCard
-        title="전류 THD (%)"
-        subtitle="— 보상 전후 · IEEE 519 8%"
-        large={!compactMode}
-        fill={fill}
-      >
-        {hasThd(device) ? (
-          <div className={fill ? "chart-card-plot" : undefined}>
-          <ResponsiveContainer width="100%" height={plotH}>
-            <BarChart
-              data={thdData}
-              margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
-            >
-              <CartesianGrid {...GRID} />
-              <XAxis dataKey="phase" {...AXIS} />
-              <YAxis
-                {...AXIS}
-                allowDecimals={false}
-                domain={yDomainWithPadding}
-              />
-              <Tooltip
-                contentStyle={TOOLTIP_STYLE}
-                labelStyle={TOOLTIP_LABEL_STYLE}
-                itemStyle={TOOLTIP_ITEM_STYLE}
-                cursor={TOOLTIP_CURSOR}
-              />
-              <Legend content={<ThdBarLegend />} />
-              <ChartThresholdLines kind="thd" />
-              <Bar
-                dataKey="보상전"
-                fill={CHART_COLORS.accent}
-                radius={[4, 4, 0, 0]}
-                barSize={28}
-              >
-                {thdData.map((entry, i) => (
-                  <Cell key={i} fill={thdBarColor(entry.보상전)} />
-                ))}
-              </Bar>
-              <Bar
-                dataKey="보상후"
-                fill={CHART_COLORS.accent}
-                radius={[4, 4, 0, 0]}
-                barSize={28}
-              >
-                {thdData.map((entry, i) => (
-                  <Cell key={i} fill={thdBarColor(entry.보상후)} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-          </div>
-        ) : (
-          <ChartEmpty />
-        )}
-      </ChartCard>
+        <ChartCard title="전류 THD (%)" large={!compactMode} fill={fill}>
+          {hasThd(device) ? (
+            <div className={fill ? "chart-card-plot" : undefined}>
+              <ResponsiveContainer width="100%" height={plotH}>
+                <BarChart
+                  data={thdData}
+                  margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
+                >
+                  <CartesianGrid {...GRID} />
+                  <XAxis dataKey="phase" {...AXIS} />
+                  <YAxis
+                    {...AXIS}
+                    allowDecimals={false}
+                    domain={yDomainWithPadding}
+                  />
+                  <Tooltip
+                    contentStyle={TOOLTIP_STYLE}
+                    labelStyle={TOOLTIP_LABEL_STYLE}
+                    itemStyle={TOOLTIP_ITEM_STYLE}
+                    cursor={TOOLTIP_CURSOR}
+                  />
+                  <Legend content={<ThdBarLegend />} />
+                  <ChartThresholdLines kind="thd" />
+                  <Bar
+                    dataKey="보상전"
+                    fill={CHART_COLORS.accent}
+                    radius={[4, 4, 0, 0]}
+                    barSize={28}
+                  >
+                    {thdData.map((entry, i) => (
+                      <Cell key={i} fill={thdBarColor(entry.보상전)} />
+                    ))}
+                  </Bar>
+                  <Bar
+                    dataKey="보상후"
+                    fill={CHART_COLORS.accent}
+                    radius={[4, 4, 0, 0]}
+                    barSize={28}
+                  >
+                    {thdData.map((entry, i) => (
+                      <Cell key={i} fill={thdBarColor(entry.보상후)} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <ChartEmpty />
+          )}
+        </ChartCard>
       )}
 
       {show(["pf"]) && (
-      <ChartCard
-        title="전력"
-        subtitle="— 보상 전후 비교"
-        large={!compactMode}
-        fill={fill}
-        legend={
-          <ul className="pf-power-legend">
-            <li>
-              <span className="pf-qty-pill pf-qty-pill--q">Q</span>
-              DPF
-            </li>
-            <li>
-              <span className="pf-qty-pill pf-qty-pill--q">Q</span>
-              <span className="pf-qty-plus">+</span>
-              <span className="pf-qty-pill pf-qty-pill--h">H</span>
-              TPF
-            </li>
-          </ul>
-        }
-      >
-        {hasPower(device) ? (
-          <div className={fill ? "chart-card-plot" : undefined}>
-          <ResponsiveContainer width="100%" height={plotH}>
-            <BarChart
-              data={powerData}
-              margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
-            >
-              <CartesianGrid {...GRID} />
-              <XAxis dataKey="name" {...AXIS} fontSize={11} tick={<PowerAxisTick />} />
-              <YAxis
-                {...AXIS}
-                allowDecimals={false}
-                domain={yDomainWithPadding}
-              />
-              <Tooltip
-                contentStyle={TOOLTIP_STYLE}
-                labelStyle={TOOLTIP_LABEL_STYLE}
-                itemStyle={TOOLTIP_ITEM_STYLE}
-                cursor={TOOLTIP_CURSOR}
-              />
-              <ReferenceLine
-                y={0}
-                stroke="rgba(255,255,255,0.25)"
-                strokeWidth={1}
-              />
-              <Bar
-                dataKey="보상전"
-                radius={[4, 4, 0, 0]}
-                barSize={28}
-              >
-                {powerData.map((entry) => (
-                  <Cell key={`pre-${entry.name}`} fill={powerBarFill(entry.name, "before")} />
-                ))}
-              </Bar>
-              <Bar
-                dataKey="보상후"
-                radius={[4, 4, 0, 0]}
-                barSize={28}
-              >
-                {powerData.map((entry) => (
-                  <Cell key={`post-${entry.name}`} fill={powerBarFill(entry.name, "after")} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-          </div>
-        ) : (
-          <ChartEmpty />
-        )}
-      </ChartCard>
+        <ChartCard
+          title="전력"
+          subtitle="— 보상 전후 비교"
+          large={!compactMode}
+          fill={fill}
+          legend={
+            <ul className="pf-power-legend">
+              <li>
+                <span className="pf-qty-pill pf-qty-pill--q">Q</span>
+                DPF
+              </li>
+              <li>
+                <span className="pf-qty-pill pf-qty-pill--q">Q</span>
+                <span className="pf-qty-plus">+</span>
+                <span className="pf-qty-pill pf-qty-pill--h">H</span>
+                TPF
+              </li>
+            </ul>
+          }
+        >
+          {hasPower(device) ? (
+            <div className={fill ? "chart-card-plot" : undefined}>
+              <ResponsiveContainer width="100%" height={plotH}>
+                <BarChart
+                  data={powerData}
+                  margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid {...GRID} />
+                  <XAxis
+                    dataKey="name"
+                    {...AXIS}
+                    fontSize={11}
+                    tick={<PowerAxisTick />}
+                  />
+                  <YAxis
+                    {...AXIS}
+                    allowDecimals={false}
+                    domain={yDomainWithPadding}
+                  />
+                  <Tooltip
+                    contentStyle={TOOLTIP_STYLE}
+                    labelStyle={TOOLTIP_LABEL_STYLE}
+                    itemStyle={TOOLTIP_ITEM_STYLE}
+                    cursor={TOOLTIP_CURSOR}
+                  />
+                  <ReferenceLine
+                    y={0}
+                    stroke="rgba(255,255,255,0.25)"
+                    strokeWidth={1}
+                  />
+                  <Bar dataKey="보상전" radius={[4, 4, 0, 0]} barSize={28}>
+                    {powerData.map((entry) => (
+                      <Cell
+                        key={`pre-${entry.name}`}
+                        fill={powerBarFill(entry.name, "before")}
+                      />
+                    ))}
+                  </Bar>
+                  <Bar dataKey="보상후" radius={[4, 4, 0, 0]} barSize={28}>
+                    {powerData.map((entry) => (
+                      <Cell
+                        key={`post-${entry.name}`}
+                        fill={powerBarFill(entry.name, "after")}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <ChartEmpty />
+          )}
+        </ChartCard>
       )}
 
       {show(["pf"]) && (
-      <ChartCard
-        title="역률 (%)"
-        fill={fill}
-      >
-        {hasPf(device) ? (
-          <div className="pf-gauge-row monitor-pf-row">
-            <PfNeedleGauge
-              label="TPF"
-              kind="tpf"
-              before={device.tpf1}
-              after={device.tpf2}
-              qBefore={device.uncompQ}
-              qAfter={device.compQ}
-              hBefore={device.uncompH}
-              hAfter={device.compH}
-            />
-            <PfNeedleGauge
-              label="DPF"
-              kind="dpf"
-              before={device.dpf1}
-              after={device.dpf2}
-              qBefore={device.uncompQ}
-              qAfter={device.compQ}
-            />
-          </div>
-        ) : (
-          <ChartEmpty />
-        )}
-      </ChartCard>
+        <ChartCard title="역률 (%)" fill={fill}>
+          {hasPf(device) ? (
+            <div className="pf-tab-gauges">
+              <div className="pf-gauge-col">
+                <PfNeedleGauge
+                  label="TPF"
+                  qty="tpf"
+                  before={device.tpf1}
+                  after={device.tpf2}
+                />
+                <PfQtyMix
+                  kind="tpf"
+                  qBefore={device.uncompQ}
+                  qAfter={device.compQ}
+                  hBefore={device.uncompH}
+                  hAfter={device.compH}
+                />
+              </div>
+              <div className="pf-gauge-col">
+                <PfNeedleGauge
+                  label="DPF"
+                  qty="dpf"
+                  before={device.dpf1}
+                  after={device.dpf2}
+                />
+                <PfQtyMix
+                  kind="dpf"
+                  qBefore={device.uncompQ}
+                  qAfter={device.compQ}
+                />
+              </div>
+            </div>
+          ) : (
+            <ChartEmpty />
+          )}
+        </ChartCard>
       )}
 
       {show(["thermal"]) && !compactMode && (
-      <>
-      <ChartCard title="주위 온도 (°C)" large fill={fill}>
-        {hasAreaTemp ? (
-          <div className={fill ? "chart-card-plot" : undefined}>
-          <ResponsiveContainer width="100%" height={plotH}>
-            <BarChart
-              data={areaTempData}
-              margin={{ top: 8, right: TEMP_CHART_MARGIN_RIGHT, left: -10, bottom: 0 }}
-            >
-              <CartesianGrid {...GRID} />
-              <XAxis dataKey="sensor" {...AXIS} />
-              <YAxis
-                {...AXIS}
-                allowDecimals={false}
-                domain={[0, 50]}
-                unit="°C"
-              />
-              <Tooltip
-                contentStyle={TOOLTIP_STYLE}
-                labelStyle={TOOLTIP_LABEL_STYLE}
-                itemStyle={TOOLTIP_ITEM_STYLE}
-                cursor={TOOLTIP_CURSOR}
-                formatter={(v) => [`${v} °C`]}
-              />
-              <ReferenceLine
-                y={TEMP_THRESHOLDS.areaWarn}
-                stroke={CHART_COLORS.load}
-                {...TEMP_WARN_REF}
-                label={{
-                  value: `주의 ${TEMP_THRESHOLDS.areaWarn}°C`,
-                  position: "right",
-                  fill: CHART_COLORS.load,
-                  fontSize: 10,
-                }}
-              />
-              <ReferenceLine
-                y={TEMP_THRESHOLDS.areaAlarm}
-                stroke={CHART_COLORS.danger}
-                {...TEMP_ALARM_REF}
-                label={{
-                  value: `경보 ${TEMP_THRESHOLDS.areaAlarm}°C`,
-                  position: "right",
-                  fill: CHART_COLORS.danger,
-                  fontSize: 10,
-                  fontWeight: 600,
-                }}
-              />
-              <Bar dataKey="온도" radius={[4, 4, 0, 0]} barSize={36}>
-                {areaTempData.map((entry, i) => (
-                  <Cell
-                    key={i}
-                    fill={
-                      entry.온도 >= TEMP_THRESHOLDS.areaAlarm
-                        ? CHART_COLORS.danger
-                        : entry.온도 >= TEMP_THRESHOLDS.areaWarn
-                          ? CHART_COLORS.load
-                          : CHART_COLORS.accent
-                    }
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-          </div>
-        ) : (
-          <ChartEmpty />
-        )}
-      </ChartCard>
+        <>
+          <ChartCard title="주위 온도 (°C)" large fill={fill}>
+            {hasAreaTemp ? (
+              <div className={fill ? "chart-card-plot" : undefined}>
+                <ResponsiveContainer width="100%" height={plotH}>
+                  <BarChart
+                    data={areaTempData}
+                    margin={{
+                      top: 8,
+                      right: TEMP_CHART_MARGIN_RIGHT,
+                      left: -10,
+                      bottom: 0,
+                    }}
+                  >
+                    <CartesianGrid {...GRID} />
+                    <XAxis dataKey="sensor" {...AXIS} />
+                    <YAxis
+                      {...AXIS}
+                      allowDecimals={false}
+                      domain={[0, 50]}
+                      unit="°C"
+                    />
+                    <Tooltip
+                      contentStyle={TOOLTIP_STYLE}
+                      labelStyle={TOOLTIP_LABEL_STYLE}
+                      itemStyle={TOOLTIP_ITEM_STYLE}
+                      cursor={TOOLTIP_CURSOR}
+                      formatter={(v) => [`${v} °C`]}
+                    />
+                    <ReferenceLine
+                      y={TEMP_THRESHOLDS.areaWarn}
+                      stroke={CHART_COLORS.load}
+                      {...TEMP_WARN_REF}
+                      label={{
+                        value: `주의 ${TEMP_THRESHOLDS.areaWarn}°C`,
+                        position: "right",
+                        fill: CHART_COLORS.load,
+                        fontSize: 10,
+                      }}
+                    />
+                    <ReferenceLine
+                      y={TEMP_THRESHOLDS.areaAlarm}
+                      stroke={CHART_COLORS.danger}
+                      {...TEMP_ALARM_REF}
+                      label={{
+                        value: `경보 ${TEMP_THRESHOLDS.areaAlarm}°C`,
+                        position: "right",
+                        fill: CHART_COLORS.danger,
+                        fontSize: 10,
+                        fontWeight: 600,
+                      }}
+                    />
+                    <Bar dataKey="온도" radius={[4, 4, 0, 0]} barSize={36}>
+                      {areaTempData.map((entry, i) => (
+                        <Cell
+                          key={i}
+                          fill={
+                            entry.온도 >= TEMP_THRESHOLDS.areaAlarm
+                              ? CHART_COLORS.danger
+                              : entry.온도 >= TEMP_THRESHOLDS.areaWarn
+                                ? CHART_COLORS.load
+                                : CHART_COLORS.accent
+                          }
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <ChartEmpty />
+            )}
+          </ChartCard>
 
-      <ChartCard title="모듈 온도 (°C)" large fill={fill}>
-        {hasModuleTemp ? (
-          <div className={fill ? "chart-card-plot" : undefined}>
-          <ResponsiveContainer width="100%" height={plotH}>
-            <BarChart
-              data={moduleTempData}
-              margin={{ top: 8, right: TEMP_CHART_MARGIN_RIGHT, left: -10, bottom: 0 }}
-            >
-              <CartesianGrid {...GRID} />
-              <XAxis dataKey="sensor" {...AXIS} fontSize={11} />
-              <YAxis
-                {...AXIS}
-                allowDecimals={false}
-                domain={[0, 150]}
-                unit="°C"
-              />
-              <Tooltip
-                contentStyle={TOOLTIP_STYLE}
-                labelStyle={TOOLTIP_LABEL_STYLE}
-                itemStyle={TOOLTIP_ITEM_STYLE}
-                cursor={TOOLTIP_CURSOR}
-                formatter={(v) => [`${v} °C`]}
-              />
-              <ReferenceLine
-                y={TEMP_THRESHOLDS.moduleWarn}
-                stroke={CHART_COLORS.warn}
-                {...TEMP_WARN_REF}
-                label={{
-                  value: `주의 ${TEMP_THRESHOLDS.moduleWarn}°C`,
-                  position: "right",
-                  fill: CHART_COLORS.warn,
-                  fontSize: 10,
-                }}
-              />
-              <ReferenceLine
-                y={TEMP_THRESHOLDS.moduleAlarm}
-                stroke={CHART_COLORS.danger}
-                {...TEMP_ALARM_REF}
-                label={{
-                  value: `경보 ${TEMP_THRESHOLDS.moduleAlarm}°C`,
-                  position: "right",
-                  fill: CHART_COLORS.danger,
-                  fontSize: 10,
-                  fontWeight: 600,
-                }}
-              />
-              <Bar dataKey="온도" radius={[4, 4, 0, 0]} barSize={30}>
-                {moduleTempData.map((entry, i) => (
-                  <Cell
-                    key={i}
-                    fill={
-                      entry.온도 >= TEMP_THRESHOLDS.moduleAlarm
-                        ? CHART_COLORS.danger
-                        : entry.온도 >= TEMP_THRESHOLDS.moduleWarn
-                          ? CHART_COLORS.warn
-                          : CHART_COLORS.accent
-                    }
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-          </div>
-        ) : (
-          <ChartEmpty />
-        )}
-      </ChartCard>
+          <ChartCard title="모듈 온도 (°C)" large fill={fill}>
+            {hasModuleTemp ? (
+              <div className={fill ? "chart-card-plot" : undefined}>
+                <ResponsiveContainer width="100%" height={plotH}>
+                  <BarChart
+                    data={moduleTempData}
+                    margin={{
+                      top: 8,
+                      right: TEMP_CHART_MARGIN_RIGHT,
+                      left: -10,
+                      bottom: 0,
+                    }}
+                  >
+                    <CartesianGrid {...GRID} />
+                    <XAxis dataKey="sensor" {...AXIS} fontSize={11} />
+                    <YAxis
+                      {...AXIS}
+                      allowDecimals={false}
+                      domain={[0, 150]}
+                      unit="°C"
+                    />
+                    <Tooltip
+                      contentStyle={TOOLTIP_STYLE}
+                      labelStyle={TOOLTIP_LABEL_STYLE}
+                      itemStyle={TOOLTIP_ITEM_STYLE}
+                      cursor={TOOLTIP_CURSOR}
+                      formatter={(v) => [`${v} °C`]}
+                    />
+                    <ReferenceLine
+                      y={TEMP_THRESHOLDS.moduleWarn}
+                      stroke={CHART_COLORS.warn}
+                      {...TEMP_WARN_REF}
+                      label={{
+                        value: `주의 ${TEMP_THRESHOLDS.moduleWarn}°C`,
+                        position: "right",
+                        fill: CHART_COLORS.warn,
+                        fontSize: 10,
+                      }}
+                    />
+                    <ReferenceLine
+                      y={TEMP_THRESHOLDS.moduleAlarm}
+                      stroke={CHART_COLORS.danger}
+                      {...TEMP_ALARM_REF}
+                      label={{
+                        value: `경보 ${TEMP_THRESHOLDS.moduleAlarm}°C`,
+                        position: "right",
+                        fill: CHART_COLORS.danger,
+                        fontSize: 10,
+                        fontWeight: 600,
+                      }}
+                    />
+                    <Bar dataKey="온도" radius={[4, 4, 0, 0]} barSize={30}>
+                      {moduleTempData.map((entry, i) => (
+                        <Cell
+                          key={i}
+                          fill={
+                            entry.온도 >= TEMP_THRESHOLDS.moduleAlarm
+                              ? CHART_COLORS.danger
+                              : entry.온도 >= TEMP_THRESHOLDS.moduleWarn
+                                ? CHART_COLORS.warn
+                                : CHART_COLORS.accent
+                          }
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <ChartEmpty />
+            )}
+          </ChartCard>
 
-      <ChartCard title="팬 속도 (m/s)" large fill={fill}>
-        {hasFanSpeed ? (
-          <div className={fill ? "chart-card-plot" : undefined}>
-          <ResponsiveContainer width="100%" height={plotH}>
-            <BarChart
-              data={fanSpeedData}
-              margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
-            >
-              <CartesianGrid {...GRID} />
-              <XAxis dataKey="fan" {...AXIS} />
-              <YAxis
-                {...AXIS}
-                allowDecimals={false}
-                domain={[0, 20]}
-                unit=" m/s"
-              />
-              <Tooltip
-                contentStyle={TOOLTIP_STYLE}
-                labelStyle={TOOLTIP_LABEL_STYLE}
-                itemStyle={TOOLTIP_ITEM_STYLE}
-                cursor={TOOLTIP_CURSOR}
-                formatter={(v) => [`${v} m/s`]}
-              />
-              <Bar
-                dataKey="RPM"
-                fill={CHART_COLORS.purple}
-                radius={[4, 4, 0, 0]}
-                barSize={48}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-          </div>
-        ) : (
-          <ChartEmpty />
-        )}
-      </ChartCard>
+          <ChartCard title="팬 속도 (m/s)" large fill={fill}>
+            {hasFanSpeed ? (
+              <div className={fill ? "chart-card-plot" : undefined}>
+                <ResponsiveContainer width="100%" height={plotH}>
+                  <BarChart
+                    data={fanSpeedData}
+                    margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
+                  >
+                    <CartesianGrid {...GRID} />
+                    <XAxis dataKey="fan" {...AXIS} />
+                    <YAxis
+                      {...AXIS}
+                      allowDecimals={false}
+                      domain={[0, 20]}
+                      unit=" m/s"
+                    />
+                    <Tooltip
+                      contentStyle={TOOLTIP_STYLE}
+                      labelStyle={TOOLTIP_LABEL_STYLE}
+                      itemStyle={TOOLTIP_ITEM_STYLE}
+                      cursor={TOOLTIP_CURSOR}
+                      formatter={(v) => [`${v} m/s`]}
+                    />
+                    <Bar
+                      dataKey="RPM"
+                      fill={CHART_COLORS.purple}
+                      radius={[4, 4, 0, 0]}
+                      barSize={48}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <ChartEmpty />
+            )}
+          </ChartCard>
 
-      <CapacitySnapshot device={device} fill={fill} wide={!section} />
-      </>
+          <CapacitySnapshot device={device} fill={fill} wide={!section} />
+        </>
       )}
     </div>
   );

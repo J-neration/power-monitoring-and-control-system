@@ -13,7 +13,6 @@ import {
 } from "recharts";
 import ScadaTooltip from "./ScadaTooltip";
 import FaultChartMarkers from "./FaultChartMarkers";
-import ChartThresholdLines from "./ChartThresholdLines";
 import type { FaultEvent } from "../../lib/api";
 import {
   AXIS,
@@ -53,7 +52,6 @@ type Props = {
   yUnit?: string;
   yDomain?: [number | string, number | string];
   yAxisWidth?: number;
-  threshold?: "thd" | "pf";
   faults?: FaultEvent[];
   children?: ReactNode;
   margin?: { top?: number; right?: number; left?: number; bottom?: number };
@@ -71,6 +69,21 @@ function yAxisWidthForUnit(unit?: string): number {
   return 44;
 }
 
+/** 24시간 이력에서 시작·끝을 포함해 약 6개만 표시 (4시간 간격) */
+function historyTimeTicks(data: Record<string, unknown>[]): string[] {
+  const times = data.map((d) => String(d.time ?? ""));
+  const n = times.length;
+  if (n === 0) return [];
+  const count = Math.min(6, n);
+  if (count === 1) return [times[0]];
+  const last = n - 1;
+  const idxs: number[] = [];
+  for (let i = 0; i < count; i++) {
+    idxs.push(Math.round((i * last) / (count - 1)));
+  }
+  return [...new Set(idxs)].map((i) => times[i]);
+}
+
 export default function HistoryAreaChart({
   data,
   series,
@@ -78,7 +91,6 @@ export default function HistoryAreaChart({
   yUnit,
   yDomain = ["auto", "auto"],
   yAxisWidth,
-  threshold,
   faults = [],
   children,
   margin,
@@ -88,8 +100,9 @@ export default function HistoryAreaChart({
     top: margin?.top ?? 8,
     right: margin?.right ?? 16,
     left: margin?.left ?? 0,
-    bottom: margin?.bottom ?? 0,
+    bottom: margin?.bottom ?? 4,
   };
+  const xTicks = historyTimeTicks(data);
 
   return (
     <ResponsiveContainer width="100%" height={CHART_H}>
@@ -99,7 +112,10 @@ export default function HistoryAreaChart({
         <XAxis
           dataKey="time"
           {...AXIS}
-          interval="preserveStartEnd"
+          ticks={xTicks}
+          interval={0}
+          minTickGap={24}
+          tickMargin={8}
           tick={{ ...AXIS.tick, className: "tabular-nums" }}
         />
         <YAxis
@@ -111,7 +127,6 @@ export default function HistoryAreaChart({
         />
         <Tooltip content={<ScadaTooltip />} />
         <Legend {...LEGEND} />
-        {threshold ? <ChartThresholdLines kind={threshold} /> : null}
         <FaultChartMarkers faults={faults} data={data as { time: string; recordedAt: string }[]} />
         {children}
         {series.map((s) => (
