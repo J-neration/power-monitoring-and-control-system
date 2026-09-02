@@ -4,11 +4,7 @@ import { redirect } from "next/navigation";
 import { fetchDevice, fetchReadings, fetchFaults } from "../../../../lib/api";
 import { getSessionUser } from "../../../../lib/auth-server";
 import DeviceDetailTabs from "../../../../components/DeviceDetailTabs";
-import LteSignalIndicator from "../../../../components/LteSignalIndicator";
 import PageLiveRefresh from "../../../../components/PageLiveRefresh";
-import { STATUS_LABEL } from "../../../../lib/deviceStatus";
-import { isCommLost } from "../../../../lib/commStatus";
-import CommLostBadge from "../../../../components/CommLostBadge";
 import type { DeviceWithInstallation } from "../../../../types/site";
 type Props = {
   params: { id: string };
@@ -43,7 +39,6 @@ export default async function DeviceDetailPage({ params }: Props) {
   const site = device.installation?.site;
   const siteId = site?.id;
   const deviceLabel = device.installation?.label ?? "Installation";
-  const commLost = isCommLost(device.lastSeenAt);
 
   return (
     <main
@@ -54,83 +49,31 @@ export default async function DeviceDetailPage({ params }: Props) {
           <strong>이상 상태</strong> — 장비 점검이 필요합니다
         </div>
       )}
-      {commLost && (
-        <div className="page-comm-lost-banner" role="status">
-          <strong>통신 끊김</strong> — 마지막 수신 이후 30분이 지났습니다.
-          모듈 상태({STATUS_LABEL[device.status]})와 측정값은 그때의 스냅샷입니다.
-        </div>
-      )}
 
-      <section className="device-detail-header device-detail-header--compact scada-panel">
+      <section className="device-detail-header device-detail-header--compact device-detail-header--crumb scada-panel">
         <div className="device-detail-header-inner">
-          <div className="device-detail-header-main">
-            <nav className="device-breadcrumb page-breadcrumb">
-              <Link href="/" className="breadcrumb-item">
-                대시보드
+          <nav className="device-breadcrumb page-breadcrumb">
+            <Link href="/" className="breadcrumb-item">
+              대시보드
+            </Link>
+            <span className="breadcrumb-sep">/</span>
+            {siteId ? (
+              <Link
+                href={`/sites/${encodeURIComponent(siteId)}`}
+                target="_blank"
+                className="breadcrumb-item"
+              >
+                {site?.name ?? "현장"}
               </Link>
-              <span className="breadcrumb-sep">/</span>
-              {siteId ? (
-                <Link
-                  href={`/sites/${encodeURIComponent(siteId)}`}
-                  target="_blank"
-                  className="breadcrumb-item"
-                >
-                  {site?.name ?? "현장"}
-                </Link>
-              ) : (
-                <span className="breadcrumb-item breadcrumb-current">현장</span>
-              )}
-              <span className="breadcrumb-sep">/</span>
-              <span className="breadcrumb-item breadcrumb-current">
-                {deviceLabel}
-              </span>
-            </nav>
-
-            <div className="device-detail-title-row">
-              <div className={`detail-status-dot ${device.status}`} />
-              <h1>{deviceLabel}</h1>
-              <span className={`detail-status-badge ${device.status}`}>
-                {STATUS_LABEL[device.status]}
-              </span>
-              {device.model || device.capacity != null ? (
-                <span className="device-spec-pair">
-                  {device.model ? (
-                    <span className="device-model-badge">
-                      {device.model.toUpperCase()}
-                    </span>
-                  ) : null}
-                  {device.capacity != null ? (
-                    <span className="device-capacity-badge">
-                      {device.capacity} {device.model === "paf" ? "A" : "kVAR"}
-                    </span>
-                  ) : null}
-                </span>
-              ) : null}
-            </div>
-            <div className="device-detail-meta-row">
-              {commLost ? <CommLostBadge /> : null}
-              <span className="device-detail-id">
-                {site?.region ?? "-"} · {device.installationId}
-              </span>
-            </div>
-          </div>
-
-          <div className="device-detail-aside">
-            <PageLiveRefresh installationIds={[device.installationId]} />
-            <div className="device-detail-lte">
-              <span className="device-detail-lte-title">LTE</span>
-              <LteSignalIndicator device={device} variant="detail" />
-            </div>
-            <div className="device-detail-received">
-              <p>
-                {device.lastSeenAt
-                  ? new Date(device.lastSeenAt).toLocaleString("ko-KR", {
-                      timeZone: "Asia/Seoul",
-                    })
-                  : "-"}
-              </p>
-            </div>
-          </div>
+            ) : (
+              <span className="breadcrumb-item breadcrumb-current">현장</span>
+            )}
+            <span className="breadcrumb-sep">/</span>
+            <span className="breadcrumb-item breadcrumb-current">
+              {deviceLabel}
+            </span>
+          </nav>
+          <PageLiveRefresh installationIds={[device.installationId]} />
         </div>
       </section>
 

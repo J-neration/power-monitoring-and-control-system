@@ -1,5 +1,6 @@
 import { FastifyPluginAsync } from "fastify";
 import { deviceService } from "../services/deviceService.js";
+import { watchFactsService } from "../services/watchFactsService.js";
 import { authenticate, requireAdmin } from "../middleware/authenticate.js";
 import { faultService } from "../services/faultService.js";
 import { settingsService } from "../services/settingsService.js";
@@ -135,6 +136,21 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
       activeViewers: adminSessionActive ? 1 : 0,
       isActivelyViewed: adminSessionActive,
     });
+  });
+
+  /** 장치 1대 · 최근 N시간 통계 팩트 (Gemini 없음) */
+  server.get("/:id/watch-facts", { preHandler: authenticate }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { hours } = request.query as { hours?: string };
+    const parsedHours = hours ? parseInt(hours, 10) : 24;
+    const report = await watchFactsService.get(
+      { id, hours: Number.isFinite(parsedHours) ? parsedHours : 24 },
+      request.user,
+    );
+    if (report === null) {
+      return reply.status(404).send({ message: "Device not found" });
+    }
+    return report;
   });
 
   server.get("/:id/readings", { preHandler: authenticate }, async (request, reply) => {
