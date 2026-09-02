@@ -114,6 +114,7 @@ function Block({
   warn,
   alarm,
   channelLabel,
+  showWarnLabel = true,
 }: {
   title: string;
   unit: string;
@@ -121,6 +122,7 @@ function Block({
   warn?: number;
   alarm?: number;
   channelLabel: string;
+  showWarnLabel?: boolean;
 }) {
   const t = warn != null && alarm != null ? tone(stats.now, warn, alarm) : "ok";
   const when = fmtWhen(stats.maxAt);
@@ -159,10 +161,12 @@ function Block({
       ) : (
         <p className="thermal-stat-note">24시간 이력 없음</p>
       )}
-      {warn != null && alarm != null ? (
+      {alarm != null ? (
         <p className="thermal-stat-limit">
-          주의 {warn}
-          {unit === "°C" ? "°C" : ` ${unit}`} · 경보 {alarm}
+          {showWarnLabel && warn != null
+            ? `주의 ${warn}${unit === "°C" ? "°C" : ` ${unit}`} · `
+            : null}
+          경보 {alarm}
           {unit === "°C" ? "°C" : ` ${unit}`}
         </p>
       ) : null}
@@ -197,6 +201,7 @@ export default function ThermalSummaryPanel({ device, readings = [] }: Props) {
         warn={TEMP_THRESHOLDS.moduleWarn}
         alarm={TEMP_THRESHOLDS.moduleAlarm}
         channelLabel="모듈"
+        showWarnLabel={false}
       />
       <Block title="팬 속도" unit="m/s" stats={fan} channelLabel="팬" />
     </aside>

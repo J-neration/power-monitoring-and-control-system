@@ -8,13 +8,15 @@ type Props = {
   after?: number | null;
 };
 
+const PAD = 14;
+const LABEL_R = 16;
 const CX = 120;
-const CY = 128;
-const R_OUT = 94;
-const R_MID = 76;
-const R_IN = 60;
+const R_OUT = 88;
+const R_MID = 70;
+const R_IN = 54;
+const CY = PAD + R_OUT + LABEL_R;
 const SCALE = 100;
-const VB = { w: 240, h: 164 };
+const VB = { w: 240, h: CY + 6 };
 
 const COLOR = {
   green: "#22c55e",
@@ -43,7 +45,7 @@ function polar(t: number, r: number) {
   };
 }
 
-/** 반원 홈을 부채꼴로 채움. 끝은 둥근 캡이 아니라 반지름 방향 절단면. */
+/** 반원(≤180°)만 그리므로 SVG large-arc 는 항상 0. */
 function sector(t0: number, t1: number, rOuter: number, rInner: number) {
   const span = Math.max(0, Math.min(1, t1) - Math.max(0, t0));
   if (span < 0.0008) return "";
@@ -53,8 +55,7 @@ function sector(t0: number, t1: number, rOuter: number, rInner: number) {
   const o1 = polar(a1, rOuter);
   const i1 = polar(a1, rInner);
   const i0 = polar(a0, rInner);
-  const large = a1 - a0 > 0.5 ? 1 : 0;
-  return `M ${o0.x} ${o0.y} A ${rOuter} ${rOuter} 0 ${large} 1 ${o1.x} ${o1.y} L ${i1.x} ${i1.y} A ${rInner} ${rInner} 0 ${large} 0 ${i0.x} ${i0.y} Z`;
+  return `M ${o0.x} ${o0.y} A ${rOuter} ${rOuter} 0 0 1 ${o1.x} ${o1.y} L ${i1.x} ${i1.y} A ${rInner} ${rInner} 0 0 0 ${i0.x} ${i0.y} Z`;
 }
 
 function radial(t: number, r0: number, r1: number) {
@@ -104,6 +105,8 @@ export default function ThdArcGauge({ label, before, after }: Props) {
       <div className="thd-arc-plot">
         <svg
           viewBox={`0 0 ${VB.w} ${VB.h}`}
+          preserveAspectRatio="xMidYMid meet"
+          overflow="hidden"
           role="img"
           aria-label={`${label} 전 ${b != null ? fmt(b) : "없음"}, 후 ${a != null ? fmt(a) : "없음"}`}
         >
@@ -151,7 +154,7 @@ export default function ThdArcGauge({ label, before, after }: Props) {
 
           {([0, 20, 50, 100] as const).map((tick) => {
             const t = tick / SCALE;
-            const p = polar(t, R_OUT + 14);
+            const p = polar(t, R_OUT + LABEL_R);
             return (
               <text
                 key={`lab-${tick}`}

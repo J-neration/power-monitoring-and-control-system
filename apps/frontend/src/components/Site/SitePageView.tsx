@@ -95,12 +95,16 @@ export default function SitePageView({ site }: { site: Site }) {
       <header className="site-header scada-panel">
         <div className="site-header-left">
           <div className="site-header-title">
-            <div className={`detail-status-dot ${siteStatus}`} />
-            <h1>{site.name}</h1>
-            <span className={`detail-status-badge ${siteStatus}`}>
-              {STATUS_LABEL[siteStatus]}
-            </span>
-            {stats.commLost > 0 ? <CommLostBadge /> : null}
+            <div className="site-header-identity">
+              <div className={`detail-status-dot ${siteStatus}`} />
+              <h1>{site.name}</h1>
+            </div>
+            <div className="site-header-flags">
+              <span className={`detail-status-badge ${siteStatus}`}>
+                {STATUS_LABEL[siteStatus]}
+              </span>
+              {stats.commLost > 0 ? <CommLostBadge /> : null}
+            </div>
           </div>
           <p className="site-header-meta">
             {CLIENT_LABELS[site.client] ?? site.client} · {site.region} ·{" "}
@@ -174,54 +178,63 @@ export default function SitePageView({ site }: { site: Site }) {
                 className={`site-inst-card site-inst-card--${instStatus}${commLost ? " site-inst-card--comm-lost" : ""}`}
               >
                 <div className="site-inst-top">
-                  <div className={`site-inst-dot ${instStatus}`} />
-                  <span className="site-inst-label">{inst.label}</span>
-                  <LteSignalIndicator device={d} variant="compact" />
-                  <span className={`detail-status-badge ${instStatus}`}>
-                    {STATUS_LABEL[instStatus]}
-                  </span>
-                  {commLost ? <CommLostBadge /> : null}
+                  <div className="site-inst-row site-inst-row--name">
+                    <div className={`site-inst-dot ${instStatus}`} />
+                    <span className="site-inst-label">{inst.label}</span>
+                    <LteSignalIndicator device={d} variant="compact" />
+                  </div>
+                  <div className="site-inst-row site-inst-row--status">
+                    <span className={`detail-status-badge ${instStatus}`}>
+                      {STATUS_LABEL[instStatus]}
+                    </span>
+                    {commLost ? <CommLostBadge /> : null}
+                  </div>
+                  {d?.model || d?.capacity != null ? (
+                    <div className="site-inst-row site-inst-row--spec">
+                      {[
+                        d.model?.toUpperCase(),
+                        d.capacity != null
+                          ? `${d.capacity}${d.model === "paf" ? "A" : "kVAR"}`
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    </div>
+                  ) : null}
                 </div>
 
-                <div className="site-inst-meta-row">
-                  {d?.model && (
-                    <span className="device-model-badge">
-                      {d.model.toUpperCase()}
-                    </span>
-                  )}
-                  {d?.capacity != null && (
-                    <span className="device-capacity-badge">
-                      {d.capacity} {d.model === "paf" ? "A" : "kVAR"}
-                    </span>
-                  )}
-                </div>
-
-                <div className="site-inst-divider" />
-
-                <div className="site-inst-table">
-                  <div className="sit-row">
-                    <span className="sit-label">V (V)</span>
+                <div className="site-inst-readout">
+                  <div className="site-inst-readout-head">
+                    <span />
+                    <span>L1</span>
+                    <span>L2</span>
+                    <span>L3</span>
+                  </div>
+                  <div className="site-inst-readout-row">
+                    <span className="site-inst-readout-lbl">V</span>
                     <MetricValue value={d?.vL1} kind="voltage" />
                     <MetricValue value={d?.vL2} kind="voltage" />
                     <MetricValue value={d?.vL3} kind="voltage" />
                   </div>
-                  <div className="sit-row">
-                    <span className="sit-label">Grid I (A)</span>
+                  <div className="site-inst-readout-row">
+                    <span className="site-inst-readout-lbl">I</span>
                     <MetricValue value={d?.gridCurrentL1} />
                     <MetricValue value={d?.gridCurrentL2} />
                     <MetricValue value={d?.gridCurrentL3} />
                   </div>
-                  <div className="sit-row">
-                    <span className="sit-label">Grid THD (%)</span>
+                  <div className="site-inst-readout-row">
+                    <span className="site-inst-readout-lbl">THD</span>
                     <MetricValue value={d?.gridCurrentTHDL1} kind="thd" />
                     <MetricValue value={d?.gridCurrentTHDL2} kind="thd" />
                     <MetricValue value={d?.gridCurrentTHDL3} kind="thd" />
                   </div>
-                  <div className="sit-row sit-row-pf">
-                    <span className="sit-label">Grid TPF / DPF</span>
+                  <div className="site-inst-readout-row site-inst-readout-row--single">
+                    <span className="site-inst-readout-lbl">TPF</span>
                     <MetricValue value={d?.tpf2} kind="pf" suffix="%" />
+                  </div>
+                  <div className="site-inst-readout-row site-inst-readout-row--single">
+                    <span className="site-inst-readout-lbl">DPF</span>
                     <MetricValue value={d?.dpf2} kind="pf" suffix="%" />
-                    <span />
                   </div>
                 </div>
 

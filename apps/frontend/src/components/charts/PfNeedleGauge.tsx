@@ -143,6 +143,8 @@ export default function PfNeedleGauge({ label, before, after, qty }: Props) {
       <div className="pf-needle-plot">
         <svg
           viewBox={`0 0 ${VB.w} ${VB.h}`}
+          preserveAspectRatio="xMidYMid meet"
+          overflow="hidden"
           role="img"
           aria-label={`${label} 전 ${b != null ? fmt(b) : "없음"}, 후 ${a != null ? fmt(a) : "없음"}`}
         >

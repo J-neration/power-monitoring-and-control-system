@@ -69,7 +69,6 @@ export default function DeviceMonitorBoard({
             <span className="hmi-rail-id">01</span>
             <span className="hmi-rail-label">운용 절감</span>
             <span className="hmi-rail-line" />
-            <span className="hmi-rail-note">연간 환산 · 보상 전→후</span>
           </div>
           <DeviceOpsBenefitPanel device={device} readings={readings} />
           <div className="hmi-rail">
