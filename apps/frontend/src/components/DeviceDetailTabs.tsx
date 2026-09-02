@@ -10,6 +10,8 @@ import DeviceSettingsSyncBar from "./DeviceSettingsSyncBar";
 import DeviceDataRefreshButton from "./DeviceDataRefreshButton";
 import DeviceFaultHistory from "./DeviceFaultHistory";
 import ViewingBanner from "./ViewingBanner";
+import DeviceWatchSummaryCard from "./DeviceWatchSummaryCard";
+import DeviceSideIdentity from "./DeviceSideIdentity";
 import type { DeviceWithInstallation } from "../types/site";
 import type { TelemetryReading } from "../types/site";
 import type { FaultEvent } from "../lib/api";
@@ -115,6 +117,16 @@ export default function DeviceDetailTabs({
 
   return (
     <div className="device-detail-tabs">
+      <aside className="device-detail-side">
+        <DeviceSideIdentity device={device} />
+        <DeviceWatchSummaryCard
+          device={device}
+          readings={readings}
+          hours={hours}
+          faults={faults}
+        />
+      </aside>
+      <div className="device-detail-workspace">
       <div className="device-remote-chrome">
         <div className="device-tab-bar">
           <div className="device-tab-bar-tabs" role="tablist">
@@ -191,7 +203,10 @@ export default function DeviceDetailTabs({
 
       <div className={`device-detail-tab-body${tab === "monitor" ? " device-detail-tab-body--fit" : ""}`}>
       {tab === "monitor" && (
-        <DeviceMonitorBoard device={device} readings={readings} />
+        <DeviceMonitorBoard
+          device={device}
+          readings={readings}
+        />
       )}
 
       {tab === "analytics" && (
@@ -260,6 +275,7 @@ export default function DeviceDetailTabs({
           faults={faults}
         />
       )}
+      </div>
       </div>
     </div>
   );
