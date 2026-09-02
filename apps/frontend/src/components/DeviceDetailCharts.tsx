@@ -326,6 +326,24 @@ export default function DeviceDetailCharts({
     <div
       className={`device-charts-grid${compactMode ? " device-charts-grid--compact" : ""}${section ? ` device-charts-grid--section device-charts-grid--${section}` : ""}`}
     >
+      {section === "unbalance" && (
+        <ChartCard title="불평형 (%)" subtitle="— 전압 LVUR · 전류 불평형" fill>
+          <div className="pf-gauge-row monitor-pf-row">
+            <CompareRingGauge
+              label="전압 불평형"
+              after={vUnbalance}
+              kind="unbalance"
+            />
+            <CompareRingGauge
+              label="전류 불평형"
+              before={iLoadUnbalance}
+              after={iGridUnbalance}
+              kind="unbalance"
+            />
+          </div>
+        </ChartCard>
+      )}
+
       {show(["unbalance"]) && (
         <ChartCard
           title="상별 계측값"
@@ -375,24 +393,6 @@ export default function DeviceDetailCharts({
               },
             ]}
           />
-        </ChartCard>
-      )}
-
-      {section === "unbalance" && (
-        <ChartCard title="불평형 (%)" subtitle="— 전압 LVUR · 전류 불평형" fill>
-          <div className="pf-gauge-row monitor-pf-row">
-            <CompareRingGauge
-              label="전압 불평형"
-              after={vUnbalance}
-              kind="unbalance"
-            />
-            <CompareRingGauge
-              label="전류 불평형"
-              before={iLoadUnbalance}
-              after={iGridUnbalance}
-              kind="unbalance"
-            />
-          </div>
         </ChartCard>
       )}
 
@@ -780,17 +780,6 @@ export default function DeviceDetailCharts({
                       itemStyle={TOOLTIP_ITEM_STYLE}
                       cursor={TOOLTIP_CURSOR}
                       formatter={(v) => [`${v} °C`]}
-                    />
-                    <ReferenceLine
-                      y={TEMP_THRESHOLDS.moduleWarn}
-                      stroke={CHART_COLORS.warn}
-                      {...TEMP_WARN_REF}
-                      label={{
-                        value: `주의 ${TEMP_THRESHOLDS.moduleWarn}°C`,
-                        position: "right",
-                        fill: CHART_COLORS.warn,
-                        fontSize: 10,
-                      }}
                     />
                     <ReferenceLine
                       y={TEMP_THRESHOLDS.moduleAlarm}

@@ -431,17 +431,6 @@ export default function DeviceHistoryCharts({
                 margin={{ right: TEMP_CHART_MARGIN_RIGHT }}
               >
                 <ReferenceLine
-                  y={TEMP_THRESHOLDS.moduleWarn}
-                  stroke={CHART_COLORS.warn}
-                  {...TEMP_WARN_REF}
-                  label={{
-                    value: `주의 ${TEMP_THRESHOLDS.moduleWarn}°C`,
-                    position: "right",
-                    fill: CHART_COLORS.warn,
-                    fontSize: 10,
-                  }}
-                />
-                <ReferenceLine
                   y={TEMP_THRESHOLDS.moduleAlarm}
                   stroke={CHART_COLORS.danger}
                   {...TEMP_ALARM_REF}

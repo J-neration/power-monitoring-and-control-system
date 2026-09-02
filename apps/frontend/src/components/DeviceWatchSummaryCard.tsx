@@ -53,14 +53,6 @@ export default function DeviceWatchSummaryCard({
             <span className="watch-chip watch-chip--ok">이상 없음</span>
           ) : null}
         </div>
-        <button
-          type="button"
-          className="device-settings-sync-btn device-settings-sync-btn--compact"
-          disabled
-          title="다음 단계에서 Gemini를 연결합니다"
-        >
-          요약 생성
-        </button>
       </div>
 
       {anomalies.length === 0 ? (
