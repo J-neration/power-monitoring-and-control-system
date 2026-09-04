@@ -597,7 +597,14 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
             installationId: cmd.installationId,
             module: cmd.module,
             power: cmd.power,
-            hasFields: !!parsed.data.fields,
+            moduleType: parsed.data.moduleType ?? null,
+            incomingKeys: parsed.data.fields
+              ? Object.keys(parsed.data.fields)
+              : [],
+            storedKeys:
+              cmd.fields && typeof cmd.fields === "object" && !Array.isArray(cmd.fields)
+                ? Object.keys(cmd.fields as object)
+                : [],
           },
           "Command created",
         );
