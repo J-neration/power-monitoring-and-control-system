@@ -125,6 +125,10 @@ function Bay({
       <TotalRow tag="TPF" unit="%" value={tpf} kind="pf" />
       <TotalRow tag="DPF" unit="%" value={dpf} kind="pf" />
       <div className="hmi-compare-rule" />
+      <div className="hmi-compare-cols hmi-compare-cols--sum" aria-hidden>
+        <span>TAG</span>
+        <span title="3상 합계">SUM</span>
+      </div>
       <TotalRow tag="S" unit="kVA" value={s} />
       <TotalRow tag="P" unit="kW" value={p} />
       <TotalRow tag="Q" unit="kvar" value={q} />
@@ -278,7 +282,7 @@ export default function DeviceCompareTable({ device }: Props) {
       </div>
 
       <footer className="hmi-compare-bus">
-        <span className="hmi-compare-bus-label">계통 전압</span>
+        <span className="hmi-compare-bus-label">계통 전압 RMS</span>
         <span>
           L1 <MetricValue value={device.vL1} kind="voltage" digits={1} />
           <span className="hmi-compare-bus-unit">V</span>
