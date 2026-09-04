@@ -43,6 +43,7 @@ function PowerStatusCard({ status }: { status: StatusBanner }) {
       role="status"
       aria-live="polite"
       aria-busy={status.tone === "pending"}
+      title={status.detail ?? status.title}
     >
       <div className="device-settings-status-icon" aria-hidden>
         {status.tone === "pending" ? (
@@ -62,9 +63,6 @@ function PowerStatusCard({ status }: { status: StatusBanner }) {
         <p className="device-settings-status-title">{status.title}</p>
         {status.detail ? (
           <p className="device-settings-status-detail">{status.detail}</p>
-        ) : null}
-        {status.commandId ? (
-          <code className="device-settings-status-cmd">{status.commandId}</code>
         ) : null}
       </div>
     </div>
@@ -211,11 +209,12 @@ export default function DeviceModulePowerPanel({
     : "";
 
   return (
-    <section className="device-detail-body">
+    <section className="device-settings-section">
       <div className="chart-card chart-card-wide device-module-power-panel">
-        <h3 className="chart-title">모듈 전원 제어</h3>
-
-        {status ? <PowerStatusCard status={status} /> : null}
+        <div className="device-module-power-head">
+          <h3 className="chart-title">모듈 전원</h3>
+          {status ? <PowerStatusCard status={status} /> : null}
+        </div>
 
         <div className="device-module-power-grid">
           {Array.from({ length: MODULE_SLOT_COUNT }, (_, i) => {
