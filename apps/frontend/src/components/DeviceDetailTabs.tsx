@@ -201,7 +201,7 @@ export default function DeviceDetailTabs({
         </div>
       </div>
 
-      <div className={`device-detail-tab-body${tab === "monitor" ? " device-detail-tab-body--fit" : ""}`}>
+      <div className={`device-detail-tab-body${tab === "monitor" || tab === "settings" ? " device-detail-tab-body--fit" : ""}`}>
       {tab === "monitor" && (
         <DeviceMonitorBoard
           device={device}
@@ -224,11 +224,25 @@ export default function DeviceDetailTabs({
       )}
 
       {tab === "settings" && isAdmin && (
-        <>
-          <div className="device-settings-help" role="note">
-            <p className="device-settings-help-title">
-              설정·모듈 상태는 자동으로 업데이트 되지 않습니다.
-            </p>
+        <div className="device-settings-console">
+          <details className="device-settings-help">
+            <summary>
+              <span className="device-settings-help-chevron" aria-hidden>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                  <path
+                    d="M6 9l6 6 6-6"
+                    stroke="currentColor"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <span className="device-settings-help-kicker">NOTE</span>
+              <span className="device-settings-help-summary">
+                설정·모듈 상태는 자동으로 업데이트 되지 않습니다.
+              </span>
+            </summary>
             <ol className="device-settings-help-list">
               <li>
                 이 장치 페이지에 들어와 있으면 원격 세션이 켜집니다. HMI는 다음
@@ -236,19 +250,19 @@ export default function DeviceDetailTabs({
                 세션은 로그아웃하거나 브라우저 탭을 닫을 때 해제됩니다.
               </li>
               <li>
-                아래 <strong>설정값 갱신</strong>을 누르면 HMI가 설정 스냅샷과
-                모듈 상태를 한 번 올립니다.
+                <strong>갱신</strong>을 누르면 HMI가 설정 스냅샷과 모듈 상태를
+                한 번 올립니다.
               </li>
               <li>
                 모니터 계측값(전압·전류·PF 등)은 <strong>모니터</strong> 화면의{" "}
                 <strong>데이터 갱신</strong>을 사용하세요.
               </li>
               <li>
-                필드 수정 후 <strong>변경 사항 적용</strong>하면 setBasic 명령이
-                가고, 적용 성공 후 스냅샷이 다시 동기화됩니다.
+                필드 수정 후 <strong>적용</strong>하면 setBasic 명령이 가고,
+                성공 후 스냅샷이 다시 동기화됩니다.
               </li>
             </ol>
-          </div>
+          </details>
           <DeviceSettingsSyncBar
             installationId={device.installationId}
             requestedBy={adminUsername}
@@ -266,7 +280,7 @@ export default function DeviceDetailTabs({
               numOfMods={device.numOfMods}
             />
           </div>
-        </>
+        </div>
       )}
 
       {tab === "faults" && isAdmin && (

@@ -77,6 +77,7 @@ const createCommandSchema = z.object({
   module: z.number().int(),
   power: z.string().min(1),
   requestedBy: z.string().trim().optional().nullable(),
+  moduleType: z.string().trim().optional().nullable(),
   fields: z
     .record(
       z.string(),
@@ -588,6 +589,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
           power: parsed.data.power,
           requestedBy: parsed.data.requestedBy ?? request.user.username,
           fields: parsed.data.fields ?? null,
+          moduleType: parsed.data.moduleType ?? null,
         });
         server.log.info(
           {

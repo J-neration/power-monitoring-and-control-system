@@ -8,6 +8,8 @@ import type {
 import {
   allowedKeysForModuleType,
   canonicalSettingsKey,
+  canonicalizeSettingsValue,
+  resolveModuleTypeForSetBasic,
 } from "../lib/deviceSettingsKeys.js";
 
 const prisma = new PrismaClient({
@@ -27,6 +29,8 @@ type CreateInput = {
   expiresAt?: Date | null;
   /** setBasic partial field map */
   fields?: Record<string, number | string | boolean | null> | null;
+  /** Settings form moduleType; used when the stored snapshot type is stale. */
+  moduleType?: string | null;
 };
 
 type AckInput = {
@@ -224,13 +228,14 @@ const sanitizeFields = (
     if (rawKey === "mod") continue; // module comes from command.module
     const key = canonicalSettingsKey(rawKey);
     if (!allowed.has(key)) continue;
+    const canonical = canonicalizeSettingsValue(moduleType, key, value);
     if (
-      value === null ||
-      typeof value === "number" ||
-      typeof value === "string" ||
-      typeof value === "boolean"
+      canonical === null ||
+      typeof canonical === "number" ||
+      typeof canonical === "string" ||
+      typeof canonical === "boolean"
     ) {
-      out[key] = value;
+      out[key] = canonical;
     }
   }
   return Object.keys(out).length > 0 ? out : null;
@@ -290,7 +295,12 @@ export const createCommandService = (
 
       let moduleType: string | null = null;
       if (power === "setBasic") {
-        moduleType = await repo.getModuleType(installationId);
+        const storedType = await repo.getModuleType(installationId);
+        moduleType = resolveModuleTypeForSetBasic(
+          storedType,
+          input.moduleType,
+          Object.keys(input.fields ?? {}),
+        );
       }
 
       const fields =
@@ -298,10 +308,15 @@ export const createCommandService = (
           ? sanitizeFields(input.fields ?? null, moduleType)
           : null;
       if (power === "setBasic" && !fields) {
+        const submitted = Object.keys(input.fields ?? {}).filter(
+          (key) => key !== "mod",
+        );
         throw new CommandError(
           400,
           "INVALID_FIELDS",
-          "setBasic requires a non-empty fields object with keys allowed for this moduleType",
+          submitted.length === 0
+            ? "setBasic requires a non-empty fields object with keys allowed for this moduleType"
+            : `setBasic fields [${submitted.join(", ")}] are not allowed for moduleType=${moduleType ?? "unknown"}`,
         );
       }
 
