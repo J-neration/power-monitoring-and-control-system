@@ -2491,12 +2491,28 @@ main.dashboard-full {
 
 .device-detail-page {
   padding: 8px 16px 10px;
-  margin-inline: clamp(12px, 3vw, 56px);
+  margin-inline: clamp(16px, 2vw, 28px);
   min-width: 0;
+  width: auto;
+  max-width: none;
   height: calc(100dvh - 44px);
   max-height: calc(100dvh - 44px);
   overflow: hidden;
   gap: 8px;
+}
+
+@media (min-width: 1025px) {
+  html:has(.device-detail-page),
+  body:has(.device-detail-page) {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .global-content:has(.device-detail-page) {
+    overflow: hidden;
+    min-height: 0;
+  }
 }
 
 .device-detail-page > .page-fault-banner {
@@ -2721,7 +2737,7 @@ main.dashboard-full {
   position: relative;
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   min-height: 104px;
   padding: 12px 14px 12px 16px;
@@ -4389,8 +4405,14 @@ main.dashboard-full {
   background: rgba(148, 163, 184, 0.12);
 }
 
+.hmi-compare-cols--sum,
 .hmi-compare-row--total {
-  grid-template-columns: minmax(72px, 0.9fr) minmax(0, 3fr);
+  grid-template-columns: minmax(72px, 0.9fr) minmax(0, 1fr);
+}
+
+.hmi-compare-cols--sum span:last-child {
+  color: rgba(226, 232, 240, 0.72);
+  letter-spacing: 0.12em;
 }
 
 .hmi-compare-total {
@@ -4487,8 +4509,12 @@ main.dashboard-full {
 
 .hmi-compare-bus-unit {
   margin-left: 4px;
-  font-size: 11px;
-  color: rgba(148, 163, 184, 0.45);
+  font-size: 12px;
+  font-weight: 800;
+  font-variant: normal;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: rgba(226, 232, 240, 0.72);
 }
 
 @media (max-width: 1100px) {
@@ -6967,6 +6993,7 @@ body.pmcs-control-room .global-header:hover {
     overflow-x: hidden;
     overflow-y: visible;
     max-width: 100%;
+    width: auto;
     margin-inline: 12px;
     box-sizing: border-box;
   }
@@ -7914,6 +7941,11 @@ body.pmcs-control-room .global-header:hover {
   .hmi-compare-row {
     grid-template-columns: minmax(48px, 0.8fr) repeat(3, minmax(0, 1fr));
     gap: 4px;
+  }
+
+  .hmi-compare-cols--sum,
+  .hmi-compare-row--total {
+    grid-template-columns: minmax(48px, 0.8fr) minmax(0, 1fr);
   }
 
   .hmi-compare-row .metric-value {
@@ -10308,12 +10340,18 @@ body.pmcs-control-room .global-header:hover {
 /* ── 2xl: ≥ 1920px (FHD 관제 디스플레이) ───────────────────── */
 @media (min-width: 1920px) {
   /* 흐름 페이지: 좌우로 무한정 늘어나지 않게 콘텐츠 폭 캡 + 가운데 정렬 */
-  .device-detail-page,
   .site-page {
     margin-inline: auto;
     max-width: 1680px;
     width: 100%;
     padding-inline: 40px;
+  }
+
+  .device-detail-page {
+    margin-inline: 24px;
+    max-width: none;
+    width: auto;
+    padding-inline: 16px;
   }
 
   /* 대시보드: 고정 사이드 컬럼을 넓혀 대형 화면 공간 활용 */
@@ -10338,10 +10376,15 @@ body.pmcs-control-room .global-header:hover {
 
 /* ── 3xl: ≥ 2560px (4K·QHD 관제 월) ────────────────────────── */
 @media (min-width: 2560px) {
-  .device-detail-page,
   .site-page {
     max-width: 2200px;
     padding-inline: 56px;
+  }
+
+  .device-detail-page {
+    margin-inline: 28px;
+    width: auto;
+    padding-inline: 16px;
   }
 
   /* 멀리서 보는 월 디스플레이 — 사이드 컬럼·간격·텍스트 추가 확대 */
@@ -11118,7 +11161,9 @@ body.pmcs-control-room .global-header:hover {
   font-size: 11px;
 }
 
-.device-settings-console .device-module-power-cell .device-module-power-chip.module-chip {
+.device-settings-console
+  .device-module-power-cell
+  .device-module-power-chip.module-chip {
   font-size: 9px;
   padding: 2px 4px;
 }

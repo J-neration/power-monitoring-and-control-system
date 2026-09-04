@@ -29,10 +29,7 @@ type FormulaBlock = {
 function BoltIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M13 2 4 14h7l-1 8 10-14h-7l1-6z"
-        fill="currentColor"
-      />
+      <path d="M13 2 4 14h7l-1 8 10-14h-7l1-6z" fill="currentColor" />
     </svg>
   );
 }
@@ -194,14 +191,14 @@ function StatCard({
         {compare ? (
           <div className="ops-stat-compare">
             <span className="ops-stat-compare-pair">
-              <span className="ops-stat-compare-tag">전</span>
+              <span className="ops-stat-compare-tag">보상 전</span>
               <span className="ops-stat-compare-before">{compare.before}</span>
             </span>
             <span className="ops-stat-compare-arrow" aria-hidden>
               →
             </span>
             <span className="ops-stat-compare-pair">
-              <span className="ops-stat-compare-tag">후</span>
+              <span className="ops-stat-compare-tag">보상 후</span>
               <span className="ops-stat-compare-after">{compare.after}</span>
             </span>
           </div>
@@ -228,7 +225,10 @@ export default function DeviceOpsBenefitPanel({
   const pBefore = device.uncompP;
   const pAfter = device.compP;
   const energyCompare =
-    pBefore != null && pAfter != null && Number.isFinite(pBefore) && Number.isFinite(pAfter)
+    pBefore != null &&
+    pAfter != null &&
+    Number.isFinite(pBefore) &&
+    Number.isFinite(pAfter)
       ? {
           before: `${pBefore.toFixed(1)} kW`,
           after: `${pAfter.toFixed(1)} kW`,
@@ -259,7 +259,9 @@ export default function DeviceOpsBenefitPanel({
         unit={kwhParts?.unit}
         compare={energyCompare}
         hint={
-          s.kwSaved != null ? `지금 ${s.kwSaved.toFixed(1)} kW 절감 중` : undefined
+          s.kwSaved != null
+            ? `지금 ${s.kwSaved.toFixed(1)} kW 절감 중`
+            : undefined
         }
         formula={{
           title: "전력량 절감 공식",
@@ -340,9 +342,7 @@ export default function DeviceOpsBenefitPanel({
         tone="quality"
         icon={<GaugeIcon />}
         kicker="전기 품질 점수"
-        value={
-          s.qualityAfter != null ? formatQuality(s.qualityAfter) : "—"
-        }
+        value={s.qualityAfter != null ? formatQuality(s.qualityAfter) : "—"}
         unit={s.qualityAfter != null ? "점" : undefined}
         compare={qualityCompare}
         hint={`IEEE 519 THD 한도 ${QUALITY_REFS.thdLimitPct}%`}
