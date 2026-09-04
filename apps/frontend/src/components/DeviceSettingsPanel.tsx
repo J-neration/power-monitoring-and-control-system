@@ -87,6 +87,18 @@ function diffFields(
   return Object.keys(out).length > 0 ? out : null;
 }
 
+/** Full visible row for setBasic — HMI ignores unchanged coils, so send the form as shown. */
+function rowToSetBasicFields(
+  row: BasicSettingRow,
+  fields: SettingFieldDef[],
+): Record<string, number | string> {
+  const out: Record<string, number | string> = {};
+  for (const f of fields) {
+    out[f.key] = canonicalizeFieldValue(f, row[f.key]);
+  }
+  return out;
+}
+
 function formatSnapshotAbsolute(iso: string): string {
   return new Date(iso).toLocaleString("ko-KR", {
     timeZone: "Asia/Seoul",
@@ -450,11 +462,12 @@ export default function DeviceSettingsPanel({
 
   const save = async () => {
     if (!currentRow || !currentBaseline || fieldDefs.length === 0) return;
-    const fields = diffFields(currentBaseline, currentRow, fieldDefs);
-    if (!fields) {
+    const diff = diffFields(currentBaseline, currentRow, fieldDefs);
+    if (!diff) {
       setStatus({ tone: "info", title: "변경된 항목이 없습니다." });
       return;
     }
+    const fields = rowToSetBasicFields(currentRow, fieldDefs);
     setBusy(true);
     setStatus(null);
     settledOkRef.current = false;
@@ -491,15 +504,10 @@ export default function DeviceSettingsPanel({
       }
       const id = data.command?.id ?? "";
       setPendingCommandId(id || null);
-      setBaseline((prev) =>
-        prev.map((row) =>
-          Number(row.mod) === selectedMod ? { ...currentRow } : row,
-        ),
-      );
       setStatus({
         tone: "pending",
         title: "설정 적용 대기 중",
-        detail: "HMI가 다음 명령 폴링에서 setBasic을 받아 적용합니다.",
+        detail: `전송 ${Object.keys(fields).join(", ")} · HMI가 다음 폴링에서 적용합니다.`,
         commandId: id || undefined,
       });
     } catch {
