@@ -7,7 +7,11 @@ import {
   ensureInstallationForIccid,
   getInstallationIdByIccid,
 } from "./deviceService.js";
-import { canonicalSettingsKey } from "../lib/deviceSettingsKeys.js";
+import {
+  allowedKeysForModuleType,
+  canonicalSettingsKey,
+  canonicalizeSettingsValue,
+} from "../lib/deviceSettingsKeys.js";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({
@@ -49,29 +53,41 @@ const asFiniteNumber = (v: unknown): number | null => {
   return null;
 };
 
-const normalizeBasicRow = (raw: unknown): BasicSettingRow | null => {
+const normalizeBasicRow = (
+  raw: unknown,
+  moduleType?: string | null,
+): BasicSettingRow | null => {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const src = raw as Record<string, unknown>;
+  const allowed = moduleType ? allowedKeysForModuleType(moduleType) : null;
   const out: BasicSettingRow = {};
   for (const [rawKey, value] of Object.entries(src)) {
     const key = canonicalSettingsKey(rawKey);
     // Prefer explicit tpf over legacy tc if both present
     if (rawKey === "tc" && ("tpf" in src || "tpf" in out)) continue;
+    if (key !== "mod" && allowed && !allowed.has(key)) continue;
+    let stored: number | string | boolean | null;
     if (value === null) {
-      out[key] = null;
-      continue;
-    }
-    if (typeof value === "boolean") {
-      out[key] = value;
-      continue;
-    }
-    if (typeof value === "string") {
+      stored = null;
+    } else if (typeof value === "boolean") {
+      stored = value;
+    } else if (typeof value === "string") {
       const n = asFiniteNumber(value);
-      out[key] = n !== null ? n : value;
-      continue;
+      stored = n !== null ? n : value;
+    } else {
+      const n = asFiniteNumber(value);
+      if (n === null) continue;
+      stored = n;
     }
-    const n = asFiniteNumber(value);
-    if (n !== null) out[key] = n;
+    const canonical = canonicalizeSettingsValue(moduleType, key, stored);
+    if (
+      canonical === null ||
+      typeof canonical === "number" ||
+      typeof canonical === "string" ||
+      typeof canonical === "boolean"
+    ) {
+      out[key] = canonical;
+    }
   }
   if (typeof out.mod !== "number") {
     const mod = asFiniteNumber(src.mod);
@@ -82,9 +98,12 @@ const normalizeBasicRow = (raw: unknown): BasicSettingRow | null => {
 };
 
 /** Migrate legacy `tc` → `tpf` when reading stored snapshots. */
-const migrateStoredBasic = (basic: BasicSettingRow[]): BasicSettingRow[] =>
+const migrateStoredBasic = (
+  basic: BasicSettingRow[],
+  moduleType?: string | null,
+): BasicSettingRow[] =>
   basic
-    .map((row) => normalizeBasicRow(row))
+    .map((row) => normalizeBasicRow(row, moduleType))
     .filter((row): row is BasicSettingRow => row !== null);
 
 export const settingsService = {
@@ -109,7 +128,7 @@ export const settingsService = {
     }
 
     const basic = input.basic
-      .map(normalizeBasicRow)
+      .map((row) => normalizeBasicRow(row, moduleType))
       .filter((row): row is BasicSettingRow => row !== null);
 
     const numOfMods =
@@ -149,7 +168,7 @@ export const settingsService = {
       installationId: row.installationId,
       moduleType: row.moduleType as ModuleType,
       numOfMods: row.numOfMods,
-      basic: migrateStoredBasic(rawBasic),
+      basic: migrateStoredBasic(rawBasic, row.moduleType),
       updatedAt: row.updatedAt.toISOString(),
     };
   },

@@ -231,3 +231,138 @@ test("setBasic filters to v3v4 allowed keys and renames tc→tpf", async () => {
     tpf: 0.98,
   });
 });
+
+test("setBasic filters to v5 keys, stores enum strings, and leaves wiring 0/1 alone", async () => {
+  const repo = new InMemoryRepo();
+  repo.moduleTypes.set("PSVG-RNDTEST5", "v5");
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "setBasic",
+    fields: {
+      tpf: 0.98,
+      compMode: 3,
+      startupMethod: "auto",
+      wiring: 0,
+      ictrs: 100, // v1v2-only
+      reactiveSwitch: 1, // not on v5
+      k0: 10, // v3v4-only
+    },
+  });
+
+  const polled = await service.poll("PSVG-RNDTEST5");
+  assert.equal(created.power, "setBasic");
+  assert.ok("fields" in polled);
+  assert.deepEqual(polled.fields, {
+    tpf: 0.98,
+    compMode: "Harm+Reactive",
+    startupMethod: "Auto",
+    wiring: 0,
+  });
+});
+
+test("setBasic v5 accepts HMI string enums as-is", async () => {
+  const repo = new InMemoryRepo();
+  repo.moduleTypes.set("PSVG-RNDTEST5", "v5");
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+
+  await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "setBasic",
+    fields: {
+      compMode: "Harm+Reactive",
+      harmonicMode: "Selective",
+      phaseAdaption: "On",
+      wiring: "3P4L",
+      priorityMode: "Harm",
+    },
+  });
+
+  const polled = await service.poll("PSVG-RNDTEST5");
+  assert.ok("fields" in polled);
+  assert.deepEqual(polled.fields, {
+    compMode: "Harm+Reactive",
+    harmonicMode: "Selective",
+    phaseAdaption: "On",
+    wiring: "3P4L",
+    priorityMode: "Harm",
+  });
+});
+
+test("setBasic v1v2 rejects v5-only keys", async () => {
+  const repo = new InMemoryRepo();
+  repo.moduleTypes.set("PSVG-RNDTEST5", "v1v2");
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "setBasic",
+    fields: {
+      ectrs: 1000,
+      pcs: 55.5,
+      compMode: "Harmonic",
+      wiring: "3P4L",
+    },
+  });
+
+  const polled = await service.poll("PSVG-RNDTEST5");
+  assert.equal(created.power, "setBasic");
+  assert.ok("fields" in polled);
+  assert.deepEqual(polled.fields, {
+    ectrs: 1000,
+    pcs: 55.5,
+  });
+});
+
+test("setBasic v5-only keys succeed even if stored moduleType is stale v1v2", async () => {
+  const repo = new InMemoryRepo();
+  repo.moduleTypes.set("PSVG-RNDTEST5", "v1v2");
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "setBasic",
+    moduleType: "v5",
+    fields: {
+      startupMethod: "Manual",
+      harmonicMode: "Selective",
+      reactiveRatio: 100,
+      wiring: "3P4L",
+    },
+  });
+
+  const polled = await service.poll("PSVG-RNDTEST5");
+  assert.equal(created.power, "setBasic");
+  assert.ok("fields" in polled);
+  assert.deepEqual(polled.fields, {
+    startupMethod: "Manual",
+    harmonicMode: "Selective",
+    reactiveRatio: 100,
+    wiring: "3P4L",
+  });
+});
+
+test("setBasic infers v5 when only v5-only keys are sent against stale v1v2", async () => {
+  const repo = new InMemoryRepo();
+  repo.moduleTypes.set("PSVG-RNDTEST5", "v1v2");
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+
+  await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "setBasic",
+    fields: { startupMethod: "Auto", priorityMode: "Harm" },
+  });
+
+  const polled = await service.poll("PSVG-RNDTEST5");
+  assert.ok("fields" in polled);
+  assert.deepEqual(polled.fields, {
+    startupMethod: "Auto",
+    priorityMode: "Harm",
+  });
+});

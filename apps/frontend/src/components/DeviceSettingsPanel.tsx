@@ -2,13 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  canonicalizeFieldValue,
   fieldsFromPayload,
   isModuleType,
+  matchSelectOption,
   migrateBasicRowKeys,
   type BasicSettingRow,
   type DeviceSettingsSnapshot,
   type ModuleType,
   type SettingFieldDef,
+  type SettingOption,
 } from "../lib/deviceSettingsFields";
 import { useWsEvents } from "../hooks/useWsEvents";
 
@@ -42,28 +45,44 @@ function toEditableRows(
     for (const f of fields) {
       const v = migrated[f.key];
       if (v === undefined || v === null) {
-        next[f.key] = 0;
-      } else if (typeof v === "boolean") {
-        next[f.key] = v ? 1 : 0;
+        next[f.key] = f.kind === "select" ? (f.options?.[0]?.value ?? 0) : 0;
       } else {
-        next[f.key] = v;
+        next[f.key] = canonicalizeFieldValue(f, v);
       }
     }
     return next;
   });
 }
 
+function valuesEqual(
+  field: SettingFieldDef,
+  a: unknown,
+  b: unknown,
+): boolean {
+  if (field.kind === "select") {
+    const ca = canonicalizeFieldValue(field, a);
+    const cb = canonicalizeFieldValue(field, b);
+    if (typeof ca === "string" && typeof cb === "string") {
+      return ca.toLowerCase() === cb.toLowerCase();
+    }
+    return ca === cb;
+  }
+  const na = Number(a ?? 0);
+  const nb = Number(b ?? 0);
+  if (!Number.isFinite(na) || !Number.isFinite(nb)) return false;
+  return na === nb;
+}
+
 function diffFields(
   original: BasicSettingRow,
   edited: BasicSettingRow,
   fields: SettingFieldDef[],
-): Record<string, number> | null {
-  const out: Record<string, number> = {};
+): Record<string, number | string> | null {
+  const out: Record<string, number | string> = {};
   for (const f of fields) {
-    const a = Number(original[f.key] ?? 0);
-    const b = Number(edited[f.key] ?? 0);
-    if (!Number.isFinite(a) || !Number.isFinite(b)) continue;
-    if (a !== b) out[f.key] = b;
+    if (valuesEqual(f, original[f.key], edited[f.key])) continue;
+    const next = canonicalizeFieldValue(f, edited[f.key]);
+    out[f.key] = next;
   }
   return Object.keys(out).length > 0 ? out : null;
 }
@@ -101,6 +120,7 @@ function StatusCard({ status }: { status: StatusBanner }) {
       role="status"
       aria-live="polite"
       aria-busy={status.tone === "pending"}
+      title={status.detail ?? status.title}
     >
       <div className="device-settings-status-icon" aria-hidden>
         {status.tone === "pending" ? (
@@ -126,10 +146,89 @@ function StatusCard({ status }: { status: StatusBanner }) {
         {status.detail ? (
           <p className="device-settings-status-detail">{status.detail}</p>
         ) : null}
-        {status.commandId ? (
-          <code className="device-settings-status-cmd">{status.commandId}</code>
-        ) : null}
       </div>
+    </div>
+  );
+}
+
+function SettingsDropdown({
+  label,
+  options,
+  value,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  options: SettingOption[];
+  value: string | number | undefined;
+  disabled: boolean;
+  onChange: (value: string | number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const selected = options.find((o) => o.value === value);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (disabled) setOpen(false);
+  }, [disabled]);
+
+  return (
+    <div className="device-settings-dropdown" ref={rootRef}>
+      <button
+        type="button"
+        className={`device-settings-dropdown-btn${open ? " open" : ""}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={label}
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="device-settings-dropdown-value">
+          {selected?.label ?? "—"}
+        </span>
+        <span className="device-settings-dropdown-caret" aria-hidden>
+          ▾
+        </span>
+      </button>
+      {open ? (
+        <ul className="device-settings-dropdown-menu" role="listbox">
+          {options.map((o) => {
+            const active = selected != null && o.value === selected.value;
+            return (
+              <li key={String(o.value)}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={active}
+                  className={`device-settings-dropdown-item${active ? " active" : ""}`}
+                  onClick={() => {
+                    onChange(o.value);
+                    setOpen(false);
+                  }}
+                >
+                  {o.label}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
     </div>
   );
 }
@@ -341,7 +440,7 @@ export default function DeviceSettingsPanel({
   const currentBaseline =
     baseline.find((r) => Number(r.mod) === selectedMod) ?? baseline[0];
 
-  const updateField = (key: string, value: number) => {
+  const updateField = (key: string, value: number | string) => {
     setRows((prev) =>
       prev.map((row) =>
         Number(row.mod) === selectedMod ? { ...row, [key]: value } : row,
@@ -372,6 +471,7 @@ export default function DeviceSettingsPanel({
           module: selectedMod,
           power: "setBasic",
           fields,
+          ...(moduleType ? { moduleType } : {}),
           ...(requestedBy ? { requestedBy } : {}),
         }),
       });
@@ -411,12 +511,19 @@ export default function DeviceSettingsPanel({
   };
 
   const commandLocked = busy || pendingCommandId !== null;
+  const saveLabel = busy
+    ? "등록 중…"
+    : pendingCommandId
+      ? "HMI 응답 대기 중…"
+      : "변경 사항 적용";
 
   if (load.status === "loading") {
     return (
-      <section className="device-detail-body">
+      <section className="device-settings-section">
         <div className="chart-card chart-card-wide device-settings-panel">
-          <h3 className="chart-title">기본 설정</h3>
+          <div className="device-settings-panel-head">
+            <h3 className="chart-title">기본 설정</h3>
+          </div>
           <p className="device-settings-empty">설정 스냅샷 불러오는 중…</p>
         </div>
       </section>
@@ -425,13 +532,14 @@ export default function DeviceSettingsPanel({
 
   if (load.status === "empty" || !moduleType || !currentRow) {
     return (
-      <section className="device-detail-body">
+      <section className="device-settings-section">
         <div className="chart-card chart-card-wide device-settings-panel">
-          <h3 className="chart-title">기본 설정</h3>
+          <div className="device-settings-panel-head">
+            <h3 className="chart-title">기본 설정</h3>
+          </div>
           {status ? <StatusCard status={status} /> : null}
           <p className="device-settings-empty">
-            아직 장치에서 설정 스냅샷이 도착하지 않았습니다. 위 「설정값 갱신」으로
-            HMI에서 설정·모듈 상태를 받아 오세요.
+            스냅샷이 없습니다. 위 「갱신」으로 HMI에서 받아 오세요.
             {numOfMods != null ? ` (텔레메트리 모듈 수: ${numOfMods})` : null}
           </p>
         </div>
@@ -441,13 +549,15 @@ export default function DeviceSettingsPanel({
 
   if (fieldDefs.length === 0) {
     return (
-      <section className="device-detail-body">
+      <section className="device-settings-section">
         <div className="chart-card chart-card-wide device-settings-panel">
-          <h3 className="chart-title">기본 설정</h3>
+          <div className="device-settings-panel-head">
+            <h3 className="chart-title">기본 설정</h3>
+          </div>
           {status ? <StatusCard status={status} /> : null}
           <p className="device-settings-empty">
-            저장된 스냅샷에 이 moduleType({moduleType})용 필드가 없습니다. 위
-            「설정값 갱신」으로 최신 설정을 다시 받으세요.
+            이 moduleType({moduleType})용 필드가 스냅샷에 없습니다. 「갱신」으로
+            다시 받으세요.
           </p>
         </div>
       </section>
@@ -455,37 +565,37 @@ export default function DeviceSettingsPanel({
   }
 
   return (
-    <section className="device-detail-body">
+    <section className="device-settings-section">
       <div className="chart-card chart-card-wide device-settings-panel">
-        <h3 className="chart-title">기본 설정</h3>
+        <div className="device-settings-panel-head">
+          <h3 className="chart-title">기본 설정</h3>
+          <div className="device-settings-mod-tabs" role="tablist">
+            {rows.map((row) => {
+              const mod = Number(row.mod);
+              return (
+                <button
+                  key={mod}
+                  type="button"
+                  role="tab"
+                  aria-selected={mod === selectedMod}
+                  className={`device-settings-mod-tab${mod === selectedMod ? " active" : ""}`}
+                  onClick={() => setSelectedMod(mod)}
+                >
+                  M{mod + 1}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {status ? <StatusCard status={status} /> : null}
 
-        <div className="device-settings-mod-tabs" role="tablist">
-          {rows.map((row) => {
-            const mod = Number(row.mod);
-            return (
-              <button
-                key={mod}
-                type="button"
-                role="tab"
-                aria-selected={mod === selectedMod}
-                className={`device-settings-mod-tab${mod === selectedMod ? " active" : ""}`}
-                onClick={() => setSelectedMod(mod)}
-              >
-                M{mod + 1}
-              </button>
-            );
-          })}
-        </div>
-
         <div className="device-settings-grid">
           {fieldDefs.map((f) => {
-            const raw = Number(currentRow[f.key] ?? 0);
             if (f.kind === "switch") {
-              const on = raw !== 0;
+              const on = Number(currentRow[f.key] ?? 0) !== 0;
               return (
-                <label key={f.key} className="device-settings-field">
+                <label key={f.key} className="device-settings-field" title={f.hint}>
                   <span className="device-settings-field-label">{f.label}</span>
                   <button
                     type="button"
@@ -500,43 +610,69 @@ export default function DeviceSettingsPanel({
               );
             }
             if (f.kind === "select" && f.options?.length) {
-              const selected = f.options.some((o) => o.value === raw)
-                ? raw
-                : f.options[0]!.value;
-              return (
-                <div key={f.key} className="device-settings-field">
-                  <span className="device-settings-field-label">{f.label}</span>
+              const matched = matchSelectOption(f, currentRow[f.key]);
+              const useSegment = f.options.length <= 2;
+              const wide = f.options.length > 4;
+              if (useSegment) {
+                return (
                   <div
-                    className="device-settings-segment"
-                    role="group"
-                    aria-label={f.label}
+                    key={f.key}
+                    className="device-settings-field"
+                    title={f.hint}
                   >
-                    {f.options.map((o) => {
-                      const active = o.value === selected;
-                      return (
-                        <button
-                          key={o.value}
-                          type="button"
-                          className={`device-settings-segment-btn${active ? " active" : ""}`}
-                          aria-pressed={active}
-                          disabled={commandLocked}
-                          onClick={() => updateField(f.key, o.value)}
-                        >
-                          {o.label}
-                        </button>
-                      );
-                    })}
+                    <span className="device-settings-field-label">{f.label}</span>
+                    <div
+                      className="device-settings-segment"
+                      role="radiogroup"
+                      aria-label={f.label}
+                    >
+                      {f.options.map((o) => {
+                        const active = matched != null && o.value === matched.value;
+                        return (
+                          <button
+                            key={String(o.value)}
+                            type="button"
+                            role="radio"
+                            className={`device-settings-segment-btn${active ? " active" : ""}`}
+                            aria-checked={active}
+                            disabled={commandLocked}
+                            onClick={() => updateField(f.key, o.value)}
+                          >
+                            {o.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
+                );
+              }
+              return (
+                <div
+                  key={f.key}
+                  className={`device-settings-field${wide ? " device-settings-field--wide" : ""}`}
+                  title={f.hint}
+                >
+                  <span className="device-settings-field-label">{f.label}</span>
+                  <SettingsDropdown
+                    label={f.label}
+                    options={f.options}
+                    value={matched?.value}
+                    disabled={commandLocked}
+                    onChange={(next) => updateField(f.key, next)}
+                  />
                 </div>
               );
             }
+            const raw = Number(currentRow[f.key] ?? 0);
             return (
-              <label key={f.key} className="device-settings-field">
+              <label key={f.key} className="device-settings-field" title={f.hint}>
                 <span className="device-settings-field-label">{f.label}</span>
                 <input
                   type="number"
                   className="device-settings-input"
                   step={f.step ?? 1}
+                  min={f.min}
+                  max={f.max}
                   value={Number.isFinite(raw) ? raw : 0}
                   disabled={commandLocked}
                   onChange={(e) => {
@@ -556,14 +692,11 @@ export default function DeviceSettingsPanel({
             disabled={commandLocked}
             onClick={() => void save()}
           >
-            {busy
-              ? "등록 중…"
-              : pendingCommandId
-                ? "HMI 응답 대기 중…"
-                : "변경 사항 적용"}
+            {saveLabel}
           </button>
         </div>
       </div>
     </section>
   );
 }
+
