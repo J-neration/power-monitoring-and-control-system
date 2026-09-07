@@ -62,9 +62,10 @@ function yAxisWidthForUnit(unit?: string): number {
   if (u === "%") return 46;
   if (u === "°c") return 48;
   if (u === "m/s") return 52;
-  if (u.endsWith("kvar") || u.endsWith("kva") || u.endsWith("kw") || u === "a") {
-    return 58;
+  if (u.endsWith("kvar") || u.endsWith("kva") || u.endsWith("kw")) {
+    return 80;
   }
+  if (u === "a") return 52;
   return 48;
 }
 

@@ -65,17 +65,7 @@ export default function DeviceMonitorBoard({
 
       {section === "overview" ? (
         <div className="device-monitor-overview">
-          <div className="hmi-rail">
-            <span className="hmi-rail-id">01</span>
-            <span className="hmi-rail-label">운용 절감</span>
-            <span className="hmi-rail-line" />
-          </div>
           <DeviceOpsBenefitPanel device={device} readings={readings} />
-          <div className="hmi-rail">
-            <span className="hmi-rail-id">02</span>
-            <span className="hmi-rail-label">실시간 계측</span>
-            <span className="hmi-rail-line" />
-          </div>
           <div className="monitor-gauge-grid">
             <PfNeedleGauge
               label="TPF"
@@ -104,11 +94,6 @@ export default function DeviceMonitorBoard({
             />
           </div>
           <div className="device-monitor-overview-cap">
-            <div className="hmi-rail">
-              <span className="hmi-rail-id">03</span>
-              <span className="hmi-rail-label">용량</span>
-              <span className="hmi-rail-line" />
-            </div>
             <CapacitySnapshot device={device} fill />
           </div>
         </div>
@@ -118,7 +103,13 @@ export default function DeviceMonitorBoard({
         </section>
       ) : (
         <div
-          className={`device-monitor-layout${section === "pf" || section === "thd" || section === "unbalance" ? " device-monitor-layout--charts-only" : ""}`}
+          className={`device-monitor-layout${
+            section === "pf" || section === "thd" || section === "unbalance"
+              ? " device-monitor-layout--charts-only"
+              : section === "thermal"
+                ? " device-monitor-layout--thermal"
+                : ""
+          }`}
         >
           <section className="device-detail-body device-monitor-charts">
             <DeviceDetailChartsLazy device={device} section={section} />

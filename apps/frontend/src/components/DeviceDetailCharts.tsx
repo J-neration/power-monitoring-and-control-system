@@ -37,7 +37,6 @@ import {
 import PfNeedleGauge from "./charts/PfNeedleGauge";
 import PfQtyMix from "./charts/PfQtyMix";
 import ThdArcGauge from "./charts/ThdArcGauge";
-import CapacitySnapshot from "./CapacitySnapshot";
 
 export type DeviceChartSection = "pf" | "thd" | "unbalance" | "thermal";
 function ThdBarLegend() {
@@ -271,17 +270,17 @@ export default function DeviceDetailCharts({
   const hasFanSpeed = (device.fanSpeed?.length ?? 0) > 0;
 
   const areaTempData = (device.areaTemp ?? []).map((v, i) => ({
-    sensor: `주위 ${i + 1}`,
+    ch: String(i + 1),
     온도: Math.round(v * 10) / 10,
   }));
 
   const moduleTempData = (device.moduleTemp ?? []).map((v, i) => ({
-    sensor: `모듈 ${i + 1}`,
+    ch: String(i + 1),
     온도: Math.round(v * 10) / 10,
   }));
 
   const fanSpeedData = (device.fanSpeed ?? []).map((v, i) => ({
-    fan: `팬 ${i + 1}`,
+    ch: String(i + 1),
     RPM: Math.round(v),
   }));
 
@@ -643,7 +642,7 @@ export default function DeviceDetailCharts({
                     }}
                   >
                     <CartesianGrid {...GRID} />
-                    <XAxis dataKey="sensor" {...AXIS} />
+                    <XAxis dataKey="ch" {...AXIS} interval={0} />
                     <YAxis
                       {...AXIS}
                       allowDecimals={false}
@@ -656,6 +655,7 @@ export default function DeviceDetailCharts({
                       labelStyle={TOOLTIP_LABEL_STYLE}
                       itemStyle={TOOLTIP_ITEM_STYLE}
                       cursor={TOOLTIP_CURSOR}
+                      labelFormatter={(l) => `센서 ${l}`}
                       formatter={(v) => [`${v}°C`]}
                     />
                     <ReferenceLine
@@ -717,7 +717,7 @@ export default function DeviceDetailCharts({
                     }}
                   >
                     <CartesianGrid {...GRID} />
-                    <XAxis dataKey="sensor" {...AXIS} fontSize={11} />
+                    <XAxis dataKey="ch" {...AXIS} interval={0} />
                     <YAxis
                       {...AXIS}
                       allowDecimals={false}
@@ -730,6 +730,7 @@ export default function DeviceDetailCharts({
                       labelStyle={TOOLTIP_LABEL_STYLE}
                       itemStyle={TOOLTIP_ITEM_STYLE}
                       cursor={TOOLTIP_CURSOR}
+                      labelFormatter={(l) => `모듈 ${l}`}
                       formatter={(v) => [`${v}°C`]}
                     />
                     <ReferenceLine
@@ -775,7 +776,7 @@ export default function DeviceDetailCharts({
                     margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
                   >
                     <CartesianGrid {...GRID} />
-                    <XAxis dataKey="fan" {...AXIS} />
+                    <XAxis dataKey="ch" {...AXIS} interval={0} />
                     <YAxis
                       {...AXIS}
                       allowDecimals={false}
@@ -787,6 +788,7 @@ export default function DeviceDetailCharts({
                       labelStyle={TOOLTIP_LABEL_STYLE}
                       itemStyle={TOOLTIP_ITEM_STYLE}
                       cursor={TOOLTIP_CURSOR}
+                      labelFormatter={(l) => `팬 ${l}`}
                       formatter={(v) => [`${v} m/s`]}
                     />
                     <Bar
@@ -802,8 +804,6 @@ export default function DeviceDetailCharts({
               <ChartEmpty />
             )}
           </ChartCard>
-
-          <CapacitySnapshot device={device} fill={fill} wide={!section} />
         </>
       )}
     </div>
