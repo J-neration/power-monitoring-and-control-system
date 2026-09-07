@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import DeviceHistoryCharts from "./DeviceHistoryCharts";
 import DeviceMonitorBoard from "./DeviceMonitorBoard";
@@ -15,6 +15,10 @@ import DeviceSideIdentity from "./DeviceSideIdentity";
 import type { DeviceWithInstallation } from "../types/site";
 import type { TelemetryReading } from "../types/site";
 import type { FaultEvent } from "../lib/api";
+import {
+  DEMO_HISTORY_INSTALLATION_ID,
+  buildDemoHistoryReadings,
+} from "../lib/demoHistoryReadings";
 import { useWsEvents } from "../hooks/useWsEvents";
 import { useDeviceViewing } from "../hooks/useDeviceViewing";
 
@@ -114,6 +118,13 @@ export default function DeviceDetailTabs({
 
   const activeFaultCount = faults.filter((f) => f.active).length;
   const hasActiveFaults = activeFaultCount > 0;
+  const historyReadings = useMemo(
+    () =>
+      device.installationId === DEMO_HISTORY_INSTALLATION_ID
+        ? buildDemoHistoryReadings(device.installationId)
+        : readings,
+    [device.installationId, readings],
+  );
 
   return (
     <div className="device-detail-tabs">
@@ -215,7 +226,7 @@ export default function DeviceDetailTabs({
             <h2 className="history-section-title">최근 {hours}시간 이력</h2>
           </div>
           <DeviceHistoryCharts
-            readings={readings}
+            readings={historyReadings}
             hours={hours}
             model={device.model}
             faults={faults}

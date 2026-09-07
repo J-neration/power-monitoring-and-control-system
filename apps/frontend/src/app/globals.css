@@ -2820,6 +2820,12 @@ main.dashboard-full {
   opacity: 0.7;
 }
 
+.ops-stat-num + .ops-stat-hint {
+  margin-top: 2px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
 .ops-stat-compare {
   display: flex;
   align-items: baseline;
@@ -4259,6 +4265,7 @@ main.dashboard-full {
 .hmi-compare-head {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   flex-shrink: 0;
   min-width: 0;
@@ -4280,7 +4287,6 @@ main.dashboard-full {
 }
 
 .hmi-compare-flow {
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -4293,6 +4299,29 @@ main.dashboard-full {
 .hmi-compare-flow span {
   color: var(--pmcs-accent-bright);
   opacity: 0.7;
+}
+
+.hmi-compare-stack {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.hmi-compare-block {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hmi-compare-block-label {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(148, 163, 184, 0.55);
 }
 
 .hmi-compare-bays {
@@ -4384,6 +4413,27 @@ main.dashboard-full {
   text-align: right;
 }
 
+.hmi-compare-metric {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  justify-self: end;
+  gap: 3px;
+  min-width: 0;
+  width: 100%;
+}
+
+.hmi-compare-metric.is-pct {
+  gap: 1px;
+}
+
+.hmi-compare-metric-unit {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(148, 163, 184, 0.55);
+  letter-spacing: 0.02em;
+}
+
 .hmi-compare-tag {
   display: inline-flex;
   align-items: baseline;
@@ -4397,6 +4447,12 @@ main.dashboard-full {
   font-size: 10px;
   font-weight: 600;
   color: rgba(148, 163, 184, 0.42);
+}
+
+.hmi-compare-name {
+  font-size: 11px;
+  font-weight: 650;
+  color: rgba(148, 163, 184, 0.5);
 }
 
 .hmi-compare-rule {
@@ -4484,40 +4540,163 @@ main.dashboard-full {
 
 .hmi-compare-bus {
   flex-shrink: 0;
+  margin-left: auto;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 8px 22px;
-  padding: 8px 12px;
+  gap: 8px 12px;
+  padding: 4px 8px 4px 12px;
   border-radius: var(--pmcs-radius);
   background: #070a10;
   border: 1px solid rgba(148, 163, 184, 0.14);
-  font-size: 13px;
-  font-weight: 650;
 }
 
 .hmi-compare-bus-label {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.06em;
+  color: rgba(148, 163, 184, 0.55);
+  white-space: nowrap;
+}
+
+.hmi-compare-bus-phases {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.hmi-compare-bus-phase {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.hmi-compare-bus-phase-tag {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   color: rgba(148, 163, 184, 0.5);
 }
 
 .hmi-compare-bus .metric-value {
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: 800;
 }
 
 .hmi-compare-bus-unit {
-  margin-left: 4px;
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 700;
   font-variant: normal;
   text-transform: none;
   letter-spacing: 0.02em;
-  color: rgba(226, 232, 240, 0.72);
+  color: rgba(148, 163, 184, 0.45);
+}
+
+.hmi-power-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.hmi-power-cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: var(--pmcs-radius);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left-width: 3px;
+}
+
+.hmi-power-cell--s {
+  border-left-color: #60a5fa;
+}
+
+.hmi-power-cell--p {
+  border-left-color: #34d399;
+}
+
+.hmi-power-cell--q {
+  border-left-color: #fbbf24;
+}
+
+.hmi-power-cell--h {
+  border-left-color: #c084fc;
+}
+
+.hmi-power-cell-tag {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(226, 232, 240, 0.82);
+}
+
+.hmi-power-cell--s .hmi-power-cell-tag {
+  color: #93c5fd;
+}
+
+.hmi-power-cell--p .hmi-power-cell-tag {
+  color: #6ee7b7;
+}
+
+.hmi-power-cell--q .hmi-power-cell-tag {
+  color: #fcd34d;
+}
+
+.hmi-power-cell--h .hmi-power-cell-tag {
+  color: #d8b4fe;
+}
+
+.hmi-power-cell-name {
+  font-size: 11px;
+  font-weight: 650;
+  color: rgba(148, 163, 184, 0.55);
+}
+
+.hmi-power-cell-val {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.hmi-power-cell-val .metric-value {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.hmi-power-cell-unit {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(148, 163, 184, 0.5);
 }
 
 @media (max-width: 1100px) {
+  .hmi-compare-stack {
+    height: auto;
+  }
+
+  .hmi-compare-bus {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .hmi-compare-bus-phases {
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
   .hmi-compare-bays {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
@@ -4912,7 +5091,7 @@ main.dashboard-full {
 .pf-gauge-col .pf-needle-plot,
 .monitor-pf-row .thd-arc-plot,
 .monitor-pf-row .pf-needle-plot {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
   aspect-ratio: auto;
   display: flex;
@@ -5039,11 +5218,11 @@ main.dashboard-full {
   flex: 0 0 auto;
   width: 100%;
   line-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .thd-arc-plot {
-  aspect-ratio: 240 / 124;
+  aspect-ratio: 240 / 136;
 }
 
 .pf-needle-plot {
@@ -5056,7 +5235,7 @@ main.dashboard-full {
   width: 100%;
   height: auto;
   max-width: 100%;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .monitor-gauge-grid .pf-needle-plot,
@@ -5077,12 +5256,52 @@ main.dashboard-full {
   justify-content: center;
 }
 
+.thd-arc-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  flex-shrink: 0;
+}
+
+.thd-arc-leg {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(226, 232, 240, 0.62);
+}
+
+.thd-arc-leg-swatch {
+  display: inline-block;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.thd-arc-leg-swatch--in {
+  width: 14px;
+  height: 7px;
+  border-radius: 14px 14px 0 0;
+  background: #94a3b8;
+}
+
+.thd-arc-leg-swatch--out {
+  width: 20px;
+  height: 10px;
+  border-radius: 20px 20px 0 0;
+  border: 3px solid #e2e8f0;
+  border-bottom: none;
+  background: transparent;
+}
+
 .pf-needle-legend {
   display: flex;
   justify-content: center;
   gap: 14px;
   margin-top: auto;
   margin-bottom: 2px;
+  flex-shrink: 0;
 }
 
 .pf-needle-gauge .ring-gauge-values {
@@ -5241,6 +5460,25 @@ main.dashboard-full {
   color: rgba(255, 255, 255, 0.35);
 }
 
+.thd-arc-caption {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 4px;
+}
+
+.thd-arc-gauge .thd-arc-legend {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.thd-arc-gauge .ring-gauge-values {
+  margin-top: 0;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
 .monitor-pf-row {
   flex: 1;
   min-height: 0;
@@ -5273,13 +5511,40 @@ main.dashboard-full {
 }
 
 .device-charts-grid--thd {
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.device-charts-grid--thd .chart-card {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.device-charts-grid--thd .monitor-pf-row {
+  gap: 8px;
+}
+
+.device-charts-grid--thd .thd-arc-gauge {
+  overflow: hidden;
+}
+
+.device-charts-grid--thd .thd-arc-plot {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.device-charts-grid--thd .chart-card-plot .recharts-wrapper,
+.device-charts-grid--thd .chart-card-plot .recharts-surface {
+  overflow: visible;
 }
 
 .device-charts-grid--unbalance {
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  grid-template-rows: minmax(0, 1.05fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.device-charts-grid--unbalance > :first-child {
+  grid-column: 1 / -1;
 }
 
 .device-charts-grid--thermal {
@@ -5295,6 +5560,229 @@ main.dashboard-full {
   flex: 1;
   min-height: 0;
   overflow: auto;
+}
+
+.unb-limit-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;
+  padding: 4px 2px 2px;
+}
+
+.unb-limit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.unb-limit-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.unb-limit-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(226, 232, 240, 0.78);
+}
+
+.unb-limit-readout {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.unb-limit-before {
+  font-size: 13px;
+  font-weight: 650;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.unb-limit-arrow {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.unb-limit-after {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.unb-limit--ok .unb-limit-after {
+  color: #5eead4;
+}
+
+.unb-limit--warn .unb-limit-after {
+  color: #fcd34d;
+}
+
+.unb-limit--danger .unb-limit-after {
+  color: #fca5a5;
+}
+
+.unb-limit-track {
+  position: relative;
+  height: 16px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.unb-limit-fill {
+  position: absolute;
+  left: 0;
+  border-radius: 1px;
+}
+
+.unb-limit-fill--before {
+  top: 2px;
+  bottom: 2px;
+  background: repeating-linear-gradient(
+    -55deg,
+    rgba(148, 163, 184, 0.45),
+    rgba(148, 163, 184, 0.45) 3px,
+    rgba(148, 163, 184, 0.18) 3px,
+    rgba(148, 163, 184, 0.18) 6px
+  );
+}
+
+.unb-limit-fill--after {
+  top: 4px;
+  bottom: 4px;
+}
+
+.unb-limit--ok .unb-limit-fill--after {
+  background: #14b8a6;
+}
+
+.unb-limit--warn .unb-limit-fill--after {
+  background: #eab308;
+}
+
+.unb-limit--danger .unb-limit-fill--after {
+  background: #f87171;
+}
+
+.unb-limit-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.38);
+  transform: translateX(-0.5px);
+  pointer-events: none;
+}
+
+.unb-limit-scale {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  min-height: 16px;
+  font-size: 10px;
+  font-weight: 650;
+  color: rgba(226, 232, 240, 0.42);
+}
+
+.unb-limit-scale-mark {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.unb-limit--empty {
+  justify-content: center;
+  min-height: 72px;
+}
+
+.unb-limit-muted {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.unb-leg {
+  display: inline-block;
+  width: 16px;
+  height: 0;
+  flex-shrink: 0;
+}
+
+.unb-leg--before {
+  border-top: 3px solid #f59e0b;
+}
+
+.unb-leg--after {
+  border-top: 3px solid #00d4aa;
+}
+
+.unb-limit-notes {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.unb-limit-notes li {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(226, 232, 240, 0.68);
+}
+
+.unb-limit-notes strong {
+  font-weight: 700;
+  color: rgba(226, 232, 240, 0.88);
+}
+
+.unb-limit-notes-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px;
+  padding: 1px 7px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.unb-limit-notes-tag--motor {
+  color: #fde68a;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+.unb-limit-notes-tag--grid {
+  color: #fda4af;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+}
+
+.unb-limit-notes-tag--danger {
+  color: #fca5a5;
+  background: rgba(248, 113, 113, 0.16);
+  border: 1px solid rgba(248, 113, 113, 0.5);
+}
+
+@media (max-width: 1024px) {
+  .unb-limit-notes li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
 }
 
 .device-charts-grid--compact {
@@ -5357,6 +5845,11 @@ main.dashboard-full {
 .ring-gauge-plot .recharts-responsive-container {
   position: absolute !important;
   inset: 0;
+}
+
+.chart-card .recharts-wrapper,
+.chart-card-plot .recharts-wrapper {
+  overflow: visible;
 }
 
 .device-charts-grid--compact .pf-gauge-row {
@@ -5470,7 +5963,7 @@ main.dashboard-full {
 .device-monitor-metrics .thermal-summary {
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -5485,6 +5978,7 @@ main.dashboard-full {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .thermal-summary-title {
@@ -5495,12 +5989,23 @@ main.dashboard-full {
 
 .thermal-summary-window {
   margin-left: auto;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 650;
-  color: rgba(148, 163, 184, 0.55);
+  color: rgba(148, 163, 184, 0.62);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .thermal-stat {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
   padding: 10px 12px 11px;
   border-radius: var(--pmcs-radius);
   background: #070a10;
@@ -5518,91 +6023,121 @@ main.dashboard-full {
 
 .thermal-stat-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .thermal-stat-head h3 {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  color: rgba(226, 232, 240, 0.82);
+  color: rgba(226, 232, 240, 0.88);
 }
 
-.thermal-stat-unit {
+.thermal-stat-status {
   font-size: 11px;
-  font-weight: 650;
-  color: rgba(148, 163, 184, 0.5);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
 }
 
-.thermal-stat-now {
+.thermal-stat-status--ok {
+  color: #86efac;
+  background: rgba(134, 239, 172, 0.1);
+}
+
+.thermal-stat-status--warn {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.12);
+}
+
+.thermal-stat-status--danger {
+  color: #fca5a5;
+  background: rgba(248, 113, 113, 0.14);
+}
+
+.thermal-stat-block {
+  min-width: 0;
+}
+
+.thermal-stat-block-label {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(148, 163, 184, 0.62);
+}
+
+.thermal-stat-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.thermal-metric {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 8px 0 10px;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(148, 163, 184, 0.08);
 }
 
-.thermal-stat-kicker {
-  font-size: 11px;
-  font-weight: 700;
-  color: rgba(148, 163, 184, 0.5);
+.thermal-metric-label {
+  font-size: 12px;
+  font-weight: 650;
+  color: rgba(148, 163, 184, 0.68);
 }
 
-.thermal-stat-now strong {
+.thermal-metric-value {
   font-family: var(--pmcs-font-mono);
-  font-size: 28px;
+  font-size: clamp(18px, 2.2vh, 22px);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
   color: #e2e8f0;
-  line-height: 1;
+  line-height: 1.05;
 }
 
-.thermal-stat--warn .thermal-stat-now strong {
+.thermal-metric-unit {
+  margin-left: 3px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: rgba(148, 163, 184, 0.7);
+}
+
+.thermal-stat--warn .thermal-metric--peak .thermal-metric-value {
   color: #fbbf24;
 }
 
-.thermal-stat--danger .thermal-stat-now strong {
+.thermal-stat--danger .thermal-metric--peak .thermal-metric-value {
   color: #f87171;
 }
 
-.thermal-stat-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 10px;
-  margin: 0;
-}
-
-.thermal-stat-grid .thermal-stat-max {
-  grid-column: 1 / -1;
-}
-
-.thermal-stat-grid dt {
-  font-size: 11px;
+.thermal-stat-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 0;
+  font-size: 12px;
   font-weight: 650;
-  color: rgba(148, 163, 184, 0.5);
+  color: rgba(148, 163, 184, 0.55);
 }
 
-.thermal-stat-grid dd {
-  margin: 2px 0 0;
-  font-family: var(--pmcs-font-mono);
-  font-size: 16px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: rgba(226, 232, 240, 0.88);
-}
-
-.thermal-stat-note,
-.thermal-stat-limit {
-  margin: 8px 0 0;
-  font-size: 11px;
-  font-weight: 650;
-  color: rgba(148, 163, 184, 0.5);
-}
-
-.thermal-stat-limit {
-  color: rgba(148, 163, 184, 0.4);
+.thermal-stat-foot span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .device-monitor-metrics .scada-metrics-grid {
@@ -7028,17 +7563,323 @@ body.pmcs-control-room .global-header:hover {
 }
 
 @media (max-width: 1280px) {
+  /* 1280×720 빔/노트북: 4열 유지하고 카드만 줄여 계측 게이지까지 한 화면에 */
+  .device-detail-tabs {
+    grid-template-columns: minmax(176px, 208px) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .device-detail-side {
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .device-side-identity {
+    padding: 7px 8px 6px;
+    min-width: 0;
+  }
+
+  .device-side-identity-title {
+    gap: 4px;
+  }
+
+  .device-side-identity-title h1 {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .device-side-identity-spec,
+  .device-side-identity-id,
+  .device-side-identity-seen {
+    padding-left: 14px;
+    font-size: 10px;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  .device-side-identity-link {
+    margin-top: 6px;
+    padding-top: 6px;
+  }
+
+  .watch-summary {
+    padding: 7px 8px 6px;
+    min-width: 0;
+  }
+
+  .watch-summary-head {
+    margin-bottom: 6px;
+    gap: 4px;
+  }
+
+  .watch-summary-meta {
+    font-size: 10px;
+  }
+
+  .watch-chip {
+    font-size: 10px;
+    padding: 1px 5px;
+  }
+
+  .watch-summary-empty {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .watch-summary-list {
+    gap: 3px;
+  }
+
+  .watch-summary-item {
+    align-items: flex-start;
+    gap: 5px;
+    padding: 4px 5px;
+    min-width: 0;
+  }
+
+  .watch-summary-level {
+    font-size: 10px;
+  }
+
+  .watch-summary-msg {
+    min-width: 0;
+    font-size: 11px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .device-detail-page .device-tab-bar {
+    min-height: 32px;
+    padding: 0 0 4px;
+    gap: 8px;
+  }
+
+  .device-detail-page .device-tab-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .device-detail-page .device-tab-icon,
+  .device-detail-page .device-tab-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .device-detail-page .device-detail-tab-body {
+    padding-top: 6px;
+  }
+
+  .monitor-view-nav {
+    margin-bottom: 6px;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .monitor-view-chips {
+    height: 28px;
+  }
+
+  .monitor-view-chip {
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  .module-slot-grid--nav .module-slot-id {
+    font-size: 9px;
+  }
+
+  .module-slot-grid--nav .module-slot-state {
+    font-size: 10px;
+  }
+
   .ops-benefit {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
   }
 
   .ops-stat {
-    min-height: 96px;
-    padding: 14px 16px 12px;
+    min-height: 0;
+    min-width: 0;
+    padding: 7px 8px;
+    gap: 6px;
+  }
+
+  .ops-stat-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .ops-stat-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .ops-stat-body,
+  .ops-stat-num {
+    min-width: 0;
   }
 
   .ops-stat-value {
-    font-size: 28px;
+    font-size: 18px;
+  }
+
+  .ops-stat-unit {
+    font-size: 11px;
+  }
+
+  .device-monitor-overview .ops-benefit {
+    margin-bottom: 6px;
+  }
+
+  .device-monitor-overview .ops-stat {
+    min-height: 0;
+    padding: 7px 8px;
+    gap: 6px;
+  }
+
+  .device-monitor-overview .ops-stat-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .device-monitor-overview .ops-stat-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .device-monitor-overview .ops-stat-value {
+    font-size: 18px;
+  }
+
+  .device-monitor-overview .ops-stat-kicker {
+    font-size: 11px;
+  }
+
+  .device-monitor-overview .ops-stat-hint {
+    font-size: 10px;
+  }
+
+  .device-monitor-overview .ops-stat-compare {
+    flex-wrap: wrap;
+    gap: 2px 6px;
+    margin-top: 1px;
+    padding-top: 3px;
+    font-size: 10px;
+    line-height: 1.25;
+    white-space: normal;
+    overflow: visible;
+  }
+
+  .device-monitor-overview .ops-stat-compare-tag {
+    font-size: 9px;
+    margin-right: 3px;
+  }
+
+  .device-monitor-overview .hmi-rail {
+    margin-bottom: 4px;
+    gap: 8px;
+  }
+
+  .device-monitor-overview .hmi-rail-label {
+    font-size: 12px;
+  }
+
+  .device-monitor-overview .monitor-gauge-grid {
+    flex: 1 1 0;
+    min-height: 150px;
+    height: auto;
+    max-height: none;
+    gap: 6px;
+  }
+
+  .device-monitor-overview .ring-gauge,
+  .monitor-gauge-grid > .ring-gauge {
+    min-width: 0;
+    min-height: 0;
+    padding: 4px 4px 2px;
+  }
+
+  .device-monitor-overview .ring-gauge-title {
+    font-size: 13px;
+    line-height: 1.2;
+  }
+
+  .device-monitor-overview .ring-gauge-title::before {
+    font-size: 9px;
+  }
+
+  .device-monitor-overview .pf-needle-head {
+    gap: 2px;
+  }
+
+  .device-monitor-overview .pf-qty-pill {
+    min-width: 16px;
+    height: 14px;
+    padding: 0 4px;
+    font-size: 9px;
+  }
+
+  .device-monitor-overview .pf-needle-legend {
+    gap: 6px;
+    margin-top: 0;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  .device-monitor-overview .pf-needle-leg,
+  .device-monitor-overview .thd-arc-leg {
+    font-size: 8px;
+    gap: 3px;
+    line-height: 1.2;
+  }
+
+  .device-monitor-overview .pf-needle-leg::before {
+    width: 10px;
+  }
+
+  .device-monitor-overview .thd-arc-caption {
+    padding-top: 0;
+    flex-shrink: 0;
+  }
+
+  .device-monitor-overview .thd-arc-legend {
+    gap: 2px 6px;
+    flex-shrink: 0;
+  }
+
+  .device-monitor-overview .thd-arc-leg-swatch--in {
+    width: 9px;
+    height: 5px;
+  }
+
+  .device-monitor-overview .thd-arc-leg-swatch--out {
+    width: 12px;
+    height: 6px;
+    border-width: 2px;
+  }
+
+  .device-monitor-overview .ring-gauge-values {
+    padding-top: 2px;
+    padding-bottom: 0;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .device-monitor-overview .ring-gauge-before {
+    font-size: 12px;
+  }
+
+  .device-monitor-overview .ring-gauge-arrow {
+    font-size: 11px;
+  }
+
+  .device-monitor-overview .ring-gauge-after {
+    font-size: 16px;
+  }
+
+  .device-monitor-overview-cap .cap-stat {
+    font-size: 11px;
   }
 
   .device-monitor-layout {
@@ -7050,17 +7891,6 @@ body.pmcs-control-room .global-header:hover {
     grid-template-rows: minmax(0, 1fr);
   }
 
-  .monitor-gauge-grid {
-    flex: none;
-    height: auto;
-    min-height: 0;
-    max-height: none;
-  }
-
-  .device-monitor-overview .ops-stat {
-    min-height: 128px;
-  }
-
   .device-charts-grid--pf,
   .device-charts-grid--unbalance,
   .device-charts-grid--thermal {
@@ -7068,7 +7898,41 @@ body.pmcs-control-room .global-header:hover {
   }
 }
 
+@media (max-height: 740px) {
+  .device-monitor-overview .hmi-rail {
+    margin-bottom: 4px;
+  }
+
+  .device-monitor-overview .ops-benefit {
+    margin-bottom: 6px;
+  }
+
+  .device-monitor-overview .ops-stat {
+    min-height: 0;
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  .device-monitor-overview .monitor-gauge-grid {
+    flex: 1 1 0;
+    min-height: 140px;
+  }
+
+  .device-monitor-overview .ring-gauge,
+  .monitor-gauge-grid > .ring-gauge {
+    min-height: 0;
+  }
+
+  .device-monitor-overview-cap .chart-card {
+    padding: 8px 12px 6px;
+  }
+}
+
 @media (max-width: 1024px) {
+  .ops-benefit {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .device-monitor-layout,
   .device-monitor-layout--charts-only {
     grid-template-columns: 1fr;
@@ -7306,6 +8170,10 @@ body.pmcs-control-room .global-header:hover {
     height: auto;
     grid-template-columns: 1fr;
     grid-template-rows: none;
+  }
+
+  .unb-limit-row {
+    grid-template-columns: 1fr;
   }
 
   .chart-card-wide {
@@ -7950,6 +8818,10 @@ body.pmcs-control-room .global-header:hover {
 
   .hmi-compare-row .metric-value {
     font-size: 12px;
+  }
+
+  .hmi-compare-metric-unit {
+    font-size: 10px;
   }
 
   .device-module-power-grid {
@@ -10162,9 +11034,10 @@ body.pmcs-control-room .global-header:hover {
 
 .scada-chart-card-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .scada-chart-card-titles {
@@ -10222,16 +11095,24 @@ body.pmcs-control-room .global-header:hover {
   font-weight: 600;
 }
 
+.scada-chart-card-legend {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 .thd-bar-legend {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-end;
+  align-items: center;
   gap: 14px;
   list-style: none;
-  padding: 8px 0 0;
+  padding: 0;
   margin: 0;
+  flex-shrink: 0;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.65);
+  font-weight: 700;
+  color: rgba(226, 232, 240, 0.72);
 }
 
 .thd-bar-legend li {
@@ -10240,11 +11121,57 @@ body.pmcs-control-room .global-header:hover {
   gap: 6px;
 }
 
-.thd-bar-legend-dot {
+.thd-bar-legend-mark {
+  display: inline-block;
   width: 8px;
-  height: 8px;
+  height: 12px;
+  border-radius: 2px 2px 0 0;
+  flex-shrink: 0;
+}
+
+.thd-bar-legend-mark--before {
+  background: #94a3b8;
+}
+
+.thd-bar-legend-mark--after {
+  background: #2dd4bf;
+}
+
+.history-area-chart {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.history-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 16px;
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 650;
+  color: rgba(226, 232, 240, 0.68);
+}
+
+.history-chart-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.history-chart-legend-swatch {
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+.history-chart-legend-swatch.is-dashed {
+  box-shadow: inset 0 0 0 1.5px rgba(15, 23, 42, 0.55);
 }
 
 .digital-phase-panel {

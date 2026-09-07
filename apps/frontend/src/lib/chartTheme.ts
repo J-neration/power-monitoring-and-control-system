@@ -88,6 +88,16 @@ export const LEGEND = {
   iconSize: 8,
 };
 
+/** `%`·`°C`는 숫자 바로 뒤에, 그 외 단위는 한 칸 띄워 붙인다. */
+export function withChartUnit(value: string | number, unit?: string): string {
+  const text = String(value);
+  if (!unit) return text;
+  const u = unit.trim();
+  if (!u) return text;
+  if (u === "%" || u === "°C") return `${text}${u}`;
+  return `${text} ${u}`;
+}
+
 export function thdBarColor(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return CHART_COLORS.gridMuted;
   if (value >= THD_THRESHOLDS.danger) return CHART_COLORS.danger;

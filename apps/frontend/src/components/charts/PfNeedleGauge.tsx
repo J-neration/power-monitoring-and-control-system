@@ -91,9 +91,9 @@ const BANDS = [
 ] as const;
 
 const LABELS = [
-  { t: pfToT(-GREEN), text: "−90" },
-  { t: 0.5, text: "100" },
-  { t: pfToT(GREEN), text: "90" },
+  { t: pfToT(-GREEN), text: "−90%" },
+  { t: 0.5, text: "100%" },
+  { t: pfToT(GREEN), text: "90%" },
 ] as const;
 
 const TICKS = [50, 60, 70, 80, 90, 100] as const;
@@ -201,7 +201,7 @@ export default function PfNeedleGauge({ label, before, after, qty }: Props) {
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill={COLOR.text}
-                fontSize={item.text === "100" ? 11 : 9}
+                fontSize={item.text === "100%" ? 11 : 9}
                 fontWeight="600"
               >
                 {item.text}

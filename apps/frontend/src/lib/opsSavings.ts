@@ -32,6 +32,8 @@ export const QUALITY_REFS = {
   voltageUnbalanceLimitPct: 2,
   /** NEMA MG-1 전동기 권장 전압 불평형 */
   voltageUnbalanceMotorPct: 1,
+  /** 품질 점수 0점 구간 · 한도 바 만칸 */
+  voltageUnbalanceDangerPct: 5,
   /** 한전 전기공급약관 역률 기준(할증) / 인센티브 상한 */
   kepcoPfPct: 90,
   kepcoPfIncentivePct: 95,
@@ -173,6 +175,31 @@ export function phaseUnbalancePct(
   if (mean <= 0) return null;
   const maxDev = Math.max(...xs.map((v) => Math.abs(v - mean)));
   return (maxDev / mean) * 100;
+}
+
+export type PhaseId = "L1" | "L2" | "L3";
+
+/** 상별 (값 − 평균) / 평균 × 100. 0이 평형, +는 무거운 상, −는 가벼운 상. */
+export function phaseDeviationPcts(
+  l1?: number | null,
+  l2?: number | null,
+  l3?: number | null,
+): { phase: PhaseId; value: number | null; pct: number | null }[] {
+  const raw = [l1, l2, l3].map(num);
+  const xs = raw.filter((v): v is number => v != null && v > 0);
+  const mean = xs.length === 3 ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+  return (["L1", "L2", "L3"] as const).map((phase, i) => {
+    const value = raw[i];
+    const pct =
+      mean != null && mean > 0 && value != null && value > 0
+        ? ((value - mean) / mean) * 100
+        : null;
+    return {
+      phase,
+      value,
+      pct: pct != null ? Math.round(pct * 100) / 100 : null,
+    };
+  });
 }
 
 /**

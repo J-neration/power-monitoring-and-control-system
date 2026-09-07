@@ -8,21 +8,20 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
   Cell,
   ReferenceLine,
 } from "recharts";
 import type { Device } from "../types/site";
 import ChartCard from "./charts/ChartCard";
 import ChartThresholdLines from "./charts/ChartThresholdLines";
-import DigitalPhasePanel from "./charts/DigitalPhasePanel";
-import { phaseUnbalancePct } from "../lib/opsSavings";
+import UnbalanceLimitBar from "./charts/UnbalanceLimitBar";
+import UnbalanceDeviationChart from "./charts/UnbalanceDeviationChart";
+import { phaseDeviationPcts, phaseUnbalancePct } from "../lib/opsSavings";
 import {
   AXIS,
   CHART_COLORS,
   CHART_H,
   GRID,
-  LEGEND,
   PF_QTY,
   thdBarColor,
   TOOLTIP_CURSOR,
@@ -33,9 +32,8 @@ import {
   TEMP_CHART_MARGIN_RIGHT,
   TEMP_THRESHOLDS,
   TEMP_WARN_REF,
-  VOLTAGE_NOMINAL,
+  withChartUnit,
 } from "../lib/chartTheme";
-import CompareRingGauge from "./charts/CompareRingGauge";
 import PfNeedleGauge from "./charts/PfNeedleGauge";
 import PfQtyMix from "./charts/PfQtyMix";
 import ThdArcGauge from "./charts/ThdArcGauge";
@@ -44,21 +42,35 @@ import CapacitySnapshot from "./CapacitySnapshot";
 export type DeviceChartSection = "pf" | "thd" | "unbalance" | "thermal";
 function ThdBarLegend() {
   const items = [
-    { label: "보상 전", color: CHART_COLORS.accent },
-    { label: "보상 후", color: CHART_COLORS.accent },
+    { label: "보상 전", swatch: "before" },
+    { label: "보상 후", swatch: "after" },
   ];
   return (
     <ul className="thd-bar-legend">
       {items.map((item) => (
         <li key={item.label}>
           <span
-            className="thd-bar-legend-dot"
-            style={{ background: item.color }}
+            className={`thd-bar-legend-mark thd-bar-legend-mark--${item.swatch}`}
             aria-hidden
           />
           {item.label}
         </li>
       ))}
+    </ul>
+  );
+}
+
+function ThdGaugeLegend() {
+  return (
+    <ul className="thd-bar-legend">
+      <li>
+        <span className="thd-arc-leg-swatch thd-arc-leg-swatch--in" aria-hidden />
+        안쪽 · 보상 전
+      </li>
+      <li>
+        <span className="thd-arc-leg-swatch thd-arc-leg-swatch--out" aria-hidden />
+        바깥 · 보상 후
+      </li>
     </ul>
   );
 }
@@ -176,56 +188,24 @@ export default function DeviceDetailCharts({
   compact = false,
   section,
 }: DeviceDetailChartsProps) {
-  const voltageData = [
-    {
-      phase: "L1",
-      전압: device.vL1 != null ? Math.round(device.vL1 * 10) / 10 : null,
-    },
-    {
-      phase: "L2",
-      전압: device.vL2 != null ? Math.round(device.vL2 * 10) / 10 : null,
-    },
-    {
-      phase: "L3",
-      전압: device.vL3 != null ? Math.round(device.vL3 * 10) / 10 : null,
-    },
-  ];
-
-  const currentData = [
-    {
-      phase: "L1",
-      보상전:
-        device.loadCurrentL1 != null
-          ? Math.round(device.loadCurrentL1 * 10) / 10
-          : null,
-      보상후:
-        device.gridCurrentL1 != null
-          ? Math.round(device.gridCurrentL1 * 10) / 10
-          : null,
-    },
-    {
-      phase: "L2",
-      보상전:
-        device.loadCurrentL2 != null
-          ? Math.round(device.loadCurrentL2 * 10) / 10
-          : null,
-      보상후:
-        device.gridCurrentL2 != null
-          ? Math.round(device.gridCurrentL2 * 10) / 10
-          : null,
-    },
-    {
-      phase: "L3",
-      보상전:
-        device.loadCurrentL3 != null
-          ? Math.round(device.loadCurrentL3 * 10) / 10
-          : null,
-      보상후:
-        device.gridCurrentL3 != null
-          ? Math.round(device.gridCurrentL3 * 10) / 10
-          : null,
-    },
-  ];
+  const vDeviation = phaseDeviationPcts(device.vL1, device.vL2, device.vL3).map(
+    (row) => ({ phase: row.phase, 편차: row.pct }),
+  );
+  const iLoadDev = phaseDeviationPcts(
+    device.loadCurrentL1,
+    device.loadCurrentL2,
+    device.loadCurrentL3,
+  );
+  const iGridDev = phaseDeviationPcts(
+    device.gridCurrentL1,
+    device.gridCurrentL2,
+    device.gridCurrentL3,
+  );
+  const iDeviation = iLoadDev.map((row, i) => ({
+    phase: row.phase,
+    보상전: row.pct,
+    보상후: iGridDev[i]?.pct ?? null,
+  }));
 
   const thdData = [
     {
@@ -327,159 +307,96 @@ export default function DeviceDetailCharts({
       className={`device-charts-grid${compactMode ? " device-charts-grid--compact" : ""}${section ? ` device-charts-grid--section device-charts-grid--${section}` : ""}`}
     >
       {section === "unbalance" && (
-        <ChartCard title="불평형 (%)" subtitle="— 전압 LVUR · 전류 불평형" fill>
-          <div className="pf-gauge-row monitor-pf-row">
-            <CompareRingGauge
-              label="전압 불평형"
-              after={vUnbalance}
-              kind="unbalance"
-            />
-            <CompareRingGauge
-              label="전류 불평형"
-              before={iLoadUnbalance}
-              after={iGridUnbalance}
-              kind="unbalance"
-            />
-          </div>
-        </ChartCard>
-      )}
-
-      {show(["unbalance"]) && (
-        <ChartCard
-          title="상별 계측값"
-          subtitle="— 디지털 패널"
-          wide={!compactMode && section !== "unbalance"}
-          fill={fill}
-        >
-          <DigitalPhasePanel
-            rows={[
-              {
-                label: "전압 (V)",
-                l1: device.vL1,
-                l2: device.vL2,
-                l3: device.vL3,
-                kind: "voltage",
-                suffix: " V",
-              },
-              {
-                label: "전류 Load (A)",
-                l1: device.loadCurrentL1,
-                l2: device.loadCurrentL2,
-                l3: device.loadCurrentL3,
-                suffix: " A",
-              },
-              {
-                label: "전류 Grid (A)",
-                l1: device.gridCurrentL1,
-                l2: device.gridCurrentL2,
-                l3: device.gridCurrentL3,
-                suffix: " A",
-              },
-              {
-                label: "THD Load (%)",
-                l1: device.loadCurrentTHDL1,
-                l2: device.loadCurrentTHDL2,
-                l3: device.loadCurrentTHDL3,
-                kind: "thd",
-                suffix: "%",
-              },
-              {
-                label: "THD Grid (%)",
-                l1: device.gridCurrentTHDL1,
-                l2: device.gridCurrentTHDL2,
-                l3: device.gridCurrentTHDL3,
-                kind: "thd",
-                suffix: "%",
-              },
-            ]}
-          />
-        </ChartCard>
-      )}
-
-      {show(["unbalance"]) && !compactMode && (
         <>
-          <ChartCard title="전압 (V)" large fill={fill}>
+          <ChartCard
+            title="불평형 KPI"
+            subtitle="— 세 상 크기가 얼마나 다른지 (LVUR)"
+            wide
+          >
+            <div className="unb-limit-row">
+              <UnbalanceLimitBar label="전압 불평형" value={vUnbalance} />
+              <UnbalanceLimitBar
+                label="전류 불평형"
+                before={iLoadUnbalance}
+                value={iGridUnbalance}
+              />
+            </div>
+            <ul className="unb-limit-notes">
+              <li>
+                <span className="unb-limit-notes-tag unb-limit-notes-tag--motor">
+                  전동기 1%
+                </span>
+                <span>
+                  <strong>NEMA MG-1</strong> — 미국 전동기 제작 규격. 전압 불평형이 1%를
+                  넘으면 모터가 더 뜨거워지고 수명이 줄어든다고 봅니다.
+                </span>
+              </li>
+              <li>
+                <span className="unb-limit-notes-tag unb-limit-notes-tag--grid">
+                  계통 2%
+                </span>
+                <span>
+                  <strong>IEC 61000-2-2 / EN 50160</strong> — 유럽·국제 저압 계통 품질
+                  규격. 공공 저압망에서 전압 불평형의 양립 레벨(이 정도까지는 설비가
+                  견딘다고 보는 값)이 2%입니다.
+                </span>
+              </li>
+              <li>
+                <span className="unb-limit-notes-tag unb-limit-notes-tag--danger">
+                  위험 5%
+                </span>
+                <span>
+                  이 화면의 막대 만칸입니다. 품질 점수에서는 5% 이상을 0점으로 둡니다.
+                  법정 차단값이 아니라 관제용 상한입니다.
+                </span>
+              </li>
+            </ul>
+          </ChartCard>
+          <ChartCard
+            title="전압 상편차 (%)"
+            subtitle="— (Vφ − Vavg) / Vavg"
+            fill
+          >
             {hasVoltage(device) ? (
-              <div className={fill ? "chart-card-plot" : undefined}>
-                <ResponsiveContainer width="100%" height={plotH}>
-                  <BarChart
-                    data={voltageData}
-                    margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
-                  >
-                    <CartesianGrid {...GRID} />
-                    <XAxis dataKey="phase" {...AXIS} />
-                    <YAxis
-                      {...AXIS}
-                      allowDecimals={false}
-                      domain={yDomainWithPadding}
-                    />
-                    <Tooltip
-                      contentStyle={TOOLTIP_STYLE}
-                      labelStyle={TOOLTIP_LABEL_STYLE}
-                      itemStyle={TOOLTIP_ITEM_STYLE}
-                      cursor={TOOLTIP_CURSOR}
-                    />
-                    <ReferenceLine
-                      y={VOLTAGE_NOMINAL}
-                      stroke={CHART_COLORS.accent}
-                      strokeDasharray="4 3"
-                      label={{
-                        value: `${VOLTAGE_NOMINAL}V`,
-                        fill: CHART_COLORS.accent,
-                        fontSize: 10,
-                        position: "insideTopRight",
-                      }}
-                    />
-                    <Bar
-                      dataKey="전압"
-                      fill={CHART_COLORS.blue}
-                      radius={[4, 4, 0, 0]}
-                      barSize={36}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="chart-card-plot">
+                <UnbalanceDeviationChart
+                  data={vDeviation}
+                  series={[{ key: "편차", name: "상편차", color: CHART_COLORS.blue }]}
+                  height={plotH}
+                  colorByLimit
+                />
               </div>
             ) : (
               <ChartEmpty />
             )}
           </ChartCard>
-
-          <ChartCard title="전류 (A)" subtitle="— 보상 전후" large fill={fill}>
+          <ChartCard
+            title="전류 상편차 (%)"
+            subtitle="— 보상 전(부하) / 후(계통)"
+            fill
+            legend={
+              <ul className="thd-bar-legend">
+                <li>
+                  <span className="unb-leg unb-leg--before" aria-hidden />
+                  보상 전
+                </li>
+                <li>
+                  <span className="unb-leg unb-leg--after" aria-hidden />
+                  보상 후
+                </li>
+              </ul>
+            }
+          >
             {hasCurrent(device) ? (
-              <div className={fill ? "chart-card-plot" : undefined}>
-                <ResponsiveContainer width="100%" height={plotH}>
-                  <BarChart
-                    data={currentData}
-                    margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
-                  >
-                    <CartesianGrid {...GRID} />
-                    <XAxis dataKey="phase" {...AXIS} />
-                    <YAxis
-                      {...AXIS}
-                      allowDecimals={false}
-                      domain={yDomainWithPadding}
-                    />
-                    <Tooltip
-                      contentStyle={TOOLTIP_STYLE}
-                      labelStyle={TOOLTIP_LABEL_STYLE}
-                      itemStyle={TOOLTIP_ITEM_STYLE}
-                      cursor={TOOLTIP_CURSOR}
-                    />
-                    <Legend {...LEGEND} />
-                    <Bar
-                      dataKey="보상전"
-                      fill={CHART_COLORS.load}
-                      radius={[4, 4, 0, 0]}
-                      barSize={28}
-                    />
-                    <Bar
-                      dataKey="보상후"
-                      fill={CHART_COLORS.grid}
-                      radius={[4, 4, 0, 0]}
-                      barSize={28}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="chart-card-plot">
+                <UnbalanceDeviationChart
+                  data={iDeviation}
+                  series={[
+                    { key: "보상전", name: "보상 전", color: CHART_COLORS.load },
+                    { key: "보상후", name: "보상 후", color: CHART_COLORS.grid },
+                  ]}
+                  height={plotH}
+                />
               </div>
             ) : (
               <ChartEmpty />
@@ -488,8 +405,14 @@ export default function DeviceDetailCharts({
         </>
       )}
 
+
       {section === "thd" && (
-        <ChartCard title="상별 THDi" subtitle="— 보상 전후" fill>
+        <ChartCard
+          title="상별 THDi (%)"
+          subtitle="— 안쪽 보상 전 · 바깥 보상 후"
+          fill
+          legend={<ThdGaugeLegend />}
+        >
           <div className="pf-gauge-row monitor-pf-row">
             <ThdArcGauge
               label="THDi L1"
@@ -511,28 +434,42 @@ export default function DeviceDetailCharts({
       )}
 
       {show(["thd"]) && (
-        <ChartCard title="전류 THD (%)" large={!compactMode} fill={fill}>
+        <ChartCard
+          title="전류 THD (%)"
+          subtitle="— 보상 전 / 후"
+          large={!compactMode}
+          fill={fill}
+          legend={<ThdBarLegend />}
+        >
           {hasThd(device) ? (
             <div className={fill ? "chart-card-plot" : undefined}>
               <ResponsiveContainer width="100%" height={plotH}>
                 <BarChart
                   data={thdData}
-                  margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
+                  margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
                 >
                   <CartesianGrid {...GRID} />
-                  <XAxis dataKey="phase" {...AXIS} />
+                  <XAxis dataKey="phase" {...AXIS} tickMargin={8} />
                   <YAxis
                     {...AXIS}
                     allowDecimals={false}
-                    domain={yDomainWithPadding}
+                    width={46}
+                    tickFormatter={(v) => withChartUnit(v, "%")}
+                    domain={[
+                      0,
+                      (dataMax: number) => {
+                        if (!Number.isFinite(dataMax)) return 1;
+                        return dataMax + Math.max(Math.abs(dataMax) * 0.08, 1);
+                      },
+                    ]}
                   />
                   <Tooltip
                     contentStyle={TOOLTIP_STYLE}
                     labelStyle={TOOLTIP_LABEL_STYLE}
                     itemStyle={TOOLTIP_ITEM_STYLE}
                     cursor={TOOLTIP_CURSOR}
+                    formatter={(v) => [withChartUnit(String(v ?? ""), "%")]}
                   />
-                  <Legend content={<ThdBarLegend />} />
                   <ChartThresholdLines kind="thd" />
                   <Bar
                     dataKey="보상전"
@@ -608,6 +545,18 @@ export default function DeviceDetailCharts({
                     labelStyle={TOOLTIP_LABEL_STYLE}
                     itemStyle={TOOLTIP_ITEM_STYLE}
                     cursor={TOOLTIP_CURSOR}
+                    formatter={(value, _name, item) => {
+                      const row = String(
+                        (item as { payload?: { name?: string } })?.payload
+                          ?.name ?? "",
+                      );
+                      const unit = row.includes("kVA")
+                        ? "kVA"
+                        : row.includes("kW")
+                          ? "kW"
+                          : "kvar";
+                      return [withChartUnit(String(value ?? ""), unit)];
+                    }}
                   />
                   <ReferenceLine
                     y={0}
@@ -689,7 +638,7 @@ export default function DeviceDetailCharts({
                     margin={{
                       top: 8,
                       right: TEMP_CHART_MARGIN_RIGHT,
-                      left: -10,
+                      left: 0,
                       bottom: 0,
                     }}
                   >
@@ -699,14 +648,15 @@ export default function DeviceDetailCharts({
                       {...AXIS}
                       allowDecimals={false}
                       domain={[0, 50]}
-                      unit="°C"
+                      tickFormatter={(v) => `${v}°C`}
+                      width={44}
                     />
                     <Tooltip
                       contentStyle={TOOLTIP_STYLE}
                       labelStyle={TOOLTIP_LABEL_STYLE}
                       itemStyle={TOOLTIP_ITEM_STYLE}
                       cursor={TOOLTIP_CURSOR}
-                      formatter={(v) => [`${v} °C`]}
+                      formatter={(v) => [`${v}°C`]}
                     />
                     <ReferenceLine
                       y={TEMP_THRESHOLDS.areaWarn}
@@ -762,7 +712,7 @@ export default function DeviceDetailCharts({
                     margin={{
                       top: 8,
                       right: TEMP_CHART_MARGIN_RIGHT,
-                      left: -10,
+                      left: 0,
                       bottom: 0,
                     }}
                   >
@@ -772,14 +722,15 @@ export default function DeviceDetailCharts({
                       {...AXIS}
                       allowDecimals={false}
                       domain={[0, 150]}
-                      unit="°C"
+                      tickFormatter={(v) => `${v}°C`}
+                      width={48}
                     />
                     <Tooltip
                       contentStyle={TOOLTIP_STYLE}
                       labelStyle={TOOLTIP_LABEL_STYLE}
                       itemStyle={TOOLTIP_ITEM_STYLE}
                       cursor={TOOLTIP_CURSOR}
-                      formatter={(v) => [`${v} °C`]}
+                      formatter={(v) => [`${v}°C`]}
                     />
                     <ReferenceLine
                       y={TEMP_THRESHOLDS.moduleAlarm}
