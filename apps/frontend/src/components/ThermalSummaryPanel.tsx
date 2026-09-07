@@ -1,5 +1,11 @@
+"use client";
+
 import type { DeviceWithInstallation, TelemetryReading } from "../types/site";
 import { TEMP_THRESHOLDS } from "../lib/chartTheme";
+import { isCommLost } from "../lib/commStatus";
+import { formatLastSeen } from "../lib/lteSignal";
+import { useHasMounted } from "../hooks/useHasMounted";
+import CommLostBadge from "./CommLostBadge";
 
 type Props = {
   device: DeviceWithInstallation;
@@ -20,8 +26,8 @@ function maxOf(values: number[]): number | null {
 }
 
 type SeriesStats = {
-  now: number | null;
-  nowAvg: number | null;
+  lastMax: number | null;
+  lastAvg: number | null;
   avg24: number | null;
   max24: number | null;
   maxAt: string | null;
@@ -34,7 +40,7 @@ function seriesStats(
   readings: TelemetryReading[],
   pick: (r: TelemetryReading) => number[] | null | undefined,
 ): SeriesStats {
-  const nowVals = finiteNums(live);
+  const lastVals = finiteNums(live);
   let max24 = -Infinity;
   let maxAt: string | null = null;
   let maxCh: number | null = null;
@@ -54,8 +60,8 @@ function seriesStats(
   }
 
   return {
-    now: maxOf(nowVals),
-    nowAvg: mean(nowVals),
+    lastMax: maxOf(lastVals),
+    lastAvg: mean(lastVals),
     avg24: mean(all),
     max24: Number.isFinite(max24) ? max24 : null,
     maxAt,
@@ -64,12 +70,8 @@ function seriesStats(
   };
 }
 
-function fmtTemp(v: number | null) {
-  return v == null ? "—" : v.toFixed(1);
-}
-
-function fmtFan(v: number | null) {
-  return v == null ? "—" : v.toFixed(1);
+function fmtNum(v: number) {
+  return v.toFixed(1);
 }
 
 function fmtWhen(iso: string | null) {
@@ -85,8 +87,8 @@ function fmtWhen(iso: string | null) {
   });
 }
 
-function windowNote(readings: TelemetryReading[]): string {
-  if (!readings.length) return "최근 이력 없음";
+function windowLabel(readings: TelemetryReading[]): string {
+  if (!readings.length) return "이력 없음";
   let minT = Infinity;
   let maxT = -Infinity;
   for (const r of readings) {
@@ -95,16 +97,53 @@ function windowNote(readings: TelemetryReading[]): string {
     if (t < minT) minT = t;
     if (t > maxT) maxT = t;
   }
-  if (!Number.isFinite(minT)) return "최근 이력";
+  if (!Number.isFinite(minT)) return "이력";
   const hours = Math.max(1, Math.round((maxT - minT) / 3_600_000));
-  return `최근 ${hours}시간`;
+  return hours >= 20 && hours <= 28 ? "최근 24시간" : `최근 ${hours}시간`;
 }
 
-function tone(value: number | null, warn: number, alarm: number) {
-  if (value == null) return "ok";
+function tone(value: number | null, warn?: number, alarm?: number) {
+  if (value == null || warn == null || alarm == null) return "ok";
   if (value >= alarm) return "danger";
   if (value >= warn) return "warn";
   return "ok";
+}
+
+function statusLabel(t: "ok" | "warn" | "danger", hasThreshold: boolean) {
+  if (!hasThreshold) return null;
+  if (t === "danger") return "경보";
+  if (t === "warn") return "주의";
+  return "정상";
+}
+
+function Metric({
+  label,
+  value,
+  unit,
+  peak,
+}: {
+  label: string;
+  value: number | null;
+  unit: string;
+  peak?: boolean;
+}) {
+  return (
+    <div className={`thermal-metric${peak ? " thermal-metric--peak" : ""}`}>
+      <span className="thermal-metric-label">{label}</span>
+      <strong className="thermal-metric-value">
+        {value == null ? (
+          "—"
+        ) : (
+          <>
+            {fmtNum(value)}
+            <span className="thermal-metric-unit">
+              {unit === "°C" ? "°C" : ` ${unit}`}
+            </span>
+          </>
+        )}
+      </strong>
+    </div>
+  );
 }
 
 function Block({
@@ -115,6 +154,8 @@ function Block({
   alarm,
   channelLabel,
   showWarnLabel = true,
+  lastLabel,
+  historyLabel,
 }: {
   title: string;
   unit: string;
@@ -123,68 +164,86 @@ function Block({
   alarm?: number;
   channelLabel: string;
   showWarnLabel?: boolean;
+  lastLabel: string;
+  historyLabel: string;
 }) {
-  const t = warn != null && alarm != null ? tone(stats.now, warn, alarm) : "ok";
+  const hasThreshold = warn != null && alarm != null;
+  const t = tone(stats.lastMax, warn, alarm);
   const when = fmtWhen(stats.maxAt);
-  const fmt = unit === "m/s" ? fmtFan : fmtTemp;
+  const status = statusLabel(t, hasThreshold);
 
   return (
     <article className={`thermal-stat thermal-stat--${t}`}>
       <header className="thermal-stat-head">
         <h3>{title}</h3>
-        <span className="thermal-stat-unit">{unit}</span>
+        {status ? (
+          <span className={`thermal-stat-status thermal-stat-status--${t}`}>
+            {status}
+          </span>
+        ) : null}
       </header>
-      <div className="thermal-stat-now">
-        <span className="thermal-stat-kicker">지금</span>
-        <strong>{fmt(stats.now)}</strong>
+
+      <div className="thermal-stat-block">
+        <p className="thermal-stat-block-label">{lastLabel}</p>
+        <div className="thermal-stat-pair">
+          <Metric label="최고" value={stats.lastMax} unit={unit} peak />
+          <Metric label="평균" value={stats.lastAvg} unit={unit} />
+        </div>
       </div>
-      <dl className="thermal-stat-grid">
-        <div>
-          <dt>지금 평균</dt>
-          <dd>{fmt(stats.nowAvg)}</dd>
+
+      <div className="thermal-stat-block">
+        <p className="thermal-stat-block-label">{historyLabel}</p>
+        <div className="thermal-stat-pair">
+          <Metric label="평균" value={stats.avg24} unit={unit} />
+          <Metric label="최고" value={stats.max24} unit={unit} />
         </div>
-        <div>
-          <dt>24h 평균</dt>
-          <dd>{fmt(stats.avg24)}</dd>
-        </div>
-        <div className="thermal-stat-max">
-          <dt>24h 최고</dt>
-          <dd>{fmt(stats.max24)}</dd>
-        </div>
-      </dl>
-      {stats.max24 != null ? (
-        <p className="thermal-stat-note">
-          {stats.maxCh != null ? `${channelLabel} ${stats.maxCh} · ` : null}
-          {when ?? "시각 없음"}
-          {stats.samples ? ` · ${stats.samples}점` : null}
-        </p>
-      ) : (
-        <p className="thermal-stat-note">24시간 이력 없음</p>
-      )}
-      {alarm != null ? (
-        <p className="thermal-stat-limit">
-          {showWarnLabel && warn != null
-            ? `주의 ${warn}${unit === "°C" ? "°C" : ` ${unit}`} · `
-            : null}
-          경보 {alarm}
-          {unit === "°C" ? "°C" : ` ${unit}`}
-        </p>
-      ) : null}
+      </div>
+
+      <footer className="thermal-stat-foot">
+        <span>
+          {stats.max24 != null
+            ? [
+                stats.maxCh != null ? `${channelLabel} ${stats.maxCh}` : null,
+                when,
+              ]
+                .filter(Boolean)
+                .join(" · ") || "최고 시각 없음"
+            : "기간 이력 없음"}
+        </span>
+        {alarm != null ? (
+          <span>
+            {showWarnLabel && warn != null ? `주의 ${warn}${unit} · ` : null}
+            경보 {alarm}
+            {unit}
+          </span>
+        ) : null}
+      </footer>
     </article>
   );
 }
 
 export default function ThermalSummaryPanel({ device, readings = [] }: Props) {
+  const mounted = useHasMounted();
   const area = seriesStats(device.areaTemp, readings, (r) => r.areaTemp);
   const module = seriesStats(device.moduleTemp, readings, (r) => r.moduleTemp);
   const fan = seriesStats(device.fanSpeed, readings, (r) => r.fanSpeed);
+  const commLost = isCommLost(device.lastSeenAt);
+  const lastSeenRel = mounted ? formatLastSeen(device.lastSeenAt) : null;
+  const lastSeenAbs = fmtWhen(device.lastSeenAt);
+  const lastLabel = commLost ? "최종 측정" : "최근 측정";
+  const historyLabel = windowLabel(readings);
 
   return (
     <aside className="thermal-summary" aria-label="열관리 요약">
       <div className="thermal-summary-head">
         <span className="hmi-compare-ch">05</span>
         <span className="thermal-summary-title">열 요약</span>
-        <span className="thermal-summary-window">{windowNote(readings)}</span>
+        {commLost ? <CommLostBadge /> : null}
+        <span className="thermal-summary-window">
+          {lastSeenAbs
+            ? `최종 수신 ${lastSeenRel ? `${lastSeenRel} · ` : ""}${lastSeenAbs}`
+            : "수신 기록 없음"}
+        </span>
       </div>
       <Block
         title="주위 온도"
@@ -193,6 +252,8 @@ export default function ThermalSummaryPanel({ device, readings = [] }: Props) {
         warn={TEMP_THRESHOLDS.areaWarn}
         alarm={TEMP_THRESHOLDS.areaAlarm}
         channelLabel="센서"
+        lastLabel={lastLabel}
+        historyLabel={historyLabel}
       />
       <Block
         title="모듈 온도"
@@ -202,8 +263,17 @@ export default function ThermalSummaryPanel({ device, readings = [] }: Props) {
         alarm={TEMP_THRESHOLDS.moduleAlarm}
         channelLabel="모듈"
         showWarnLabel={false}
+        lastLabel={lastLabel}
+        historyLabel={historyLabel}
       />
-      <Block title="팬 속도" unit="m/s" stats={fan} channelLabel="팬" />
+      <Block
+        title="팬 속도"
+        unit="m/s"
+        stats={fan}
+        channelLabel="팬"
+        lastLabel={lastLabel}
+        historyLabel={historyLabel}
+      />
     </aside>
   );
 }

@@ -16,7 +16,7 @@ const R_MID = 70;
 const R_IN = 54;
 const CY = PAD + R_OUT + LABEL_R;
 const SCALE = 100;
-const VB = { w: 240, h: CY + 6 };
+const VB = { w: 240, h: CY + 18 };
 
 const COLOR = {
   green: "#22c55e",
@@ -106,7 +106,7 @@ export default function ThdArcGauge({ label, before, after }: Props) {
         <svg
           viewBox={`0 0 ${VB.w} ${VB.h}`}
           preserveAspectRatio="xMidYMid meet"
-          overflow="hidden"
+          overflow="visible"
           role="img"
           aria-label={`${label} 전 ${b != null ? fmt(b) : "없음"}, 후 ${a != null ? fmt(a) : "없음"}`}
         >
@@ -166,20 +166,32 @@ export default function ThdArcGauge({ label, before, after }: Props) {
                 fontSize="10"
                 fontWeight="600"
               >
-                {tick}
+                {tick}%
               </text>
             );
           })}
         </svg>
       </div>
-      <div className="ring-gauge-values">
-        <span className="ring-gauge-before" style={{ color: beforeColor }}>
-          {b != null ? fmt(b) : "—"}
-        </span>
-        <span className="ring-gauge-arrow">→</span>
-        <span className="ring-gauge-after" style={{ color: afterColor }}>
-          {a != null ? fmt(a) : "—"}
-        </span>
+      <div className="thd-arc-caption">
+        <div className="thd-arc-legend">
+          <span className="thd-arc-leg">
+            <span className="thd-arc-leg-swatch thd-arc-leg-swatch--in" aria-hidden />
+            안쪽 · 보상 전
+          </span>
+          <span className="thd-arc-leg">
+            <span className="thd-arc-leg-swatch thd-arc-leg-swatch--out" aria-hidden />
+            바깥 · 보상 후
+          </span>
+        </div>
+        <div className="ring-gauge-values">
+          <span className="ring-gauge-before" style={{ color: beforeColor }}>
+            {b != null ? fmt(b) : "—"}
+          </span>
+          <span className="ring-gauge-arrow">→</span>
+          <span className="ring-gauge-after" style={{ color: afterColor }}>
+            {a != null ? fmt(a) : "—"}
+          </span>
+        </div>
       </div>
     </article>
   );
