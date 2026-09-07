@@ -292,7 +292,7 @@ export default function DeviceHistoryCharts({
               <ChartCard
                 key={phase}
                 title={`${phase} 전류 THD (%)`}
-                subtitle={`— ${hoursLabel}`}
+                subtitle={`— 보상 전 / 후 · ${hoursLabel}`}
                 wide
               >
                 <HistoryAreaChart
@@ -309,6 +309,7 @@ export default function DeviceHistoryCharts({
                     gradB,
                     gradA,
                   )}
+                  yDomain={[0, "auto"]}
                   yUnit="%"
                   faults={faults}
                 />
@@ -353,6 +354,7 @@ export default function DeviceHistoryCharts({
                     stackId: "cap",
                   },
                 ]}
+                yUnit={capUnit === "A" ? " A" : " kvar"}
                 faults={faults}
               />
               <div className="capacity-legend-row">

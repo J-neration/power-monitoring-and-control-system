@@ -39,15 +39,17 @@ export default function DeviceWatchSummaryCard({
   return (
     <div className="watch-summary">
       <div className="watch-summary-head">
-        <p className="watch-summary-meta">
-          최근 {facts.hours}시간 · 측정 {facts.sampleCount}건
-        </p>
+        <p className="watch-summary-meta">최근 {facts.hours}시간</p>
         <div className="watch-summary-counts">
           {dangerCount > 0 ? (
-            <span className="watch-chip watch-chip--danger">위험 {dangerCount}</span>
+            <span className="watch-chip watch-chip--danger">
+              위험 {dangerCount}
+            </span>
           ) : null}
           {warnCount > 0 ? (
-            <span className="watch-chip watch-chip--warn">주의 {warnCount}</span>
+            <span className="watch-chip watch-chip--warn">
+              주의 {warnCount}
+            </span>
           ) : null}
           {anomalies.length === 0 ? (
             <span className="watch-chip watch-chip--ok">이상 없음</span>

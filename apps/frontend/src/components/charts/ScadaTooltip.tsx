@@ -1,6 +1,6 @@
 "use client";
 
-import { fmtChartDateTime } from "../../lib/chartTheme";
+import { fmtChartDateTime, withChartUnit } from "../../lib/chartTheme";
 
 type PayloadEntry = {
   name?: string;
@@ -13,9 +13,10 @@ type Props = {
   active?: boolean;
   payload?: PayloadEntry[];
   label?: string | number;
+  unit?: string;
 };
 
-export default function ScadaTooltip({ active, payload, label }: Props) {
+export default function ScadaTooltip({ active, payload, label, unit }: Props) {
   if (!active || !payload?.length) return null;
 
   const recordedAt = payload[0]?.payload?.recordedAt;
@@ -36,7 +37,9 @@ export default function ScadaTooltip({ active, payload, label }: Props) {
           return (
             <li key={i} style={{ color: entry.color ?? "#e2e8f0" }}>
               <span className="scada-chart-tooltip-name">{entry.name}</span>
-              <span className="scada-chart-tooltip-val">{val}</span>
+              <span className="scada-chart-tooltip-val">
+                {withChartUnit(val, unit)}
+              </span>
             </li>
           );
         })}
