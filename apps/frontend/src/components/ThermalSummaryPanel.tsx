@@ -3,9 +3,6 @@
 import type { DeviceWithInstallation, TelemetryReading } from "../types/site";
 import { TEMP_THRESHOLDS } from "../lib/chartTheme";
 import { isCommLost } from "../lib/commStatus";
-import { formatLastSeen } from "../lib/lteSignal";
-import { useHasMounted } from "../hooks/useHasMounted";
-import CommLostBadge from "./CommLostBadge";
 
 type Props = {
   device: DeviceWithInstallation;
@@ -154,7 +151,6 @@ function Block({
   alarm,
   channelLabel,
   showWarnLabel = true,
-  lastLabel,
   historyLabel,
 }: {
   title: string;
@@ -164,7 +160,6 @@ function Block({
   alarm?: number;
   channelLabel: string;
   showWarnLabel?: boolean;
-  lastLabel: string;
   historyLabel: string;
 }) {
   const hasThreshold = warn != null && alarm != null;
@@ -184,7 +179,6 @@ function Block({
       </header>
 
       <div className="thermal-stat-block">
-        <p className="thermal-stat-block-label">{lastLabel}</p>
         <div className="thermal-stat-pair">
           <Metric label="최고" value={stats.lastMax} unit={unit} peak />
           <Metric label="평균" value={stats.lastAvg} unit={unit} />
@@ -223,28 +217,14 @@ function Block({
 }
 
 export default function ThermalSummaryPanel({ device, readings = [] }: Props) {
-  const mounted = useHasMounted();
   const area = seriesStats(device.areaTemp, readings, (r) => r.areaTemp);
   const module = seriesStats(device.moduleTemp, readings, (r) => r.moduleTemp);
   const fan = seriesStats(device.fanSpeed, readings, (r) => r.fanSpeed);
   const commLost = isCommLost(device.lastSeenAt);
-  const lastSeenRel = mounted ? formatLastSeen(device.lastSeenAt) : null;
-  const lastSeenAbs = fmtWhen(device.lastSeenAt);
-  const lastLabel = commLost ? "최종 측정" : "최근 측정";
   const historyLabel = windowLabel(readings);
 
   return (
     <aside className="thermal-summary" aria-label="열관리 요약">
-      <div className="thermal-summary-head">
-        <span className="hmi-compare-ch">05</span>
-        <span className="thermal-summary-title">열 요약</span>
-        {commLost ? <CommLostBadge /> : null}
-        <span className="thermal-summary-window">
-          {lastSeenAbs
-            ? `최종 수신 ${lastSeenRel ? `${lastSeenRel} · ` : ""}${lastSeenAbs}`
-            : "수신 기록 없음"}
-        </span>
-      </div>
       <Block
         title="주위 온도"
         unit="°C"
@@ -252,7 +232,6 @@ export default function ThermalSummaryPanel({ device, readings = [] }: Props) {
         warn={TEMP_THRESHOLDS.areaWarn}
         alarm={TEMP_THRESHOLDS.areaAlarm}
         channelLabel="센서"
-        lastLabel={lastLabel}
         historyLabel={historyLabel}
       />
       <Block
@@ -263,7 +242,6 @@ export default function ThermalSummaryPanel({ device, readings = [] }: Props) {
         alarm={TEMP_THRESHOLDS.moduleAlarm}
         channelLabel="모듈"
         showWarnLabel={false}
-        lastLabel={lastLabel}
         historyLabel={historyLabel}
       />
       <Block
@@ -271,7 +249,6 @@ export default function ThermalSummaryPanel({ device, readings = [] }: Props) {
         unit="m/s"
         stats={fan}
         channelLabel="팬"
-        lastLabel={lastLabel}
         historyLabel={historyLabel}
       />
     </aside>

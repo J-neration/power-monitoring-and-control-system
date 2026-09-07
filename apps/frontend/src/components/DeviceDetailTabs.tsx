@@ -212,7 +212,7 @@ export default function DeviceDetailTabs({
         </div>
       </div>
 
-      <div className={`device-detail-tab-body${tab === "monitor" || tab === "settings" ? " device-detail-tab-body--fit" : ""}`}>
+      <div className={`device-detail-tab-body${tab === "monitor" || tab === "analytics" || tab === "settings" ? " device-detail-tab-body--fit" : ""}`}>
       {tab === "monitor" && (
         <DeviceMonitorBoard
           device={device}
@@ -221,17 +221,12 @@ export default function DeviceDetailTabs({
       )}
 
       {tab === "analytics" && (
-        <section className="device-detail-body">
-          <div className="history-section-header">
-            <h2 className="history-section-title">최근 {hours}시간 이력</h2>
-          </div>
-          <DeviceHistoryCharts
-            readings={historyReadings}
-            hours={hours}
-            model={device.model}
-            faults={faults}
-          />
-        </section>
+        <DeviceHistoryCharts
+          readings={historyReadings}
+          hours={hours}
+          model={device.model}
+          faults={faults}
+        />
       )}
 
       {tab === "settings" && isAdmin && (
