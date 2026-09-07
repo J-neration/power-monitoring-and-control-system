@@ -78,30 +78,30 @@ function PhaseRow({
   );
 }
 
-function TotalRow({
-  tag,
-  name,
-  unit,
-  value,
-  kind,
-  digits = 2,
+function PfSum({
+  tpf,
+  dpf,
 }: {
-  tag: string;
-  name?: string;
-  unit: string;
-  value?: number | null;
-  kind?: Kind;
-  digits?: number;
+  tpf?: number | null;
+  dpf?: number | null;
 }) {
   return (
-    <div className="hmi-compare-row hmi-compare-row--total">
-      <span className="hmi-compare-tag">
-        {tag}
-        {name ? <span className="hmi-compare-name">{name}</span> : null}
-      </span>
-      <span className="hmi-compare-total">
-        <CompareMetric value={value} unit={unit} kind={kind} digits={digits} />
-      </span>
+    <div className="hmi-compare-sum" aria-label="3상 합계 역률">
+      <span className="hmi-compare-sum-kicker">3상 합계</span>
+      <div className="hmi-compare-sum-cell">
+        <span className="hmi-compare-tag">
+          TPF
+          <span className="hmi-compare-name">종합역률</span>
+        </span>
+        <CompareMetric value={tpf} unit="%" kind="pf" digits={2} />
+      </div>
+      <div className="hmi-compare-sum-cell">
+        <span className="hmi-compare-tag">
+          DPF
+          <span className="hmi-compare-name">변위역률</span>
+        </span>
+        <CompareMetric value={dpf} unit="%" kind="pf" digits={2} />
+      </div>
     </div>
   );
 }
@@ -153,8 +153,7 @@ function PhaseBay({
         kind="thd"
       />
       <div className="hmi-compare-rule" />
-      <TotalRow tag="TPF" name="종합역률" unit="%" value={tpf} kind="pf" />
-      <TotalRow tag="DPF" name="변위역률" unit="%" value={dpf} kind="pf" />
+      <PfSum tpf={tpf} dpf={dpf} />
     </article>
   );
 }
