@@ -34,7 +34,7 @@ type SeriesKey = "보상전" | "보상후" | "편차";
 type Props = {
   data: DeviationRow[];
   series: { key: SeriesKey; name: string; color: string }[];
-  height?: number | string;
+  height?: number | `${number}%`;
   colorByLimit?: boolean;
 };
 
@@ -47,7 +47,7 @@ function toneColor(pct: number | null | undefined): string {
 }
 
 function domainOf(data: DeviationRow[], keys: SeriesKey[]): [number, number] {
-  let max = QUALITY_REFS.voltageUnbalanceLimitPct;
+  let max: number = QUALITY_REFS.voltageUnbalanceLimitPct;
   for (const row of data) {
     for (const key of keys) {
       const v = row[key];
