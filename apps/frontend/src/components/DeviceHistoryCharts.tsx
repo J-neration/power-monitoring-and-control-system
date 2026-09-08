@@ -7,6 +7,8 @@ import HistoryAreaChart from "./charts/HistoryAreaChart";
 import type { FaultEvent } from "../lib/api";
 import {
   CHART_COLORS,
+  connectedAreaTemp,
+  connectedModuleTemp,
   fmtChartTime,
   TEMP_ALARM_REF,
   TEMP_CHART_MARGIN_RIGHT,
@@ -129,11 +131,10 @@ export default function DeviceHistoryCharts({
         };
 
         for (let i = 0; i < maxArea; i++) {
-          row[`area${i}`] = r.areaTemp?.[i] ?? null;
+          row[`area${i}`] = connectedAreaTemp(r.areaTemp?.[i]);
         }
         for (let i = 0; i < maxMod; i++) {
-          const modVal = r.moduleTemp?.[i] ?? null;
-          row[`mod${i}`] = modVal != null && modVal >= 0 ? modVal : null;
+          row[`mod${i}`] = connectedModuleTemp(r.moduleTemp?.[i]);
         }
         for (let i = 0; i < maxFan; i++) {
           row[`fan${i}`] = r.fanSpeed?.[i] ?? null;
@@ -341,22 +342,22 @@ export default function DeviceHistoryCharts({
               <HistoryAreaChart
                 data={data}
                 grads={[
-                  { id: "capR", color: CHART_COLORS.accent, opacity: 0.5 },
-                  { id: "capI", color: CHART_COLORS.blue, opacity: 0.4 },
+                  { id: "capR", color: CHART_COLORS.danger, opacity: 0.5 },
+                  { id: "capI", color: CHART_COLORS.accent, opacity: 0.4 },
                   { id: "capM", color: CHART_COLORS.gridMuted, opacity: 0.35 },
                 ]}
                 series={[
                   {
                     dataKey: "reactive",
                     name: "무효 전력",
-                    stroke: CHART_COLORS.accent,
+                    stroke: CHART_COLORS.danger,
                     fill: "url(#capR)",
                     stackId: "cap",
                   },
                   {
                     dataKey: "idle",
                     name: "운전 용량",
-                    stroke: CHART_COLORS.blue,
+                    stroke: CHART_COLORS.accent,
                     fill: "url(#capI)",
                     stackId: "cap",
                   },

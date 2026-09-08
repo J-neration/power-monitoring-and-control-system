@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { DeviceWithInstallation } from "../types/site";
 import MetricValue from "./MetricValue";
-import { TEMP_THRESHOLDS } from "../lib/chartTheme";
+import { connectedAreaTemp, connectedModuleTemp, TEMP_THRESHOLDS } from "../lib/chartTheme";
 
 type StatusCardProps = {
   device: DeviceWithInstallation;
@@ -200,14 +200,14 @@ export function StatusCard({ device, compact = false }: StatusCardProps) {
       <div className="device-health-strip" aria-label="설비 상태">
         <HealthCell
           label="주위"
-          value={maxOf(device.areaTemp)}
+          value={maxOf((device.areaTemp ?? []).map(connectedAreaTemp))}
           suffix="°"
           warn={TEMP_THRESHOLDS.areaWarn}
           alarm={TEMP_THRESHOLDS.areaAlarm}
         />
         <HealthCell
           label="모듈"
-          value={maxOf(device.moduleTemp)}
+          value={maxOf((device.moduleTemp ?? []).map(connectedModuleTemp))}
           suffix="°"
           warn={TEMP_THRESHOLDS.moduleWarn}
           alarm={TEMP_THRESHOLDS.moduleAlarm}

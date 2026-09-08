@@ -1363,9 +1363,10 @@ main.dashboard-full {
 
 .site-group-summary {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  padding: 7px 16px 7px 28px;
+  gap: 4px 6px;
+  padding: 7px 10px 7px 24px;
   cursor: pointer;
   user-select: none;
   transition: background 0.12s;
@@ -1399,11 +1400,11 @@ main.dashboard-full {
 }
 
 .site-group-info {
-  flex: 1;
+  flex: 1 1 96px;
   display: flex;
   flex-direction: column;
   gap: 1px;
-  min-width: 0;
+  min-width: 96px;
 }
 .site-group-name {
   font-size: 12px;
@@ -1424,10 +1425,11 @@ main.dashboard-full {
 
 .inst-card {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 4px 6px;
   width: 100%;
-  padding: 6px 16px 6px 44px;
+  padding: 5px 8px 5px 32px;
   border: none;
   background: none;
   color: inherit;
@@ -1466,14 +1468,15 @@ main.dashboard-full {
 }
 
 .inst-card-info {
-  flex: 1;
+  flex: 1 1 96px;
   display: flex;
   align-items: baseline;
   gap: 6px;
-  min-width: 0;
+  min-width: 96px;
 }
 .inst-card-label {
   font-size: 12px;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2456,6 +2459,16 @@ main.dashboard-full {
 
 .inst-card .lte-signal--compact {
   flex-shrink: 0;
+}
+
+.inst-card .lte-signal--compact .lte-signal-label {
+  display: none;
+}
+
+.inst-card .site-card-badge,
+.inst-card .comm-lost-badge {
+  padding: 2px 5px;
+  font-size: 9px;
 }
 
 .summary-inst-metrics {
@@ -3697,15 +3710,15 @@ main.dashboard-full {
 }
 
 .cap-reactive {
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(248, 113, 113, 0.16);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.35);
 }
 
 .cap-idle {
-  background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: rgba(0, 212, 170, 0.15);
+  color: #00d4aa;
+  border: 1px solid rgba(0, 212, 170, 0.3);
 }
 
 .cap-margin {
@@ -3714,7 +3727,7 @@ main.dashboard-full {
   border: 1px solid rgba(71, 85, 105, 0.4);
 }
 
-/* Capacity snapshot — 운전=탱크, 발생=내부 채움, 총용량=눈금 */
+/* Capacity snapshot — 운전=초록 탱크, 무효전력=경고 채움, 총용량=눈금 */
 .cap-tank {
   display: flex;
   flex-direction: column;
@@ -3738,9 +3751,9 @@ main.dashboard-full {
   position: absolute;
   inset: 0 auto 0 0;
   box-sizing: border-box;
-  border: 2px solid #60a5fa;
+  border: 2px solid #00d4aa;
   border-radius: 10px;
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(0, 212, 170, 0.14);
 }
 
 .cap-tank-well {
@@ -3754,14 +3767,15 @@ main.dashboard-full {
   min-width: 0;
   border-radius: 6px;
   overflow: hidden;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38);
+  background: linear-gradient(180deg, #fca5a5 0%, #f87171 55%, #dc2626 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32);
   transition: width 0.45s ease;
 }
 
 .cap-tank-liquid--full {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    0 0 0 1px rgba(94, 234, 212, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 0 0 1px rgba(248, 113, 113, 0.45);
 }
 
 .cap-tank-liquid-pct {
@@ -3772,7 +3786,8 @@ main.dashboard-full {
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.02em;
-  color: rgba(8, 20, 18, 0.88);
+  color: rgba(255, 248, 248, 0.96);
+  text-shadow: 0 1px 1px rgba(127, 29, 29, 0.55);
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
@@ -3803,11 +3818,11 @@ main.dashboard-full {
 }
 
 .cap-readout-item--rp {
-  border-left-color: #00d4aa;
+  border-left-color: #f87171;
 }
 
 .cap-readout-item--op {
-  border-left-color: #60a5fa;
+  border-left-color: #00d4aa;
 }
 
 .cap-readout-item--total {
@@ -3832,7 +3847,7 @@ main.dashboard-full {
 .cap-readout-hint {
   font-size: 11px;
   font-weight: 650;
-  color: #5eead4;
+  color: #fca5a5;
   white-space: nowrap;
 }
 
@@ -7664,6 +7679,53 @@ body.pmcs-control-room .global-header:hover {
 }
 
 @media (max-width: 1280px) {
+  /* 홈 사이드바: 설치지점명이 배지·LTE 라벨에 밀려 … 만 남지 않게 */
+  .dash-body {
+    grid-template-columns: 280px minmax(0, 1fr) minmax(250px, 300px);
+  }
+
+  .dash-sidebar .region-group-summary {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .dash-sidebar .region-group-name {
+    font-size: 13px;
+  }
+
+  .dash-sidebar .region-group-count {
+    font-size: 10px;
+  }
+
+  .dash-sidebar .site-group-summary {
+    padding: 5px 8px 5px 18px;
+    gap: 4px 6px;
+  }
+
+  .dash-sidebar .site-group-name {
+    font-size: 11px;
+  }
+
+  .dash-sidebar .site-group-client {
+    font-size: 9px;
+  }
+
+  .dash-sidebar .inst-card {
+    padding: 4px 6px 4px 26px;
+    gap: 3px 5px;
+  }
+
+  .dash-sidebar .inst-card-label {
+    font-size: 11px;
+  }
+
+  .dash-sidebar .site-card-badge,
+  .dash-sidebar .comm-lost-badge {
+    font-size: 9px;
+    padding: 1px 5px;
+    letter-spacing: 0;
+  }
+
   /* 1280×720 빔/노트북: 4열 유지하고 카드만 줄여 계측 게이지까지 한 화면에 */
   .device-detail-tabs {
     grid-template-columns: minmax(176px, 208px) minmax(0, 1fr);

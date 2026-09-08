@@ -170,8 +170,13 @@ export function buildWatchFacts(input: {
     .map((r) => phaseUnbalancePct(r.vL1, r.vL2, r.vL3))
     .filter((v): v is number => v != null);
 
-  const area = flatten(readings.map((r) => r.areaTemp));
-  const module = flatten(readings.map((r) => r.moduleTemp));
+  // -40°C = 주위 온도 센서 미연결
+  const area = flatten(readings.map((r) => r.areaTemp)).filter(
+    (v) => v > -40,
+  );
+  const module = flatten(readings.map((r) => r.moduleTemp)).filter(
+    (v) => v >= 0,
+  );
   const totals = readings.map((r) => num(r.totalCapacity)).filter((v): v is number => v != null);
   const operating = readings
     .map((r) => num(r.operatingCapacity))

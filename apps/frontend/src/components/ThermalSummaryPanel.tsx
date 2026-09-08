@@ -1,7 +1,7 @@
 "use client";
 
 import type { DeviceWithInstallation, TelemetryReading } from "../types/site";
-import { TEMP_THRESHOLDS } from "../lib/chartTheme";
+import { connectedAreaTemp, connectedModuleTemp, TEMP_THRESHOLDS } from "../lib/chartTheme";
 import { isCommLost } from "../lib/commStatus";
 
 type Props = {
@@ -9,8 +9,12 @@ type Props = {
   readings?: TelemetryReading[];
 };
 
-function finiteNums(values?: number[] | null): number[] {
-  return (values ?? []).filter((v) => Number.isFinite(v));
+function finiteNums(
+  values?: Array<number | null | undefined> | null,
+): number[] {
+  return (values ?? []).filter(
+    (v): v is number => v != null && Number.isFinite(v),
+  );
 }
 
 function mean(values: number[]): number | null {
@@ -33,9 +37,11 @@ type SeriesStats = {
 };
 
 function seriesStats(
-  live: number[] | undefined,
+  live: Array<number | null | undefined> | undefined,
   readings: TelemetryReading[],
-  pick: (r: TelemetryReading) => number[] | null | undefined,
+  pick: (
+    r: TelemetryReading,
+  ) => Array<number | null | undefined> | null | undefined,
 ): SeriesStats {
   const lastVals = finiteNums(live);
   let max24 = -Infinity;
@@ -46,7 +52,7 @@ function seriesStats(
   for (const r of readings) {
     const arr = pick(r) ?? [];
     arr.forEach((v, i) => {
-      if (!Number.isFinite(v)) return;
+      if (v == null || !Number.isFinite(v)) return;
       all.push(v);
       if (v > max24) {
         max24 = v;
@@ -165,7 +171,8 @@ function Block({
   const hasThreshold = warn != null && alarm != null;
   const t = tone(stats.lastMax, warn, alarm);
   const when = fmtWhen(stats.maxAt);
-  const status = statusLabel(t, hasThreshold);
+  const status =
+    stats.lastMax == null ? null : statusLabel(t, hasThreshold);
 
   return (
     <article className={`thermal-stat thermal-stat--${t}`}>
@@ -217,8 +224,16 @@ function Block({
 }
 
 export default function ThermalSummaryPanel({ device, readings = [] }: Props) {
-  const area = seriesStats(device.areaTemp, readings, (r) => r.areaTemp);
-  const module = seriesStats(device.moduleTemp, readings, (r) => r.moduleTemp);
+  const area = seriesStats(
+    (device.areaTemp ?? []).map(connectedAreaTemp),
+    readings,
+    (r) => (r.areaTemp ?? []).map(connectedAreaTemp),
+  );
+  const module = seriesStats(
+    (device.moduleTemp ?? []).map(connectedModuleTemp),
+    readings,
+    (r) => (r.moduleTemp ?? []).map(connectedModuleTemp),
+  );
   const fan = seriesStats(device.fanSpeed, readings, (r) => r.fanSpeed);
   const commLost = isCommLost(device.lastSeenAt);
   const historyLabel = windowLabel(readings);

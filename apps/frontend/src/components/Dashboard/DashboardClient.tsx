@@ -487,7 +487,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                     className={`site-group-dot ${siteStatus}`}
                                   />
                                   <div className="site-group-info">
-                                    <strong className="site-group-name">
+                                    <strong className="site-group-name" title={site.name}>
                                       {site.name}
                                     </strong>
                                     <span className="site-group-client">
@@ -531,7 +531,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                           className={`inst-card-dot ${instStatus}`}
                                         />
                                         <div className="inst-card-info">
-                                          <span className="inst-card-label">
+                                          <span className="inst-card-label" title={inst.label}>
                                             {inst.label}
                                           </span>
                                         </div>

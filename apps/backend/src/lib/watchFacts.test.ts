@@ -82,4 +82,34 @@ describe("buildWatchFacts", () => {
     });
     assert.equal(facts.commLost, true);
   });
+
+  it("ignores disconnected ambient sensor sentinel (-40°C)", () => {
+    const facts = buildWatchFacts({
+      installationId: "PSVG-DONGTAN01",
+      hours: 24,
+      readings: [
+        {
+          recordedAt: "2026-09-01T00:00:00Z",
+          areaTemp: [-40, 32],
+        },
+      ],
+    });
+    assert.equal(facts.thermal.areaMax, 32);
+    assert.equal(facts.thermal.areaAvg, 32);
+  });
+
+  it("ignores negative unused module temperature sentinels", () => {
+    const facts = buildWatchFacts({
+      installationId: "PSVG-DONGTAN01",
+      hours: 24,
+      readings: [
+        {
+          recordedAt: "2026-09-01T00:00:00Z",
+          moduleTemp: [-200, 14, -127],
+        },
+      ],
+    });
+    assert.equal(facts.thermal.moduleMax, 14);
+    assert.equal(facts.thermal.moduleAvg, 14);
+  });
 });

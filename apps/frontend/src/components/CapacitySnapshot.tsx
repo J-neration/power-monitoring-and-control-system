@@ -1,5 +1,4 @@
 import type { Device } from "../types/site";
-import { CHART_COLORS } from "../lib/chartTheme";
 import ChartCard from "./charts/ChartCard";
 
 function hasCapTelemetry(d: Device): boolean {
@@ -66,10 +65,7 @@ export default function CapacitySnapshot({
                   {fillOfOp != null ? (
                     <div
                       className={`cap-tank-liquid${atLimit ? " cap-tank-liquid--full" : ""}`}
-                      style={{
-                        width: `${fillOfOp}%`,
-                        background: `linear-gradient(180deg, ${CHART_COLORS.accentBright} 0%, ${CHART_COLORS.accent} 58%, #0f766e 100%)`,
-                      }}
+                      style={{ width: `${fillOfOp}%` }}
                     >
                       {showFillLabel ? (
                         <span className="cap-tank-liquid-pct">

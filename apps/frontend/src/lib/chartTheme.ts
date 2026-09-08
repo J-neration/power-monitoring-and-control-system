@@ -30,6 +30,26 @@ export const TEMP_THRESHOLDS = {
   moduleAlarm: 90,
 } as const;
 
+/** 주위 온도 센서 미연결 시 장치가 보내는 값. */
+export const AREA_TEMP_DISCONNECTED = -40;
+
+export function connectedAreaTemp(
+  v: number | null | undefined,
+): number | null {
+  if (v == null || !Number.isFinite(v) || v <= AREA_TEMP_DISCONNECTED) {
+    return null;
+  }
+  return v;
+}
+
+/** 모듈 온도 미장착/미연결 슬롯은 음수 센티널을 보낸다. */
+export function connectedModuleTemp(
+  v: number | null | undefined,
+): number | null {
+  if (v == null || !Number.isFinite(v) || v < 0) return null;
+  return v;
+}
+
 /** 주의 온도 — 점선(격자와 패턴 구분) */
 export const TEMP_WARN_REF = {
   strokeDasharray: "6 4",

@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   Cell,
   ReferenceLine,
+  LabelList,
 } from "recharts";
 import type { Device } from "../types/site";
 import ChartCard from "./charts/ChartCard";
@@ -32,6 +33,8 @@ import {
   TEMP_CHART_MARGIN_RIGHT,
   TEMP_THRESHOLDS,
   TEMP_WARN_REF,
+  connectedAreaTemp,
+  connectedModuleTemp,
   withChartUnit,
 } from "../lib/chartTheme";
 import PfNeedleGauge from "./charts/PfNeedleGauge";
@@ -269,15 +272,23 @@ export default function DeviceDetailCharts({
   const hasModuleTemp = (device.moduleTemp?.length ?? 0) > 0;
   const hasFanSpeed = (device.fanSpeed?.length ?? 0) > 0;
 
-  const areaTempData = (device.areaTemp ?? []).map((v, i) => ({
-    ch: String(i + 1),
-    온도: Math.round(v * 10) / 10,
-  }));
+  const areaTempData = (device.areaTemp ?? []).map((v, i) => {
+    const t = connectedAreaTemp(v);
+    return {
+      ch: String(i + 1),
+      온도: t != null ? Math.round(t * 10) / 10 : null,
+      mark: t == null ? "—" : "",
+    };
+  });
 
-  const moduleTempData = (device.moduleTemp ?? []).map((v, i) => ({
-    ch: String(i + 1),
-    온도: Math.round(v * 10) / 10,
-  }));
+  const moduleTempData = (device.moduleTemp ?? []).map((v, i) => {
+    const t = connectedModuleTemp(v);
+    return {
+      ch: String(i + 1),
+      온도: t != null ? Math.round(t * 10) / 10 : null,
+      mark: t == null ? "—" : "",
+    };
+  });
 
   const fanSpeedData = (device.fanSpeed ?? []).map((v, i) => ({
     ch: String(i + 1),
@@ -656,7 +667,11 @@ export default function DeviceDetailCharts({
                       itemStyle={TOOLTIP_ITEM_STYLE}
                       cursor={TOOLTIP_CURSOR}
                       labelFormatter={(l) => `센서 ${l}`}
-                      formatter={(v) => [`${v}°C`]}
+                      formatter={(v) => [
+                        v == null || !Number.isFinite(Number(v))
+                          ? "—"
+                          : `${v}°C`,
+                      ]}
                     />
                     <ReferenceLine
                       y={TEMP_THRESHOLDS.areaWarn}
@@ -686,14 +701,24 @@ export default function DeviceDetailCharts({
                         <Cell
                           key={i}
                           fill={
-                            entry.온도 >= TEMP_THRESHOLDS.areaAlarm
-                              ? CHART_COLORS.danger
-                              : entry.온도 >= TEMP_THRESHOLDS.areaWarn
-                                ? CHART_COLORS.load
-                                : CHART_COLORS.accent
+                            entry.온도 == null
+                              ? CHART_COLORS.gridMuted
+                              : entry.온도 >= TEMP_THRESHOLDS.areaAlarm
+                                ? CHART_COLORS.danger
+                                : entry.온도 >= TEMP_THRESHOLDS.areaWarn
+                                  ? CHART_COLORS.load
+                                  : CHART_COLORS.accent
                           }
                         />
                       ))}
+                      <LabelList
+                        dataKey="mark"
+                        position="insideBottom"
+                        fill="rgba(148, 163, 184, 0.9)"
+                        fontSize={12}
+                        fontWeight={700}
+                        offset={6}
+                      />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -731,7 +756,11 @@ export default function DeviceDetailCharts({
                       itemStyle={TOOLTIP_ITEM_STYLE}
                       cursor={TOOLTIP_CURSOR}
                       labelFormatter={(l) => `모듈 ${l}`}
-                      formatter={(v) => [`${v}°C`]}
+                      formatter={(v) => [
+                        v == null || !Number.isFinite(Number(v))
+                          ? "—"
+                          : `${v}°C`,
+                      ]}
                     />
                     <ReferenceLine
                       y={TEMP_THRESHOLDS.moduleAlarm}
@@ -750,14 +779,24 @@ export default function DeviceDetailCharts({
                         <Cell
                           key={i}
                           fill={
-                            entry.온도 >= TEMP_THRESHOLDS.moduleAlarm
-                              ? CHART_COLORS.danger
-                              : entry.온도 >= TEMP_THRESHOLDS.moduleWarn
-                                ? CHART_COLORS.warn
-                                : CHART_COLORS.accent
+                            entry.온도 == null
+                              ? CHART_COLORS.gridMuted
+                              : entry.온도 >= TEMP_THRESHOLDS.moduleAlarm
+                                ? CHART_COLORS.danger
+                                : entry.온도 >= TEMP_THRESHOLDS.moduleWarn
+                                  ? CHART_COLORS.warn
+                                  : CHART_COLORS.accent
                           }
                         />
                       ))}
+                      <LabelList
+                        dataKey="mark"
+                        position="insideBottom"
+                        fill="rgba(148, 163, 184, 0.9)"
+                        fontSize={12}
+                        fontWeight={700}
+                        offset={6}
+                      />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
