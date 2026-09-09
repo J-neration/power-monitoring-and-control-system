@@ -68,9 +68,7 @@ export default function CapacitySnapshot({
                       style={{ width: `${fillOfOp}%` }}
                     >
                       {showFillLabel ? (
-                        <span className="cap-tank-liquid-pct">
-                          {atLimit ? "채움" : `${fillOfOp}%`}
-                        </span>
+                        <span className="cap-tank-liquid-pct">{fillOfOp}%</span>
                       ) : null}
                     </div>
                   ) : null}
@@ -93,9 +91,7 @@ export default function CapacitySnapshot({
               </span>
               {fillOfOp != null ? (
                 <span className="cap-readout-hint">
-                  {atLimit
-                    ? "운전용량을 채움"
-                    : `운전용량 대비 ${fillOfOp}%`}
+                  운전용량 대비 {fillOfOp}%
                 </span>
               ) : null}
             </div>
