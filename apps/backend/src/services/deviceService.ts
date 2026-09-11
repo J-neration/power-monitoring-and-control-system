@@ -234,13 +234,44 @@ export const deriveDeviceStatus = (moduleStatus?: number[]): DeviceStatus | unde
   return toStatus(worst) ?? "offline";
 };
 
+export const withLiveDeviceFields = <
+  T extends { moduleStatus: number[] | null; lastSeenAt: Date | null },
+>(
+  device: T,
+  moduleType?: string | null,
+) => ({
+  ...device,
+  moduleType: moduleType ?? null,
+  status: deriveDeviceStatus(device.moduleStatus ?? undefined) ?? "offline",
+  commLost: isCommLost(device.lastSeenAt),
+});
+
 const withLiveFields = <T extends { moduleStatus: number[] | null; lastSeenAt: Date | null }>(
   d: T,
-) => ({
-  ...d,
-  status: deriveDeviceStatus(d.moduleStatus ?? undefined) ?? "offline",
-  commLost: isCommLost(d.lastSeenAt),
-});
+) => withLiveDeviceFields(d);
+
+const deviceWithSiteInclude = {
+  installation: {
+    include: {
+      site: true,
+      deviceSettings: { select: { moduleType: true } },
+    },
+  },
+} as const;
+
+function withModuleType<
+  T extends {
+    moduleStatus: number[] | null;
+    lastSeenAt: Date | null;
+    installation: { deviceSettings?: { moduleType: string } | null };
+  },
+>(d: T) {
+  const { deviceSettings, ...installation } = d.installation;
+  return withLiveDeviceFields(
+    { ...d, installation },
+    deviceSettings?.moduleType ?? null,
+  );
+}
 
 /* ─── 권한별 Device WHERE 필터 (site 경로로) ─────── */
 const deviceWhereFilter = (ctx: UserContext) => {
@@ -399,20 +430,20 @@ export const deviceService = {
     const rows = await prisma.device.findMany({
       where: deviceWhereFilter(ctx),
       orderBy: { installationId: "asc" },
-      include: { installation: { include: { site: true } } },
+      include: deviceWithSiteInclude,
     });
-    return rows.map((d) => withLiveFields(d));
+    return rows.map((d) => withModuleType(d));
   },
 
   get: async ({ id }: { id: string }, ctx: UserContext) => {
     const d = await prisma.device.findUnique({
       where: { installationId: id },
-      include: { installation: { include: { site: true } } },
+      include: deviceWithSiteInclude,
     });
     if (!d) return null;
     if (!canAccessDevice(ctx, d.installation.site.client, d.installation.siteId))
       return null;
-    return withLiveFields(d);
+    return withModuleType(d);
   },
 
   /* =====================================================

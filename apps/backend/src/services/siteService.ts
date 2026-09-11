@@ -1,7 +1,6 @@
 import { PrismaClient } from "../../prisma/generated/client/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { deriveDeviceStatus } from "./deviceService.js";
-import { isCommLost } from "../lib/commStatus.js";
+import { withLiveDeviceFields } from "./deviceService.js";
 import type { UserContext } from "../modules/auth/auth.types.js";
 
 const prisma = new PrismaClient({
@@ -24,6 +23,11 @@ const canAccessSite = (ctx: UserContext, siteClient: string, siteId: string) => 
   return siteId === ctx.siteId;
 };
 
+const siteInstallInclude = {
+  device: true,
+  deviceSettings: { select: { moduleType: true as const } },
+};
+
 const deriveSiteStatus = (devices: { status: string }[]) => {
   if (devices.some((d) => d.status === "fault")) return "fault";
   if (devices.some((d) => d.status === "standby" || d.status === "start"))
@@ -32,6 +36,17 @@ const deriveSiteStatus = (devices: { status: string }[]) => {
   return "running";
 };
 
+function withModuleTypeOnDevice<
+  T extends {
+    device: Parameters<typeof withLiveDeviceFields>[0] | null;
+    deviceSettings?: { moduleType: string } | null;
+  },
+>(inst: T) {
+  return inst.device
+    ? withLiveDeviceFields(inst.device, inst.deviceSettings?.moduleType ?? null)
+    : null;
+}
+
 export const siteService = {
   /* ─── 메인페이지용: Site 요약 목록 ─────────────── */
   list: async (ctx: UserContext) => {
@@ -39,29 +54,19 @@ export const siteService = {
       where: siteWhereFilter(ctx),
       include: {
         installations: {
-          include: { device: true },
+          include: siteInstallInclude,
         },
       },
       orderBy: { name: "asc" },
     });
 
     return sites.map((site) => {
-      const enrichedInstallations = site.installations.map((inst) => {
-        const devicePayload =
-          inst.device != null
-            ? {
-                ...inst.device,
-                status: deriveDeviceStatus(inst.device.moduleStatus) ?? "offline",
-                commLost: isCommLost(inst.device.lastSeenAt),
-              }
-            : null;
-        return {
-          id: inst.id,
-          label: inst.label,
-          ...(ctx.role === "ADMIN" ? { iccid: inst.iccid ?? null } : {}),
-          device: devicePayload,
-        };
-      });
+      const enrichedInstallations = site.installations.map((inst) => ({
+        id: inst.id,
+        label: inst.label,
+        ...(ctx.role === "ADMIN" ? { iccid: inst.iccid ?? null } : {}),
+        device: withModuleTypeOnDevice(inst),
+      }));
 
       const statusInputs = enrichedInstallations
         .map((i) => i.device)
@@ -152,7 +157,7 @@ export const siteService = {
       where: { id: siteId },
       include: {
         installations: {
-          include: { device: true },
+          include: siteInstallInclude,
           orderBy: { label: "asc" },
         },
       },
@@ -163,17 +168,11 @@ export const siteService = {
     return {
       ...site,
       installations: site.installations.map((inst) => {
-        const { iccid, ...instWithoutIccid } = inst;
-        const base = ctx.role === "ADMIN" ? { ...inst } : { ...instWithoutIccid };
+        const { deviceSettings, device, iccid, ...rest } = inst;
         return {
-          ...base,
-          device: inst.device
-            ? {
-                ...inst.device,
-                status: deriveDeviceStatus(inst.device.moduleStatus) ?? "offline",
-                commLost: isCommLost(inst.device.lastSeenAt),
-              }
-            : inst.device,
+          ...rest,
+          ...(ctx.role === "ADMIN" ? { iccid: iccid ?? null } : {}),
+          device: withModuleTypeOnDevice({ device, deviceSettings }),
         };
       }),
     };
