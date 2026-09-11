@@ -40,6 +40,13 @@ function devicePhase(id: string): number {
 const r = (v: number, decimals = 2) =>
   Math.round(v * Math.pow(10, decimals)) / Math.pow(10, decimals);
 
+function splitModuleCapacity(totalCap: number, numOfMods: number): number[] {
+  const n = Math.min(Math.max(Math.trunc(numOfMods) || 0, 0), 6);
+  if (n <= 0) return [];
+  const each = r(totalCap / n, 1);
+  return Array.from({ length: n }, () => each);
+}
+
 /** 온도·팬·용량 필드 — TelemetryRecord 시드와 동일한 공식 (h = 시뮬레이션 시각 0~24) */
 function capacityAndThermalAtHour(
   installationId: string,
@@ -120,6 +127,10 @@ const seed = async () => {
         lastIp: "unknown",
         moduleStatus: d?.moduleStatus ?? [],
         numOfMods: d?.numOfMods ?? 0,
+        moduleCapacity: splitModuleCapacity(
+          d?.capacity ?? 150,
+          d?.numOfMods ?? 0,
+        ),
         vL1: d?.vL1 ?? null,
         vL2: d?.vL2 ?? null,
         vL3: d?.vL3 ?? null,

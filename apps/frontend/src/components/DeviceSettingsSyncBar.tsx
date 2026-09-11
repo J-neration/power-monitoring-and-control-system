@@ -29,17 +29,23 @@ type Banner = {
   detail?: string;
 };
 
-function formatAbsolute(iso: string): string {
-  return new Date(iso).toLocaleString("ko-KR", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
+function formatSnapParts(iso: string): { date: string; time: string } {
+  const d = new Date(iso);
+  return {
+    date: d.toLocaleDateString("ko-KR", {
+      timeZone: "Asia/Seoul",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }),
+    time: d.toLocaleTimeString("ko-KR", {
+      timeZone: "Asia/Seoul",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }),
+  };
 }
 
 function formatRelative(iso: string, nowMs: number): string {
@@ -82,7 +88,7 @@ export default function DeviceSettingsSyncBar({
   pendingRef.current = pendingCommandId;
 
   useEffect(() => {
-    const id = window.setInterval(() => setNowMs(Date.now()), 15_000);
+    const id = window.setInterval(() => setNowMs(Date.now()), 1_000);
     return () => window.clearInterval(id);
   }, []);
 
@@ -280,80 +286,81 @@ export default function DeviceSettingsSyncBar({
   const locked = busy || pendingCommandId !== null;
   const refreshing = locked;
 
+  const typeLabel =
+    meta.status === "loading"
+      ? "…"
+      : meta.status === "ready"
+        ? moduleTypeLabel(meta.moduleType)
+        : "없음";
+  const snapParts =
+    meta.status === "ready" ? formatSnapParts(meta.updatedAt) : null;
+
   return (
     <div className="device-settings-sync" aria-label="설정·모듈 동기화">
       <div className="device-settings-sync-inner">
-        <div className="device-settings-sync-copy">
-          <p className="device-settings-sync-kicker">온디맨드 동기화</p>
-          <h3 className="device-settings-sync-title">설정 · 모듈 상태</h3>
-          <p className="device-settings-sync-desc">
-            아래 전원·기본 설정에 쓰는 최신값을 HMI에서 한 번 가져옵니다.
-          </p>
-        </div>
-
-        <div className="device-settings-sync-facts">
-          <div className="device-settings-sync-fact">
-            <span className="device-settings-sync-fact-label">모듈 타입</span>
-            <span className="device-settings-sync-fact-value">
-              {meta.status === "loading"
-                ? "…"
-                : meta.status === "ready"
-                  ? moduleTypeLabel(meta.moduleType)
-                  : "스냅샷 없음"}
-            </span>
+        <dl className="device-settings-sync-telemetry">
+          <div className="device-settings-sync-tel">
+            <dt>TYPE</dt>
+            <dd>{typeLabel}</dd>
           </div>
-          <div className="device-settings-sync-fact device-settings-sync-fact--time">
-            <span className="device-settings-sync-fact-label">최근 스냅샷</span>
-            {meta.status === "ready" ? (
-              <>
-                <span className="device-settings-sync-fact-value device-settings-sync-fact-relative">
-                  {formatRelative(meta.updatedAt, nowMs)}
+          <div className="device-settings-sync-tel device-settings-sync-tel--snap">
+            <dt>SNAP</dt>
+            <dd>
+              {meta.status === "ready" && snapParts ? (
+                <>
+                  <time dateTime={meta.updatedAt}>
+                    <span className="device-settings-sync-clock">
+                      {snapParts.time}
+                    </span>
+                    <span className="device-settings-sync-date">
+                      {snapParts.date}
+                    </span>
+                  </time>
+                  <span className="device-settings-sync-rel">
+                    {formatRelative(meta.updatedAt, nowMs)}
+                  </span>
+                </>
+              ) : (
+                <span className="device-settings-sync-muted">
+                  {meta.status === "loading" ? "불러오는 중" : "—"}
                 </span>
-                <span className="device-settings-sync-fact-abs">
-                  {formatAbsolute(meta.updatedAt)}
-                </span>
-              </>
-            ) : (
-              <span className="device-settings-sync-fact-value device-settings-sync-fact-muted">
-                {meta.status === "loading" ? "불러오는 중…" : "—"}
-              </span>
-            )}
+              )}
+            </dd>
           </div>
-        </div>
+        </dl>
 
-        <button
-          type="button"
-          className="device-settings-sync-btn"
-          disabled={locked}
-          aria-busy={refreshing}
-          onClick={() => void requestRefresh()}
-        >
-          <span className="device-settings-sync-btn-main">
-            {refreshing ? "갱신 중…" : "↻ 설정값 갱신"}
-          </span>
-          <span className="device-settings-sync-btn-sub">
-            설정 스냅샷 + 모듈 상태
-          </span>
-        </button>
+        <div className="device-settings-sync-ops">
+          {banner ? (
+            <p
+              className={`device-settings-sync-rail device-settings-sync-rail--${banner.tone}`}
+              role="status"
+              aria-live="polite"
+              title={banner.detail ?? banner.title}
+            >
+              {banner.tone === "pending" ? (
+                <span className="device-settings-sync-spinner" aria-hidden />
+              ) : null}
+              <span className="device-settings-sync-rail-title">{banner.title}</span>
+              {banner.detail ? (
+                <span className="device-settings-sync-rail-detail">{banner.detail}</span>
+              ) : null}
+            </p>
+          ) : (
+            <p className="device-settings-sync-hint">
+              전원·기본설정 최신값을 HMI에서 가져옵니다.
+            </p>
+          )}
+          <button
+            type="button"
+            className="device-settings-sync-btn"
+            disabled={locked}
+            aria-busy={refreshing}
+            onClick={() => void requestRefresh()}
+          >
+            {refreshing ? "갱신 중…" : "↻ 갱신"}
+          </button>
+        </div>
       </div>
-
-      {banner ? (
-        <div
-          className={`device-settings-sync-banner device-settings-sync-banner--${banner.tone}`}
-          role="status"
-          aria-live="polite"
-        >
-          {banner.tone === "pending" ? (
-            <span className="device-settings-sync-spinner" aria-hidden />
-          ) : null}
-          <div>
-            <p className="device-settings-sync-banner-title">{banner.title}</p>
-            {banner.detail ? (
-              <p className="device-settings-sync-banner-detail">{banner.detail}</p>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

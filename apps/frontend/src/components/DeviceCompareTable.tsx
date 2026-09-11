@@ -26,8 +26,29 @@ function delta(after: number | null, before: number | null): number | null {
   return after - before;
 }
 
+function CompareMetric({
+  value,
+  unit,
+  kind,
+  digits,
+}: {
+  value?: number | null;
+  unit: string;
+  kind?: Kind;
+  digits?: number;
+}) {
+  const has = value != null && Number.isFinite(value);
+  return (
+    <span className={`hmi-compare-metric${unit === "%" ? " is-pct" : ""}`}>
+      <MetricValue value={value} kind={kind} digits={digits} />
+      {has ? <span className="hmi-compare-metric-unit">{unit}</span> : null}
+    </span>
+  );
+}
+
 function PhaseRow({
   tag,
+  name,
   unit,
   l1,
   l2,
@@ -36,6 +57,7 @@ function PhaseRow({
   digits = 1,
 }: {
   tag: string;
+  name?: string;
   unit: string;
   l1?: number | null;
   l2?: number | null;
@@ -47,42 +69,44 @@ function PhaseRow({
     <div className="hmi-compare-row">
       <span className="hmi-compare-tag">
         {tag}
-        <span className="hmi-compare-unit">{unit}</span>
+        {name ? <span className="hmi-compare-name">{name}</span> : null}
       </span>
-      <MetricValue value={l1} kind={kind} digits={digits} />
-      <MetricValue value={l2} kind={kind} digits={digits} />
-      <MetricValue value={l3} kind={kind} digits={digits} />
+      <CompareMetric value={l1} unit={unit} kind={kind} digits={digits} />
+      <CompareMetric value={l2} unit={unit} kind={kind} digits={digits} />
+      <CompareMetric value={l3} unit={unit} kind={kind} digits={digits} />
     </div>
   );
 }
 
-function TotalRow({
-  tag,
-  unit,
-  value,
-  kind,
-  digits = 2,
+function PfSum({
+  tpf,
+  dpf,
 }: {
-  tag: string;
-  unit: string;
-  value?: number | null;
-  kind?: Kind;
-  digits?: number;
+  tpf?: number | null;
+  dpf?: number | null;
 }) {
   return (
-    <div className="hmi-compare-row hmi-compare-row--total">
-      <span className="hmi-compare-tag">
-        {tag}
-        <span className="hmi-compare-unit">{unit}</span>
-      </span>
-      <span className="hmi-compare-total">
-        <MetricValue value={value} kind={kind} digits={digits} />
-      </span>
+    <div className="hmi-compare-sum" aria-label="3상 합계 역률">
+      <span className="hmi-compare-sum-kicker">3상 합계</span>
+      <div className="hmi-compare-sum-cell">
+        <span className="hmi-compare-tag">
+          TPF
+          <span className="hmi-compare-name">종합역률</span>
+        </span>
+        <CompareMetric value={tpf} unit="%" kind="pf" digits={2} />
+      </div>
+      <div className="hmi-compare-sum-cell">
+        <span className="hmi-compare-tag">
+          DPF
+          <span className="hmi-compare-name">변위역률</span>
+        </span>
+        <CompareMetric value={dpf} unit="%" kind="pf" digits={2} />
+      </div>
     </div>
   );
 }
 
-function Bay({
+function PhaseBay({
   side,
   title,
   kicker,
@@ -90,10 +114,6 @@ function Bay({
   thd,
   tpf,
   dpf,
-  s,
-  p,
-  q,
-  h,
 }: {
   side: "load" | "grid";
   title: string;
@@ -102,10 +122,6 @@ function Bay({
   thd: { l1?: number | null; l2?: number | null; l3?: number | null };
   tpf?: number | null;
   dpf?: number | null;
-  s?: number | null;
-  p?: number | null;
-  q?: number | null;
-  h?: number | null;
 }) {
   return (
     <article className={`hmi-compare-bay hmi-compare-bay--${side}`}>
@@ -119,16 +135,83 @@ function Bay({
         <span>L2</span>
         <span>L3</span>
       </div>
-      <PhaseRow tag="I" unit="A" l1={current.l1} l2={current.l2} l3={current.l3} />
-      <PhaseRow tag="THDi" unit="%" l1={thd.l1} l2={thd.l2} l3={thd.l3} kind="thd" />
+      <PhaseRow
+        tag="I"
+        name="전류"
+        unit="A"
+        l1={current.l1}
+        l2={current.l2}
+        l3={current.l3}
+      />
+      <PhaseRow
+        tag="THDi"
+        name="왜곡"
+        unit="%"
+        l1={thd.l1}
+        l2={thd.l2}
+        l3={thd.l3}
+        kind="thd"
+      />
       <div className="hmi-compare-rule" />
-      <TotalRow tag="TPF" unit="%" value={tpf} kind="pf" />
-      <TotalRow tag="DPF" unit="%" value={dpf} kind="pf" />
-      <div className="hmi-compare-rule" />
-      <TotalRow tag="S" unit="kVA" value={s} />
-      <TotalRow tag="P" unit="kW" value={p} />
-      <TotalRow tag="Q" unit="kvar" value={q} />
-      <TotalRow tag="H" unit="kvar" value={h} />
+      <PfSum tpf={tpf} dpf={dpf} />
+    </article>
+  );
+}
+
+function PowerCell({
+  tag,
+  name,
+  unit,
+  value,
+}: {
+  tag: "S" | "P" | "Q" | "H";
+  name: string;
+  unit: string;
+  value?: number | null;
+}) {
+  return (
+    <div className={`hmi-power-cell hmi-power-cell--${tag.toLowerCase()}`}>
+      <span className="hmi-power-cell-tag">
+        {tag}
+        <span className="hmi-power-cell-name">{name}</span>
+      </span>
+      <span className="hmi-power-cell-val">
+        <MetricValue value={value} digits={1} />
+        <span className="hmi-power-cell-unit">{unit}</span>
+      </span>
+    </div>
+  );
+}
+
+function PowerBay({
+  side,
+  title,
+  kicker,
+  s,
+  p,
+  q,
+  h,
+}: {
+  side: "load" | "grid";
+  title: string;
+  kicker: string;
+  s?: number | null;
+  p?: number | null;
+  q?: number | null;
+  h?: number | null;
+}) {
+  return (
+    <article className={`hmi-compare-bay hmi-compare-bay--${side}`}>
+      <header className="hmi-compare-bay-head">
+        <span className="hmi-compare-kicker">{kicker}</span>
+        <h3>{title}</h3>
+      </header>
+      <div className="hmi-power-grid">
+        <PowerCell tag="S" name="피상전력" unit="kVA" value={s} />
+        <PowerCell tag="P" name="유효전력" unit="kW" value={p} />
+        <PowerCell tag="Q" name="무효전력" unit="kvar" value={q} />
+        <PowerCell tag="H" name="고조파" unit="kvar" value={h} />
+      </div>
     </article>
   );
 }
@@ -185,6 +268,27 @@ export default function DeviceCompareTable({ device }: Props) {
     device.gridCurrentTHDL3,
   );
 
+  const loadCurrent = {
+    l1: device.loadCurrentL1,
+    l2: device.loadCurrentL2,
+    l3: device.loadCurrentL3,
+  };
+  const gridCurrent = {
+    l1: device.gridCurrentL1,
+    l2: device.gridCurrentL2,
+    l3: device.gridCurrentL3,
+  };
+  const loadThd = {
+    l1: device.loadCurrentTHDL1,
+    l2: device.loadCurrentTHDL2,
+    l3: device.loadCurrentTHDL3,
+  };
+  const gridThd = {
+    l1: device.gridCurrentTHDL1,
+    l2: device.gridCurrentTHDL2,
+    l3: device.gridCurrentTHDL3,
+  };
+
   return (
     <div className="device-compare-panel">
       <div className="hmi-compare-head">
@@ -195,103 +299,133 @@ export default function DeviceCompareTable({ device }: Props) {
           <span aria-hidden>→</span>
           GRID
         </span>
+        <div className="hmi-compare-bus" aria-label="계통 전압 RMS">
+          <span className="hmi-compare-bus-label">계통 전압 RMS</span>
+          <div className="hmi-compare-bus-phases">
+            <span className="hmi-compare-bus-phase">
+              <span className="hmi-compare-bus-phase-tag">L1</span>
+              <MetricValue value={device.vL1} kind="voltage" digits={1} />
+              <span className="hmi-compare-bus-unit">V</span>
+            </span>
+            <span className="hmi-compare-bus-phase">
+              <span className="hmi-compare-bus-phase-tag">L2</span>
+              <MetricValue value={device.vL2} kind="voltage" digits={1} />
+              <span className="hmi-compare-bus-unit">V</span>
+            </span>
+            <span className="hmi-compare-bus-phase">
+              <span className="hmi-compare-bus-phase-tag">L3</span>
+              <MetricValue value={device.vL3} kind="voltage" digits={1} />
+              <span className="hmi-compare-bus-unit">V</span>
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div className="hmi-compare-bays">
-        <Bay
-          side="load"
-          kicker="LOAD"
-          title="보상 전"
-          current={{
-            l1: device.loadCurrentL1,
-            l2: device.loadCurrentL2,
-            l3: device.loadCurrentL3,
-          }}
-          thd={{
-            l1: device.loadCurrentTHDL1,
-            l2: device.loadCurrentTHDL2,
-            l3: device.loadCurrentTHDL3,
-          }}
-          tpf={device.tpf1}
-          dpf={device.dpf1}
-          s={device.uncompS}
-          p={device.uncompP}
-          q={device.uncompQ}
-          h={device.uncompH}
-        />
+      <div className="hmi-compare-stack">
+        <section className="hmi-compare-block" aria-label="전류 고조파 역률">
+          <div className="hmi-compare-block-label">전류 · THD · 역률</div>
+          <div className="hmi-compare-bays">
+            <PhaseBay
+              side="load"
+              kicker="LOAD"
+              title="보상 전"
+              current={loadCurrent}
+              thd={loadThd}
+              tpf={device.tpf1}
+              dpf={device.dpf1}
+            />
+            <aside className="hmi-compare-spine" aria-label="보상 전후 차이">
+              <span className="hmi-delta-head">Δ</span>
+              <DeltaCell label="I" unit="A" before={iBefore} after={iAfter} better="down" />
+              <DeltaCell
+                label="THDi"
+                unit="%"
+                before={thdBefore}
+                after={thdAfter}
+                better="down"
+              />
+              <DeltaCell
+                label="TPF"
+                unit="%"
+                before={num(device.tpf1)}
+                after={num(device.tpf2)}
+                better="up"
+              />
+              <DeltaCell
+                label="DPF"
+                unit="%"
+                before={num(device.dpf1)}
+                after={num(device.dpf2)}
+                better="up"
+              />
+            </aside>
+            <PhaseBay
+              side="grid"
+              kicker="GRID"
+              title="보상 후"
+              current={gridCurrent}
+              thd={gridThd}
+              tpf={device.tpf2}
+              dpf={device.dpf2}
+            />
+          </div>
+        </section>
 
-        <aside className="hmi-compare-spine" aria-label="보상 전후 차이">
-          <span className="hmi-delta-head">Δ</span>
-          <DeltaCell label="I" unit="A" before={iBefore} after={iAfter} better="down" />
-          <DeltaCell label="THDi" unit="%" before={thdBefore} after={thdAfter} better="down" />
-          <DeltaCell
-            label="TPF"
-            unit="%"
-            before={num(device.tpf1)}
-            after={num(device.tpf2)}
-            better="up"
-          />
-          <DeltaCell
-            label="DPF"
-            unit="%"
-            before={num(device.dpf1)}
-            after={num(device.dpf2)}
-            better="up"
-          />
-          <DeltaCell
-            label="Q"
-            unit="kvar"
-            before={num(device.uncompQ)}
-            after={num(device.compQ)}
-            better="down"
-          />
-          <DeltaCell
-            label="H"
-            unit="kvar"
-            before={num(device.uncompH)}
-            after={num(device.compH)}
-            better="down"
-          />
-        </aside>
-
-        <Bay
-          side="grid"
-          kicker="GRID"
-          title="보상 후"
-          current={{
-            l1: device.gridCurrentL1,
-            l2: device.gridCurrentL2,
-            l3: device.gridCurrentL3,
-          }}
-          thd={{
-            l1: device.gridCurrentTHDL1,
-            l2: device.gridCurrentTHDL2,
-            l3: device.gridCurrentTHDL3,
-          }}
-          tpf={device.tpf2}
-          dpf={device.dpf2}
-          s={device.compS}
-          p={device.compP}
-          q={device.compQ}
-          h={device.compH}
-        />
+        <section className="hmi-compare-block" aria-label="전력 SPQH">
+          <div className="hmi-compare-block-label">전력 · 3상 합계</div>
+          <div className="hmi-compare-bays">
+            <PowerBay
+              side="load"
+              kicker="LOAD"
+              title="보상 전"
+              s={device.uncompS}
+              p={device.uncompP}
+              q={device.uncompQ}
+              h={device.uncompH}
+            />
+            <aside className="hmi-compare-spine" aria-label="전력 전후 차이">
+              <span className="hmi-delta-head">Δ</span>
+              <DeltaCell
+                label="S"
+                unit="kVA"
+                before={num(device.uncompS)}
+                after={num(device.compS)}
+                better="down"
+              />
+              <DeltaCell
+                label="P"
+                unit="kW"
+                before={num(device.uncompP)}
+                after={num(device.compP)}
+                better="down"
+              />
+              <DeltaCell
+                label="Q"
+                unit="kvar"
+                before={num(device.uncompQ)}
+                after={num(device.compQ)}
+                better="down"
+              />
+              <DeltaCell
+                label="H"
+                unit="kvar"
+                before={num(device.uncompH)}
+                after={num(device.compH)}
+                better="down"
+              />
+            </aside>
+            <PowerBay
+              side="grid"
+              kicker="GRID"
+              title="보상 후"
+              s={device.compS}
+              p={device.compP}
+              q={device.compQ}
+              h={device.compH}
+            />
+          </div>
+        </section>
       </div>
-
-      <footer className="hmi-compare-bus">
-        <span className="hmi-compare-bus-label">계통 전압</span>
-        <span>
-          L1 <MetricValue value={device.vL1} kind="voltage" digits={1} />
-          <span className="hmi-compare-bus-unit">V</span>
-        </span>
-        <span>
-          L2 <MetricValue value={device.vL2} kind="voltage" digits={1} />
-          <span className="hmi-compare-bus-unit">V</span>
-        </span>
-        <span>
-          L3 <MetricValue value={device.vL3} kind="voltage" digits={1} />
-          <span className="hmi-compare-bus-unit">V</span>
-        </span>
-      </footer>
     </div>
   );
 }

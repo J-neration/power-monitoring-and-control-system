@@ -77,6 +77,8 @@ export default function DeviceMonitorSynoptic({
           <ModuleSlotGrid
             moduleStatus={device.moduleStatus}
             numOfMods={device.numOfMods}
+            moduleCapacity={device.moduleCapacity}
+            capUnit={device.model === "paf" ? "A" : "kvar"}
           />
         </div>
         <div className="device-synoptic-capacity scada-panel">

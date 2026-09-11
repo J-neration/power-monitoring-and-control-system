@@ -5,7 +5,6 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
-  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -18,7 +17,7 @@ import {
   AXIS,
   CHART_H,
   GRID,
-  LEGEND,
+  withChartUnit,
 } from "../../lib/chartTheme";
 
 type GradDef = { id: string; color: string; opacity?: number };
@@ -60,13 +59,14 @@ type Props = {
 function yAxisWidthForUnit(unit?: string): number {
   if (!unit) return 34;
   const u = unit.trim().toLowerCase();
-  if (u === "%") return 38;
-  if (u === "°c") return 42;
-  if (u === "m/s") return 46;
-  if (u.endsWith("kvar") || u.endsWith("kva") || u.endsWith("kw") || u === "a") {
-    return 58;
+  if (u === "%") return 46;
+  if (u === "°c") return 48;
+  if (u === "m/s") return 52;
+  if (u.endsWith("kvar") || u.endsWith("kva") || u.endsWith("kw")) {
+    return 80;
   }
-  return 44;
+  if (u === "a") return 52;
+  return 48;
 }
 
 /** 24시간 이력에서 시작·끝을 포함해 약 6개만 표시 (4시간 간격) */
@@ -100,11 +100,12 @@ export default function HistoryAreaChart({
     top: margin?.top ?? 8,
     right: margin?.right ?? 16,
     left: margin?.left ?? 0,
-    bottom: margin?.bottom ?? 4,
+    bottom: margin?.bottom ?? 12,
   };
   const xTicks = historyTimeTicks(data);
 
   return (
+    <div className="history-area-chart">
     <ResponsiveContainer width="100%" height={CHART_H}>
       <AreaChart data={data} margin={chartMargin}>
         <Grads defs={grads} />
@@ -122,11 +123,10 @@ export default function HistoryAreaChart({
           {...AXIS}
           width={axisWidth}
           domain={yDomain}
-          unit={yUnit}
+          tickFormatter={(v) => withChartUnit(v, yUnit)}
           tick={{ ...AXIS.tick, className: "tabular-nums" }}
         />
-        <Tooltip content={<ScadaTooltip />} />
-        <Legend {...LEGEND} />
+        <Tooltip content={<ScadaTooltip unit={yUnit} />} />
         <FaultChartMarkers faults={faults} data={data as { time: string; recordedAt: string }[]} />
         {children}
         {series.map((s) => (
@@ -145,5 +145,20 @@ export default function HistoryAreaChart({
         ))}
       </AreaChart>
     </ResponsiveContainer>
+      {series.length > 0 ? (
+        <ul className="history-chart-legend">
+          {series.map((s) => (
+            <li key={s.dataKey}>
+              <span
+                className={`history-chart-legend-swatch${s.dashed ? " is-dashed" : ""}`}
+                style={{ background: s.stroke }}
+                aria-hidden
+              />
+              {s.name}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
   );
 }

@@ -16,7 +16,7 @@ const R_MID = 70;
 const R_IN = 54;
 const CY = PAD + R_OUT + LABEL_R;
 const SCALE = 100;
-const VB = { w: 240, h: CY + 6 };
+const VB = { w: 240, h: CY + 18 };
 
 const COLOR = {
   green: "#22c55e",
@@ -106,17 +106,17 @@ export default function ThdArcGauge({ label, before, after }: Props) {
         <svg
           viewBox={`0 0 ${VB.w} ${VB.h}`}
           preserveAspectRatio="xMidYMid meet"
-          overflow="hidden"
+          overflow="visible"
           role="img"
           aria-label={`${label} 전 ${b != null ? fmt(b) : "없음"}, 후 ${a != null ? fmt(a) : "없음"}`}
         >
           <path d={sector(0, 1, R_OUT, R_MID)} fill={COLOR.track} />
           <path d={sector(0, 1, R_MID - 3, R_IN)} fill={COLOR.trackInner} />
 
-          {tB > 0.002 ? (
-            <path d={sector(0, tB, R_MID - 3, R_IN)} fill={beforeColor} opacity="0.78" />
+          {tA > 0.002 ? (
+            <path d={sector(0, tA, R_MID - 3, R_IN)} fill={afterColor} opacity="0.78" />
           ) : null}
-          {tA > 0.002 ? <path d={sector(0, tA, R_OUT, R_MID)} fill={afterColor} /> : null}
+          {tB > 0.002 ? <path d={sector(0, tB, R_OUT, R_MID)} fill={beforeColor} /> : null}
 
           {([0, 20, 50, 100] as const).map((tick) => {
             const t = tick / SCALE;
@@ -130,15 +130,15 @@ export default function ThdArcGauge({ label, before, after }: Props) {
             );
           })}
 
-          {tB > 0.002 ? (
+          {tA > 0.002 ? (
             <path
-              d={radial(tB, R_IN, R_MID - 3)}
+              d={radial(tA, R_IN, R_MID - 3)}
               stroke="rgba(255,255,255,0.7)"
               strokeWidth="2"
             />
           ) : null}
-          {tA > 0.002 ? (
-            <path d={radial(tA, R_MID, R_OUT)} stroke="#f8fafc" strokeWidth="2.4" />
+          {tB > 0.002 ? (
+            <path d={radial(tB, R_MID, R_OUT)} stroke="#f8fafc" strokeWidth="2.4" />
           ) : null}
 
           <path
@@ -166,20 +166,32 @@ export default function ThdArcGauge({ label, before, after }: Props) {
                 fontSize="10"
                 fontWeight="600"
               >
-                {tick}
+                {tick}%
               </text>
             );
           })}
         </svg>
       </div>
-      <div className="ring-gauge-values">
-        <span className="ring-gauge-before" style={{ color: beforeColor }}>
-          {b != null ? fmt(b) : "—"}
-        </span>
-        <span className="ring-gauge-arrow">→</span>
-        <span className="ring-gauge-after" style={{ color: afterColor }}>
-          {a != null ? fmt(a) : "—"}
-        </span>
+      <div className="thd-arc-caption">
+        <div className="thd-arc-legend">
+          <span className="thd-arc-leg">
+            <span className="thd-arc-leg-swatch thd-arc-leg-swatch--out" aria-hidden />
+            바깥 · 보상 전
+          </span>
+          <span className="thd-arc-leg">
+            <span className="thd-arc-leg-swatch thd-arc-leg-swatch--in" aria-hidden />
+            안쪽 · 보상 후
+          </span>
+        </div>
+        <div className="ring-gauge-values">
+          <span className="ring-gauge-before" style={{ color: beforeColor }}>
+            {b != null ? fmt(b) : "—"}
+          </span>
+          <span className="ring-gauge-arrow">→</span>
+          <span className="ring-gauge-after" style={{ color: afterColor }}>
+            {a != null ? fmt(a) : "—"}
+          </span>
+        </div>
       </div>
     </article>
   );

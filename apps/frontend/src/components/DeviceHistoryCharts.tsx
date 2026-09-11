@@ -12,6 +12,7 @@ import {
   TEMP_CHART_MARGIN_RIGHT,
   TEMP_THRESHOLDS,
   TEMP_WARN_REF,
+  areaTempOrNull,
 } from "../lib/chartTheme";
 import type { TelemetryReading } from "../types/site";
 
@@ -24,13 +25,14 @@ const TEMP_COLORS = [
   CHART_COLORS.warn,
 ];
 
-type SubTab = "pf" | "thd" | "capacity" | "temp";
+type SubTab = "pf" | "power" | "thd" | "capacity" | "temp";
 
-const SUB_TABS: { key: SubTab; label: string; color: string }[] = [
-  { key: "pf", label: "역률·전력", color: CHART_COLORS.accent },
-  { key: "thd", label: "THD", color: CHART_COLORS.warn },
-  { key: "capacity", label: "용량", color: CHART_COLORS.purple },
-  { key: "temp", label: "온도", color: CHART_COLORS.load },
+const SUB_TABS: { key: SubTab; label: string }[] = [
+  { key: "pf", label: "역률" },
+  { key: "power", label: "전력" },
+  { key: "thd", label: "THD" },
+  { key: "capacity", label: "용량" },
+  { key: "temp", label: "온도" },
 ];
 
 function formatDataDateRangeLabel(readings: TelemetryReading[]): string {
@@ -128,7 +130,7 @@ export default function DeviceHistoryCharts({
         };
 
         for (let i = 0; i < maxArea; i++) {
-          row[`area${i}`] = r.areaTemp?.[i] ?? null;
+          row[`area${i}`] = areaTempOrNull(r.areaTemp?.[i]);
         }
         for (let i = 0; i < maxMod; i++) {
           const modVal = r.moduleTemp?.[i] ?? null;
@@ -154,13 +156,40 @@ export default function DeviceHistoryCharts({
 
   const dataDateLabel = formatDataDateRangeLabel(readings);
 
+  const nav = (
+    <nav className="monitor-view-nav" aria-label="이력 화면">
+      <div className="monitor-view-chips" role="tablist">
+        {SUB_TABS.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={subTab === key}
+            className={`monitor-view-chip${subTab === key ? " active" : ""}`}
+            onClick={() => setSubTab(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {dataDateLabel ? (
+        <p className="history-data-date-line" aria-label="데이터 기준 날짜">
+          {dataDateLabel}
+        </p>
+      ) : null}
+    </nav>
+  );
+
   if (readings.length === 0) {
     return (
-      <div className="chart-card chart-card-wide history-empty">
-        <p>최근 {hours}시간 수신된 데이터가 없습니다.</p>
-        <p className="history-empty-sub">
-          HMI에서 데이터를 전송하면 여기에 그래프가 표시됩니다.
-        </p>
+      <div className="device-monitor-board">
+        {nav}
+        <div className="chart-card chart-card-wide history-empty">
+          <p>최근 {hours}시간 수신된 데이터가 없습니다.</p>
+          <p className="history-empty-sub">
+            HMI에서 데이터를 전송하면 여기에 그래프가 표시됩니다.
+          </p>
+        </div>
       </div>
     );
   }
@@ -182,32 +211,13 @@ export default function DeviceHistoryCharts({
   ];
 
   return (
-    <>
-      <div className="analytics-subtab-bar">
-        {SUB_TABS.map(({ key, label, color }) => (
-          <button
-            key={key}
-            type="button"
-            className={`analytics-subtab${subTab === key ? " active" : ""}`}
-            style={{ "--tab-accent": color } as React.CSSProperties}
-            onClick={() => setSubTab(key)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      {dataDateLabel ? (
-        <p className="history-data-date-line" aria-label="데이터 기준 날짜">
-          {dataDateLabel}
-        </p>
-      ) : null}
+    <div className="device-monitor-board">
+      {nav}
 
-      <div
-        className={`device-charts-grid${subTab === "pf" ? " history-pf-grid" : ""}`}
-      >
-        {subTab === "pf" && (
+      <div className="device-history-body device-charts-grid">
+        {subTab === "power" && (
           <>
-            <ChartCard title="S (kVA)" subtitle="— 보상 전 / 후">
+            <ChartCard title="S (kVA)" subtitle="— 보상 전 / 후" wide>
               <HistoryAreaChart
                 data={data}
                 grads={[
@@ -219,7 +229,7 @@ export default function DeviceHistoryCharts({
                 faults={faults}
               />
             </ChartCard>
-            <ChartCard title="P (kW)" subtitle="— 보상 전 / 후">
+            <ChartCard title="P (kW)" subtitle="— 보상 전 / 후" wide>
               <HistoryAreaChart
                 data={data}
                 grads={[
@@ -231,7 +241,7 @@ export default function DeviceHistoryCharts({
                 faults={faults}
               />
             </ChartCard>
-            <ChartCard title="Q (kvar)" subtitle="— 보상 전 / 후">
+            <ChartCard title="Q (kvar)" subtitle="— 보상 전 / 후" wide>
               <HistoryAreaChart
                 data={data}
                 grads={[
@@ -243,7 +253,7 @@ export default function DeviceHistoryCharts({
                 faults={faults}
               />
             </ChartCard>
-            <ChartCard title="H (kvar)" subtitle="— 보상 전 / 후">
+            <ChartCard title="H (kvar)" subtitle="— 보상 전 / 후" wide>
               <HistoryAreaChart
                 data={data}
                 grads={[
@@ -255,6 +265,11 @@ export default function DeviceHistoryCharts({
                 faults={faults}
               />
             </ChartCard>
+          </>
+        )}
+
+        {subTab === "pf" && (
+          <>
             <ChartCard title="TPF (%)" subtitle={`— ${hoursLabel}`} wide>
               <HistoryAreaChart
                 data={data}
@@ -292,7 +307,7 @@ export default function DeviceHistoryCharts({
               <ChartCard
                 key={phase}
                 title={`${phase} 전류 THD (%)`}
-                subtitle={`— ${hoursLabel}`}
+                subtitle={`— 보상 전 / 후 · ${hoursLabel}`}
                 wide
               >
                 <HistoryAreaChart
@@ -309,6 +324,7 @@ export default function DeviceHistoryCharts({
                     gradB,
                     gradA,
                   )}
+                  yDomain={[0, "auto"]}
                   yUnit="%"
                   faults={faults}
                 />
@@ -353,6 +369,7 @@ export default function DeviceHistoryCharts({
                     stackId: "cap",
                   },
                 ]}
+                yUnit={capUnit === "A" ? " A" : " kvar"}
                 faults={faults}
               />
               <div className="capacity-legend-row">
@@ -464,6 +481,6 @@ export default function DeviceHistoryCharts({
           </>
         )}
       </div>
-    </>
+    </div>
   );
 }

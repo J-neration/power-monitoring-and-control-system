@@ -77,6 +77,7 @@ const createCommandSchema = z.object({
   module: z.number().int(),
   power: z.string().min(1),
   requestedBy: z.string().trim().optional().nullable(),
+  moduleType: z.string().trim().optional().nullable(),
   fields: z
     .record(
       z.string(),
@@ -96,6 +97,8 @@ const receiverSettingsSchema = z.object({
   iccid: z.string().min(1),
   moduleType: z.string().min(1),
   numOfMods: z.coerce.number().int().optional(),
+  /** Per-module rated capacity. Settings snapshot only — not telemetry. */
+  moduleCapacity: z.unknown().optional(),
   settings: z.object({
     basic: z.array(z.record(z.string(), z.unknown())),
   }),
@@ -524,10 +527,15 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
         iccid: parsed.data.iccid,
         moduleType: parsed.data.moduleType,
         numOfMods: parsed.data.numOfMods,
+        moduleCapacity: parsed.data.moduleCapacity,
         basic: parsed.data.settings.basic,
       });
       wsHub.broadcast({
         type: "settings_updated",
+        installationId,
+      });
+      wsHub.broadcast({
+        type: "device_updated",
         installationId,
       });
       // On-demand settings upload usually follows command poll — treat as linked.
@@ -588,6 +596,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
           power: parsed.data.power,
           requestedBy: parsed.data.requestedBy ?? request.user.username,
           fields: parsed.data.fields ?? null,
+          moduleType: parsed.data.moduleType ?? null,
         });
         server.log.info(
           {
@@ -595,7 +604,14 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
             installationId: cmd.installationId,
             module: cmd.module,
             power: cmd.power,
-            hasFields: !!parsed.data.fields,
+            moduleType: parsed.data.moduleType ?? null,
+            incomingKeys: parsed.data.fields
+              ? Object.keys(parsed.data.fields)
+              : [],
+            storedKeys:
+              cmd.fields && typeof cmd.fields === "object" && !Array.isArray(cmd.fields)
+                ? Object.keys(cmd.fields as object)
+                : [],
           },
           "Command created",
         );

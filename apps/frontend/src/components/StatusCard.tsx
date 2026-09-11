@@ -1,15 +1,20 @@
 import type { ReactNode } from "react";
 import type { DeviceWithInstallation } from "../types/site";
 import MetricValue from "./MetricValue";
-import { TEMP_THRESHOLDS } from "../lib/chartTheme";
+import { TEMP_THRESHOLDS, isAreaTempDisconnected } from "../lib/chartTheme";
 
 type StatusCardProps = {
   device: DeviceWithInstallation;
   compact?: boolean;
 };
 
-function maxOf(values?: number[] | null): number | null {
-  const xs = (values ?? []).filter((v) => Number.isFinite(v));
+function maxOf(
+  values?: number[] | null,
+  skip?: (v: number) => boolean,
+): number | null {
+  const xs = (values ?? []).filter(
+    (v) => Number.isFinite(v) && !skip?.(v),
+  );
   return xs.length ? Math.max(...xs) : null;
 }
 
@@ -200,7 +205,7 @@ export function StatusCard({ device, compact = false }: StatusCardProps) {
       <div className="device-health-strip" aria-label="설비 상태">
         <HealthCell
           label="주위"
-          value={maxOf(device.areaTemp)}
+          value={maxOf(device.areaTemp, isAreaTempDisconnected)}
           suffix="°"
           warn={TEMP_THRESHOLDS.areaWarn}
           alarm={TEMP_THRESHOLDS.areaAlarm}

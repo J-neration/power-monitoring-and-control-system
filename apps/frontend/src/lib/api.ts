@@ -27,7 +27,18 @@ export type FaultEvent = {
   acknowledgedAt?: string | null;
 };
 
-const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
+const apiBase = (() => {
+  const raw = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:4000";
+  try {
+    const url = new URL(raw);
+    // Node undici on Windows often fails localhost → ::1 while the API
+    // listens on IPv4. Pin loopback to v4 for server-side fetches.
+    if (url.hostname === "localhost") url.hostname = "127.0.0.1";
+    return url.origin;
+  } catch {
+    return raw;
+  }
+})();
 
 /** 서버 컴포넌트 전용: pmcs_token 쿠키를 Authorization 헤더로 포워딩 */
 const authHeaders = (): Record<string, string> => {
@@ -40,23 +51,46 @@ const authHeaders = (): Record<string, string> => {
   }
 };
 
-export const fetchDevicesRaw = async (): Promise<DeviceWithInstallation[]> => {
-  const response = await fetch(`${apiBase}/devices`, {
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Backend restarts (tsx watch) and Windows localhost/IPv6 blips throw
+ * TypeError: fetch failed before a Response exists. Retry once, then null.
+ */
+const requestApi = async (
+  path: string,
+  init?: RequestInit,
+): Promise<Response | null> => {
+  const url = `${apiBase}${path}`;
+  const options: RequestInit = {
     cache: "no-store",
-    headers: authHeaders(),
-  });
-  if (response.status === 401) return [];
+    ...init,
+    headers: { ...authHeaders(), ...(init?.headers as Record<string, string> | undefined) },
+  };
+  try {
+    return await fetch(url, options);
+  } catch {
+    await wait(350);
+    try {
+      return await fetch(url, options);
+    } catch (err) {
+      console.error(`[api] fetch failed ${path}`, err);
+      return null;
+    }
+  }
+};
+
+export const fetchDevicesRaw = async (): Promise<DeviceWithInstallation[]> => {
+  const response = await requestApi("/devices");
+  if (!response || response.status === 401) return [];
   if (!response.ok) throw new Error("Failed to fetch devices");
   const data = (await response.json()) as { devices: DeviceWithInstallation[] };
   return data.devices;
 };
 
 export const fetchSites = async (): Promise<Site[]> => {
-  const response = await fetch(`${apiBase}/sites`, {
-    cache: "no-store",
-    headers: authHeaders(),
-  });
-  if (response.status === 401) return [];
+  const response = await requestApi("/sites");
+  if (!response || response.status === 401) return [];
   if (!response.ok) throw new Error("Failed to fetch sites");
   const data = (await response.json()) as {
     sites: Array<{
@@ -90,21 +124,19 @@ export const fetchReadings = async (
   installationId: string,
   hours = 24
 ): Promise<TelemetryReading[]> => {
-  const response = await fetch(
-    `${apiBase}/devices/${encodeURIComponent(installationId)}/readings?hours=${hours}`,
-    { cache: "no-store", headers: authHeaders() }
+  const response = await requestApi(
+    `/devices/${encodeURIComponent(installationId)}/readings?hours=${hours}`,
   );
-  if (!response.ok) return [];
+  if (!response?.ok) return [];
   const data = (await response.json()) as { readings: TelemetryReading[] };
   return data.readings ?? [];
 };
 
 export const fetchDevice = async (installationId: string) => {
-  const response = await fetch(`${apiBase}/devices/${installationId}`, {
-    cache: "no-store",
-    headers: authHeaders(),
-  });
-  if (response.status === 404) return null;
+  const response = await requestApi(
+    `/devices/${encodeURIComponent(installationId)}`,
+  );
+  if (!response || response.status === 404) return null;
   if (!response.ok) throw new Error("Failed to fetch device");
   const data = (await response.json()) as { device: DeviceWithInstallation };
   return data.device ?? null;
@@ -115,22 +147,18 @@ export const fetchFaults = async (
   installationId: string,
   limit = 50
 ): Promise<FaultEvent[]> => {
-  const response = await fetch(
-    `${apiBase}/devices/${encodeURIComponent(installationId)}/faults?limit=${limit}`,
-    { cache: "no-store", headers: authHeaders() }
+  const response = await requestApi(
+    `/devices/${encodeURIComponent(installationId)}/faults?limit=${limit}`,
   );
-  if (!response.ok) return [];
+  if (!response?.ok) return [];
   const data = (await response.json()) as { faults: FaultEvent[] };
   return data.faults ?? [];
 };
 
 /** GET /sites — ADMIN 응답에 installations[].iccid 포함 */
 export const fetchSitesListFromApi = async (): Promise<SiteListFromApi[]> => {
-  const response = await fetch(`${apiBase}/sites`, {
-    cache: "no-store",
-    headers: authHeaders(),
-  });
-  if (response.status === 401) return [];
+  const response = await requestApi("/sites");
+  if (!response || response.status === 401) return [];
   if (!response.ok) throw new Error("Failed to fetch sites");
   const data = (await response.json()) as { sites: SiteListFromApi[] };
   return data.sites ?? [];
@@ -141,11 +169,8 @@ export const fetchClientOptionsFromApi = async (
 ): Promise<ClientOptionFromApi[]> => {
   const q = includeInactive ? "?includeInactive=1" : "";
   try {
-    const response = await fetch(`${apiBase}/admin/registry/clients${q}`, {
-      cache: "no-store",
-      headers: authHeaders(),
-    });
-    if (response.ok) {
+    const response = await requestApi(`/admin/registry/clients${q}`);
+    if (response?.ok) {
       const data = (await response.json()) as {
         clients?: ClientOptionFromApi[];
       };
@@ -162,11 +187,8 @@ export const fetchClientOptionsFromApi = async (
 
 export const fetchRoleOptionsFromApi = async (): Promise<RoleOptionFromApi[]> => {
   try {
-    const response = await fetch(`${apiBase}/admin/registry/roles`, {
-      cache: "no-store",
-      headers: authHeaders(),
-    });
-    if (response.ok) {
+    const response = await requestApi("/admin/registry/roles");
+    if (response?.ok) {
       const data = (await response.json()) as { roles?: RoleOptionFromApi[] };
       return withRegistryDefaults(data.roles ?? [], DEFAULT_ROLE_OPTIONS);
     }

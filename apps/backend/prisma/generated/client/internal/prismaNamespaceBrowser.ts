@@ -170,6 +170,7 @@ export const DeviceScalarFieldEnum = {
   capacity: 'capacity',
   moduleStatus: 'moduleStatus',
   numOfMods: 'numOfMods',
+  moduleCapacity: 'moduleCapacity',
   lastSeenAt: 'lastSeenAt',
   lastValue: 'lastValue',
   lastIp: 'lastIp',

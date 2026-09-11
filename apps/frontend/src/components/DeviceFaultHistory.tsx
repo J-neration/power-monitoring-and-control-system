@@ -115,11 +115,6 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
               </span>
             )}
           </div>
-
-          <p className="fault-refresh-hint">
-            모니터 계측은 <strong>모니터</strong> 탭 「데이터 갱신」, 설정·모듈
-            상태는 <strong>설정</strong> 탭 「설정값 갱신」에서 요청합니다.
-          </p>
         </div>
 
         {faults.length === 0 ? (
@@ -140,21 +135,30 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
                 {faults.map((f) => {
                   const status = faultStatus(f);
                   return (
-                    <tr key={f.id} className={status === "active" ? "fault-row-active" : ""}>
+                    <tr
+                      key={f.id}
+                      className={status === "active" ? "fault-row-active" : ""}
+                    >
                       <td className="fault-time">
                         <span className="fault-time-abs">
                           {new Date(f.occurredAt).toLocaleString("ko-KR", {
                             timeZone: "Asia/Seoul",
                           })}
                         </span>
-                        <span className="fault-time-rel">{relativeTime(f.occurredAt)}</span>
+                        <span className="fault-time-rel">
+                          {relativeTime(f.occurredAt)}
+                        </span>
                       </td>
                       <td>
-                        <span className="fault-module-badge">{moduleLabel(f.module)}</span>
+                        <span className="fault-module-badge">
+                          {moduleLabel(f.module)}
+                        </span>
                       </td>
                       <td className="fault-event-name">{faultLabel(f)}</td>
                       <td>
-                        <span className={`fault-status-chip fault-status-${status}`}>
+                        <span
+                          className={`fault-status-chip fault-status-${status}`}
+                        >
                           {STATUS_LABEL[status]}
                         </span>
                       </td>

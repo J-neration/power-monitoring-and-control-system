@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import type { ClientOptionFromApi, SiteListFromApi } from "../../types/admin";
-import { CLIENT_LABELS, isTestClient } from "../../data/clients";
+import { CLIENT_LABELS } from "../../data/clients";
 
 type Props = {
   initialSites: SiteListFromApi[];
@@ -775,9 +775,6 @@ export default function AdminSitesPanel({
                     <div>
                       <span className="admin-sites-name">
                         {site.name}
-                        {isTestClient(site.client) && (
-                          <span className="test-badge">TEST</span>
-                        )}
                       </span>
                       <span className="admin-sites-meta">
                         {clientLabelMap[site.client] ?? site.client} · {site.region} · 설치지점{" "}

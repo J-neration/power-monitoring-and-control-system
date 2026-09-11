@@ -33,8 +33,10 @@ export default function ChartCard({
               <span className="chart-title-sub"> {subtitle}</span>
             ) : null}
           </h3>
-          {legend}
         </div>
+        {legend ? (
+          <div className="scada-chart-card-legend">{legend}</div>
+        ) : null}
         {badge ? <span className="scada-chart-badge">{badge}</span> : null}
       </div>
       {children}

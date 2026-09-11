@@ -15,6 +15,8 @@ export const OPS_SAVINGS = {
   demandKrwPerKwMonth: 8320,
   /** 변압기+선로 동손 비율 (미보상 전류 기준, 가정치) */
   copperLossRatio: 0.03,
+  /** 이보다 작은 유효전력은 무부하. ΔS·동손만으로 연간 요금을 만들지 않는다 */
+  minLoadKw: 1,
   /** 소나무류 1그루 연간 CO₂ 흡수량 (kg) — 국립산림과학원 표준 */
   treeKgCo2PerYear: 6.6,
   hoursPerYear: 8760,
@@ -32,9 +34,13 @@ export const QUALITY_REFS = {
   voltageUnbalanceLimitPct: 2,
   /** NEMA MG-1 전동기 권장 전압 불평형 */
   voltageUnbalanceMotorPct: 1,
+  /** 품질 점수 0점 구간 · 한도 바 만칸 */
+  voltageUnbalanceDangerPct: 5,
   /** 한전 전기공급약관 역률 기준(할증) / 인센티브 상한 */
   kepcoPfPct: 90,
   kepcoPfIncentivePct: 95,
+  /** 이보다 낮은 순시 역률은 경부하로 보고 역률요금 환산에서 뺀다 */
+  kepcoPfBillingFloorPct: 70,
 } as const;
 
 export type PowerSnapshot = {
@@ -58,6 +64,8 @@ export type PowerSnapshot = {
   gridCurrentTHDL3?: number | null;
   tpf1?: number | null;
   tpf2?: number | null;
+  dpf1?: number | null;
+  dpf2?: number | null;
   vL1?: number | null;
   vL2?: number | null;
   vL3?: number | null;
@@ -107,54 +115,76 @@ export function pfChargeRatio(tpfPct: number): number {
   return -Math.min(pf - 90, 5) * perPoint;
 }
 
-/**
- * 순시 kW 절감: 유효전력 감소 + 전류 감소에 따른 I²R 동손.
- * 고조파 전류 감소분은 I_grid < I_load 에 이미 포함되므로 따로 더하지 않는다.
- */
-export function estimateKwSaved(s: PowerSnapshot): number | null {
+function isLoadedKw(p: number | null): p is number {
+  return p != null && p >= OPS_SAVINGS.minLoadKw;
+}
+
+function isIdleSnapshot(s: PowerSnapshot): boolean {
   const pBefore = num(s.uncompP);
   const pAfter = num(s.compP);
-  const iLoad = avg([s.loadCurrentL1, s.loadCurrentL2, s.loadCurrentL3]);
-  const iGrid = avg([s.gridCurrentL1, s.gridCurrentL2, s.gridCurrentL3]);
-  const v = avg([s.vL1, s.vL2, s.vL3]);
-  const sBefore = num(s.uncompS);
-  const sAfter = num(s.compS);
+  if (pBefore == null && pAfter == null) return false;
+  return !isLoadedKw(pBefore) && !isLoadedKw(pAfter);
+}
 
-  let kw = 0;
-  let has = false;
+/** 0–100% 부호 있는 역률 → 0–1 절댓값. 진상은 부호만 다르고 손실은 같다. */
+function pfFraction(v: number | null | undefined): number | null {
+  const x = num(v);
+  if (x == null) return null;
+  const mag = Math.abs(x) / 100;
+  return mag >= 0.01 && mag <= 1 ? mag : null;
+}
 
-  if (pBefore != null && pAfter != null && pBefore > pAfter) {
-    kw += pBefore - pAfter;
-    has = true;
-  }
+/**
+ * 종합역률(TPF). 못 받았으면 변위역률과 전류 THD로 만든다.
+ * TPF = DPF / √(1 + THD²) — 왜곡분까지 포함한 전 전류 기준 역률.
+ */
+function totalPf(
+  tpf: number | null | undefined,
+  dpf: number | null | undefined,
+  thdPct: number | null,
+): number | null {
+  const direct = pfFraction(tpf);
+  if (direct != null) return direct;
+  const d = pfFraction(dpf);
+  const thd = num(thdPct);
+  if (d == null || thd == null || thd < 0) return null;
+  return d / Math.sqrt(1 + (thd / 100) ** 2);
+}
 
-  const pBase =
-    pBefore ??
-    (v != null && iLoad != null ? (Math.sqrt(3) * v * iLoad) / 1000 : null);
+/**
+ * 순시 kW 절감 — 보상 전후 역률만으로 낸다.
+ *
+ * 유효전력이 같으면 전류는 역률에 반비례한다 (I = P / √3·V·PF). 동손은 전류
+ * 제곱에 비례하므로 보상 전후 손실비는 (PF_전 / PF_후)² 이고, 절감률은
+ * 1 − (PF_전 / PF_후)² 이다. 역률 개선 절감의 표준식.
+ *
+ * 종합역률은 고조파를 포함한 전 전류 기준이라 THD 효과가 이미 들어있다
+ * (TPF = DPF / √(1+THD²)). THD를 따로 더하면 이중 계산이 된다.
+ *
+ * 크기(kW)를 내려면 부하 규모가 하나는 필요하다. 보상 전 유효전력을 쓴다.
+ * 보상 후 P는 보상기 손실만큼만 달라져야 하는 값이라 기준으로 삼지 않는다.
+ * 보상기 자체 손실(P의 1~3%)은 차감하지 않으므로 그만큼 낙관적인 값이다.
+ */
+export function estimateKwSaved(s: PowerSnapshot): number | null {
+  const p = num(s.uncompP);
+  if (!isLoadedKw(p)) return null;
 
-  if (
-    pBase != null &&
-    pBase > 0 &&
-    iLoad != null &&
-    iLoad > 0 &&
-    iGrid != null &&
-    iGrid >= 0 &&
-    iGrid < iLoad
-  ) {
-    const ratio = iGrid / iLoad;
-    kw += pBase * OPS_SAVINGS.copperLossRatio * (1 - ratio * ratio);
-    has = true;
-  } else if (
-    sBefore != null &&
-    sAfter != null &&
-    sBefore > sAfter &&
-    sBefore > 0
-  ) {
-    kw += (sBefore - sAfter) * OPS_SAVINGS.copperLossRatio;
-    has = true;
-  }
+  const before = totalPf(
+    s.tpf1,
+    s.dpf1,
+    avg([s.loadCurrentTHDL1, s.loadCurrentTHDL2, s.loadCurrentTHDL3]),
+  );
+  const after = totalPf(
+    s.tpf2,
+    s.dpf2,
+    avg([s.gridCurrentTHDL1, s.gridCurrentTHDL2, s.gridCurrentTHDL3]),
+  );
+  if (before == null || after == null || after <= before) return null;
 
-  return has ? kw : null;
+  // 보상 전 피상전력 = P / 역률. 동손은 전류, 즉 kVA에 비례한다.
+  const lossBefore = (p / before) * OPS_SAVINGS.copperLossRatio;
+  const saved = lossBefore * (1 - (before / after) ** 2);
+  return saved > 0 ? saved : null;
 }
 
 /**
@@ -173,6 +203,31 @@ export function phaseUnbalancePct(
   if (mean <= 0) return null;
   const maxDev = Math.max(...xs.map((v) => Math.abs(v - mean)));
   return (maxDev / mean) * 100;
+}
+
+export type PhaseId = "L1" | "L2" | "L3";
+
+/** 상별 (값 − 평균) / 평균 × 100. 0이 평형, +는 무거운 상, −는 가벼운 상. */
+export function phaseDeviationPcts(
+  l1?: number | null,
+  l2?: number | null,
+  l3?: number | null,
+): { phase: PhaseId; value: number | null; pct: number | null }[] {
+  const raw = [l1, l2, l3].map(num);
+  const xs = raw.filter((v): v is number => v != null && v > 0);
+  const mean = xs.length === 3 ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+  return (["L1", "L2", "L3"] as const).map((phase, i) => {
+    const value = raw[i];
+    const pct =
+      mean != null && mean > 0 && value != null && value > 0
+        ? ((value - mean) / mean) * 100
+        : null;
+    return {
+      phase,
+      value,
+      pct: pct != null ? Math.round(pct * 100) / 100 : null,
+    };
+  });
 }
 
 /**
@@ -266,8 +321,17 @@ function pfCostYearFromSnapshot(s: PowerSnapshot): number | null {
   if (before == null || after == null || demandKw == null || demandKw <= 0) {
     return null;
   }
+  // 한전 역률요금은 부하기간 평균 지상역률. 경부하 순시 9% 같은 값은 고지서 환산에 쓰지 않는다.
+  if (
+    Math.abs(before) < QUALITY_REFS.kepcoPfBillingFloorPct ||
+    Math.abs(after) < QUALITY_REFS.kepcoPfBillingFloorPct
+  ) {
+    return null;
+  }
   const monthlyBasic = demandKw * OPS_SAVINGS.demandKrwPerKwMonth;
   const delta = pfChargeRatio(before) - pfChargeRatio(after);
+  // 가감이 같으면 보고할 절감이 없다. 0원을 띄우면 계산이 된 것처럼 보인다.
+  if (delta === 0) return null;
   return monthlyBasic * delta * 12;
 }
 
@@ -300,8 +364,10 @@ export function computeOpsSavings(
   let windowHours: number | null = null;
   let kWhYear: number | null = null;
   let kwSaved = estimateKwSaved(device);
+  const noEnergy = isIdleSnapshot(device);
 
-  if (sorted.length >= 2) {
+  // 지금 무부하면 이력으로 연간 전력량 요금을 만들지 않는다.
+  if (!noEnergy && sorted.length >= 2) {
     let energy = 0;
     let used = false;
     for (let i = 1; i < sorted.length; i++) {
@@ -328,7 +394,12 @@ export function computeOpsSavings(
     }
   }
 
-  if (kWhYear == null && kwSaved != null) {
+  if (noEnergy) {
+    kwSaved = null;
+    kWhYear = null;
+    kWhWindow = null;
+    windowHours = null;
+  } else if (kWhYear == null && kwSaved != null) {
     kWhYear = kwSaved * OPS_SAVINGS.hoursPerYear;
   }
 
@@ -340,7 +411,7 @@ export function computeOpsSavings(
       : null;
   const energyCostYear =
     kWhYear != null ? kWhYear * OPS_SAVINGS.krwPerKwh : null;
-  const pfCostYear = pfCostYearFromSnapshot(device);
+  const pfCostYear = noEnergy ? null : pfCostYearFromSnapshot(device);
   const costYear =
     energyCostYear != null || pfCostYear != null
       ? (energyCostYear ?? 0) + (pfCostYear ?? 0)

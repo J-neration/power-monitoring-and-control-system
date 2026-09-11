@@ -12,6 +12,8 @@ export type Device = {
   status: DeviceStatus;
   /** 마지막 수신 후 30분 이상 미수신. 모듈 status와 별개 */
   commLost?: boolean;
+  /** HMI 모듈 버전: v1v2 | v3v4 | v5 */
+  moduleType?: string | null;
   model?: string;
   capacity?: number;
   lastSeenAt: string | null;
@@ -25,6 +27,8 @@ export type Device = {
 
   moduleStatus?: number[];
   numOfMods?: number;
+  /** Per-module rated capacity. Length = numOfMods, index 0 = M1 */
+  moduleCapacity?: number[];
 
   vL1?: number;
   vL2?: number;
