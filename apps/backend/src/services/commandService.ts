@@ -10,6 +10,7 @@ import {
   canonicalSettingsKey,
   canonicalizeSettingsValue,
   resolveModuleTypeForSetBasic,
+  SETTINGS_READONLY_KEYS,
 } from "../lib/deviceSettingsKeys.js";
 
 const prisma = new PrismaClient({
@@ -227,7 +228,7 @@ const sanitizeFields = (
   for (const [rawKey, value] of Object.entries(fields)) {
     if (rawKey === "mod") continue; // module comes from command.module
     const key = canonicalSettingsKey(rawKey);
-    if (!allowed.has(key)) continue;
+    if (!allowed.has(key) || SETTINGS_READONLY_KEYS.has(key)) continue;
     const canonical = canonicalizeSettingsValue(moduleType, key, value);
     if (
       canonical === null ||

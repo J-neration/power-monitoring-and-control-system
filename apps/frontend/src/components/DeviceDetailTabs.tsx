@@ -278,6 +278,8 @@ export default function DeviceDetailTabs({
               installationId={device.installationId}
               moduleStatus={device.moduleStatus}
               numOfMods={device.numOfMods}
+              moduleCapacity={device.moduleCapacity}
+              capUnit={device.model === "paf" ? "A" : "kvar"}
               requestedBy={adminUsername}
             />
             <DeviceSettingsPanel

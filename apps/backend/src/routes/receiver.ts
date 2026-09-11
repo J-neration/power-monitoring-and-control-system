@@ -97,6 +97,8 @@ const receiverSettingsSchema = z.object({
   iccid: z.string().min(1),
   moduleType: z.string().min(1),
   numOfMods: z.coerce.number().int().optional(),
+  /** Per-module rated capacity. Settings snapshot only — not telemetry. */
+  moduleCapacity: z.unknown().optional(),
   settings: z.object({
     basic: z.array(z.record(z.string(), z.unknown())),
   }),
@@ -525,10 +527,15 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
         iccid: parsed.data.iccid,
         moduleType: parsed.data.moduleType,
         numOfMods: parsed.data.numOfMods,
+        moduleCapacity: parsed.data.moduleCapacity,
         basic: parsed.data.settings.basic,
       });
       wsHub.broadcast({
         type: "settings_updated",
+        installationId,
+      });
+      wsHub.broadcast({
+        type: "device_updated",
         installationId,
       });
       // On-demand settings upload usually follows command poll — treat as linked.

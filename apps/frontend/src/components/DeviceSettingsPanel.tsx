@@ -80,6 +80,7 @@ function diffFields(
 ): Record<string, number | string> | null {
   const out: Record<string, number | string> = {};
   for (const f of fields) {
+    if (f.readOnly) continue;
     if (valuesEqual(f, original[f.key], edited[f.key])) continue;
     const next = canonicalizeFieldValue(f, edited[f.key]);
     out[f.key] = next;
@@ -94,6 +95,7 @@ function rowToSetBasicFields(
 ): Record<string, number | string> {
   const out: Record<string, number | string> = {};
   for (const f of fields) {
+    if (f.readOnly) continue;
     out[f.key] = canonicalizeFieldValue(f, row[f.key]);
   }
   return out;
@@ -682,7 +684,8 @@ export default function DeviceSettingsPanel({
                   min={f.min}
                   max={f.max}
                   value={Number.isFinite(raw) ? raw : 0}
-                  disabled={commandLocked}
+                  disabled={commandLocked || Boolean(f.readOnly)}
+                  readOnly={Boolean(f.readOnly)}
                   onChange={(e) => {
                     const n = Number(e.target.value);
                     if (Number.isFinite(n)) updateField(f.key, n);

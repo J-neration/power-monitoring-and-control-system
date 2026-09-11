@@ -232,6 +232,24 @@ test("setBasic filters to v3v4 allowed keys and renames tc→tpf", async () => {
   });
 });
 
+test("setBasic drops moduleCapacity (settings snapshot only)", async () => {
+  const repo = new InMemoryRepo();
+  repo.moduleTypes.set("PSVG-RNDTEST5", "v1v2");
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "setBasic",
+    fields: { ectrs: 1200, moduleCapacity: 50 },
+  });
+
+  const polled = await service.poll("PSVG-RNDTEST5");
+  assert.ok("fields" in polled);
+  assert.deepEqual(polled.fields, { ectrs: 1200 });
+  assert.equal(created.power, "setBasic");
+});
+
 test("setBasic filters to v5 keys, stores enum strings, and leaves wiring 0/1 alone", async () => {
   const repo = new InMemoryRepo();
   repo.moduleTypes.set("PSVG-RNDTEST5", "v5");

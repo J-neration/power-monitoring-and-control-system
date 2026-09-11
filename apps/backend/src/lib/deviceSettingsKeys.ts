@@ -5,7 +5,7 @@
 
 export type ModuleType = "v1v2" | "v3v4" | "v5";
 
-/** v3v4 (200A) — exactly these 7. */
+/** v3v4 (200A) HMI basic keys. moduleCapacity is snapshot-only. */
 export const ALLOWED_KEYS_V3V4: ReadonlySet<string> = new Set([
   "reactiveSwitch",
   "harmSwitch",
@@ -14,6 +14,7 @@ export const ALLOWED_KEYS_V3V4: ReadonlySet<string> = new Set([
   "k0",
   "ccr",
   "tpf",
+  "moduleCapacity",
 ]);
 
 /** v1v2 (150A Gray) common basic. */
@@ -33,6 +34,7 @@ export const ALLOWED_KEYS_V1V2: ReadonlySet<string> = new Set([
   "imbSwitch",
   "reactiveCapacity",
   "numOfMods",
+  "moduleCapacity",
 ]);
 
 /** v5 SIC sic_mod_setting. No v1v2/v3v4-only switches or ictrs/pcs/cm/pro. */
@@ -50,6 +52,12 @@ export const ALLOWED_KEYS_V5: ReadonlySet<string> = new Set([
   "phaseAdaption",
   "wiring",
   "priorityMode",
+  "moduleCapacity",
+]);
+
+/** Rated capacity — snapshot only. Do not send on setBasic. */
+export const SETTINGS_READONLY_KEYS: ReadonlySet<string> = new Set([
+  "moduleCapacity",
 ]);
 
 /** HMI labels in index order. Display/store these strings, not free text. */

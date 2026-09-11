@@ -8,9 +8,15 @@ const MODULE_LABEL_KO: Record<string, string> = {
   OFFLINE: "오프라인",
 };
 
+function fmtCap(v: number): string {
+  return Number.isInteger(v) ? String(v) : v.toFixed(1);
+}
+
 type Props = {
   moduleStatus?: number[];
   numOfMods?: number;
+  moduleCapacity?: number[];
+  capUnit?: string;
   compact?: boolean;
   className?: string;
 };
@@ -18,6 +24,8 @@ type Props = {
 export default function ModuleSlotGrid({
   moduleStatus = [],
   numOfMods,
+  moduleCapacity,
+  capUnit = "kvar",
   compact = false,
   className = "",
 }: Props) {
@@ -48,15 +56,27 @@ export default function ModuleSlotGrid({
                 : chipClass.includes("start")
                   ? "start"
                   : "standby";
+          const cap = moduleCapacity?.[index];
+          const capText =
+            cap != null && Number.isFinite(cap)
+              ? `${fmtCap(cap)} ${capUnit}`
+              : null;
 
           return (
             <div
               key={`mod-${index}`}
               className={`module-slot module-slot--${slotVariant}`}
-              title={`M${index + 1} ${label}`}
+              title={
+                capText
+                  ? `M${index + 1} ${label} · ${capText}`
+                  : `M${index + 1} ${label}`
+              }
             >
               <span className="module-slot-id">M{index + 1}</span>
               <span className="module-slot-state">{label}</span>
+              {capText ? (
+                <span className="module-slot-cap">{capText}</span>
+              ) : null}
             </div>
           );
         })}
