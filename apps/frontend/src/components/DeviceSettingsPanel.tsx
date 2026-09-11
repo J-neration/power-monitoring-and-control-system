@@ -14,11 +14,15 @@ import {
   type SettingOption,
 } from "../lib/deviceSettingsFields";
 import { useWsEvents } from "../hooks/useWsEvents";
+import ModuleSlotGrid, { hasVisibleModuleSlots } from "./ModuleSlotGrid";
 
 type Props = {
   installationId: string;
   requestedBy?: string;
   numOfMods?: number;
+  moduleStatus?: number[];
+  moduleCapacity?: number[];
+  capUnit?: string;
 };
 
 type LoadState =
@@ -251,6 +255,9 @@ export default function DeviceSettingsPanel({
   installationId,
   requestedBy,
   numOfMods,
+  moduleStatus,
+  moduleCapacity,
+  capUnit = "kvar",
 }: Props) {
   const [load, setLoad] = useState<LoadState>({ status: "loading" });
   const [rows, setRows] = useState<BasicSettingRow[]>([]);
@@ -526,6 +533,8 @@ export default function DeviceSettingsPanel({
     : pendingCommandId
       ? "HMI 응답 대기 중…"
       : "변경 사항 적용";
+  const editableFields = fieldDefs.filter((f) => !f.readOnly);
+  const useSlotPicker = hasVisibleModuleSlots(moduleStatus, numOfMods);
 
   if (load.status === "loading") {
     return (
@@ -579,29 +588,43 @@ export default function DeviceSettingsPanel({
       <div className="chart-card chart-card-wide device-settings-panel">
         <div className="device-settings-panel-head">
           <h3 className="chart-title">기본 설정</h3>
-          <div className="device-settings-mod-tabs" role="tablist">
-            {rows.map((row) => {
-              const mod = Number(row.mod);
-              return (
-                <button
-                  key={mod}
-                  type="button"
-                  role="tab"
-                  aria-selected={mod === selectedMod}
-                  className={`device-settings-mod-tab${mod === selectedMod ? " active" : ""}`}
-                  onClick={() => setSelectedMod(mod)}
-                >
-                  M{mod + 1}
-                </button>
-              );
-            })}
-          </div>
+          {useSlotPicker ? (
+            <ModuleSlotGrid
+              compact
+              className="module-slot-grid--settings"
+              moduleStatus={moduleStatus}
+              numOfMods={numOfMods}
+              moduleCapacity={moduleCapacity}
+              capUnit={capUnit}
+              selectedIndex={selectedMod}
+              onSelect={setSelectedMod}
+            />
+          ) : (
+            <div className="device-settings-mod-tabs" role="tablist">
+              {rows.map((row) => {
+                const mod = Number(row.mod);
+                return (
+                  <button
+                    key={mod}
+                    type="button"
+                    role="tab"
+                    aria-selected={mod === selectedMod}
+                    className={`device-settings-mod-tab${mod === selectedMod ? " active" : ""}`}
+                    onClick={() => setSelectedMod(mod)}
+                  >
+                    M{mod + 1}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {status ? <StatusCard status={status} /> : null}
 
+        {editableFields.length > 0 ? (
         <div className="device-settings-grid">
-          {fieldDefs.map((f) => {
+          {editableFields.map((f) => {
             if (f.kind === "switch") {
               const on = Number(currentRow[f.key] ?? 0) !== 0;
               return (
@@ -684,8 +707,7 @@ export default function DeviceSettingsPanel({
                   min={f.min}
                   max={f.max}
                   value={Number.isFinite(raw) ? raw : 0}
-                  disabled={commandLocked || Boolean(f.readOnly)}
-                  readOnly={Boolean(f.readOnly)}
+                  disabled={commandLocked}
                   onChange={(e) => {
                     const n = Number(e.target.value);
                     if (Number.isFinite(n)) updateField(f.key, n);
@@ -695,7 +717,9 @@ export default function DeviceSettingsPanel({
             );
           })}
         </div>
+        ) : null}
 
+        {editableFields.length > 0 ? (
         <div className="device-settings-actions">
           <button
             type="button"
@@ -706,6 +730,7 @@ export default function DeviceSettingsPanel({
             {saveLabel}
           </button>
         </div>
+        ) : null}
       </div>
     </section>
   );

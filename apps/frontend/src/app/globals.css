@@ -3729,8 +3729,10 @@ main.dashboard-full {
 
 .cap-tank-recommend-zone {
   position: absolute;
-  inset: 0 auto 0 0;
-  background: rgba(34, 197, 94, 0.1);
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(251, 191, 36, 0.12);
   pointer-events: none;
 }
 
@@ -3740,7 +3742,7 @@ main.dashboard-full {
   bottom: 0;
   width: 2px;
   margin-left: -1px;
-  background: #4ade80;
+  background: #fbbf24;
   z-index: 3;
   pointer-events: none;
 }
@@ -3778,7 +3780,7 @@ main.dashboard-full {
 .cap-tank-axis-rec {
   position: absolute;
   transform: translateX(-50%);
-  color: #4ade80;
+  color: #fbbf24;
   white-space: nowrap;
 }
 
@@ -4317,25 +4319,20 @@ main.dashboard-full {
 }
 
 .module-slot-grid--nav .module-slot-grid-cells {
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .module-slot-grid--nav .module-slot {
-  flex-direction: row;
-  gap: 4px;
   min-width: 0;
-  padding: 3px 7px;
-  border-radius: var(--pmcs-radius);
+  padding: 3px 8px;
+  gap: 0;
 }
 
-.module-slot-grid--nav .module-slot-id {
-  font-size: 10px;
-  opacity: 0.55;
-}
-
+.module-slot-grid--nav .module-slot-id,
+.module-slot-grid--nav .module-slot-cap,
 .module-slot-grid--nav .module-slot-state {
   font-size: 11px;
-  line-height: 1;
 }
 
 .device-monitor-data {
@@ -6396,42 +6393,53 @@ main.dashboard-full {
 }
 
 .module-slot {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 2px;
-  min-width: 44px;
-  padding: 6px 8px;
+  gap: 0;
+  min-width: 0;
+  padding: 5px 8px;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
+  white-space: nowrap;
+  line-height: 1;
 }
 
 .module-slot-grid--compact .module-slot {
-  min-width: 38px;
-  padding: 4px 6px;
+  padding: 4px 7px;
+}
+
+.module-slot-id,
+.module-slot-cap,
+.module-slot-state {
+  display: inline-flex;
+  align-items: center;
+  height: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .module-slot-id {
-  font-size: 10px;
-  font-weight: 700;
-  opacity: 0.45;
+  opacity: 0.72;
 }
 
+.module-slot-cap,
 .module-slot-state {
-  font-size: 10px;
-  font-weight: 600;
+  margin-left: 6px;
+  padding-left: 6px;
+  border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
 }
 
 .module-slot-cap {
-  font-size: 9px;
-  font-weight: 600;
-  opacity: 0.72;
-  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  opacity: 1;
 }
 
-.module-slot-grid--nav .module-slot-cap {
-  display: none;
+.module-slot-state {
+  opacity: 0.95;
 }
 
 .module-slot--running {
@@ -6456,6 +6464,40 @@ main.dashboard-full {
   border-color: rgba(245, 158, 11, 0.35);
   background: rgba(245, 158, 11, 0.08);
   color: #fcd34d;
+}
+
+button.module-slot {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.device-settings-panel-head .module-slot-grid--settings {
+  margin: 0;
+  padding: 0;
+  border: none;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.device-settings-panel-head .module-slot-grid--settings .module-slot-grid-title {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.module-slot-grid--settings .module-slot:not(.module-slot--selected) {
+  opacity: 0.42;
+  filter: saturate(0.45);
+}
+
+.module-slot-grid--settings .module-slot--selected {
+  opacity: 1;
+  box-shadow:
+    0 0 0 2px #0b0d12,
+    0 0 0 4px #5eead4;
 }
 
 .device-tab-btn.active {
@@ -7903,12 +7945,11 @@ body.pmcs-control-room .global-header:hover {
     font-size: 11px;
   }
 
-  .module-slot-grid--nav .module-slot-id {
-    font-size: 9px;
-  }
-
+  .module-slot-grid--nav .module-slot-id,
+  .module-slot-grid--nav .module-slot-cap,
   .module-slot-grid--nav .module-slot-state {
     font-size: 10px;
+    height: 13px;
   }
 
   .ops-benefit {
