@@ -31,9 +31,21 @@ export type SettingFieldDef = {
    * Default true. wiring must stay false (do not reinterpret 0/1).
    */
   mapIndex?: boolean;
+  /** Snapshot-only. Shown in the form, never sent on setBasic. */
+  readOnly?: boolean;
 };
 
-/** v3v4 (200A) — exactly these 7 keys (HMI contract). ectp is not Load/Grid. */
+const MODULE_CAPACITY_FIELD: SettingFieldDef = {
+  key: "moduleCapacity",
+  label: "모듈 용량",
+  kind: "number",
+  step: 0.1,
+  min: 0,
+  readOnly: true,
+  hint: "슬롯 정격용량. HMI 설정 스냅샷에서만 수신",
+};
+
+/** v3v4 (200A) HMI basic keys. ectp is not Load/Grid. moduleCapacity is snapshot-only. */
 const V3V4_FIELDS: SettingFieldDef[] = [
   { key: "reactiveSwitch", label: "무효전력 보상", kind: "switch" },
   { key: "harmSwitch", label: "고조파 보상", kind: "switch" },
@@ -60,6 +72,7 @@ const V3V4_FIELDS: SettingFieldDef[] = [
     kind: "number",
     step: 0.01,
   },
+  MODULE_CAPACITY_FIELD,
 ];
 
 const V1V2_FIELDS: SettingFieldDef[] = [
@@ -96,6 +109,7 @@ const V1V2_FIELDS: SettingFieldDef[] = [
   { key: "imbSwitch", label: "불평형", kind: "switch" },
   { key: "reactiveCapacity", label: "무효전력 용량", kind: "number", step: 1 },
   { key: "numOfMods", label: "모듈 수", kind: "number", step: 1 },
+  MODULE_CAPACITY_FIELD,
 ];
 
 /** v5 SIC — sic_mod_setting. Enum labels are HMI source of truth. */
@@ -198,6 +212,7 @@ const V5_FIELDS: SettingFieldDef[] = [
       { value: "Unb", label: "Unb" },
     ],
   },
+  MODULE_CAPACITY_FIELD,
 ];
 
 export const ALLOWED_KEYS_V3V4: ReadonlySet<string> = new Set(
@@ -223,14 +238,41 @@ export function allowedKeysForModuleType(
 export function moduleTypeLabel(moduleType: ModuleType): string {
   switch (moduleType) {
     case "v1v2":
-      return "v1v2 · 150A Gray";
+      return "V1/V2";
     case "v3v4":
-      return "v3v4 · 200A";
+      return "V3/V4";
     case "v5":
       return "v5 · SIC";
     default:
       return moduleType;
   }
+}
+
+/** Compact identity label: V3V4, V5 */
+export function moduleTypeCompactLabel(moduleType: string): string {
+  switch (moduleType) {
+    case "v1v2":
+      return "V1V2";
+    case "v3v4":
+      return "V3V4";
+    case "v5":
+      return "V5";
+    default:
+      return moduleType.toUpperCase();
+  }
+}
+
+export function deviceModelVersionSpec(device: {
+  model?: string | null;
+  moduleType?: string | null;
+} | null | undefined): string {
+  if (!device) return "";
+  return [
+    device.model ? device.model.toUpperCase() : null,
+    device.moduleType ? moduleTypeCompactLabel(device.moduleType) : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 /** Allowed field catalog for the moduleType (not yet filtered by payload). */

@@ -167,6 +167,8 @@ model Device {
 
   moduleStatus   Int[]    @default([])
   numOfMods      Int      @default(0)
+  /// 슬롯별 모듈 정격용량 (kVAR/A). POST /receiver/settings 에서만 수신. 길이 = numOfMods (max 6). index 0 = M1
+  moduleCapacity Float[]  @default([])
 
   /// 실제 텔레메트리/수신이 온 시각. 설치만 하고 미통신이면 null
   lastSeenAt     DateTime?

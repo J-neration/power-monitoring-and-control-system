@@ -19,6 +19,7 @@ import {
   type StatusFilter,
 } from "../../lib/deviceStatus";
 import { isCommLost } from "../../lib/commStatus";
+import { deviceModelVersionSpec } from "../../lib/deviceSettingsFields";
 
 const FILTER_OPTIONS: { id: StatusFilter; label: string }[] = [
   { id: "all", label: "전체" },
@@ -168,6 +169,7 @@ export default function SitePageView({ site }: { site: Site }) {
             const d = inst.device;
             const instStatus = (d?.status as DeviceStatus) ?? "offline";
             const commLost = isCommLost(d?.lastSeenAt);
+            const spec = deviceModelVersionSpec(d);
 
             return (
               <Link
@@ -189,17 +191,8 @@ export default function SitePageView({ site }: { site: Site }) {
                     </span>
                     {commLost ? <CommLostBadge /> : null}
                   </div>
-                  {d?.model || d?.capacity != null ? (
-                    <div className="site-inst-row site-inst-row--spec">
-                      {[
-                        d.model?.toUpperCase(),
-                        d.capacity != null
-                          ? `${d.capacity}${d.model === "paf" ? "A" : "kVAR"}`
-                          : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                    </div>
+                  {spec ? (
+                    <div className="site-inst-row site-inst-row--spec">{spec}</div>
                   ) : null}
                 </div>
 
@@ -243,6 +236,8 @@ export default function SitePageView({ site }: { site: Site }) {
                 <ModuleSlotGrid
                   moduleStatus={d?.moduleStatus}
                   numOfMods={d?.numOfMods}
+                  moduleCapacity={d?.moduleCapacity}
+                  capUnit={d?.model === "paf" ? "A" : "kvar"}
                   compact
                 />
               </Link>

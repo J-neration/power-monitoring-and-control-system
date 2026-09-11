@@ -60,6 +60,8 @@ export default function DeviceMonitorBoard({
           className="module-slot-grid--nav"
           moduleStatus={device.moduleStatus}
           numOfMods={device.numOfMods}
+          moduleCapacity={device.moduleCapacity}
+          capUnit={device.model === "paf" ? "A" : "kvar"}
         />
       </nav>
 
@@ -94,7 +96,7 @@ export default function DeviceMonitorBoard({
             />
           </div>
           <div className="device-monitor-overview-cap">
-            <CapacitySnapshot device={device} fill />
+            <CapacitySnapshot device={device} />
           </div>
         </div>
       ) : section === "data" ? (

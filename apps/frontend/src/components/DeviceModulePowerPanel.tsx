@@ -33,8 +33,15 @@ type Props = {
   moduleStatus?: number[];
   /** 장치에 연결된 모듈 개수. 없으면 6슬롯 모두 제어 가능(기존 동작). */
   numOfMods?: number;
+  /** 슬롯별 모듈 정격용량. 길이 = numOfMods, index 0 = M1 */
+  moduleCapacity?: number[];
+  capUnit?: string;
   requestedBy?: string;
 };
+
+function fmtCap(v: number): string {
+  return Number.isInteger(v) ? String(v) : v.toFixed(1);
+}
 
 function PowerStatusCard({ status }: { status: StatusBanner }) {
   return (
@@ -73,6 +80,8 @@ export default function DeviceModulePowerPanel({
   installationId,
   moduleStatus,
   numOfMods,
+  moduleCapacity,
+  capUnit = "kvar",
   requestedBy,
 }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
@@ -221,6 +230,7 @@ export default function DeviceModulePowerPanel({
             const code = moduleStatus?.[i];
             const telemetryOn = moduleTelemetrySuggestsOn(code);
             const slotActive = i < activeSlots;
+            const cap = moduleCapacity?.[i];
             const switchClass = telemetryOn
               ? "module-power-switch module-power-switch--telemetry-on"
               : "module-power-switch module-power-switch--telemetry-off";
@@ -250,6 +260,11 @@ export default function DeviceModulePowerPanel({
                 >
                   {moduleStatusLabel(code)}
                 </span>
+                {slotActive && cap != null && Number.isFinite(cap) ? (
+                  <span className="device-module-power-cap">
+                    {fmtCap(cap)} {capUnit}
+                  </span>
+                ) : null}
                 <div
                   className={switchClass}
                   role="group"
