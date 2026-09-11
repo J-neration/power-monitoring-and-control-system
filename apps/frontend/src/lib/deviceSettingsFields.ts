@@ -252,9 +252,9 @@ export function moduleTypeLabel(moduleType: ModuleType): string {
 export function moduleTypeCompactLabel(moduleType: string): string {
   switch (moduleType) {
     case "v1v2":
-      return "V1V2";
+      return "V1/V2";
     case "v3v4":
-      return "V3V4";
+      return "V3/V4";
     case "v5":
       return "V5";
     default:

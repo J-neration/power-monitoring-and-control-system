@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import type { Site, DeviceStatus } from "../../types/site";
-import { CLIENT_LABELS, isTestClient } from "../../data/clients";
+import { CLIENT_LABELS } from "../../data/clients";
 import LteSignalIndicator from "../LteSignalIndicator";
 import CommLostBadge from "../CommLostBadge";
 import MetricValue from "../MetricValue";
@@ -89,9 +89,6 @@ export default function SiteSummaryPanel({
             <Link href={siteHref} target="_blank" className="detail-site-name-link">
               {site.name}
             </Link>
-            {isTestClient(site.client) && (
-              <span className="test-badge">TEST</span>
-            )}
           </h2>
           <span className="detail-site-addr">
             {CLIENT_LABELS[site.client] ?? site.client} · {site.address}

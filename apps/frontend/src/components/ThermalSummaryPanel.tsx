@@ -1,7 +1,7 @@
 "use client";
 
 import type { DeviceWithInstallation, TelemetryReading } from "../types/site";
-import { TEMP_THRESHOLDS } from "../lib/chartTheme";
+import { TEMP_THRESHOLDS, isAreaTempDisconnected } from "../lib/chartTheme";
 import { isCommLost } from "../lib/commStatus";
 
 type Props = {
@@ -36,8 +36,9 @@ function seriesStats(
   live: number[] | undefined,
   readings: TelemetryReading[],
   pick: (r: TelemetryReading) => number[] | null | undefined,
+  skip?: (v: number) => boolean,
 ): SeriesStats {
-  const lastVals = finiteNums(live);
+  const lastVals = finiteNums(live).filter((v) => !skip?.(v));
   let max24 = -Infinity;
   let maxAt: string | null = null;
   let maxCh: number | null = null;
@@ -46,7 +47,7 @@ function seriesStats(
   for (const r of readings) {
     const arr = pick(r) ?? [];
     arr.forEach((v, i) => {
-      if (!Number.isFinite(v)) return;
+      if (!Number.isFinite(v) || skip?.(v)) return;
       all.push(v);
       if (v > max24) {
         max24 = v;
@@ -165,7 +166,7 @@ function Block({
   const hasThreshold = warn != null && alarm != null;
   const t = tone(stats.lastMax, warn, alarm);
   const when = fmtWhen(stats.maxAt);
-  const status = statusLabel(t, hasThreshold);
+  const status = stats.lastMax == null ? null : statusLabel(t, hasThreshold);
 
   return (
     <article className={`thermal-stat thermal-stat--${t}`}>
@@ -217,7 +218,12 @@ function Block({
 }
 
 export default function ThermalSummaryPanel({ device, readings = [] }: Props) {
-  const area = seriesStats(device.areaTemp, readings, (r) => r.areaTemp);
+  const area = seriesStats(
+    device.areaTemp,
+    readings,
+    (r) => r.areaTemp,
+    isAreaTempDisconnected,
+  );
   const module = seriesStats(device.moduleTemp, readings, (r) => r.moduleTemp);
   const fan = seriesStats(device.fanSpeed, readings, (r) => r.fanSpeed);
   const commLost = isCommLost(device.lastSeenAt);

@@ -1,6 +1,7 @@
 import type { Device } from "../types/site";
-import { CHART_COLORS } from "../lib/chartTheme";
 import ChartCard from "./charts/ChartCard";
+
+const REC_OP_PCT = 70;
 
 function hasCapTelemetry(d: Device): boolean {
   return (
@@ -20,6 +21,10 @@ function pctOf(value: number | null, max: number): number | null {
   return Math.max(0, Math.min(100, (value / max) * 100));
 }
 
+function roundPct(v: number): number {
+  return Math.round(v * 10) / 10;
+}
+
 export default function CapacitySnapshot({
   device,
   fill = false,
@@ -34,91 +39,108 @@ export default function CapacitySnapshot({
   const totalCap = device.totalCapacity ?? device.capacity ?? null;
   const opCap = device.operatingCapacity ?? null;
   const rpCap = device.reactivePowerCapacity ?? null;
-  const margin =
-    device.availableMargin ??
-    (totalCap != null && opCap != null ? totalCap - opCap : null);
-  const fillOfOp =
-    rpCap != null && opCap != null && opCap > 0
-      ? Math.max(0, Math.min(100, Math.round((rpCap / opCap) * 1000) / 10))
-      : null;
+  const headroom =
+    opCap != null && rpCap != null ? roundPct(opCap - rpCap) : null;
+  const isShort = headroom != null && headroom < 0;
+  const headroomAbs = headroom != null ? Math.abs(headroom) : null;
   const opPct = totalCap != null ? pctOf(opCap, totalCap) : null;
-  const atLimit = fillOfOp != null && fillOfOp >= 98.5;
-  const showFillLabel = fillOfOp != null && fillOfOp >= 22;
+  const overRecommend = opPct != null && opPct >= REC_OP_PCT;
+  const fillTone = isShort ? "short" : headroom != null ? "head" : "neutral";
+
+  const tooltip = [
+    opCap != null ? `운전용량 ${fmtCap(opCap)} ${capUnit}` : null,
+    headroom != null
+      ? `${isShort ? "부족" : "여유"} ${fmtCap(headroomAbs ?? 0)} ${capUnit}`
+      : null,
+    `설비용량 ${fmtCap(totalCap ?? 0)} ${capUnit}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <ChartCard title={`용량 현황 (${capUnit})`} wide={wide} fill={fill}>
+    <ChartCard
+      title={`용량 현황 (${capUnit})`}
+      subtitle="— 운전용량 70% 미만 권장"
+      wide={wide}
+      fill={fill}
+    >
       {capOk && totalCap != null && totalCap > 0 ? (
         <div className="cap-tank">
-          <div
-            className="cap-tank-track"
-            title={
-              rpCap != null && opCap != null
-                ? `무효전력 발생 ${fmtCap(rpCap)} ${capUnit} · 운전용량 ${fmtCap(opCap)} ${capUnit}의 ${fillOfOp}%`
-                : `총용량 ${fmtCap(totalCap)} ${capUnit}`
-            }
-          >
+          <div className="cap-tank-track" title={tooltip}>
+            <div
+              className="cap-tank-recommend-zone"
+              style={{ width: `${REC_OP_PCT}%` }}
+            />
+            <div
+              className="cap-tank-recommend-mark"
+              style={{ left: `${REC_OP_PCT}%` }}
+            />
             {opPct != null ? (
               <div
-                className="cap-tank-shell"
+                className={`cap-tank-fill cap-tank-fill--${fillTone}`}
                 style={{ width: `${Math.max(opPct, 2)}%` }}
-              >
-                <div className="cap-tank-well">
-                  {fillOfOp != null ? (
-                    <div
-                      className={`cap-tank-liquid${atLimit ? " cap-tank-liquid--full" : ""}`}
-                      style={{
-                        width: `${fillOfOp}%`,
-                        background: `linear-gradient(180deg, ${CHART_COLORS.accentBright} 0%, ${CHART_COLORS.accent} 58%, #0f766e 100%)`,
-                      }}
-                    >
-                      {showFillLabel ? (
-                        <span className="cap-tank-liquid-pct">
-                          {atLimit ? "채움" : `${fillOfOp}%`}
-                        </span>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
+              />
             ) : null}
           </div>
           <div className="cap-tank-axis">
             <span>0</span>
+            <span
+              className="cap-tank-axis-rec"
+              style={{ left: `${REC_OP_PCT}%` }}
+            >
+              권장 {REC_OP_PCT}%
+            </span>
             <span>
-              총 {fmtCap(totalCap)} {capUnit}
+              설비 {fmtCap(totalCap)} {capUnit}
             </span>
           </div>
 
           <div className="cap-readout">
-            <div className="cap-readout-item cap-readout-item--rp">
-              <span className="cap-readout-label">무효전력 발생</span>
-              <span className="cap-readout-val">
-                {rpCap != null ? `${fmtCap(rpCap)} ${capUnit}` : "—"}
-              </span>
-              {fillOfOp != null ? (
-                <span className="cap-readout-hint">
-                  {atLimit
-                    ? "운전용량을 채움"
-                    : `운전용량 대비 ${fillOfOp}%`}
-                </span>
-              ) : null}
-            </div>
-            <div className="cap-readout-item cap-readout-item--op">
-              <span className="cap-readout-label">운전 용량</span>
+            <div
+              className={`cap-readout-item cap-readout-item--op cap-readout-item--${fillTone}`}
+            >
+              <span className="cap-readout-label">운전용량</span>
               <span className="cap-readout-val">
                 {opCap != null ? `${fmtCap(opCap)} ${capUnit}` : "—"}
               </span>
+              {opPct != null ? (
+                <span
+                  className={`cap-readout-hint${overRecommend ? " cap-readout-hint--warn" : ""}`}
+                >
+                  {roundPct(opPct)}% 
+                </span>
+              ) : null}
+            </div>
+            <div
+              className={`cap-readout-item cap-readout-item--${isShort ? "short" : "head"}`}
+            >
+              <span className="cap-readout-label">
+                {headroom == null
+                  ? "여유용량"
+                  : isShort
+                    ? "부족용량"
+                    : "여유용량"}
+              </span>
+              <span className="cap-readout-val">
+                {headroomAbs != null
+                  ? `${fmtCap(headroomAbs)} ${capUnit}`
+                  : "—"}
+              </span>
+              {headroomAbs != null && opCap != null && opCap > 0 ? (
+                <span
+                  className={`cap-readout-hint${isShort ? " cap-readout-hint--warn" : ""}`}
+                >
+                  {isShort
+                    ? `운전용량 대비 ${roundPct((headroomAbs / opCap) * 100)}% 초과`
+                    : `운전용량 대비 ${roundPct((headroomAbs / opCap) * 100)}%`}
+                </span>
+              ) : null}
             </div>
             <div className="cap-readout-item cap-readout-item--total">
-              <span className="cap-readout-label">총 용량</span>
+              <span className="cap-readout-label">설비용량</span>
               <span className="cap-readout-val">
                 {fmtCap(totalCap)} {capUnit}
               </span>
-              {margin != null ? (
-                <span className="cap-readout-hint cap-readout-hint--muted">
-                  여유 {fmtCap(margin)} {capUnit}
-                </span>
-              ) : null}
             </div>
           </div>
         </div>

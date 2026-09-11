@@ -1691,22 +1691,6 @@ main.dashboard-full {
   gap: 6px;
 }
 
-/* TEST 뱃지: prime 제외 모든 사이트에 표시 (개발·시연용 mock 데이터) */
-.test-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: rgba(255, 180, 0, 0.18);
-  color: #f5a623;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  border: 1px solid rgba(245, 166, 35, 0.4);
-  vertical-align: middle;
-  flex-shrink: 0;
-  margin-left: 10px;
-}
 .detail-site-addr {
   font-size: 11px;
   opacity: 0.45;
@@ -3484,6 +3468,15 @@ main.dashboard-full {
   text-align: center;
 }
 
+.device-module-power-cap {
+  display: block;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.2;
+}
+
 /* 상태 칩: 셀 안에서 한 줄로 */
 .device-module-power-cell .device-module-power-chip.module-chip {
   justify-content: center;
@@ -3714,7 +3707,7 @@ main.dashboard-full {
   border: 1px solid rgba(71, 85, 105, 0.4);
 }
 
-/* Capacity snapshot — 운전=탱크, 발생=내부 채움, 총용량=눈금 */
+/* Capacity snapshot — 설비=눈금, 운전용량 채움(여유=초록, 부족=빨강) */
 .cap-tank {
   display: flex;
   flex-direction: column;
@@ -3734,55 +3727,59 @@ main.dashboard-full {
   min-width: 0;
 }
 
-.cap-tank-shell {
+.cap-tank-recommend-zone {
   position: absolute;
   inset: 0 auto 0 0;
-  box-sizing: border-box;
-  border: 2px solid #60a5fa;
-  border-radius: 10px;
-  background: rgba(59, 130, 246, 0.1);
-}
-
-.cap-tank-well {
-  position: absolute;
-  inset: 4px;
-}
-
-.cap-tank-liquid {
-  position: relative;
-  height: 100%;
-  min-width: 0;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38);
-  transition: width 0.45s ease;
-}
-
-.cap-tank-liquid--full {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    0 0 0 1px rgba(94, 234, 212, 0.35);
-}
-
-.cap-tank-liquid-pct {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  color: rgba(8, 20, 18, 0.88);
-  font-variant-numeric: tabular-nums;
+  background: rgba(34, 197, 94, 0.1);
   pointer-events: none;
 }
 
+.cap-tank-recommend-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: #4ade80;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.cap-tank-fill {
+  position: absolute;
+  inset: 3px auto 3px 3px;
+  border-radius: 7px;
+  z-index: 1;
+  transition: width 0.45s ease;
+}
+
+.cap-tank-fill--head {
+  background: #22c55e;
+}
+
+.cap-tank-fill--short {
+  background: #f87171;
+}
+
+.cap-tank-fill--neutral {
+  background: #64748b;
+}
+
 .cap-tank-axis {
+  position: relative;
   display: flex;
   justify-content: space-between;
   font-size: 11px;
   font-weight: 650;
   color: #cbd5e1;
+  min-height: 16px;
+}
+
+.cap-tank-axis-rec {
+  position: absolute;
+  transform: translateX(-50%);
+  color: #4ade80;
+  white-space: nowrap;
 }
 
 .cap-readout {
@@ -3802,12 +3799,18 @@ main.dashboard-full {
   border-left: 3px solid rgba(148, 163, 184, 0.28);
 }
 
-.cap-readout-item--rp {
-  border-left-color: #00d4aa;
+.cap-readout-item--op.cap-readout-item--head,
+.cap-readout-item--head {
+  border-left-color: #22c55e;
 }
 
-.cap-readout-item--op {
-  border-left-color: #60a5fa;
+.cap-readout-item--op.cap-readout-item--short,
+.cap-readout-item--short {
+  border-left-color: #f87171;
+}
+
+.cap-readout-item--op.cap-readout-item--neutral {
+  border-left-color: #64748b;
 }
 
 .cap-readout-item--total {
@@ -3838,6 +3841,10 @@ main.dashboard-full {
 
 .cap-readout-hint--muted {
   color: rgba(148, 163, 184, 0.62);
+}
+
+.cap-readout-hint--warn {
+  color: #fbbf24;
 }
 
 .cap-snapshot-stats {
@@ -4922,6 +4929,28 @@ main.dashboard-full {
   min-width: 0;
 }
 
+.watch-summary-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.watch-summary-action {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(148, 163, 184, 0.78);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.watch-summary-action:hover {
+  color: rgba(226, 232, 240, 0.92);
+}
+
 .watch-chip {
   font-size: 11px;
   font-weight: 700;
@@ -4978,6 +5007,52 @@ main.dashboard-full {
   border-left: 3px solid rgba(148, 163, 184, 0.35);
 }
 
+.watch-summary-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.watch-summary-title {
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.35;
+  color: rgba(226, 232, 240, 0.92);
+}
+
+.watch-summary-scope {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(148, 163, 184, 0.7);
+}
+
+.watch-summary-when {
+  margin-top: 1px;
+  font-size: 11px;
+  color: rgba(148, 163, 184, 0.62);
+}
+
+.watch-summary-dismiss {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(148, 163, 184, 0.72);
+  cursor: pointer;
+}
+
+.watch-summary-dismiss:hover {
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #fecaca;
+  background: rgba(248, 113, 113, 0.08);
+}
+
 .watch-summary-item--warn {
   border-left-color: #f59e0b;
 }
@@ -5004,9 +5079,9 @@ main.dashboard-full {
 }
 
 .watch-summary-msg {
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.4;
-  color: rgba(226, 232, 240, 0.86);
+  color: rgba(148, 163, 184, 0.82);
 }
 
 @media (max-width: 768px) {
@@ -5054,8 +5129,8 @@ main.dashboard-full {
 }
 
 .monitor-gauge-grid {
-  flex: none;
-  min-height: 0;
+  flex: 1 1 0;
+  min-height: 240px;
   height: auto;
   max-height: none;
   display: grid;
@@ -5067,7 +5142,7 @@ main.dashboard-full {
 
 .monitor-gauge-grid > .ring-gauge {
   height: 100%;
-  min-height: 200px;
+  min-height: 0;
 }
 
 .ring-gauge {
@@ -5125,7 +5200,7 @@ main.dashboard-full {
 .device-monitor-overview .ring-gauge {
   height: 100%;
   max-height: none;
-  min-height: 200px;
+  min-height: 0;
   padding: 4px 6px 2px;
   overflow: hidden;
   isolation: isolate;
@@ -5503,17 +5578,34 @@ main.dashboard-full {
 
 .device-monitor-overview-cap {
   flex: 0 0 auto;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .device-monitor-overview-cap .chart-card {
-  padding: 10px 14px 8px;
-  gap: 6px;
+  padding: 8px 12px 6px;
+  gap: 4px;
 }
 
 .device-monitor-overview-cap .cap-tank {
-  gap: 6px;
-  padding: 2px 0 0;
+  gap: 4px;
+  padding: 0;
+}
+
+.device-monitor-overview-cap .cap-tank-track {
+  height: 24px;
+}
+
+.device-monitor-overview-cap .cap-tank-axis {
+  font-size: 10px;
+}
+
+.device-monitor-overview-cap .cap-readout {
+  gap: 4px 12px;
+  padding-top: 2px;
+}
+
+.device-monitor-overview-cap .cap-readout-val {
+  font-size: 14px;
 }
 
 .ring-gauge-values {
@@ -6329,6 +6421,17 @@ main.dashboard-full {
 .module-slot-state {
   font-size: 10px;
   font-weight: 600;
+}
+
+.module-slot-cap {
+  font-size: 9px;
+  font-weight: 600;
+  opacity: 0.72;
+  line-height: 1.1;
+}
+
+.module-slot-grid--nav .module-slot-cap {
+  display: none;
 }
 
 .module-slot--running {
@@ -7742,11 +7845,25 @@ body.pmcs-control-room .global-header:hover {
     font-size: 10px;
   }
 
+  .watch-summary-title {
+    font-size: 11px;
+  }
+
+  .watch-summary-scope,
+  .watch-summary-when {
+    font-size: 9px;
+  }
+
   .watch-summary-msg {
     min-width: 0;
-    font-size: 11px;
+    font-size: 10px;
     line-height: 1.35;
     overflow-wrap: anywhere;
+  }
+
+  .watch-summary-dismiss,
+  .watch-summary-action {
+    font-size: 10px;
   }
 
   .device-detail-page .device-tab-bar {
@@ -7888,7 +8005,7 @@ body.pmcs-control-room .global-header:hover {
 
   .device-monitor-overview .monitor-gauge-grid {
     flex: 1 1 0;
-    min-height: 150px;
+    min-height: 210px;
     height: auto;
     max-height: none;
     gap: 6px;
@@ -7980,11 +8097,11 @@ body.pmcs-control-room .global-header:hover {
   }
 
   .device-monitor-overview-cap .cap-tank-track {
-    height: 26px;
+    height: 22px;
   }
 
   .device-monitor-overview-cap .cap-readout {
-    gap: 6px 10px;
+    gap: 4px 10px;
   }
 
   .device-monitor-overview-cap .cap-readout-val {
@@ -7994,11 +8111,6 @@ body.pmcs-control-room .global-header:hover {
   .device-monitor-overview-cap .cap-readout-label,
   .device-monitor-overview-cap .cap-readout-hint {
     font-size: 10px;
-  }
-
-  .device-monitor-overview-cap .cap-tank-liquid-pct {
-    font-size: 11px;
-    right: 6px;
   }
 
   .device-monitor-layout--charts-only {
@@ -8242,7 +8354,55 @@ body.pmcs-control-room .global-header:hover {
   }
 }
 
-@media (max-height: 740px) {
+@media (max-height: 960px) and (min-width: 901px) {
+  .device-monitor-overview .ops-benefit {
+    margin-bottom: 6px;
+  }
+
+  .device-monitor-overview .ops-stat {
+    min-height: 0;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .device-monitor-overview .ops-stat-value {
+    font-size: 22px;
+  }
+
+  .device-monitor-overview .monitor-gauge-grid {
+    flex: 1 1 0;
+    min-height: 220px;
+  }
+
+  .device-monitor-overview .ring-gauge,
+  .monitor-gauge-grid > .ring-gauge {
+    min-height: 0;
+  }
+
+  .device-monitor-overview-cap {
+    margin-top: 6px;
+  }
+
+  .device-monitor-overview-cap .chart-card {
+    padding: 6px 12px 4px;
+    gap: 4px;
+  }
+
+  .device-monitor-overview-cap .cap-tank-track {
+    height: 22px;
+  }
+
+  .device-monitor-overview-cap .cap-readout-val {
+    font-size: 13px;
+  }
+
+  .device-monitor-overview-cap .cap-readout-label,
+  .device-monitor-overview-cap .cap-readout-hint {
+    font-size: 10px;
+  }
+}
+
+@media (max-height: 740px) and (min-width: 901px) {
   .device-monitor-overview .hmi-rail {
     margin-bottom: 4px;
   }
@@ -8259,7 +8419,7 @@ body.pmcs-control-room .global-header:hover {
 
   .device-monitor-overview .monitor-gauge-grid {
     flex: 1 1 0;
-    min-height: 140px;
+    min-height: 200px;
   }
 
   .device-monitor-overview .ring-gauge,
@@ -8268,7 +8428,17 @@ body.pmcs-control-room .global-header:hover {
   }
 
   .device-monitor-overview-cap .chart-card {
-    padding: 8px 12px 6px;
+    padding: 6px 10px 4px;
+  }
+
+  .device-monitor-overview-cap .cap-tank-track {
+    height: 20px;
+  }
+}
+
+@media (min-height: 1000px) and (min-width: 901px) {
+  .device-monitor-overview .monitor-gauge-grid {
+    max-height: 360px;
   }
 }
 

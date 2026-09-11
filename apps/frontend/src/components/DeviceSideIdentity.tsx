@@ -1,12 +1,21 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { DeviceWithInstallation } from "../types/site";
 import { STATUS_LABEL } from "../lib/deviceStatus";
 import { isCommLost } from "../lib/commStatus";
 import { formatLastSeen } from "../lib/lteSignal";
 import { useHasMounted } from "../hooks/useHasMounted";
+import { deviceModelVersionSpec } from "../lib/deviceSettingsFields";
 import CommLostBadge from "./CommLostBadge";
 import LteSignalIndicator from "./LteSignalIndicator";
+
+function nestedModuleType(device: DeviceWithInstallation): string | null {
+  const inst = device.installation as {
+    deviceSettings?: { moduleType?: string | null };
+  };
+  return inst?.deviceSettings?.moduleType ?? device.moduleType ?? null;
+}
 
 export default function DeviceSideIdentity({
   device,
@@ -27,13 +36,31 @@ export default function DeviceSideIdentity({
         minute: "2-digit",
       })
     : null;
-  const capUnit = device.model === "paf" ? "A" : "kVAR";
-  const spec = [
-    device.model ? device.model.toUpperCase() : null,
-    device.capacity != null ? `${device.capacity} ${capUnit}` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const [settingsModuleType, setSettingsModuleType] = useState<string | null>(
+    null,
+  );
+  const moduleType = nestedModuleType(device) ?? settingsModuleType;
+  const spec = deviceModelVersionSpec({
+    model: device.model,
+    moduleType,
+  });
+
+  useEffect(() => {
+    if (nestedModuleType(device)) return;
+    const id = device.installationId;
+    let cancelled = false;
+    fetch(`/api/devices/${encodeURIComponent(id)}/settings`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { settings?: { moduleType?: string | null } } | null) => {
+        if (cancelled) return;
+        const mt = data?.settings?.moduleType;
+        if (typeof mt === "string" && mt.trim()) setSettingsModuleType(mt);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [device.installationId, device.moduleType]);
 
   return (
     <section className="device-side-identity">
