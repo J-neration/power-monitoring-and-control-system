@@ -38,9 +38,12 @@ export default function CapacitySnapshot({
   const capOk = hasCapTelemetry(device);
   const totalCap = device.totalCapacity ?? device.capacity ?? null;
   const opCap = device.operatingCapacity ?? null;
-  const rpCap = device.reactivePowerCapacity ?? null;
   const headroom =
-    opCap != null && rpCap != null ? roundPct(opCap - rpCap) : null;
+    device.availableMargin != null
+      ? roundPct(device.availableMargin)
+      : totalCap != null && opCap != null
+        ? roundPct(totalCap - opCap)
+        : null;
   const isShort = headroom != null && headroom < 0;
   const headroomAbs = headroom != null ? Math.abs(headroom) : null;
   const opPct = totalCap != null ? pctOf(opCap, totalCap) : null;
@@ -69,7 +72,7 @@ export default function CapacitySnapshot({
           <div className="cap-tank-track" title={tooltip}>
             <div
               className="cap-tank-recommend-zone"
-              style={{ width: `${REC_OP_PCT}%` }}
+              style={{ left: `${REC_OP_PCT}%` }}
             />
             <div
               className="cap-tank-recommend-mark"
@@ -126,13 +129,13 @@ export default function CapacitySnapshot({
                   ? `${fmtCap(headroomAbs)} ${capUnit}`
                   : "—"}
               </span>
-              {headroomAbs != null && opCap != null && opCap > 0 ? (
+              {headroomAbs != null && totalCap != null && totalCap > 0 ? (
                 <span
                   className={`cap-readout-hint${isShort ? " cap-readout-hint--warn" : ""}`}
                 >
                   {isShort
-                    ? `운전용량 대비 ${roundPct((headroomAbs / opCap) * 100)}% 초과`
-                    : `운전용량 대비 ${roundPct((headroomAbs / opCap) * 100)}%`}
+                    ? `설비용량 대비 ${roundPct((headroomAbs / totalCap) * 100)}% 초과`
+                    : `설비용량 대비 ${roundPct((headroomAbs / totalCap) * 100)}%`}
                 </span>
               ) : null}
             </div>

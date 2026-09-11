@@ -286,6 +286,9 @@ export default function DeviceDetailTabs({
               installationId={device.installationId}
               requestedBy={adminUsername}
               numOfMods={device.numOfMods}
+              moduleStatus={device.moduleStatus}
+              moduleCapacity={device.moduleCapacity}
+              capUnit={device.model === "paf" ? "A" : "kvar"}
             />
           </div>
         </div>
