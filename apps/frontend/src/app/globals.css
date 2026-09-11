@@ -4905,11 +4905,19 @@ main.dashboard-full {
 
 .watch-summary-head {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   min-width: 0;
   margin-bottom: 8px;
+}
+
+.watch-summary-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
 }
 
 .watch-summary-meta {
@@ -4922,30 +4930,33 @@ main.dashboard-full {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex: 1;
   min-width: 0;
 }
 
 .watch-summary-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-left: auto;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .watch-summary-action {
-  padding: 0;
-  border: 0;
-  background: none;
+  padding: 3px 8px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 6px;
+  background: rgba(8, 11, 17, 0.4);
   font-size: 11px;
   font-weight: 600;
-  color: rgba(148, 163, 184, 0.78);
+  color: rgba(203, 213, 225, 0.88);
   cursor: pointer;
   white-space: nowrap;
 }
 
 .watch-summary-action:hover {
-  color: rgba(226, 232, 240, 0.92);
+  border-color: rgba(148, 163, 184, 0.45);
+  color: rgba(226, 232, 240, 0.96);
+  background: rgba(148, 163, 184, 0.12);
 }
 
 .watch-chip {
@@ -5083,12 +5094,8 @@ main.dashboard-full {
 
 @media (max-width: 768px) {
   .watch-summary-head {
-    flex-wrap: wrap;
-  }
-
-  .watch-summary-counts {
-    order: 3;
-    flex: 1 1 100%;
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 

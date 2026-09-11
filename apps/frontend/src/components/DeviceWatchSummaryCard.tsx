@@ -102,44 +102,46 @@ export default function DeviceWatchSummaryCard({
   return (
     <div className="watch-summary">
       <div className="watch-summary-head">
-        <p className="watch-summary-meta">최근 {facts.hours}시간 이력</p>
-        <div className="watch-summary-counts">
-          {dangerCount > 0 ? (
-            <span className="watch-chip watch-chip--danger">
-              위험 {dangerCount}
-            </span>
-          ) : null}
-          {warnCount > 0 ? (
-            <span className="watch-chip watch-chip--warn">
-              주의 {warnCount}
-            </span>
-          ) : null}
-          {visible.length === 0 && anomalies.length === 0 ? (
-            <span className="watch-chip watch-chip--ok">이상 없음</span>
-          ) : null}
-          {visible.length > 0 || hiddenCount > 0 ? (
-            <div className="watch-summary-actions">
-              {visible.length > 0 ? (
-                <button
-                  type="button"
-                  className="watch-summary-action"
-                  onClick={dismissAll}
-                >
-                  모두 지우기
-                </button>
-              ) : null}
-              {hiddenCount > 0 ? (
-                <button
-                  type="button"
-                  className="watch-summary-action"
-                  onClick={restoreAll}
-                >
-                  숨긴 알림 {hiddenCount}건
-                </button>
-              ) : null}
-            </div>
-          ) : null}
+        <div className="watch-summary-title">
+          <p className="watch-summary-meta">최근 {facts.hours}시간 이력</p>
+          <div className="watch-summary-counts">
+            {dangerCount > 0 ? (
+              <span className="watch-chip watch-chip--danger">
+                위험 {dangerCount}
+              </span>
+            ) : null}
+            {warnCount > 0 ? (
+              <span className="watch-chip watch-chip--warn">
+                주의 {warnCount}
+              </span>
+            ) : null}
+            {visible.length === 0 && anomalies.length === 0 ? (
+              <span className="watch-chip watch-chip--ok">이상 없음</span>
+            ) : null}
+          </div>
         </div>
+        {visible.length > 0 || hiddenCount > 0 ? (
+          <div className="watch-summary-actions">
+            {visible.length > 0 ? (
+              <button
+                type="button"
+                className="watch-summary-action"
+                onClick={dismissAll}
+              >
+                모두 지우기
+              </button>
+            ) : null}
+            {hiddenCount > 0 ? (
+              <button
+                type="button"
+                className="watch-summary-action"
+                onClick={restoreAll}
+              >
+                숨긴 알림 {hiddenCount}건
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       {visible.length === 0 ? (
