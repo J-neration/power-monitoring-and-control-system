@@ -234,13 +234,17 @@ export default function DeviceOpsBenefitPanel({
           after: `${pAfter.toFixed(1)} kW`,
         }
       : undefined;
-  const pfCompare =
-    s.pfBefore != null && s.pfAfter != null
-      ? {
-          before: `역률 ${Math.abs(s.pfBefore).toFixed(1)}%`,
-          after: `역률 ${Math.abs(s.pfAfter).toFixed(1)}%`,
-        }
-      : undefined;
+  const costHint = (() => {
+    if (s.costYear == null) return undefined;
+    const parts: string[] = [];
+    if (s.energyCostYear != null) {
+      parts.push(`전력량 ${formatKrw(s.energyCostYear)}`);
+    }
+    if (s.pfCostYear != null) {
+      parts.push(`역률요금 ${formatKrw(s.pfCostYear)}`);
+    }
+    return parts.length ? parts.join(" · ") : undefined;
+  })();
   const qualityCompare =
     s.qualityBefore != null && s.qualityAfter != null
       ? {
@@ -266,13 +270,15 @@ export default function DeviceOpsBenefitPanel({
         formula={{
           title: "전력량 절감 공식",
           lines: [
-            `순시 절감(kW) = 유효전력 감소 ΔP + 동손(I²R) 감소`,
-            `ΔP = max(0, 보상 전 P − 보상 후 P)  — 부하측·계통측 유효전력 계측`,
-            `동손 감소 = P × ${lossPct}% × (1 − (I계통 / I부하)²)`,
-            `전류를 못 쓰면 (보상 전 kVA − 보상 후 kVA) × ${lossPct}% 로 대체`,
+            `순시 절감(kW) = 보상 전 동손 × [1 − (보상 전 역률 / 보상 후 역률)²]`,
+            `보상 전 동손 = (보상 전 P ÷ 보상 전 역률) × ${lossPct}%  — 피상전력(kVA) 기준`,
+            `전류는 역률에 반비례하고(I = P / √3·V·PF) 동손은 전류 제곱에 비례합니다`,
+            `종합역률(TPF)은 고조파를 포함한 전 전류 기준이라 THD 효과가 이미 들어 있습니다 (TPF = DPF / √(1+THD²))`,
+            `TPF를 못 받으면 변위역률(DPF)과 전류 THD로 만들어 씁니다`,
+            `유효전력이 ${OPS_SAVINGS.minLoadKw} kW 미만이거나 역률이 좋아지지 않았으면 표시하지 않습니다`,
             `연간 kWh = 순시 kW × 8,760시간 (이력 있으면 구간의 kWh를 연간으로 환산)`,
           ],
-          note: `${historyNote} ${lossPct}%는 변압기 전부하 동손(~1–2%)과 저압 간선 손실을 합친 가정치이며 법정 계수가 아닙니다.`,
+          note: `${historyNote} ${lossPct}%는 변압기 전부하 동손(~1–2%)과 저압 간선 손실을 합친 가정치이며 법정 계수가 아닙니다. 보상기 자체 손실(P의 1~3%)은 차감하지 않았습니다.`,
           sources: [
             "줄의 법칙 / IEC 60287-1-1 — 도체 손실 P = I²R, 전류 제곱에 비례",
             "IEC 60076-1 (KS C IEC 60076-1) — 전력용 변압기 부하손(동손)은 부하전류의 제곱에 비례",
@@ -311,12 +317,8 @@ export default function DeviceOpsBenefitPanel({
         icon={<WonIcon />}
         kicker="전기요금 절감"
         value={s.costYear != null ? formatKrw(s.costYear) : "—"}
-        compare={pfCompare}
-        hint={
-          s.pfCostYear != null && s.energyCostYear != null
-            ? `전력량 ${formatKrw(s.energyCostYear)} + 역률 ${formatKrw(s.pfCostYear)}`
-            : undefined
-        }
+        compare={energyCompare}
+        hint={costHint}
         formula={{
           title: "전기요금 절감 공식",
           lines: [
@@ -325,6 +327,7 @@ export default function DeviceOpsBenefitPanel({
             `역률요금 = 기본요금 × (기준역률 − 실역률) × 0.2%  (1%당 기본요금의 0.2%)`,
             `지상 90% 미만이면 가산, 90% 초과~95% 이하면 감액 (감액 폭 최대 5%)`,
             `연간 역률 절감 = 월 기본요금 × (보상 전 가감비율 − 보상 후 가감비율) × 12`,
+            `순시 역률이 ${QUALITY_REFS.kepcoPfBillingFloorPct}% 미만이면 경부하로 보고 역률요금은 빼 둡니다`,
             `합계 = 전력량요금 절감 + 역률요금 절감`,
           ],
           note: "계약전력·실제 고지서가 아닙니다. 선택요금·시간대·기후환경요금·연료비조정은 넣지 않은 환산입니다.",

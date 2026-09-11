@@ -32,6 +32,7 @@ import {
   TEMP_CHART_MARGIN_RIGHT,
   TEMP_THRESHOLDS,
   TEMP_WARN_REF,
+  areaTempOrNull,
   withChartUnit,
 } from "../lib/chartTheme";
 import PfNeedleGauge from "./charts/PfNeedleGauge";
@@ -63,12 +64,12 @@ function ThdGaugeLegend() {
   return (
     <ul className="thd-bar-legend">
       <li>
-        <span className="thd-arc-leg-swatch thd-arc-leg-swatch--in" aria-hidden />
-        안쪽 · 보상 전
+        <span className="thd-arc-leg-swatch thd-arc-leg-swatch--out" aria-hidden />
+        바깥 · 보상 전
       </li>
       <li>
-        <span className="thd-arc-leg-swatch thd-arc-leg-swatch--out" aria-hidden />
-        바깥 · 보상 후
+        <span className="thd-arc-leg-swatch thd-arc-leg-swatch--in" aria-hidden />
+        안쪽 · 보상 후
       </li>
     </ul>
   );
@@ -265,14 +266,13 @@ export default function DeviceDetailCharts({
     },
   ];
 
-  const hasAreaTemp = (device.areaTemp?.length ?? 0) > 0;
-  const hasModuleTemp = (device.moduleTemp?.length ?? 0) > 0;
-  const hasFanSpeed = (device.fanSpeed?.length ?? 0) > 0;
-
   const areaTempData = (device.areaTemp ?? []).map((v, i) => ({
     ch: String(i + 1),
-    온도: Math.round(v * 10) / 10,
+    온도: areaTempOrNull(v) != null ? Math.round(v * 10) / 10 : null,
   }));
+  const hasAreaTemp = areaTempData.some((d) => d.온도 != null);
+  const hasModuleTemp = (device.moduleTemp?.length ?? 0) > 0;
+  const hasFanSpeed = (device.fanSpeed?.length ?? 0) > 0;
 
   const moduleTempData = (device.moduleTemp ?? []).map((v, i) => ({
     ch: String(i + 1),
@@ -408,7 +408,7 @@ export default function DeviceDetailCharts({
       {section === "thd" && (
         <ChartCard
           title="상별 THDi (%)"
-          subtitle="— 안쪽 보상 전 · 바깥 보상 후"
+          subtitle="— 바깥 보상 전 · 안쪽 보상 후"
           fill
           legend={<ThdGaugeLegend />}
         >
@@ -686,9 +686,11 @@ export default function DeviceDetailCharts({
                         <Cell
                           key={i}
                           fill={
+                            entry.온도 != null &&
                             entry.온도 >= TEMP_THRESHOLDS.areaAlarm
                               ? CHART_COLORS.danger
-                              : entry.온도 >= TEMP_THRESHOLDS.areaWarn
+                              : entry.온도 != null &&
+                                  entry.온도 >= TEMP_THRESHOLDS.areaWarn
                                 ? CHART_COLORS.load
                                 : CHART_COLORS.accent
                           }

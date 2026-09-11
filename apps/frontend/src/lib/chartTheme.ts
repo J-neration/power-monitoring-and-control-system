@@ -30,6 +30,22 @@ export const TEMP_THRESHOLDS = {
   moduleAlarm: 90,
 } as const;
 
+/** 주위온도 -40°C = 센서 미부착 */
+export const AREA_TEMP_DISCONNECTED_C = -40;
+
+export function isAreaTempDisconnected(
+  v: number | null | undefined,
+): boolean {
+  return v != null && Number.isFinite(v) && v <= AREA_TEMP_DISCONNECTED_C + 0.05;
+}
+
+export function areaTempOrNull(
+  v: number | null | undefined,
+): number | null {
+  if (v == null || !Number.isFinite(v) || isAreaTempDisconnected(v)) return null;
+  return v;
+}
+
 /** 주의 온도 — 점선(격자와 패턴 구분) */
 export const TEMP_WARN_REF = {
   strokeDasharray: "6 4",

@@ -12,6 +12,7 @@ import {
   TEMP_CHART_MARGIN_RIGHT,
   TEMP_THRESHOLDS,
   TEMP_WARN_REF,
+  areaTempOrNull,
 } from "../lib/chartTheme";
 import type { TelemetryReading } from "../types/site";
 
@@ -129,7 +130,7 @@ export default function DeviceHistoryCharts({
         };
 
         for (let i = 0; i < maxArea; i++) {
-          row[`area${i}`] = r.areaTemp?.[i] ?? null;
+          row[`area${i}`] = areaTempOrNull(r.areaTemp?.[i]);
         }
         for (let i = 0; i < maxMod; i++) {
           const modVal = r.moduleTemp?.[i] ?? null;

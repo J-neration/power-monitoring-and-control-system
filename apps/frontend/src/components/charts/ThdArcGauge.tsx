@@ -113,10 +113,10 @@ export default function ThdArcGauge({ label, before, after }: Props) {
           <path d={sector(0, 1, R_OUT, R_MID)} fill={COLOR.track} />
           <path d={sector(0, 1, R_MID - 3, R_IN)} fill={COLOR.trackInner} />
 
-          {tB > 0.002 ? (
-            <path d={sector(0, tB, R_MID - 3, R_IN)} fill={beforeColor} opacity="0.78" />
+          {tA > 0.002 ? (
+            <path d={sector(0, tA, R_MID - 3, R_IN)} fill={afterColor} opacity="0.78" />
           ) : null}
-          {tA > 0.002 ? <path d={sector(0, tA, R_OUT, R_MID)} fill={afterColor} /> : null}
+          {tB > 0.002 ? <path d={sector(0, tB, R_OUT, R_MID)} fill={beforeColor} /> : null}
 
           {([0, 20, 50, 100] as const).map((tick) => {
             const t = tick / SCALE;
@@ -130,15 +130,15 @@ export default function ThdArcGauge({ label, before, after }: Props) {
             );
           })}
 
-          {tB > 0.002 ? (
+          {tA > 0.002 ? (
             <path
-              d={radial(tB, R_IN, R_MID - 3)}
+              d={radial(tA, R_IN, R_MID - 3)}
               stroke="rgba(255,255,255,0.7)"
               strokeWidth="2"
             />
           ) : null}
-          {tA > 0.002 ? (
-            <path d={radial(tA, R_MID, R_OUT)} stroke="#f8fafc" strokeWidth="2.4" />
+          {tB > 0.002 ? (
+            <path d={radial(tB, R_MID, R_OUT)} stroke="#f8fafc" strokeWidth="2.4" />
           ) : null}
 
           <path
@@ -175,12 +175,12 @@ export default function ThdArcGauge({ label, before, after }: Props) {
       <div className="thd-arc-caption">
         <div className="thd-arc-legend">
           <span className="thd-arc-leg">
-            <span className="thd-arc-leg-swatch thd-arc-leg-swatch--in" aria-hidden />
-            안쪽 · 보상 전
+            <span className="thd-arc-leg-swatch thd-arc-leg-swatch--out" aria-hidden />
+            바깥 · 보상 전
           </span>
           <span className="thd-arc-leg">
-            <span className="thd-arc-leg-swatch thd-arc-leg-swatch--out" aria-hidden />
-            바깥 · 보상 후
+            <span className="thd-arc-leg-swatch thd-arc-leg-swatch--in" aria-hidden />
+            안쪽 · 보상 후
           </span>
         </div>
         <div className="ring-gauge-values">

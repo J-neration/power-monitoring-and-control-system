@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef } from "react";
 import type { Site } from "../../types/site";
 import type { DeviceStatus } from "../../types/site";
-import { isTestClient } from "../../data/clients";
 import { compareKoNumeric } from "../../lib/deviceStatus";
 
 type Props = {
@@ -121,9 +120,6 @@ export default function DashboardAccordion({ regionEntries, selectedRegion }: Pr
                         <div className="region-device-top">
                           <strong className="region-title">
                             {site.name}
-                            {isTestClient(site.client) && (
-                              <span className="test-badge">TEST</span>
-                            )}
                           </strong>
                           <span className="region-device-menu">{site.address}</span>
                         </div>
