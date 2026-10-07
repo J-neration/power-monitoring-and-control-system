@@ -14,7 +14,6 @@ const KoreaMap = dynamic(() => import("./KoreaMap"), {
   loading: () => <div className="korea-map-loading" aria-hidden />,
 });
 import LteRadarOverlay from "./LteRadarOverlay";
-import LteSignalIndicator from "../LteSignalIndicator";
 import CommLostBadge from "../CommLostBadge";
 import AlarmTicker from "./AlarmTicker";
 import AlarmPanel from "./AlarmPanel";
@@ -25,6 +24,7 @@ import { useAlarmAck } from "../../hooks/useAlarmAck";
 import { useControlRoomMode } from "../../hooks/useControlRoomMode";
 import { useEventLog } from "../../hooks/useEventLog";
 import { buildAlarms } from "../../lib/alarms";
+import { formatIccidListName } from "../../lib/iccidLabel";
 import { siteMatchesSearch } from "../../lib/siteSearch";
 import {
   compareKoNumeric,
@@ -470,6 +470,8 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
 
                             if (visibleInstallations.length === 0) return null;
 
+                            const siteListName = formatIccidListName(site.name);
+
                             return (
                               <details
                                 key={site.id}
@@ -487,8 +489,11 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                     className={`site-group-dot ${siteStatus}`}
                                   />
                                   <div className="site-group-info">
-                                    <strong className="site-group-name">
-                                      {site.name}
+                                    <strong
+                                      className="site-group-name"
+                                      title={siteListName.title}
+                                    >
+                                      {siteListName.text}
                                     </strong>
                                     <span className="site-group-client">
                                       {CLIENT_LABELS[site.client] ?? site.client}
@@ -515,6 +520,9 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                     const commLost = isCommLost(
                                       inst.device?.lastSeenAt,
                                     );
+                                    const instListName = formatIccidListName(
+                                      inst.label,
+                                    );
 
                                     return (
                                       <button
@@ -531,14 +539,13 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                           className={`inst-card-dot ${instStatus}`}
                                         />
                                         <div className="inst-card-info">
-                                          <span className="inst-card-label">
-                                            {inst.label}
+                                          <span
+                                            className="inst-card-label"
+                                            title={instListName.title}
+                                          >
+                                            {instListName.text}
                                           </span>
                                         </div>
-                                        <LteSignalIndicator
-                                          device={inst.device}
-                                          variant="compact"
-                                        />
                                         <span
                                           className={`site-card-badge ${instStatus}`}
                                         >

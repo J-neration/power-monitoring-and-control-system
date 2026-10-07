@@ -15,6 +15,7 @@ import {
   STATUS_LABEL,
 } from "../../lib/deviceStatus";
 import { isCommLost } from "../../lib/commStatus";
+import { formatIccidListName } from "../../lib/iccidLabel";
 
 export default function SiteSummaryPanel({
   site,
@@ -139,6 +140,7 @@ export default function SiteSummaryPanel({
           const d = inst.device;
           const isSelected = selectedInstallationId === inst.id;
           const commLost = isCommLost(d?.lastSeenAt);
+          const instListName = formatIccidListName(inst.label);
 
           return (
             <Link
@@ -150,7 +152,9 @@ export default function SiteSummaryPanel({
             >
               <div className="summary-inst-header">
                 <div className={`inst-card-dot ${instStatus}`} />
-                <span className="summary-inst-label">{inst.label}</span>
+                <span className="summary-inst-label" title={instListName.title}>
+                  {instListName.text}
+                </span>
                 {isSelected ? (
                   <span className="site-group-selected-tag">선택</span>
                 ) : null}
