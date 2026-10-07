@@ -225,7 +225,7 @@ export function phaseDeviationPcts(
     return {
       phase,
       value,
-      pct: pct != null ? Math.round(pct * 100) / 100 : null,
+      pct: pct != null ? Number(pct.toFixed(2)) : null,
     };
   });
 }
