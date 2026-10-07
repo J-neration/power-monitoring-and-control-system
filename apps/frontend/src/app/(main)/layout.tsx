@@ -7,6 +7,7 @@ import LogoutButton from "../../components/LogoutButton";
 import SessionTimeoutGuard from "../../components/SessionTimeoutGuard";
 import SystemStatusBar from "../../components/SystemStatusBar";
 import { CLIENT_LABELS } from "../../data/clients";
+import { serverApiBase } from "../../lib/serverApiBase";
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: "관리자",
@@ -25,7 +26,7 @@ async function getCurrentUser(): Promise<AuthUser | null> {
   const token = cookies().get("pmcs_token")?.value;
   if (!token) return null;
 
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
+  const apiBase = serverApiBase();
   try {
     const res = await fetch(`${apiBase}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -43,7 +44,7 @@ async function getSiteName(
   siteId: string,
   token: string,
 ): Promise<string | null> {
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
+  const apiBase = serverApiBase();
   try {
     const res = await fetch(`${apiBase}/sites/${encodeURIComponent(siteId)}`, {
       headers: { Authorization: `Bearer ${token}` },

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { serverApiBase } from "../../../../../../lib/serverApiBase";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
+const API_BASE = serverApiBase();
 
 function authHeader(request: NextRequest) {
   const token = request.cookies.get("pmcs_token")?.value;

@@ -1,6 +1,5 @@
 import { siteRegistry } from "../data/deviceRegistry.js";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient, type Device } from "../../prisma/generated/client/client.js";
+import { type Device } from "../../prisma/generated/client/client.js";
 import type { UserContext } from "../modules/auth/auth.types.js";
 import {
   iccidConflictWhere,
@@ -9,6 +8,7 @@ import {
   pickPreferredIccidMatch,
 } from "../lib/iccid.js";
 import { isCommLost } from "../lib/commStatus.js";
+import { prisma } from "../lib/prisma.js";
 
 export { normalizeIccid, iccidLookupCandidates } from "../lib/iccid.js";
 
@@ -18,13 +18,6 @@ export type DeviceStatus =
   | "running"
   | "fault"
   | "offline";
-
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({
-    connectionString:
-      process.env.DATABASE_URL ?? "postgresql://pmcs:pmcs@localhost:5432/pmcs",
-  }),
-});
 
 /* =========================================================
  * Registry lookup: device_id -> {site, installation}
