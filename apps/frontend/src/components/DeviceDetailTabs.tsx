@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { schedulePageRefresh } from "../lib/pageRefresh";
 import DeviceHistoryCharts from "./DeviceHistoryCharts";
 import DeviceMonitorBoard from "./DeviceMonitorBoard";
 import DeviceModulePowerPanel from "./DeviceModulePowerPanel";
@@ -112,7 +113,7 @@ export default function DeviceDetailTabs({
       (msg.type === "device_updated" || msg.type === "settings_updated") &&
       msg.installationId === device.installationId
     ) {
-      router.refresh();
+      schedulePageRefresh(() => router.refresh());
     }
   });
 

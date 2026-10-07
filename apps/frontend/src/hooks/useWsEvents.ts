@@ -28,6 +28,8 @@ const RECONNECT_DELAYS_MS = [1_000, 2_000, 4_000, 8_000, 16_000, 30_000];
 let _ws: WebSocket | null = null;
 let _attempt = 0;
 let _reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let _resumeBound = false;
+let _pageHeld = false;
 const _handlers = new Set<Handler>();
 const _connectionListeners = new Set<() => void>();
 
@@ -67,7 +69,53 @@ function getWsUrl(): string {
   return base.replace(/^http/, "ws") + "/ws";
 }
 
+function pageIsHidden(): boolean {
+  return (
+    _pageHeld ||
+    (typeof document !== "undefined" && document.visibilityState === "hidden")
+  );
+}
+
+function scheduleReconnect(): void {
+  if (_handlers.size === 0 || pageIsHidden() || _reconnectTimer !== null) return;
+  const delay =
+    RECONNECT_DELAYS_MS[Math.min(_attempt, RECONNECT_DELAYS_MS.length - 1)];
+  _attempt++;
+  _reconnectTimer = setTimeout(() => {
+    _reconnectTimer = null;
+    openConnection();
+  }, delay);
+}
+
+/** Reopen after bfcache / tab restore. Do not reconnect into a frozen page. */
+function ensureResumeListener(): void {
+  if (_resumeBound || typeof window === "undefined") return;
+  _resumeBound = true;
+  const resume = () => {
+    if (pageIsHidden() || _handlers.size === 0) return;
+    if (_reconnectTimer !== null) {
+      clearTimeout(_reconnectTimer);
+      _reconnectTimer = null;
+    }
+    openConnection();
+  };
+  window.addEventListener("pagehide", () => {
+    _pageHeld = true;
+    if (_reconnectTimer !== null) {
+      clearTimeout(_reconnectTimer);
+      _reconnectTimer = null;
+    }
+  });
+  window.addEventListener("pageshow", () => {
+    _pageHeld = false;
+    resume();
+  });
+  document.addEventListener("visibilitychange", resume);
+}
+
 function openConnection(): void {
+  ensureResumeListener();
+  if (pageIsHidden()) return;
   if (
     _ws &&
     (_ws.readyState === WebSocket.CONNECTING ||
@@ -108,11 +156,7 @@ function openConnection(): void {
   _ws.addEventListener("close", () => {
     _ws = null;
     setConnectionState({ status: "disconnected" });
-    if (_handlers.size === 0) return;
-    const delay =
-      RECONNECT_DELAYS_MS[Math.min(_attempt, RECONNECT_DELAYS_MS.length - 1)];
-    _attempt++;
-    _reconnectTimer = setTimeout(openConnection, delay);
+    scheduleReconnect();
   });
 
   _ws.addEventListener("error", () => {
