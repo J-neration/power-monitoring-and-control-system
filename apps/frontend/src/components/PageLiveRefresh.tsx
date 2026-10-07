@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWsEvents } from "../hooks/useWsEvents";
+import { bindPageRefresh, schedulePageRefresh } from "../lib/pageRefresh";
 
 const DEFAULT_REFRESH_SEC = 30;
 
@@ -23,15 +24,20 @@ export default function PageLiveRefresh({
   const countdownRef = useRef(refreshSec);
 
   const triggerRefresh = useCallback(() => {
-    countdownRef.current = refreshSec;
-    setCountdown(refreshSec);
-    router.refresh();
+    schedulePageRefresh(() => {
+      countdownRef.current = refreshSec;
+      setCountdown(refreshSec);
+      router.refresh();
+    });
   }, [router, refreshSec]);
+
+  useEffect(() => bindPageRefresh(triggerRefresh), [triggerRefresh]);
 
   useEffect(() => {
     countdownRef.current = refreshSec;
     setCountdown(refreshSec);
     const tick = setInterval(() => {
+      if (document.visibilityState === "hidden") return;
       countdownRef.current -= 1;
       setCountdown(countdownRef.current);
       if (countdownRef.current <= 0) triggerRefresh();

@@ -2,6 +2,7 @@ import "./globals.css";
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { IBM_Plex_Sans } from "next/font/google";
+import ClearTransientRetry from "../components/ClearTransientRetry";
 
 const logoFont = IBM_Plex_Sans({
   subsets: ["latin"],
@@ -22,7 +23,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko" className={logoFont.variable}>
-      <body>{children}</body>
+      <body>
+        <ClearTransientRetry />
+        {children}
+      </body>
     </html>
   );
 }

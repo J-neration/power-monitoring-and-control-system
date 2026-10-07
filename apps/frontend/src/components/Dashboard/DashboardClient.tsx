@@ -20,6 +20,7 @@ import AlarmPanel from "./AlarmPanel";
 import ControlRoomToolbar from "./ControlRoomToolbar";
 import EventLogPanel from "./EventLogPanel";
 import { useWsEvents } from "../../hooks/useWsEvents";
+import { bindPageRefresh, schedulePageRefresh } from "../../lib/pageRefresh";
 import { useAlarmAck } from "../../hooks/useAlarmAck";
 import { useControlRoomMode } from "../../hooks/useControlRoomMode";
 import { useEventLog } from "../../hooks/useEventLog";
@@ -199,9 +200,13 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
   const eventLogEntries = useEventLog(sites);
 
   const triggerRefresh = useCallback(() => {
-    setRefreshEpoch((n) => n + 1);
-    router.refresh();
+    schedulePageRefresh(() => {
+      setRefreshEpoch((n) => n + 1);
+      router.refresh();
+    });
   }, [router]);
+
+  useEffect(() => bindPageRefresh(triggerRefresh), [triggerRefresh]);
 
   useEffect(() => {
     const tick = setInterval(() => {
