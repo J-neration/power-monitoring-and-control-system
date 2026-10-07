@@ -1113,7 +1113,7 @@ main.dashboard-full {
 .dash-body {
   position: relative;
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr) 320px;
+  grid-template-columns: 320px minmax(0, 1fr) 320px;
   grid-template-rows: minmax(0, 1fr);
   flex: 1 1 0;
   min-height: 0;
@@ -2436,10 +2436,6 @@ main.dashboard-full {
 }
 .lte-signal--compact .lte-signal-bar:nth-child(4) {
   height: 9px;
-}
-
-.inst-card .lte-signal--compact {
-  flex-shrink: 0;
 }
 
 .summary-inst-metrics {
