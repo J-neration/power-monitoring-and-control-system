@@ -88,6 +88,25 @@ jobs:
             echo "로컬에서 \`yarn workspace @pmcs/frontend build\` 로 같은 결과를 볼 수 있습니다."
           } >> "$GITHUB_STEP_SUMMARY"
 
+  # AWS ECS 로 옮길 프론트엔드 컨테이너 이미지. 지금 운영(Netlify)과는 무관하며,
+  # 전환 전까지 이미지가 깨지지 않았는지만 확인한다.
+  frontend-image:
+    name: docker build (AWS 프론트엔드)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/frontend/Dockerfile
+          push: false
+          cache-from: type=gha,scope=frontend-image
+          cache-to: type=gha,mode=max,scope=frontend-image
+
   build:
     name: docker build (Railway와 동일)
     runs-on: ubuntu-latest

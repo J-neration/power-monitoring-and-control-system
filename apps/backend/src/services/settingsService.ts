@@ -1,8 +1,4 @@
-import { PrismaPg } from "@prisma/adapter-pg";
-import {
-  PrismaClient,
-  type Prisma,
-} from "../../prisma/generated/client/client.js";
+import { type Prisma } from "../../prisma/generated/client/client.js";
 import {
   ensureInstallationForIccid,
   getInstallationIdByIccid,
@@ -12,13 +8,7 @@ import {
   canonicalSettingsKey,
   canonicalizeSettingsValue,
 } from "../lib/deviceSettingsKeys.js";
-
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({
-    connectionString:
-      process.env.DATABASE_URL ?? "postgresql://pmcs:pmcs@localhost:5432/pmcs",
-  }),
-});
+import { prisma } from "../lib/prisma.js";
 
 export type ModuleType = "v1v2" | "v3v4" | "v5";
 

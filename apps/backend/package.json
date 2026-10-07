@@ -33,13 +33,13 @@
     "pg": "^8.18.0",
     "pino": "8.17.2",
     "prisma": "7.3.0",
-    "zod": "latest"
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "22.15.2",
     "pino-pretty": "10.2.3",
-    "tsx": "latest",
-    "typescript": "latest"
+    "tsx": "4.21.0",
+    "typescript": "5.9.3"
   }
 }

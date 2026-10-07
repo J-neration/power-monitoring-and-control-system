@@ -1,15 +1,10 @@
 import bcrypt from "bcryptjs";
-import { PrismaClient } from "../../../prisma/generated/client/client.js";
-import { PrismaPg } from "@prisma/adapter-pg";
 import type { JwtPayload, UserContext } from "./auth.types.js";
 import { assertValidPassword } from "./passwordPolicy.js";
+import { prisma } from "../../lib/prisma.js";
 
 export const LOGIN_INVALID_MESSAGE =
   "아이디 또는 비밀번호가 올바르지 않습니다.";
-
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
-});
 
 /* ─── 비밀번호 유틸 ─────────────────────────────── */
 export const hashPassword = (plain: string) => bcrypt.hash(plain, 12);

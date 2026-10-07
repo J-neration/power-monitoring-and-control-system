@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { serverApiBase } from "./serverApiBase";
 
 export type SessionUser = {
   username: string;
@@ -12,7 +13,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   const token = cookies().get("pmcs_token")?.value;
   if (!token) return null;
 
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
+  const apiBase = serverApiBase();
   try {
     const res = await fetch(`${apiBase}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
