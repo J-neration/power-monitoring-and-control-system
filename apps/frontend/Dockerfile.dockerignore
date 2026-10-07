@@ -1,0 +1,22 @@
+**/node_modules
+**/.next
+**/dist
+.git
+.github
+.vscode
+.claude
+.agents
+docs
+*.md
+.DS_Store
+**/.DS_Store
+*.log
+apps/frontend/tsconfig.tsbuildinfo
+
+# 백엔드 소스는 필요 없지만, yarn 워크스페이스 설치에 package.json 은 있어야 한다.
+apps/backend/**
+!apps/backend/package.json
+
+# 시크릿이 이미지에 들어가는 것 방지
+**/.env
+**/.env.*

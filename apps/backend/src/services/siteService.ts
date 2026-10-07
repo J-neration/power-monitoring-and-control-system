@@ -1,13 +1,6 @@
-import { PrismaClient } from "../../prisma/generated/client/client.js";
-import { PrismaPg } from "@prisma/adapter-pg";
 import { withLiveDeviceFields } from "./deviceService.js";
 import type { UserContext } from "../modules/auth/auth.types.js";
-
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({
-    connectionString: process.env.DATABASE_URL,
-  }),
-});
+import { prisma } from "../lib/prisma.js";
 
 /* ─── 권한별 Site WHERE 필터 ──────────────────────── */
 const siteWhereFilter = (ctx: UserContext) => {

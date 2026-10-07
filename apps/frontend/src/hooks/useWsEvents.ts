@@ -61,6 +61,15 @@ function getServerConnectionSnapshot(): WsConnectionState {
 }
 
 function getWsUrl(): string {
+  // "/ws" 처럼 경로만 주면 페이지와 같은 출처로 연결한다 — 쿠키(pmcs_token)가 함께 전송되어
+  // 백엔드가 WS_REQUIRE_AUTH 로 인증할 수 있다. 미설정이면 기존처럼 API 주소로 직접 연결.
+  const override = process.env.NEXT_PUBLIC_WS_URL;
+  if (override?.startsWith("/") && typeof window !== "undefined") {
+    const scheme = window.location.protocol === "https:" ? "wss" : "ws";
+    return `${scheme}://${window.location.host}${override}`;
+  }
+  if (override) return override;
+
   const base =
     (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_BASE) ||
     "http://localhost:4000";

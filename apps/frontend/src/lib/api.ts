@@ -28,7 +28,10 @@ export type FaultEvent = {
 };
 
 const apiBase = (() => {
-  const raw = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:4000";
+  const raw =
+    process.env.API_BASE_INTERNAL ??
+    process.env.NEXT_PUBLIC_API_BASE ??
+    "http://127.0.0.1:4000";
   try {
     const url = new URL(raw);
     // Node undici on Windows often fails localhost → ::1 while the API

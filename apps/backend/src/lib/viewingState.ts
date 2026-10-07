@@ -1,5 +1,4 @@
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../../prisma/generated/client/client.js";
+import { prisma } from "./prisma.js";
 
 /**
  * DB-backed admin remote session (`Installation.adminSessionActive`).
@@ -14,13 +13,6 @@ import { PrismaClient } from "../../prisma/generated/client/client.js";
 
 /** Crash-safety: clear stale true if browser dies without stop (ms). */
 export const ADMIN_SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8h — align with JWT
-
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({
-    connectionString:
-      process.env.DATABASE_URL ?? "postgresql://pmcs:pmcs@localhost:5432/pmcs",
-  }),
-});
 
 /** Register or refresh admin remote session. Call on device-page enter + heartbeat. */
 export async function startAdminSession(
