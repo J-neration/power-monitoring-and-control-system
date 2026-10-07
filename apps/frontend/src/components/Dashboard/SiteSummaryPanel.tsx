@@ -87,7 +87,11 @@ export default function SiteSummaryPanel({
         <div className={`detail-status-dot ${siteStatus}`} />
         <div className="detail-site-info">
           <h2 className="detail-site-name">
-            <Link href={siteHref} target="_blank" className="detail-site-name-link">
+            <Link
+              href={siteHref}
+              target="_blank"
+              className="detail-site-name-link"
+            >
               {site.name}
             </Link>
           </h2>
@@ -181,7 +185,7 @@ export default function SiteSummaryPanel({
                   <MetricValue value={d?.gridCurrentL3} />
                 </div>
                 <div className="sit-row sit-row-pf">
-                  <span className="sit-label">TPF2 / DPF2</span>
+                  <span className="sit-label">TPF / DPF</span>
                   <MetricValue value={d?.tpf2} suffix="%" />
                   <MetricValue value={d?.dpf2} suffix="%" />
                   <span />
