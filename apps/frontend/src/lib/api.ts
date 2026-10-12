@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import type { Device, DeviceWithInstallation, Site, TelemetryReading } from "../types/site";
 import type {
   ClientOptionFromApi,
@@ -137,7 +138,14 @@ export const fetchDevice = async (installationId: string) => {
     `/devices/${encodeURIComponent(installationId)}`,
   );
   if (!response || response.status === 404) return null;
-  if (!response.ok) throw new Error("Failed to fetch device");
+  if (response.status === 401) {
+    redirect(
+      `/api/auth/session-expired?from=${encodeURIComponent(`/devices/${installationId}`)}`,
+    );
+  }
+  if (!response.ok) {
+    throw new Error(`Failed to fetch device (HTTP ${response.status})`);
+  }
   const data = (await response.json()) as { device: DeviceWithInstallation };
   return data.device ?? null;
 };

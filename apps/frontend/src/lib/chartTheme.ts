@@ -1,5 +1,7 @@
 /** Shared SCADA-style chart theme for Recharts */
 
+import { formatKstDateTime24 } from "./kstTime";
+
 export const CHART_COLORS = {
   accent: "#00d4aa",
   accentBright: "#5eead4",
@@ -126,15 +128,5 @@ export function fmtChartTime(iso: string): string {
 }
 
 export function fmtChartDateTime(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleString("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-    timeZone: "Asia/Seoul",
-  });
+  return formatKstDateTime24(iso);
 }

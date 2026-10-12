@@ -1,5 +1,7 @@
 "use client";
 
+import { startTransition } from "react";
+import { useRouter } from "next/navigation";
 import TransientErrorFallback from "../../../components/TransientErrorFallback";
 import { isTransientClientError } from "../../../lib/transientClientError";
 
@@ -10,6 +12,8 @@ export default function AdminError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const router = useRouter();
+
   if (isTransientClientError(error)) {
     return <TransientErrorFallback error={error} reset={reset} />;
   }
@@ -23,7 +27,16 @@ export default function AdminError({
         </p>
       </div>
       <div className="admin-sites-form-actions">
-        <button type="button" className="admin-iccid-save" onClick={() => reset()}>
+        <button
+          type="button"
+          className="admin-iccid-save"
+          onClick={() => {
+            startTransition(() => {
+              router.refresh();
+              reset();
+            });
+          }}
+        >
           다시 시도
         </button>
       </div>

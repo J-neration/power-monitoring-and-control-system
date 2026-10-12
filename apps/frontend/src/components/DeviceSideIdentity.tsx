@@ -7,6 +7,7 @@ import { isCommLost } from "../lib/commStatus";
 import { formatLastSeen } from "../lib/lteSignal";
 import { useHasMounted } from "../hooks/useHasMounted";
 import { deviceModelVersionSpec } from "../lib/deviceSettingsFields";
+import { formatKstMonthDayTime } from "../lib/kstTime";
 import CommLostBadge from "./CommLostBadge";
 import LteSignalIndicator from "./LteSignalIndicator";
 
@@ -19,8 +20,11 @@ function nestedModuleType(device: DeviceWithInstallation): string | null {
 
 export default function DeviceSideIdentity({
   device,
+  isAdmin = false,
 }: {
   device: DeviceWithInstallation;
+  /** GET /devices/:id/settings is ADMIN-only on the backend. */
+  isAdmin?: boolean;
 }) {
   const mounted = useHasMounted();
   const site = device.installation?.site;
@@ -28,13 +32,7 @@ export default function DeviceSideIdentity({
   const commLost = isCommLost(device.lastSeenAt);
   const lastSeenRel = mounted ? formatLastSeen(device.lastSeenAt) : null;
   const lastSeenAbs = device.lastSeenAt
-    ? new Date(device.lastSeenAt).toLocaleString("ko-KR", {
-        timeZone: "Asia/Seoul",
-        month: "numeric",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      })
+    ? formatKstMonthDayTime(device.lastSeenAt) || null
     : null;
   const [settingsModuleType, setSettingsModuleType] = useState<string | null>(
     null,
@@ -46,7 +44,7 @@ export default function DeviceSideIdentity({
   });
 
   useEffect(() => {
-    if (nestedModuleType(device)) return;
+    if (!isAdmin || nestedModuleType(device)) return;
     const id = device.installationId;
     let cancelled = false;
     fetch(`/api/devices/${encodeURIComponent(id)}/settings`)
@@ -60,7 +58,7 @@ export default function DeviceSideIdentity({
     return () => {
       cancelled = true;
     };
-  }, [device.installationId, device.moduleType]);
+  }, [device.installationId, device.moduleType, isAdmin]);
 
   return (
     <section className="device-side-identity">
