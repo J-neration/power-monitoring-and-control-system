@@ -4,6 +4,7 @@ import { Fragment, useState } from "react";
 import type { ClientOptionFromApi, RoleOptionFromApi } from "../../types/admin";
 import type { SiteListFromApi } from "../../types/admin";
 import { validatePassword } from "../../lib/passwordPolicy";
+import { formatKstDate } from "../../lib/kstTime";
 
 type UserRole = "ADMIN" | "CLIENT" | "SITE";
 
@@ -33,11 +34,7 @@ const ROLE_COLOR: Record<UserRole, string> = {
 
 function formatDate(iso: string | null) {
   if (!iso) return "-";
-  return new Date(iso).toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
+  return formatKstDate(iso) || "-";
 }
 
 function scopeLabel(

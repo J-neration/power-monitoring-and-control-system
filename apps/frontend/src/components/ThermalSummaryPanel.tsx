@@ -3,6 +3,7 @@
 import type { DeviceWithInstallation, TelemetryReading } from "../types/site";
 import { TEMP_THRESHOLDS, isAreaTempDisconnected } from "../lib/chartTheme";
 import { isCommLost } from "../lib/commStatus";
+import { formatKstMonthDayTime } from "../lib/kstTime";
 
 type Props = {
   device: DeviceWithInstallation;
@@ -74,15 +75,7 @@ function fmtNum(v: number) {
 
 function fmtWhen(iso: string | null) {
   if (!iso) return null;
-  const d = new Date(iso);
-  if (!Number.isFinite(d.getTime())) return null;
-  return d.toLocaleString("ko-KR", {
-    timeZone: "Asia/Seoul",
-    month: "numeric",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatKstMonthDayTime(iso, { padHour: true }) || null;
 }
 
 function windowLabel(readings: TelemetryReading[]): string {

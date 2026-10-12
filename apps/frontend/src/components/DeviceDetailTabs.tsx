@@ -130,7 +130,7 @@ export default function DeviceDetailTabs({
   return (
     <div className="device-detail-tabs">
       <aside className="device-detail-side">
-        <DeviceSideIdentity device={device} />
+        <DeviceSideIdentity device={device} isAdmin={isAdmin} />
         <DeviceWatchSummaryCard
           device={device}
           readings={readings}

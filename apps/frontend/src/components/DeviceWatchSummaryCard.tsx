@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DeviceWithInstallation, TelemetryReading } from "../types/site";
 import type { FaultEvent } from "../lib/api";
 import { buildWatchFacts } from "../lib/watchFacts";
+import { formatKstMonthDayTime } from "../lib/kstTime";
 import { extractWatchAnomalies } from "../lib/watchAnomalies";
 import {
   dismissedCodesFor,
@@ -23,15 +24,7 @@ type Props = {
 };
 
 function formatWatchAt(iso: string): string {
-  const d = new Date(iso);
-  if (!Number.isFinite(d.getTime())) return "";
-  return d.toLocaleString("ko-KR", {
-    timeZone: "Asia/Seoul",
-    month: "numeric",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatKstMonthDayTime(iso, { padHour: true });
 }
 
 export default function DeviceWatchSummaryCard({
