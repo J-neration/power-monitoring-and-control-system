@@ -3,10 +3,11 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import AdminNav from "../../../components/Admin/AdminNav";
+import { serverApiBase } from "../../../lib/serverApiBase";
 
 export const metadata: Metadata = { title: "관리자 패널" };
 
-const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
+const apiBase = serverApiBase();
 const AUTH_TIMEOUT_MS = 8_000;
 
 async function checkAdmin() {
