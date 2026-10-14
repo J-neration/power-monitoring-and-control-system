@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { clearLocalAdminSessionKeeper } from "../lib/adminSessionKeeper";
-
 /**
  * Idle auto-logout for authenticated web sessions.
  *
@@ -27,15 +25,6 @@ const ACTIVITY_EVENTS: (keyof WindowEventMap)[] = [
 ];
 
 async function performLogout(): Promise<void> {
-  try {
-    await fetch("/api/devices/admin-session/stop-all", {
-      method: "POST",
-      keepalive: true,
-    });
-  } catch {
-    // best-effort
-  }
-  clearLocalAdminSessionKeeper();
   try {
     await fetch("/api/auth/logout", { method: "POST", keepalive: true });
   } catch {

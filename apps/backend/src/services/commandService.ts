@@ -257,7 +257,8 @@ export const createCommandService = (
   cfg?: { maxModules?: number; ttlSeconds?: number },
 ) => {
   const maxModules = cfg?.maxModules ?? Number(process.env.COMMAND_MAX_MODULES ?? 6);
-  const ttlSeconds = cfg?.ttlSeconds ?? Number(process.env.COMMAND_TTL_SECONDS ?? 120);
+  // HMI only starts polling after its next telemetry ACK (~10 min cycle).
+  const ttlSeconds = cfg?.ttlSeconds ?? Number(process.env.COMMAND_TTL_SECONDS ?? 900);
 
   return {
     policy: {
@@ -376,6 +377,13 @@ export const createCommandService = (
         payload.fields = sent.fields as Record<string, unknown>;
       }
       return payload;
+    },
+
+    /** Unexpired command still waiting for the HMI to poll it. */
+    async hasPending(installationIdRaw: string): Promise<boolean> {
+      const installationId = installationIdRaw?.trim();
+      if (!installationId) return false;
+      return (await repo.findOldestPending(installationId, new Date())) !== null;
     },
 
     async ack(input: AckInput) {

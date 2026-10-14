@@ -9,7 +9,8 @@ import {
 import { useWsEvents } from "../hooks/useWsEvents";
 
 const MODULE_SLOT_COUNT = 6;
-const COMMAND_ACK_TIMEOUT_MS = 130_000;
+// Command TTL (900s) + margin: the first command waits for the next telemetry (~10 min).
+const COMMAND_ACK_TIMEOUT_MS = 930_000;
 
 type CommandPower = "on" | "off";
 
@@ -102,7 +103,7 @@ export default function DeviceModulePowerPanel({
         tone: "err",
         title: "HMI 응답 시간 초과",
         detail:
-          "최대 130초 대기했습니다. 명령은 등록되었을 수 있으나 실행 여부를 확인할 수 없습니다.",
+          "최대 15분 대기했습니다. 명령은 등록되었을 수 있으나 실행 여부를 확인할 수 없습니다.",
         commandId: pendingCommandId,
       });
     }, COMMAND_ACK_TIMEOUT_MS);

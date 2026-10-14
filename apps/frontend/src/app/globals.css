@@ -9987,6 +9987,51 @@ body.pmcs-control-room .global-header:hover {
   font-size: 16px;
 }
 
+.remote-session-status--closed {
+  border-color: rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.remote-session-status--closed .remote-session-label {
+  color: rgba(226, 232, 240, 0.72);
+}
+
+.remote-session-dot--off {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+.remote-session-open-btn {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  color: #e0f2fe;
+  background: rgba(56, 189, 248, 0.16);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.remote-session-open-btn:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.26);
+  border-color: rgba(56, 189, 248, 0.7);
+}
+
+.remote-session-open-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.remote-session-error {
+  font-size: 11px;
+  color: #fca5a5;
+  white-space: nowrap;
+}
+
 .history-section-sub {
   font-size: 12px;
   font-weight: 400;
