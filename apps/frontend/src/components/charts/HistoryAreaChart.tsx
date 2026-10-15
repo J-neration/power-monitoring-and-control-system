@@ -56,17 +56,11 @@ type Props = {
   margin?: { top?: number; right?: number; left?: number; bottom?: number };
 };
 
-function yAxisWidthForUnit(unit?: string): number {
-  if (!unit) return 34;
-  const u = unit.trim().toLowerCase();
-  if (u === "%") return 46;
-  if (u === "°c") return 48;
-  if (u === "m/s") return 52;
-  if (u.endsWith("kvar") || u.endsWith("kva") || u.endsWith("kw")) {
-    return 80;
-  }
-  if (u === "a") return 52;
-  return 48;
+/** 축 눈금은 최대 소수 둘째 자리. 부동소수 노이즈로 라벨이 길어지지 않게 한다. */
+function formatAxisTick(value: unknown): string {
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n)) return "";
+  return String(Number(n.toFixed(2)));
 }
 
 /** 24시간 이력에서 시작·끝을 포함해 약 6개만 표시 (4시간 간격) */
@@ -95,7 +89,6 @@ export default function HistoryAreaChart({
   children,
   margin,
 }: Props) {
-  const axisWidth = yAxisWidth ?? yAxisWidthForUnit(yUnit);
   const chartMargin = {
     top: margin?.top ?? 8,
     right: margin?.right ?? 16,
@@ -121,9 +114,9 @@ export default function HistoryAreaChart({
         />
         <YAxis
           {...AXIS}
-          width={axisWidth}
+          width={yAxisWidth ?? "auto"}
           domain={yDomain}
-          tickFormatter={(v) => withChartUnit(v, yUnit)}
+          tickFormatter={(v) => withChartUnit(formatAxisTick(v), yUnit)}
           tick={{ ...AXIS.tick, className: "tabular-nums" }}
         />
         <Tooltip content={<ScadaTooltip unit={yUnit} />} />
