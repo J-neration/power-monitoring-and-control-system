@@ -8,15 +8,39 @@ PMCS를 AWS 서울 리전(`ap-northeast-2`)으로 옮기기 위한 인프라 코
 
 ```
 infra/terraform/
-  modules/            재사용 모듈 (dev·prod가 같은 코드를 씀)
-    state-backend/    상태 저장 S3 버킷 + KMS 키
+  modules/              재사용 모듈 (dev·prod가 같은 코드를 씀)
+    state-backend/      상태 저장 S3 버킷 + KMS 키
+    security-baseline/  CloudTrail, GuardDuty, Security Hub, Config, 보안 경보 SNS, 계정 기본 보호
+    network/            VPC, public·private·isolated 서브넷 × 2 AZ, NAT, S3 엔드포인트, Flow Logs
+    database/           RDS PostgreSQL 16 (isolated 서브넷, KMS, SSL 강제, 백업 14일)
+    ecr/                이미지 저장소 (태그 불변, 푸시 시 스캔, KMS)
+    ecs-service/        Fargate 서비스 하나 + 실행·태스크 역할 + 로그 그룹
+    edge/               ALB, WAF, ALB 접근 로그, (도메인이 정해지면) ACM·HTTPS 리스너
   envs/
-    dev/              pmcs-dev 계정(035680193225)
-      bootstrap/      상태 저장소. 가장 먼저, 한 번만
-      security/       계정 보안 기반 (CloudTrail, GuardDuty, Security Hub, Config, KMS, SNS)
-      app/            네트워크, RDS, ECR/ECS, ALB/WAF, Secrets, IAM, 로그
-    prod/             pmcs-prod 계정(887664351558). dev 검증 후 같은 모듈로 작성
+    dev/                pmcs-dev 계정(035680193225)
+      bootstrap/        상태 저장소. 가장 먼저, 한 번만
+      security/         계정 보안 기반
+      app/              앱 인프라 (KMS, 보안 그룹, Secrets, ECS 클러스터와 위 모듈들)
+    prod/               pmcs-prod 계정(887664351558). dev 검증 후 같은 모듈로 작성
 ```
+
+적용 순서는 `bootstrap` → `security` → `app`입니다. `security`와 `app`은 서로의 상태를
+참조하지 않아 따로 plan·apply할 수 있습니다.
+
+## app 루트의 현재 상태와 다음 단계
+
+- **도메인 전**: `app_hostname`·`api_hostname`이 비어 있으면 ACM 인증서와 HTTPS 리스너를
+  만들지 않고, ALB 80 포트는 모든 요청에 404를 돌려줍니다. ECS 서비스도 ALB에 붙지 않습니다.
+- **도메인이 정해지면**: `terraform.tfvars`에 두 주소를 넣고 apply → 출력 `acm_validation_records`의
+  CNAME을 DNS에 등록 → 인증서 발급 후 HTTPS 리스너와 경로 규칙이 생깁니다. app·api 주소는
+  출력 `alb_dns_name`을 가리키게 합니다.
+- **태스크 수**: 이미지와 시크릿 값이 준비되기 전에는 `api_desired_count`·`frontend_desired_count`가
+  0이라 Fargate 비용이 들지 않습니다(3단계에서 1로 올림).
+- **시크릿 값**: Terraform은 빈 시크릿만 만듭니다. 값은 콘솔에서 직접 입력합니다.
+  - `pmcs-dev/api`: `DATABASE_URL`, `MIGRATE_DATABASE_URL`, `RECEIVER_API_KEY`, `CRITICAL_FAULT_WEBHOOK_URL`
+  - `pmcs-dev/jwt`: `JWT_SECRET` (백엔드 `JWT_SECRET`, 프론트 `AUTH_JWT_SECRET`에 같이 쓰임)
+- **마이그레이션**: API 서비스는 Railway와 달리 부팅 시 마이그레이션을 하지 않습니다.
+  배포 때 `pmcs-dev-api-migrate` 작업 정의를 `aws ecs run-task`로 한 번 실행합니다.
 
 계정마다 상태 버킷과 KMS 키가 따로 있고, 루트(bootstrap·security·app)마다 상태 파일이
 따로 있어 한 루트의 실수가 다른 루트의 리소스를 건드리지 않습니다.
