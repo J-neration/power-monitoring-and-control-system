@@ -109,5 +109,9 @@ resource "aws_db_instance" "this" {
   monitoring_interval             = 60
   monitoring_role_arn             = aws_iam_role.monitoring.arn
 
-  depends_on = [aws_cloudwatch_log_group.this]
+  # 모니터링 역할에 권한이 붙기 전에 인스턴스를 만들면 "IAM role ARN value is invalid"로 실패한다.
+  depends_on = [
+    aws_cloudwatch_log_group.this,
+    aws_iam_role_policy_attachment.monitoring,
+  ]
 }
