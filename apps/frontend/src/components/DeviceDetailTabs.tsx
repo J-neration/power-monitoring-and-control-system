@@ -21,7 +21,6 @@ import {
   buildDemoHistoryReadings,
 } from "../lib/demoHistoryReadings";
 import { useWsEvents } from "../hooks/useWsEvents";
-import { useDeviceViewing } from "../hooks/useDeviceViewing";
 
 type Tab = "monitor" | "analytics" | "settings" | "faults";
 
@@ -104,9 +103,7 @@ export default function DeviceDetailTabs({
   const [tab, setTab] = useState<Tab>("monitor");
   const router = useRouter();
 
-  // Admin on device page → adminSessionActive (HMI command-poll gate).
-  // Clears only on logout / tab close (not tab hide).
-  const { showBanner } = useDeviceViewing(device.installationId, isAdmin);
+  const remoteControlTab = isAdmin && tab === "settings";
 
   useWsEvents((msg) => {
     if (
@@ -198,16 +195,14 @@ export default function DeviceDetailTabs({
               </button>
             )}
           </div>
-          {isAdmin && (
+          {remoteControlTab && (
             <div className="device-tab-bar-actions">
               <DeviceDataRefreshButton
                 installationId={device.installationId}
                 requestedBy={adminUsername}
                 compact
               />
-              {showBanner ? (
-                <ViewingBanner installationId={device.installationId} />
-              ) : null}
+              <ViewingBanner installationId={device.installationId} />
             </div>
           )}
         </div>
@@ -252,17 +247,23 @@ export default function DeviceDetailTabs({
             </summary>
             <ol className="device-settings-help-list">
               <li>
-                이 장치 페이지에 들어와 있으면 원격 세션이 켜집니다. HMI는 다음
-                텔레메트리(최대 약 10분) 후 명령을 ~1분 간격으로 받습니다.
-                세션은 로그아웃하거나 브라우저 탭을 닫을 때 해제됩니다.
+                <strong>원격 연결 열기</strong>를 누르거나 명령을 보내면 15분간
+                원격 연결이 열립니다. 다시 누르거나 명령을 보내면 그때부터 15분으로
+                연장됩니다. 탭을 열어 두기만 해서는 연결되지 않습니다.
+              </li>
+              <li>
+                HMI는 다음 정기 보고(최대 약 10분) 때 연결되므로 첫 명령은 최대 약
+                10분, 연결된 뒤 명령은 약 1분 안에 반영됩니다. 값을 고르기 전에
+                원격 연결을 먼저 열어 두면 기다리는 시간이 줄어듭니다.
               </li>
               <li>
                 <strong>갱신</strong>을 누르면 HMI가 설정 스냅샷과 모듈 상태를
                 한 번 올립니다.
               </li>
               <li>
-                모니터 계측값(전압·전류·PF 등)은 <strong>모니터</strong> 화면의{" "}
-                <strong>데이터 갱신</strong>을 사용하세요.
+                모니터 계측값(전압·전류·PF 등)은 이 화면 위쪽의{" "}
+                <strong>데이터 갱신</strong>을 누른 뒤 <strong>모니터</strong>{" "}
+                탭에서 확인하세요.
               </li>
               <li>
                 필드 수정 후 <strong>적용</strong>하면 setBasic 명령이 가고,

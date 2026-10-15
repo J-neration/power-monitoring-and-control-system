@@ -465,8 +465,11 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
 
     // Compact ACK for HMI modem buffer (~2KB). Do NOT echo the request body —
     // echoing ~900B telemetry roughly doubles the response and truncates the read.
+    // Also true while a command is pending, so a command outliving the remote
+    // window (e.g. REMOTE_WINDOW_SECONDS < COMMAND_TTL_SECONDS) still gets polled.
     const adminSessionActive = identity.installationId
-      ? await viewingState.isAdminSessionActive(identity.installationId)
+      ? (await viewingState.isAdminSessionActive(identity.installationId)) ||
+        (await commandService.hasPending(identity.installationId))
       : false;
 
     // HMI just received adminSessionActive in this ACK (session signaled).
@@ -615,7 +618,18 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
           },
           "Command created",
         );
-        return reply.status(201).send({ command: cmd });
+        const until = await viewingState.openRemoteWindow(
+          cmd.installationId,
+          request.user.userId,
+        );
+        wsHub.broadcast({
+          type: "admin_session_opened",
+          installationId: cmd.installationId,
+          until: until.toISOString(),
+        });
+        return reply
+          .status(201)
+          .send({ command: cmd, remoteWindowUntil: until.toISOString() });
       } catch (error) {
         if (error instanceof CommandError) {
           return reply

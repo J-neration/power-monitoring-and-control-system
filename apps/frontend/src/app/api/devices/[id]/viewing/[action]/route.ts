@@ -5,46 +5,24 @@ const API_BASE =
 
 type Params = { id: string; action: string };
 
-/**
- * POST /api/devices/[id]/viewing/[action]
- * BFF: cookie JWT → backend viewing start/stop.
- * stop may include `{ notAfter }` to avoid late-stop races.
- */
-export async function POST(
+async function proxy(
   request: NextRequest,
-  { params }: { params: Params },
+  id: string,
+  action: string,
+  method: "GET" | "POST",
 ) {
-  const { id, action } = params;
-
-  if (action !== "start" && action !== "stop") {
-    return NextResponse.json({ message: "Invalid action." }, { status: 400 });
-  }
-
   const token = request.cookies.get("pmcs_token")?.value;
   if (!token) {
     return NextResponse.json({ message: "Authentication required." }, { status: 401 });
-  }
-
-  let bodyText: string | undefined;
-  if (action === "stop") {
-    try {
-      const json = await request.json();
-      bodyText = JSON.stringify(json ?? {});
-    } catch {
-      bodyText = "{}";
-    }
   }
 
   try {
     const backendRes = await fetch(
       `${API_BASE}/devices/${encodeURIComponent(id)}/viewing/${action}`,
       {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          ...(bodyText ? { "Content-Type": "application/json" } : {}),
-        },
-        ...(bodyText ? { body: bodyText } : {}),
+        method,
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
       },
     );
     const data = await backendRes.json().catch(() => ({}));
@@ -55,4 +33,33 @@ export async function POST(
       { status: 503 },
     );
   }
+}
+
+/**
+ * GET /api/devices/[id]/viewing/status
+ * BFF: cookie JWT → backend remote-window status (`until`).
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Params },
+) {
+  if (params.action !== "status") {
+    return NextResponse.json({ message: "Invalid action." }, { status: 400 });
+  }
+  return proxy(request, params.id, "status", "GET");
+}
+
+/**
+ * POST /api/devices/[id]/viewing/start | stop
+ * BFF: cookie JWT → open / close the remote window.
+ */
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Params },
+) {
+  const { id, action } = params;
+  if (action !== "start" && action !== "stop") {
+    return NextResponse.json({ message: "Invalid action." }, { status: 400 });
+  }
+  return proxy(request, id, action, "POST");
 }

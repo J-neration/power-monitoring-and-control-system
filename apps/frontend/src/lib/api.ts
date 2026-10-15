@@ -54,9 +54,13 @@ const authHeaders = (): Record<string, string> => {
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const NULL_BODY_STATUSES = new Set([101, 204, 205, 304]);
+
 /**
- * Backend restarts (tsx watch) and Windows localhost/IPv6 blips throw
- * TypeError: fetch failed before a Response exists. Retry once, then null.
+ * Backend restarts and socket resets can fail before headers ("fetch failed")
+ * or mid-body ("TypeError: terminated" / ECONNRESET). The body is buffered
+ * here so both cases are retried once; callers' .json() can't retry.
+ * Only used for idempotent GETs.
  */
 const requestApi = async (
   path: string,
@@ -68,12 +72,21 @@ const requestApi = async (
     ...init,
     headers: { ...authHeaders(), ...(init?.headers as Record<string, string> | undefined) },
   };
+  const attempt = async () => {
+    const res = await fetch(url, options);
+    const body = NULL_BODY_STATUSES.has(res.status) ? null : await res.arrayBuffer();
+    return new Response(body, {
+      status: res.status,
+      statusText: res.statusText,
+      headers: res.headers,
+    });
+  };
   try {
-    return await fetch(url, options);
+    return await attempt();
   } catch {
     await wait(350);
     try {
-      return await fetch(url, options);
+      return await attempt();
     } catch (err) {
       console.error(`[api] fetch failed ${path}`, err);
       return null;
@@ -137,14 +150,19 @@ export const fetchDevice = async (installationId: string) => {
   const response = await requestApi(
     `/devices/${encodeURIComponent(installationId)}`,
   );
-  if (!response || response.status === 404) return null;
+  if (!response) {
+    throw new Error(`Failed to fetch device (network) id=${installationId}`);
+  }
+  if (response.status === 404) return null;
   if (response.status === 401) {
     redirect(
       `/api/auth/session-expired?from=${encodeURIComponent(`/devices/${installationId}`)}`,
     );
   }
   if (!response.ok) {
-    throw new Error(`Failed to fetch device (HTTP ${response.status})`);
+    throw new Error(
+      `Failed to fetch device (HTTP ${response.status}) id=${installationId}`,
+    );
   }
   const data = (await response.json()) as { device: DeviceWithInstallation };
   return data.device ?? null;

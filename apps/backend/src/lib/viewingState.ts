@@ -2,18 +2,19 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../prisma/generated/client/client.js";
 
 /**
- * DB-backed admin remote session (`Installation.adminSessionActive`).
+ * DB-backed admin remote window (`Installation.adminSessionActive`).
  *
  * HMI reads `adminSessionActive` from POST /receiver ACK and only then polls
- * GET /receiver/commands (~1 min). Survives multi-instance deploys (Railway).
- *
- * Cleared explicitly on logout / tab close. Heartbeat TTL is a long crash-safety
- * net (browser died without pagehide) — not a short “left the tab” timeout.
+ * GET /receiver/commands (~1 min). Every true row is billed HMI traffic, so the
+ * window opens only on an explicit admin action (「원격 연결 열기」 or any
+ * command) and closes by itself REMOTE_WINDOW_MS later. Each action re-opens
+ * it from that moment. `adminSessionHeartbeatAt` stores the last open time.
  * `webSettingsActive` is legacy and must stay false (HMI ignores it).
  */
 
-/** Crash-safety: clear stale true if browser dies without stop (ms). */
-export const ADMIN_SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8h — align with JWT
+/** Window must cover one telemetry cycle (~10 min) plus a few polls. */
+export const REMOTE_WINDOW_MS =
+  Number(process.env.REMOTE_WINDOW_SECONDS ?? 900) * 1000;
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({
@@ -22,11 +23,11 @@ const prisma = new PrismaClient({
   }),
 });
 
-/** Register or refresh admin remote session. Call on device-page enter + heartbeat. */
-export async function startAdminSession(
+/** Open (or extend) the remote window from now. Returns when it closes. */
+export async function openRemoteWindow(
   installationId: string,
   userId?: string,
-): Promise<void> {
+): Promise<Date> {
   const now = new Date();
   await prisma.installation.updateMany({
     where: { id: installationId },
@@ -39,33 +40,13 @@ export async function startAdminSession(
       webSettingsHeartbeatAt: null,
     },
   });
+  return new Date(now.getTime() + REMOTE_WINDOW_MS);
 }
 
-/** Clear admin session for one installation (tab close). */
-export async function stopAdminSession(
-  installationId: string,
-  _userId?: string,
-  opts?: {
-    /**
-     * Only clear if heartbeat is still at/before this instant.
-     * Prevents a late keepalive stop from wiping a newer start.
-     */
-    notAfter?: Date | string | null;
-  },
-): Promise<void> {
-  const notAfter = opts?.notAfter ? new Date(opts.notAfter) : null;
+/** Close the window for one installation now. */
+export async function stopAdminSession(installationId: string): Promise<void> {
   await prisma.installation.updateMany({
-    where: {
-      id: installationId,
-      ...(notAfter && !Number.isNaN(notAfter.getTime())
-        ? {
-            OR: [
-              { adminSessionHeartbeatAt: null },
-              { adminSessionHeartbeatAt: { lte: notAfter } },
-            ],
-          }
-        : {}),
-    },
+    where: { id: installationId },
     data: {
       adminSessionActive: false,
       adminSessionHeartbeatAt: null,
@@ -76,7 +57,7 @@ export async function stopAdminSession(
   });
 }
 
-/** Clear all admin sessions for a user (logout). */
+/** Close every window opened by a user. */
 export async function stopAllAdminSessionsForUser(
   userId: string,
 ): Promise<number> {
@@ -98,13 +79,13 @@ export async function stopAllAdminSessionsForUser(
 }
 
 /**
- * True if an admin remote session is active and heartbeat is within TTL.
- * Stale rows are cleared lazily.
+ * When the open window closes, or null if closed. Expired rows are cleared
+ * lazily.
  */
-export async function isAdminSessionActive(
+export async function getRemoteWindowUntil(
   installationId: string,
-): Promise<boolean> {
-  if (!installationId) return false;
+): Promise<Date | null> {
+  if (!installationId) return null;
   const row = await prisma.installation.findUnique({
     where: { id: installationId },
     select: {
@@ -112,48 +93,30 @@ export async function isAdminSessionActive(
       adminSessionHeartbeatAt: true,
     },
   });
-  if (!row?.adminSessionActive) return false;
-  const hb = row.adminSessionHeartbeatAt;
-  if (!hb) {
+  if (!row?.adminSessionActive) return null;
+  const openedAt = row.adminSessionHeartbeatAt;
+  const until = openedAt
+    ? new Date(openedAt.getTime() + REMOTE_WINDOW_MS)
+    : null;
+  if (!until || until.getTime() <= Date.now()) {
+    // Match openedAt so a concurrent re-open is not wiped.
     await prisma.installation.updateMany({
-      where: { id: installationId },
-      data: {
-        adminSessionActive: false,
-        adminSessionUserId: null,
-      },
-    });
-    return false;
-  }
-  if (Date.now() - hb.getTime() > ADMIN_SESSION_TTL_MS) {
-    await prisma.installation.updateMany({
-      where: { id: installationId },
+      where: { id: installationId, adminSessionHeartbeatAt: openedAt },
       data: {
         adminSessionActive: false,
         adminSessionHeartbeatAt: null,
         adminSessionUserId: null,
       },
     });
-    return false;
+    return null;
   }
-  return true;
+  return until;
 }
 
-// ─── Legacy aliases (viewing/* routes & old call sites) ───────────────
-
-/** @deprecated Use startAdminSession */
-export async function startViewing(
+export async function isAdminSessionActive(
   installationId: string,
-  userId?: string,
-): Promise<void> {
-  return startAdminSession(installationId, userId);
-}
-
-/** @deprecated Use stopAdminSession */
-export async function stopViewing(
-  installationId: string,
-  userId?: string,
-): Promise<void> {
-  return stopAdminSession(installationId, userId);
+): Promise<boolean> {
+  return (await getRemoteWindowUntil(installationId)) !== null;
 }
 
 /** @deprecated Legacy webSettingsActive — always false for HMI contract. */
@@ -162,18 +125,3 @@ export async function isWebSettingsActive(
 ): Promise<boolean> {
   return false;
 }
-
-export async function hasActiveViewers(
-  installationId: string,
-): Promise<boolean> {
-  return isAdminSessionActive(installationId);
-}
-
-export async function getActiveViewerCount(
-  installationId: string,
-): Promise<number> {
-  return (await isAdminSessionActive(installationId)) ? 1 : 0;
-}
-
-/** Legacy export name kept for imports. */
-export const SETTINGS_TTL_MS = ADMIN_SESSION_TTL_MS;
