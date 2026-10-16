@@ -9,7 +9,9 @@ type SmtpConfig = {
   to: string[];
 };
 
-let transporter: nodemailer.Transporter | null = null;
+type MailTransport = ReturnType<typeof nodemailer.createTransport>;
+
+let transporter: MailTransport | null = null;
 let transporterKey = "";
 
 const readConfig = (): SmtpConfig | null => {
