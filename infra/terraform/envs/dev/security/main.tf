@@ -10,7 +10,7 @@ module "security" {
   audit_log_retention_days = 365
 
   enable_cis_standard = var.enable_cis_standard
-  alert_emails        = var.alert_emails
+  alert_emails        = local.alert_emails
 
   create_config_service_linked_role = var.create_config_service_linked_role
 }
@@ -20,10 +20,24 @@ variable "enable_cis_standard" {
   default = false
 }
 
-variable "alert_emails" {
-  description = "보안 경보 수신 이메일. 정해지면 terraform.tfvars에 넣는다."
-  type        = list(string)
-  default     = []
+# 보안 경보 수신 이메일은 공개 저장소에 두지 않고 SSM 파라미터(StringList, 쉼표 구분)에서 읽는다.
+#   aws ssm put-parameter --name /pmcs-dev/security/alert-emails --type StringList \
+#     --value "a@example.com,b@example.com" --overwrite
+# 파라미터가 없으면 구독 없이 SNS 토픽만 만든다(경로 조회는 빈 결과를 돌려주므로 plan이 실패하지 않음).
+data "aws_ssm_parameters_by_path" "security" {
+  path = "/pmcs-dev/security"
+}
+
+locals {
+  alert_emails_parameter = "/pmcs-dev/security/alert-emails"
+  alert_emails_raw = try(
+    data.aws_ssm_parameters_by_path.security.values[
+      index(data.aws_ssm_parameters_by_path.security.names, local.alert_emails_parameter)
+    ],
+    "",
+  )
+  # 이메일은 비밀이 아니다. for_each에 쓰려면 민감 표시를 풀어야 한다.
+  alert_emails = compact([for e in split(",", nonsensitive(local.alert_emails_raw)) : trimspace(e)])
 }
 
 variable "create_config_service_linked_role" {

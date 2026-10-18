@@ -12,6 +12,11 @@ locals {
   rds_ca_file = "/app/apps/backend/certs/rds-global-bundle.pem"
 
   log_retention_days = 30
+
+  # Graviton(ARM64): 같은 사양에서 x86보다 약 20% 저렴하다(서울 vCPU $0.03725/h vs $0.04656/h).
+  # 이미지는 linux/arm64로 빌드한다 — Apple Silicon Mac에서는 기본값, CI는 ubuntu-24.04-arm 러너.
+  # 백엔드는 네이티브 모듈이 없다(Prisma 7 queryCompiler + adapter-pg, bcryptjs, pg).
+  cpu_architecture = "ARM64"
 }
 
 data "aws_caller_identity" "current" {}

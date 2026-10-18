@@ -86,6 +86,8 @@ module "api" {
   cpu         = 512
   memory      = 1024
 
+  cpu_architecture = local.cpu_architecture
+
   container_port = local.api_port
   # Railway용 Dockerfile CMD(부팅 시 마이그레이션)를 쓰지 않고 서버만 띄운다.
   # 마이그레이션은 아래 api-migrate 태스크로 따로 실행한다.
@@ -136,14 +138,15 @@ module "api" {
 module "api_migrate" {
   source = "../../../modules/ecs-service"
 
-  name_prefix    = local.name_prefix
-  name           = "api-migrate"
-  cluster_arn    = aws_ecs_cluster.this.arn
-  image          = local.api_image
-  cpu            = 256
-  memory         = 512
-  create_service = false
-  command        = ["sh", "-c", "cd apps/backend && npx prisma migrate deploy"]
+  name_prefix      = local.name_prefix
+  name             = "api-migrate"
+  cluster_arn      = aws_ecs_cluster.this.arn
+  image            = local.api_image
+  cpu              = 256
+  memory           = 512
+  cpu_architecture = local.cpu_architecture
+  create_service   = false
+  command          = ["sh", "-c", "cd apps/backend && npx prisma migrate deploy"]
 
   environment = {
     NODE_ENV = "production"
@@ -168,6 +171,8 @@ module "frontend" {
   image       = "${module.ecr.repository_urls["frontend"]}:${var.frontend_image_tag}"
   cpu         = 512
   memory      = 1024
+
+  cpu_architecture = local.cpu_architecture
 
   container_port = local.frontend_port
 

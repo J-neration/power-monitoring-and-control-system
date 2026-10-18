@@ -39,6 +39,11 @@ infra/terraform/
 - **시크릿 값**: Terraform은 빈 시크릿만 만듭니다. 값은 콘솔에서 직접 입력합니다.
   - `pmcs-dev/api`: `DATABASE_URL`, `MIGRATE_DATABASE_URL`, `RECEIVER_API_KEY`, `CRITICAL_FAULT_WEBHOOK_URL`
   - `pmcs-dev/jwt`: `JWT_SECRET` (백엔드 `JWT_SECRET`, 프론트 `AUTH_JWT_SECRET`에 같이 쓰임)
+- **CPU 아키텍처**: Fargate는 ARM64(Graviton)로 돈다(x86보다 약 20% 저렴). 이미지는
+  `docker build --platform linux/arm64 ...`로 만든다. Apple Silicon Mac에서는 기본값이다.
+- **보안 경보 이메일**: 저장소가 공개라 코드에 두지 않는다. SSM 파라미터
+  `/pmcs-dev/security/alert-emails`(StringList, 쉼표 구분)에 넣으면 security 루트가 읽어
+  SNS 이메일 구독을 만든다. 구독마다 확인 메일의 링크를 눌러야 경보가 온다.
 - **마이그레이션**: API 서비스는 Railway와 달리 부팅 시 마이그레이션을 하지 않습니다.
   배포 때 `pmcs-dev-api-migrate` 작업 정의를 `aws ecs run-task`로 한 번 실행합니다.
 
