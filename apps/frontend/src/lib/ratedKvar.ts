@@ -50,3 +50,13 @@ export function sumModuleCapacity(
   }
   return count > 0 ? sum : null;
 }
+
+/** Use telemetry total only when it is a real rating. 0 means the HMI table missed. */
+export function facilityCapacity(
+  totalCapacity: number | null | undefined,
+  moduleSum: number | null,
+): number | null {
+  if (totalCapacity != null && totalCapacity > 0) return totalCapacity;
+  if (moduleSum != null && moduleSum > 0) return moduleSum;
+  return null;
+}
