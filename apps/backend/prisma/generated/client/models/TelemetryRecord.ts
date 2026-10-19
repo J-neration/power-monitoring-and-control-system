@@ -114,6 +114,7 @@ export type TelemetryRecordMinAggregateOutputType = {
   id: string | null
   installationId: string | null
   recordedAt: Date | null
+  receivedAt: Date | null
   numOfMods: number | null
   csq: number | null
   rsrp: number | null
@@ -154,6 +155,7 @@ export type TelemetryRecordMaxAggregateOutputType = {
   id: string | null
   installationId: string | null
   recordedAt: Date | null
+  receivedAt: Date | null
   numOfMods: number | null
   csq: number | null
   rsrp: number | null
@@ -194,6 +196,7 @@ export type TelemetryRecordCountAggregateOutputType = {
   id: number
   installationId: number
   recordedAt: number
+  receivedAt: number
   moduleStatus: number
   numOfMods: number
   csq: number
@@ -322,6 +325,7 @@ export type TelemetryRecordMinAggregateInputType = {
   id?: true
   installationId?: true
   recordedAt?: true
+  receivedAt?: true
   numOfMods?: true
   csq?: true
   rsrp?: true
@@ -362,6 +366,7 @@ export type TelemetryRecordMaxAggregateInputType = {
   id?: true
   installationId?: true
   recordedAt?: true
+  receivedAt?: true
   numOfMods?: true
   csq?: true
   rsrp?: true
@@ -402,6 +407,7 @@ export type TelemetryRecordCountAggregateInputType = {
   id?: true
   installationId?: true
   recordedAt?: true
+  receivedAt?: true
   moduleStatus?: true
   numOfMods?: true
   csq?: true
@@ -533,6 +539,7 @@ export type TelemetryRecordGroupByOutputType = {
   id: string
   installationId: string
   recordedAt: Date
+  receivedAt: Date | null
   moduleStatus: number[]
   numOfMods: number | null
   csq: number | null
@@ -600,6 +607,7 @@ export type TelemetryRecordWhereInput = {
   id?: Prisma.StringFilter<"TelemetryRecord"> | string
   installationId?: Prisma.StringFilter<"TelemetryRecord"> | string
   recordedAt?: Prisma.DateTimeFilter<"TelemetryRecord"> | Date | string
+  receivedAt?: Prisma.DateTimeNullableFilter<"TelemetryRecord"> | Date | string | null
   moduleStatus?: Prisma.IntNullableListFilter<"TelemetryRecord">
   numOfMods?: Prisma.IntNullableFilter<"TelemetryRecord"> | number | null
   csq?: Prisma.IntNullableFilter<"TelemetryRecord"> | number | null
@@ -645,6 +653,7 @@ export type TelemetryRecordOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   installationId?: Prisma.SortOrder
   recordedAt?: Prisma.SortOrder
+  receivedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   moduleStatus?: Prisma.SortOrder
   numOfMods?: Prisma.SortOrderInput | Prisma.SortOrder
   csq?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -693,6 +702,7 @@ export type TelemetryRecordWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.TelemetryRecordWhereInput | Prisma.TelemetryRecordWhereInput[]
   installationId?: Prisma.StringFilter<"TelemetryRecord"> | string
   recordedAt?: Prisma.DateTimeFilter<"TelemetryRecord"> | Date | string
+  receivedAt?: Prisma.DateTimeNullableFilter<"TelemetryRecord"> | Date | string | null
   moduleStatus?: Prisma.IntNullableListFilter<"TelemetryRecord">
   numOfMods?: Prisma.IntNullableFilter<"TelemetryRecord"> | number | null
   csq?: Prisma.IntNullableFilter<"TelemetryRecord"> | number | null
@@ -738,6 +748,7 @@ export type TelemetryRecordOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   installationId?: Prisma.SortOrder
   recordedAt?: Prisma.SortOrder
+  receivedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   moduleStatus?: Prisma.SortOrder
   numOfMods?: Prisma.SortOrderInput | Prisma.SortOrder
   csq?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -790,6 +801,7 @@ export type TelemetryRecordScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"TelemetryRecord"> | string
   installationId?: Prisma.StringWithAggregatesFilter<"TelemetryRecord"> | string
   recordedAt?: Prisma.DateTimeWithAggregatesFilter<"TelemetryRecord"> | Date | string
+  receivedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"TelemetryRecord"> | Date | string | null
   moduleStatus?: Prisma.IntNullableListFilter<"TelemetryRecord">
   numOfMods?: Prisma.IntNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
   csq?: Prisma.IntNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
@@ -833,6 +845,7 @@ export type TelemetryRecordScalarWhereWithAggregatesInput = {
 export type TelemetryRecordCreateInput = {
   id?: string
   recordedAt?: Date | string
+  receivedAt?: Date | string | null
   moduleStatus?: Prisma.TelemetryRecordCreatemoduleStatusInput | number[]
   numOfMods?: number | null
   csq?: number | null
@@ -878,6 +891,7 @@ export type TelemetryRecordUncheckedCreateInput = {
   id?: string
   installationId: string
   recordedAt?: Date | string
+  receivedAt?: Date | string | null
   moduleStatus?: Prisma.TelemetryRecordCreatemoduleStatusInput | number[]
   numOfMods?: number | null
   csq?: number | null
@@ -921,6 +935,7 @@ export type TelemetryRecordUncheckedCreateInput = {
 export type TelemetryRecordUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   recordedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  receivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moduleStatus?: Prisma.TelemetryRecordUpdatemoduleStatusInput | number[]
   numOfMods?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -966,6 +981,7 @@ export type TelemetryRecordUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   installationId?: Prisma.StringFieldUpdateOperationsInput | string
   recordedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  receivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moduleStatus?: Prisma.TelemetryRecordUpdatemoduleStatusInput | number[]
   numOfMods?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1010,6 +1026,7 @@ export type TelemetryRecordCreateManyInput = {
   id?: string
   installationId: string
   recordedAt?: Date | string
+  receivedAt?: Date | string | null
   moduleStatus?: Prisma.TelemetryRecordCreatemoduleStatusInput | number[]
   numOfMods?: number | null
   csq?: number | null
@@ -1053,6 +1070,7 @@ export type TelemetryRecordCreateManyInput = {
 export type TelemetryRecordUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   recordedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  receivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moduleStatus?: Prisma.TelemetryRecordUpdatemoduleStatusInput | number[]
   numOfMods?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1097,6 +1115,7 @@ export type TelemetryRecordUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   installationId?: Prisma.StringFieldUpdateOperationsInput | string
   recordedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  receivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moduleStatus?: Prisma.TelemetryRecordUpdatemoduleStatusInput | number[]
   numOfMods?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1151,6 +1170,7 @@ export type TelemetryRecordCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   installationId?: Prisma.SortOrder
   recordedAt?: Prisma.SortOrder
+  receivedAt?: Prisma.SortOrder
   moduleStatus?: Prisma.SortOrder
   numOfMods?: Prisma.SortOrder
   csq?: Prisma.SortOrder
@@ -1236,6 +1256,7 @@ export type TelemetryRecordMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   installationId?: Prisma.SortOrder
   recordedAt?: Prisma.SortOrder
+  receivedAt?: Prisma.SortOrder
   numOfMods?: Prisma.SortOrder
   csq?: Prisma.SortOrder
   rsrp?: Prisma.SortOrder
@@ -1276,6 +1297,7 @@ export type TelemetryRecordMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   installationId?: Prisma.SortOrder
   recordedAt?: Prisma.SortOrder
+  receivedAt?: Prisma.SortOrder
   numOfMods?: Prisma.SortOrder
   csq?: Prisma.SortOrder
   rsrp?: Prisma.SortOrder
@@ -1434,6 +1456,7 @@ export type TelemetryRecordUpdatefanSpeedInput = {
 export type TelemetryRecordCreateWithoutInstallationInput = {
   id?: string
   recordedAt?: Date | string
+  receivedAt?: Date | string | null
   moduleStatus?: Prisma.TelemetryRecordCreatemoduleStatusInput | number[]
   numOfMods?: number | null
   csq?: number | null
@@ -1477,6 +1500,7 @@ export type TelemetryRecordCreateWithoutInstallationInput = {
 export type TelemetryRecordUncheckedCreateWithoutInstallationInput = {
   id?: string
   recordedAt?: Date | string
+  receivedAt?: Date | string | null
   moduleStatus?: Prisma.TelemetryRecordCreatemoduleStatusInput | number[]
   numOfMods?: number | null
   csq?: number | null
@@ -1550,6 +1574,7 @@ export type TelemetryRecordScalarWhereInput = {
   id?: Prisma.StringFilter<"TelemetryRecord"> | string
   installationId?: Prisma.StringFilter<"TelemetryRecord"> | string
   recordedAt?: Prisma.DateTimeFilter<"TelemetryRecord"> | Date | string
+  receivedAt?: Prisma.DateTimeNullableFilter<"TelemetryRecord"> | Date | string | null
   moduleStatus?: Prisma.IntNullableListFilter<"TelemetryRecord">
   numOfMods?: Prisma.IntNullableFilter<"TelemetryRecord"> | number | null
   csq?: Prisma.IntNullableFilter<"TelemetryRecord"> | number | null
@@ -1593,6 +1618,7 @@ export type TelemetryRecordScalarWhereInput = {
 export type TelemetryRecordCreateManyInstallationInput = {
   id?: string
   recordedAt?: Date | string
+  receivedAt?: Date | string | null
   moduleStatus?: Prisma.TelemetryRecordCreatemoduleStatusInput | number[]
   numOfMods?: number | null
   csq?: number | null
@@ -1636,6 +1662,7 @@ export type TelemetryRecordCreateManyInstallationInput = {
 export type TelemetryRecordUpdateWithoutInstallationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   recordedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  receivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moduleStatus?: Prisma.TelemetryRecordUpdatemoduleStatusInput | number[]
   numOfMods?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1679,6 +1706,7 @@ export type TelemetryRecordUpdateWithoutInstallationInput = {
 export type TelemetryRecordUncheckedUpdateWithoutInstallationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   recordedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  receivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moduleStatus?: Prisma.TelemetryRecordUpdatemoduleStatusInput | number[]
   numOfMods?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1722,6 +1750,7 @@ export type TelemetryRecordUncheckedUpdateWithoutInstallationInput = {
 export type TelemetryRecordUncheckedUpdateManyWithoutInstallationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   recordedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  receivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moduleStatus?: Prisma.TelemetryRecordUpdatemoduleStatusInput | number[]
   numOfMods?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1768,6 +1797,7 @@ export type TelemetryRecordSelect<ExtArgs extends runtime.Types.Extensions.Inter
   id?: boolean
   installationId?: boolean
   recordedAt?: boolean
+  receivedAt?: boolean
   moduleStatus?: boolean
   numOfMods?: boolean
   csq?: boolean
@@ -1813,6 +1843,7 @@ export type TelemetryRecordSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   id?: boolean
   installationId?: boolean
   recordedAt?: boolean
+  receivedAt?: boolean
   moduleStatus?: boolean
   numOfMods?: boolean
   csq?: boolean
@@ -1858,6 +1889,7 @@ export type TelemetryRecordSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   id?: boolean
   installationId?: boolean
   recordedAt?: boolean
+  receivedAt?: boolean
   moduleStatus?: boolean
   numOfMods?: boolean
   csq?: boolean
@@ -1903,6 +1935,7 @@ export type TelemetryRecordSelectScalar = {
   id?: boolean
   installationId?: boolean
   recordedAt?: boolean
+  receivedAt?: boolean
   moduleStatus?: boolean
   numOfMods?: boolean
   csq?: boolean
@@ -1943,7 +1976,7 @@ export type TelemetryRecordSelectScalar = {
   availableMargin?: boolean
 }
 
-export type TelemetryRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "installationId" | "recordedAt" | "moduleStatus" | "numOfMods" | "csq" | "rsrp" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "uncompS" | "compS" | "uncompP" | "compP" | "uncompQ" | "compQ" | "uncompH" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "areaTemp" | "moduleTemp" | "fanSpeed" | "totalCapacity" | "operatingCapacity" | "reactivePowerCapacity" | "availableMargin", ExtArgs["result"]["telemetryRecord"]>
+export type TelemetryRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "installationId" | "recordedAt" | "receivedAt" | "moduleStatus" | "numOfMods" | "csq" | "rsrp" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "uncompS" | "compS" | "uncompP" | "compP" | "uncompQ" | "compQ" | "uncompH" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "areaTemp" | "moduleTemp" | "fanSpeed" | "totalCapacity" | "operatingCapacity" | "reactivePowerCapacity" | "availableMargin", ExtArgs["result"]["telemetryRecord"]>
 export type TelemetryRecordInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }
@@ -1963,6 +1996,10 @@ export type $TelemetryRecordPayload<ExtArgs extends runtime.Types.Extensions.Int
     id: string
     installationId: string
     recordedAt: Date
+    /**
+     * 서버가 행을 INSERT 한 시각. 측정 시각과 구분하며 DB 트리거가 채운다.
+     */
+    receivedAt: Date | null
     moduleStatus: number[]
     numOfMods: number | null
     /**
@@ -2434,6 +2471,7 @@ export interface TelemetryRecordFieldRefs {
   readonly id: Prisma.FieldRef<"TelemetryRecord", 'String'>
   readonly installationId: Prisma.FieldRef<"TelemetryRecord", 'String'>
   readonly recordedAt: Prisma.FieldRef<"TelemetryRecord", 'DateTime'>
+  readonly receivedAt: Prisma.FieldRef<"TelemetryRecord", 'DateTime'>
   readonly moduleStatus: Prisma.FieldRef<"TelemetryRecord", 'Int[]'>
   readonly numOfMods: Prisma.FieldRef<"TelemetryRecord", 'Int'>
   readonly csq: Prisma.FieldRef<"TelemetryRecord", 'Int'>

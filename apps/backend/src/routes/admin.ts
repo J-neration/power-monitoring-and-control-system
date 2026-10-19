@@ -6,6 +6,7 @@ import { deviceService } from "../services/deviceService.js";
 import { siteService } from "../services/siteService.js";
 import { registryService } from "../services/registryService.js";
 import { validatePassword } from "../modules/auth/passwordPolicy.js";
+import { inspectRetention, purgeIfEnabled, runAggregationPass } from "../services/summaryService.js";
 
 const firstZodMessage = (error: z.ZodError) =>
   error.issues[0]?.message ?? "입력값이 올바르지 않습니다.";
@@ -324,6 +325,41 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
       }
       return reply.status(404).send({ message: "건설사를 찾을 수 없습니다." });
     }
+  });
+
+  /** 원본 삭제 대상 행 수. 삭제하지 않는다. */
+  server.get("/retention/plan", { preHandler: requireAdmin }, async () => {
+    return inspectRetention();
+  });
+
+  /**
+   * RAW_PURGE_ENABLED=true 일 때만 삭제한다.
+   * 기본값은 꺼짐이라 이 호출은 계획만 반환하고 409 가 된다.
+   */
+  server.post("/retention/purge", { preHandler: requireAdmin }, async (_request, reply) => {
+    const plan = await inspectRetention();
+    if (!plan.rawPurgeEnabled && !plan.summaryPurgeEnabled) {
+      return reply.status(409).send({
+        message: "자동 삭제가 꺼져 있습니다. RAW_PURGE_ENABLED 를 켠 뒤에만 삭제됩니다.",
+        plan,
+      });
+    }
+    const result = await purgeIfEnabled();
+    return reply.send(result);
+  });
+
+  /** 닫힌 구간 재집계와 과거 구간 backfill 을 한 번 실행한다. */
+  server.post("/aggregation/run", { preHandler: requireAdmin }, async (_request, reply) => {
+    const result = await runAggregationPass();
+    if (result.message === "SUMMARY_SCHEMA_MISSING") {
+      return reply.status(503).send({
+        message: "요약 테이블이 없습니다. prisma migrate deploy 를 먼저 실행하세요.",
+      });
+    }
+    if (!result.ok) {
+      return reply.status(500).send({ message: result.message });
+    }
+    return reply.send(result);
   });
 
   /* ── Registry: 역할 옵션 ─────────────────────────── */

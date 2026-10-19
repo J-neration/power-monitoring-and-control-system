@@ -218,6 +218,7 @@ export default function DeviceDetailTabs({
 
       {tab === "analytics" && (
         <DeviceHistoryCharts
+          installationId={device.installationId}
           readings={historyReadings}
           hours={hours}
           model={device.model}

@@ -68,6 +68,26 @@ export type Device = Prisma.DeviceModel
  */
 export type TelemetryRecord = Prisma.TelemetryRecordModel
 /**
+ * Model TelemetryHourlySummary
+ * 장치·시간(KST 정시) 요약. 동일 구간 재집계는 UPSERT.
+ */
+export type TelemetryHourlySummary = Prisma.TelemetryHourlySummaryModel
+/**
+ * Model TelemetryDailySummary
+ * 장치·일(KST 자정) 요약. 월/연 그래프의 소스.
+ */
+export type TelemetryDailySummary = Prisma.TelemetryDailySummaryModel
+/**
+ * Model AggregationState
+ * 집계 워터마크·리스. 재시작 후에도 이어서 처리한다.
+ */
+export type AggregationState = Prisma.AggregationStateModel
+/**
+ * Model AggregationLog
+ * 
+ */
+export type AggregationLog = Prisma.AggregationLogModel
+/**
  * Model FaultEvent
  * =========================
  *  * 5) FaultEvent (모듈 fault 이력)

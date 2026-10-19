@@ -59,6 +59,10 @@ export const ModelName = {
   InstallationDeviceSettings: 'InstallationDeviceSettings',
   Device: 'Device',
   TelemetryRecord: 'TelemetryRecord',
+  TelemetryHourlySummary: 'TelemetryHourlySummary',
+  TelemetryDailySummary: 'TelemetryDailySummary',
+  AggregationState: 'AggregationState',
+  AggregationLog: 'AggregationLog',
   FaultEvent: 'FaultEvent',
   ModuleFaultState: 'ModuleFaultState',
   DeviceCommand: 'DeviceCommand'
@@ -221,6 +225,7 @@ export const TelemetryRecordScalarFieldEnum = {
   id: 'id',
   installationId: 'installationId',
   recordedAt: 'recordedAt',
+  receivedAt: 'receivedAt',
   moduleStatus: 'moduleStatus',
   numOfMods: 'numOfMods',
   csq: 'csq',
@@ -262,6 +267,65 @@ export const TelemetryRecordScalarFieldEnum = {
 } as const
 
 export type TelemetryRecordScalarFieldEnum = (typeof TelemetryRecordScalarFieldEnum)[keyof typeof TelemetryRecordScalarFieldEnum]
+
+
+export const TelemetryHourlySummaryScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  bucketStart: 'bucketStart',
+  sampleCount: 'sampleCount',
+  expectedCount: 'expectedCount',
+  coverage: 'coverage',
+  metrics: 'metrics',
+  arrayMetrics: 'arrayMetrics',
+  uncompEnergyKwh: 'uncompEnergyKwh',
+  compEnergyKwh: 'compEnergyKwh',
+  energyEstimated: 'energyEstimated',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TelemetryHourlySummaryScalarFieldEnum = (typeof TelemetryHourlySummaryScalarFieldEnum)[keyof typeof TelemetryHourlySummaryScalarFieldEnum]
+
+
+export const TelemetryDailySummaryScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  bucketStart: 'bucketStart',
+  sampleCount: 'sampleCount',
+  expectedCount: 'expectedCount',
+  coverage: 'coverage',
+  metrics: 'metrics',
+  arrayMetrics: 'arrayMetrics',
+  uncompEnergyKwh: 'uncompEnergyKwh',
+  compEnergyKwh: 'compEnergyKwh',
+  energyEstimated: 'energyEstimated',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TelemetryDailySummaryScalarFieldEnum = (typeof TelemetryDailySummaryScalarFieldEnum)[keyof typeof TelemetryDailySummaryScalarFieldEnum]
+
+
+export const AggregationStateScalarFieldEnum = {
+  key: 'key',
+  value: 'value',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AggregationStateScalarFieldEnum = (typeof AggregationStateScalarFieldEnum)[keyof typeof AggregationStateScalarFieldEnum]
+
+
+export const AggregationLogScalarFieldEnum = {
+  id: 'id',
+  kind: 'kind',
+  status: 'status',
+  message: 'message',
+  detail: 'detail',
+  createdAt: 'createdAt'
+} as const
+
+export type AggregationLogScalarFieldEnum = (typeof AggregationLogScalarFieldEnum)[keyof typeof AggregationLogScalarFieldEnum]
 
 
 export const FaultEventScalarFieldEnum = {

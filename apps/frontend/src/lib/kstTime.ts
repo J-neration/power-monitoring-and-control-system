@@ -58,3 +58,31 @@ export function formatKstDate(input: Date | string | number): string {
   if (!p) return "";
   return `${p.year}. ${pad2(p.month)}. ${pad2(p.day)}.`;
 }
+
+/** "18:19" */
+export function formatKstClock(input: Date | string | number): string {
+  const p = kstParts(input);
+  if (!p) return "";
+  return `${pad2(p.hour)}:${pad2(p.minute)}`;
+}
+
+/** "10-12 18:19" */
+export function formatKstMonthDayHour(input: Date | string | number): string {
+  const p = kstParts(input);
+  if (!p) return "";
+  return `${pad2(p.month)}-${pad2(p.day)} ${pad2(p.hour)}:${pad2(p.minute)}`;
+}
+
+/** "10-12" */
+export function formatKstMonthDay(input: Date | string | number): string {
+  const p = kstParts(input);
+  if (!p) return "";
+  return `${pad2(p.month)}-${pad2(p.day)}`;
+}
+
+/** "26-10-12" */
+export function formatKstShortDate(input: Date | string | number): string {
+  const p = kstParts(input);
+  if (!p) return "";
+  return `${String(p.year).slice(2)}-${pad2(p.month)}-${pad2(p.day)}`;
+}

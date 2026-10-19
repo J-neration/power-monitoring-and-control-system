@@ -757,6 +757,8 @@ export const deviceService = {
     const clampedHours = Math.min(Math.max(hours, 1), 336); // 1h ~ 14일
     const since = new Date(Date.now() - clampedHours * 60 * 60 * 1000);
     return prisma.telemetryRecord.findMany({
+      // receivedAt 은 집계 전용. 이 조회는 마이그레이션 전에도 기존 컬럼만 읽는다.
+      omit: { receivedAt: true },
       where: {
         installationId: id,
         recordedAt: { gte: since },

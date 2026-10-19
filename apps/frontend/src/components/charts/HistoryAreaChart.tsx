@@ -41,6 +41,7 @@ type Series = {
   stroke: string;
   fill: string;
   dashed?: boolean;
+  dash?: string;
   stackId?: string;
 };
 
@@ -129,7 +130,7 @@ export default function HistoryAreaChart({
             dataKey={s.dataKey}
             name={s.name}
             stroke={s.stroke}
-            strokeDasharray={s.dashed ? "4 3" : undefined}
+            strokeDasharray={s.dash ?? (s.dashed ? "4 3" : undefined)}
             fill={s.fill}
             dot={false}
             connectNulls={false}

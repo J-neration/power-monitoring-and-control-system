@@ -127,6 +127,8 @@ model Installation {
   site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   device           Device?                     // 최신 텔레메트리 (1:1)
   telemetryRecords TelemetryRecord[]           // 시계열 이력
+  hourlySummaries  TelemetryHourlySummary[]
+  dailySummaries   TelemetryDailySummary[]
   commands         DeviceCommand[]
   faultEvents      FaultEvent[]               // fault 이력
   moduleFaultStates ModuleFaultState[]        // HMI /receiver/faults upsert 상태
@@ -248,7 +250,9 @@ model TelemetryRecord {
   installationId String
   installation   Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
 
-  recordedAt     DateTime     @default(now())  // 수신 시각 (나중에 HMI timestamp로 교체 가능)
+  recordedAt     DateTime     @default(now())  // 장치 측정 시각. timestamp 가 없으면 수신 시각
+  /// 서버가 행을 INSERT 한 시각. 측정 시각과 구분하며 DB 트리거가 채운다.
+  receivedAt     DateTime?
 
   moduleStatus     Int[]   @default([])
   numOfMods        Int?
@@ -313,6 +317,67 @@ model TelemetryRecord {
   availableMargin       Float?
 
   @@index([installationId, recordedAt])
+  @@index([recordedAt])
+}
+
+/// 장치·시간(KST 정시) 요약. 동일 구간 재집계는 UPSERT.
+model TelemetryHourlySummary {
+  id              String       @id @default(cuid())
+  installationId  String
+  installation    Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+  bucketStart     DateTime
+  sampleCount     Int
+  expectedCount   Int
+  coverage        Float
+  metrics         Json
+  arrayMetrics    Json
+  uncompEnergyKwh Float?
+  compEnergyKwh   Float?
+  energyEstimated Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([installationId, bucketStart])
+  @@index([bucketStart])
+}
+
+/// 장치·일(KST 자정) 요약. 월/연 그래프의 소스.
+model TelemetryDailySummary {
+  id              String       @id @default(cuid())
+  installationId  String
+  installation    Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+  bucketStart     DateTime
+  sampleCount     Int
+  expectedCount   Int
+  coverage        Float
+  metrics         Json
+  arrayMetrics    Json
+  uncompEnergyKwh Float?
+  compEnergyKwh   Float?
+  energyEstimated Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([installationId, bucketStart])
+  @@index([bucketStart])
+}
+
+/// 집계 워터마크·리스. 재시작 후에도 이어서 처리한다.
+model AggregationState {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model AggregationLog {
+  id        String   @id @default(cuid())
+  kind      String
+  status    String
+  message   String?
+  detail    Json?
+  createdAt DateTime @default(now())
+
+  @@index([kind, createdAt])
 }
 
 /* =========================

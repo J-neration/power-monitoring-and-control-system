@@ -9676,6 +9676,30 @@ body.pmcs-control-room .global-header:hover {
   color: rgba(255, 255, 255, 0.25);
 }
 
+.history-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 360px;
+}
+
+.history-loading-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(165, 180, 252, 0.22);
+  border-top-color: #a5b4fc;
+  animation: spin 0.7s linear infinite;
+}
+
+.history-loading-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+}
+
 .history-data-date-line {
   margin: 12px;
   text-align: center;
@@ -9690,6 +9714,53 @@ body.pmcs-control-room .global-header:hover {
   text-align: right;
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+.history-range-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.history-range-input {
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 2px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(226, 232, 240, 0.85);
+  font-size: 12px;
+}
+
+.history-range-input:disabled {
+  opacity: 0.45;
+}
+
+.monitor-view-chip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.history-month-chips {
+  height: auto;
+  flex-wrap: wrap;
+}
+
+.history-month-chips .monitor-view-chip {
+  height: 28px;
+}
+.history-energy-note {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.scada-chart-tooltip-missing {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(251, 191, 36, 0.9);
 }
 
 .device-history-body {
