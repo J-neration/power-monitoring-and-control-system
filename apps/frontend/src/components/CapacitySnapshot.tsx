@@ -1,4 +1,5 @@
 import type { Device } from "../types/site";
+import { sumModuleCapacity } from "../lib/ratedKvar";
 import ChartCard from "./charts/ChartCard";
 
 const REC_OP_PCT = 70;
@@ -35,8 +36,9 @@ export default function CapacitySnapshot({
   wide?: boolean;
 }) {
   const capUnit = device.model === "paf" ? "A" : "kvar";
-  const capOk = hasCapTelemetry(device);
-  const totalCap = device.totalCapacity ?? device.capacity ?? null;
+  const moduleSum = sumModuleCapacity(device.moduleCapacity, capUnit);
+  const capOk = hasCapTelemetry(device) || moduleSum != null;
+  const totalCap = device.totalCapacity ?? moduleSum;
   const opCap = device.operatingCapacity ?? null;
   const headroom =
     device.availableMargin != null

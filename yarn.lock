@@ -3175,6 +3175,11 @@ node-fetch-native@^1.6.6:
   resolved "https://registry.npmjs.org/node-fetch-native/-/node-fetch-native-1.6.7.tgz"
   integrity sha512-g9yhqoedzIUm0nTnTqAQvueMPVOuIY16bqgAJJC8XOOubYFNwz6IER9qs0Gq2Xd0+CecCKFjtdDTMA4u4xG06Q==
 
+nodemailer@^10.1.2:
+  version "10.1.2"
+  resolved "https://registry.yarnpkg.com/nodemailer/-/nodemailer-10.1.2.tgz#2eb546140635aa79d22006ad3240915ba730f9b6"
+  integrity sha512-rnQn9Rzh8RAwcp42MVsIvxbsv6YZ2a2/av+uyJ/LPU1+2QSlrRgFsWWZTKenyRUqkIl8urOI0c4+CEcmFdsvQw==
+
 nypm@^0.6.0:
   version "0.6.5"
   resolved "https://registry.npmjs.org/nypm/-/nypm-0.6.5.tgz"

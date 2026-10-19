@@ -1,4 +1,5 @@
 import { moduleChipClassName, moduleStatusLabel } from "../lib/moduleStatus";
+import { displayModuleCapacity } from "../lib/ratedKvar";
 
 const MODULE_LABEL_KO: Record<string, string> = {
   STANDBY: "대기",
@@ -72,11 +73,12 @@ export default function ModuleSlotGrid({
                   ? "start"
                   : "standby";
           const n = index + 1;
-          const cap = moduleCapacity?.[index];
-          const capText =
-            cap != null && Number.isFinite(cap)
-              ? `${fmtCap(cap)}${capUnit}`
+          const rawCap = moduleCapacity?.[index];
+          const cap =
+            rawCap != null && Number.isFinite(rawCap)
+              ? displayModuleCapacity(rawCap, capUnit)
               : null;
+          const capText = cap != null ? `${fmtCap(cap)}${capUnit}` : null;
           const summary = capText
             ? `모듈 ${n}번 ${capText} ${label}`
             : `모듈 ${n}번 ${label}`;
