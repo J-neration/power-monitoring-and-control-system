@@ -5,6 +5,7 @@ import { authenticate, requireAdmin } from "../middleware/authenticate.js";
 import { faultService } from "../services/faultService.js";
 import { settingsService } from "../services/settingsService.js";
 import * as viewingState from "../lib/viewingState.js";
+import { wsHub } from "../lib/wsHub.js";
 
 export const deviceRoutes: FastifyPluginAsync = async (server) => {
   server.get("/", { preHandler: authenticate }, async (request) => {
@@ -82,8 +83,8 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
 
   /**
    * POST /devices/:id/viewing/start
-   * Admin opens device remote page → Installation.adminSessionActive = true.
-   * HMI reads this from POST /receiver ACK and starts ~1min command polling.
+   * 「원격 연결 열기」 → open (or extend) the remote window for REMOTE_WINDOW_MS.
+   * HMI reads it from the next POST /receiver ACK and polls commands ~1/min.
    */
   server.post("/:id/viewing/start", { preHandler: requireAdmin }, async (request, reply) => {
     const { id } = request.params as { id: string };
@@ -91,35 +92,31 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
     if (!device) {
       return reply.status(404).send({ message: "Device not found" });
     }
-    const { userId } = request.user;
-    await viewingState.startAdminSession(id, userId);
+    const until = await viewingState.openRemoteWindow(id, request.user.userId);
+    wsHub.broadcast({
+      type: "admin_session_opened",
+      installationId: id,
+      until: until.toISOString(),
+    });
     return reply.send({
       ok: true,
       installationId: id,
       adminSessionActive: true,
+      until: until.toISOString(),
       webSettingsActive: false,
-      activeViewers: await viewingState.getActiveViewerCount(id),
     });
   });
 
-  /**
-   * POST /devices/:id/viewing/stop
-   * Tab close → adminSessionActive = false.
-   * Optional body `{ notAfter: ISO }` ignores the stop if a newer heartbeat exists.
-   */
+  /** POST /devices/:id/viewing/stop — close the remote window now. */
   server.post("/:id/viewing/stop", { preHandler: requireAdmin }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { userId } = request.user;
-    const body = (request.body ?? {}) as { notAfter?: string };
-    await viewingState.stopAdminSession(id, userId, {
-      notAfter: body.notAfter ?? null,
-    });
+    await viewingState.stopAdminSession(id);
     return reply.send({
       ok: true,
       installationId: id,
       adminSessionActive: false,
+      until: null,
       webSettingsActive: false,
-      activeViewers: 0,
     });
   });
 
@@ -128,13 +125,12 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
    */
   server.get("/:id/viewing/status", { preHandler: authenticate }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const adminSessionActive = await viewingState.isAdminSessionActive(id);
+    const until = await viewingState.getRemoteWindowUntil(id);
     return reply.send({
       installationId: id,
-      adminSessionActive,
+      adminSessionActive: until !== null,
+      until: until?.toISOString() ?? null,
       webSettingsActive: false,
-      activeViewers: adminSessionActive ? 1 : 0,
-      isActivelyViewed: adminSessionActive,
     });
   });
 

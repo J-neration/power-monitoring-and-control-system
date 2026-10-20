@@ -7,9 +7,11 @@ import {
   moduleTelemetrySuggestsOn,
 } from "../lib/moduleStatus";
 import { useWsEvents } from "../hooks/useWsEvents";
+import { displayModuleCapacity } from "../lib/ratedKvar";
 
 const MODULE_SLOT_COUNT = 6;
-const COMMAND_ACK_TIMEOUT_MS = 130_000;
+// Command TTL (900s) + margin: the first command waits for the next telemetry (~10 min).
+const COMMAND_ACK_TIMEOUT_MS = 930_000;
 
 type CommandPower = "on" | "off";
 
@@ -102,7 +104,7 @@ export default function DeviceModulePowerPanel({
         tone: "err",
         title: "HMI 응답 시간 초과",
         detail:
-          "최대 130초 대기했습니다. 명령은 등록되었을 수 있으나 실행 여부를 확인할 수 없습니다.",
+          "최대 15분 대기했습니다. 명령은 등록되었을 수 있으나 실행 여부를 확인할 수 없습니다.",
         commandId: pendingCommandId,
       });
     }, COMMAND_ACK_TIMEOUT_MS);
@@ -230,7 +232,11 @@ export default function DeviceModulePowerPanel({
             const code = moduleStatus?.[i];
             const telemetryOn = moduleTelemetrySuggestsOn(code);
             const slotActive = i < activeSlots;
-            const cap = moduleCapacity?.[i];
+            const rawCap = moduleCapacity?.[i];
+            const cap =
+              rawCap != null && Number.isFinite(rawCap)
+                ? displayModuleCapacity(rawCap, capUnit)
+                : null;
             const switchClass = telemetryOn
               ? "module-power-switch module-power-switch--telemetry-on"
               : "module-power-switch module-power-switch--telemetry-off";

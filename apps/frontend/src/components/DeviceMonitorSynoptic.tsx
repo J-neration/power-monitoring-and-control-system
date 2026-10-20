@@ -2,6 +2,7 @@
 
 import type { DeviceWithInstallation } from "../types/site";
 import type { TelemetryReading } from "../types/site";
+import { facilityCapacity, sumModuleCapacity } from "../lib/ratedKvar";
 import ChartCard from "./charts/ChartCard";
 import PhaseSynopticPanel from "./charts/PhaseSynopticPanel";
 import ModuleSlotGrid from "./ModuleSlotGrid";
@@ -18,15 +19,21 @@ function hasCapTelemetry(device: DeviceWithInstallation) {
 
 function CapacityMini({ device }: { device: DeviceWithInstallation }) {
   const capUnit = device.model === "paf" ? "A" : "kvar";
-  const capOk = hasCapTelemetry(device);
-  const totalCap = device.totalCapacity ?? device.capacity ?? null;
+  const moduleSum = sumModuleCapacity(device.moduleCapacity, capUnit);
+  const reportedTotal = device.totalCapacity;
+  const usingModuleSum = !(reportedTotal != null && reportedTotal > 0);
+  const totalCap = facilityCapacity(reportedTotal, moduleSum);
+  const capOk = hasCapTelemetry(device) || totalCap != null;
   const opCap = device.operatingCapacity ?? null;
   const rpCap = device.reactivePowerCapacity ?? null;
-  const margin =
-    device.availableMargin ??
-    (totalCap != null && opCap != null ? totalCap - opCap : null);
+  const margin = usingModuleSum
+    ? totalCap != null && opCap != null
+      ? totalCap - opCap
+      : null
+    : (device.availableMargin ??
+      (totalCap != null && opCap != null ? totalCap - opCap : null));
 
-  if (!capOk || totalCap == null) {
+  if (!capOk || totalCap == null || totalCap <= 0) {
     return (
       <div className="device-cap-mini device-cap-mini--empty">
         <span className="device-cap-mini-title">용량</span>

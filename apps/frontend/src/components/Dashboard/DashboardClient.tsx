@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import {
+  useState,
+  useMemo,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useCallback,
+} from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type { Site } from "../../types/site";
@@ -41,6 +48,8 @@ import {
 import { isCommLost } from "../../lib/commStatus";
 
 const REFRESH_SEC = 30;
+
+type MobilePane = "list" | "map" | "detail";
 
 const FILTER_OPTIONS: { id: StatusFilter; label: string }[] = [
   { id: "all", label: "전체" },
@@ -126,9 +135,32 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
   const regionElRefs = useRef(new Map<string, HTMLElement>());
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [mobilePane, setMobilePane] = useState<MobilePane>("list");
+  const [detailFrom, setDetailFrom] = useState<"list" | "map">("list");
   const [refreshEpoch, setRefreshEpoch] = useState(0);
   const sitesRef = useRef(sites);
   sitesRef.current = sites;
+  const mobilePaneRef = useRef(mobilePane);
+  mobilePaneRef.current = mobilePane;
+  const isMobileRef = useRef(false);
+  const isCompactRef = useRef(false);
+  const layoutRef = useRef<"default" | "map" | "alarm">("default");
+
+  useEffect(() => {
+    const mobile = window.matchMedia("(max-width: 768px)");
+    const compact = window.matchMedia("(max-width: 1024px)");
+    const apply = () => {
+      isMobileRef.current = mobile.matches;
+      isCompactRef.current = compact.matches;
+    };
+    apply();
+    mobile.addEventListener("change", apply);
+    compact.addEventListener("change", apply);
+    return () => {
+      mobile.removeEventListener("change", apply);
+      compact.removeEventListener("change", apply);
+    };
+  }, []);
 
   const scrollRegionIntoView = useCallback((region: string) => {
     const list = sidebarListRef.current;
@@ -139,30 +171,38 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
     const delta = elRect.top - listRect.top - 8;
     if (Math.abs(delta) < 2) return;
     list.scrollTo({
-      top: list.scrollTop + delta,
-      behavior: "smooth",
+      top: Math.max(0, list.scrollTop + delta),
+      behavior: "auto",
     });
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!scrollToRegion) return;
-    const region = scrollToRegion;
-    const id = requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        scrollRegionIntoView(region);
-        setScrollToRegion(null);
-      });
-    });
-    return () => cancelAnimationFrame(id);
+    scrollRegionIntoView(scrollToRegion);
+    setScrollToRegion(null);
   }, [scrollToRegion, openRegion, scrollRegionIntoView]);
 
   const handleSelectSite = useCallback(
-    (siteId: string, installationId?: string) => {
+    (siteId: string, installationId?: string, openDetail = true) => {
       setSelectedSiteId(siteId);
       setSelectedInstallationId(installationId ?? null);
       setFocusSeq((n) => n + 1);
       const site = sitesRef.current.find((s) => s.id === siteId);
       if (site?.region) setOpenRegion(site.region);
+      if (
+        openDetail &&
+        isCompactRef.current &&
+        layoutRef.current === "default"
+      ) {
+        if (isMobileRef.current) {
+          if (mobilePaneRef.current !== "detail") {
+            setDetailFrom(mobilePaneRef.current === "map" ? "map" : "list");
+          }
+        } else {
+          setDetailFrom("list");
+        }
+        setMobilePane("detail");
+      }
     },
     [],
   );
@@ -186,6 +226,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
     toggleControlRoom,
     rotateSec,
   } = useControlRoomMode(sites, selectedSiteId, handleSelectSite);
+  layoutRef.current = layout;
 
   const alarms = useMemo(() => buildAlarms(sites), [sites]);
   const {
@@ -285,6 +326,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
     "new-dashboard",
     controlRoom ? "dashboard-control-room" : "",
     `dashboard-layout-${layout}`,
+    `dashboard-mobile-${mobilePane}`,
   ]
     .filter(Boolean)
     .join(" ");
@@ -332,6 +374,47 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
       )}
 
       {layout !== "alarm" && <EventLogPanel entries={eventLogEntries} />}
+
+      {layout !== "alarm" && (
+        <div className="dash-mobile-chrome">
+          {mobilePane === "detail" ? (
+            <div className="dash-mobile-back">
+              <button
+                type="button"
+                onClick={() => setMobilePane(detailFrom)}
+              >
+                {detailFrom === "map" ? "← 지도" : "← 목록"}
+              </button>
+              <span className="dash-mobile-back-title">
+                {selectedSite?.name ?? "현장"}
+              </span>
+            </div>
+          ) : (
+            <div
+              className="dash-mobile-nav"
+              role="tablist"
+              aria-label="모바일 화면"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mobilePane === "list"}
+                onClick={() => setMobilePane("list")}
+              >
+                목록
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mobilePane === "map"}
+                onClick={() => setMobilePane("map")}
+              >
+                지도
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="dash-body">
         {layout === "alarm" ? (
@@ -441,16 +524,21 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                         }}
                         className="region-group"
                         open={regionOpen}
-                        onToggle={(e) => {
-                          if (statusFilter !== "all" || searchQuery.trim())
-                            return;
-                          const nextOpen = (e.currentTarget as HTMLDetailsElement)
-                            .open;
-                          if (nextOpen) setOpenRegion(region);
-                          else if (openRegion === region) setOpenRegion(null);
-                        }}
                       >
-                        <summary className="region-group-summary">
+                        <summary
+                          className="region-group-summary"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (statusFilter !== "all" || searchQuery.trim())
+                              return;
+                            if (openRegion === region) {
+                              setOpenRegion(null);
+                              return;
+                            }
+                            setOpenRegion(region);
+                            setScrollToRegion(region);
+                          }}
+                        >
                           <span className="region-group-name">{region}</span>
                           <span className="region-group-count">
                             {regionSites.length}현장 · {instCount}대
@@ -487,7 +575,11 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                   className={`site-group-summary${isSiteSelected ? " selected" : ""}`}
                                   onClick={(e) => {
                                     e.preventDefault();
-                                    handleSelectSite(site.id);
+                                    handleSelectSite(
+                                      site.id,
+                                      undefined,
+                                      !isCompactRef.current,
+                                    );
                                   }}
                                 >
                                   <div
@@ -573,12 +665,6 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
             </aside>
 
             <div className="dash-map-panel">
-              <div className="dash-map-mobile-header">
-                <span className="dash-map-mobile-label">지도</span>
-                {selectedSite && (
-                  <span className="dash-map-mobile-site">{selectedSite.name}</span>
-                )}
-              </div>
               <KoreaMap
                 allSites={sites}
                 selectedSiteId={selectedSite?.id ?? ""}
@@ -589,12 +675,22 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
               <LteRadarOverlay />
             </div>
 
-            <SiteSummaryPanel
-              site={selectedSite}
-              showSparklines
-              selectedInstallationId={selectedInstallationId}
-              focusSeq={focusSeq}
-            />
+            <div className="dash-detail-slot">
+              <div className="dash-tablet-back">
+                <button type="button" onClick={() => setMobilePane("list")}>
+                  ← 목록
+                </button>
+                <span className="dash-tablet-back-title">
+                  {selectedSite?.name ?? "현장"}
+                </span>
+              </div>
+              <SiteSummaryPanel
+                site={selectedSite}
+                showSparklines
+                selectedInstallationId={selectedInstallationId}
+                focusSeq={focusSeq}
+              />
+            </div>
           </>
         )}
       </div>

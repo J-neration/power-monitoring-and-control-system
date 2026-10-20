@@ -1165,6 +1165,7 @@ main.dashboard-full {
 .sidebar-list {
   flex: 1;
   overflow-y: auto;
+  overflow-anchor: none;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1497,6 +1498,10 @@ main.dashboard-full {
   display: none;
 }
 
+.dash-mobile-chrome {
+  display: none;
+}
+
 /* ── Center map (continued) ── */
 .korea-map-loading {
   flex: 1;
@@ -1620,6 +1625,25 @@ main.dashboard-full {
 }
 
 /* ── Right: detail panel ─────────────────────────────────────── */
+.dash-detail-slot {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.dash-detail-slot > .dash-detail {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.dash-tablet-back {
+  display: none;
+}
+
 .dash-detail {
   border-left: 1px solid var(--pmcs-panel-border);
   box-shadow: inset 1px 0 0 rgba(0, 212, 170, 0.04);
@@ -7255,7 +7279,8 @@ body.pmcs-control-room .global-header:hover {
 
 /* ── Dashboard layout modes ───────────────────────────────────── */
 .dashboard-layout-map .dash-sidebar,
-.dashboard-layout-map .dash-detail {
+.dashboard-layout-map .dash-detail,
+.dashboard-layout-map .dash-detail-slot {
   display: none;
 }
 
@@ -8760,6 +8785,76 @@ body.pmcs-control-room .global-header:hover {
   }
 }
 
+/* 769–1024px: 왼쪽은 목록/상세가 교대하고, 오른쪽 지도는 유지 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .new-dashboard.dashboard-layout-default .dash-body {
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .new-dashboard.dashboard-layout-default .dash-sidebar,
+  .new-dashboard.dashboard-layout-default .dash-detail-slot {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .new-dashboard.dashboard-layout-default .dash-map-panel {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 0;
+  }
+
+  .dashboard-layout-default.dashboard-mobile-detail .dash-sidebar {
+    display: none;
+  }
+
+  .dashboard-layout-default.dashboard-mobile-detail .dash-detail-slot {
+    display: flex;
+  }
+
+  .dashboard-layout-default.dashboard-mobile-detail .dash-map-panel {
+    display: flex;
+  }
+
+  .dashboard-layout-default.dashboard-mobile-detail .dash-tablet-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.18);
+  }
+
+  .dash-tablet-back button {
+    flex-shrink: 0;
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid var(--pmcs-accent-border);
+    background: var(--pmcs-accent-dim);
+    color: var(--pmcs-accent-bright);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .dash-tablet-back-title {
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dashboard-layout-default.dashboard-mobile-detail .dash-detail {
+    border-left: none;
+    border-right: 1px solid var(--pmcs-panel-border);
+    box-shadow: none;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    RESPONSIVE — MOBILE (≤ 768px)
 ═══════════════════════════════════════════════════════════════ */
@@ -8911,13 +9006,13 @@ body.pmcs-control-room .global-header:hover {
   }
 
   .sidebar-head {
-    padding-bottom: 6px;
+    padding-bottom: 2px;
     background: rgba(0, 0, 0, 0.12);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
 
   .sidebar-title-row {
-    padding: 12px 14px 6px;
+    padding: 6px 12px 2px;
   }
 
   .sidebar-title {
@@ -8930,32 +9025,34 @@ body.pmcs-control-room .global-header:hover {
   }
 
   .sidebar-search-wrap {
-    padding: 0 14px 10px;
+    padding: 0 12px 4px;
   }
 
   .sidebar-search {
-    height: 40px;
-    font-size: 14px;
-    padding: 0 36px 0 12px;
+    height: 30px;
+    font-size: 12px;
+    padding: 0 28px 0 10px;
+    border-radius: 6px;
   }
 
   .sidebar-search-clear {
-    right: 22px;
-    width: 28px;
-    height: 28px;
-    font-size: 16px;
+    right: 16px;
+    width: 22px;
+    height: 22px;
+    font-size: 14px;
   }
 
   .sidebar-filters {
-    gap: 6px;
-    padding: 0 14px 10px;
+    gap: 4px;
+    padding: 0 12px 4px;
   }
 
   .sidebar-filter-chip {
-    min-height: 36px;
-    padding: 8px 0;
-    font-size: 12px;
-    border-radius: 8px;
+    min-height: 26px;
+    padding: 3px 2px;
+    font-size: 11px;
+    border-radius: 6px;
+    white-space: nowrap;
   }
 
   .sidebar-list {
@@ -9043,11 +9140,37 @@ body.pmcs-control-room .global-header:hover {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 14px;
+    width: 100%;
+    margin: 0;
+    padding: 8px 14px;
+    border: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     background: rgba(0, 0, 0, 0.18);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
     flex-shrink: 0;
-    min-height: 40px;
+    min-height: 44px;
+  }
+
+  .dash-map-mobile-header:active {
+    background: rgba(0, 212, 170, 0.1);
+  }
+
+  .dash-map-toggle {
+    margin-left: auto;
+    flex-shrink: 0;
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid var(--pmcs-accent-border);
+    background: var(--pmcs-accent-dim);
+    color: var(--pmcs-accent-bright);
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
   }
 
   .dash-map-mobile-label {
@@ -9299,6 +9422,138 @@ body.pmcs-control-room .global-header:hover {
 
   .hmi-rail-note {
     white-space: normal;
+  }
+
+  /* 모바일은 목록 / 지도 / 상세 중 한 화면만 채운다. */
+  .global-content:has(.new-dashboard:not(.dashboard-layout-alarm)) {
+    overflow: hidden;
+  }
+
+  main.dashboard-full:has(.new-dashboard:not(.dashboard-layout-alarm)) {
+    height: calc(100dvh - 44px);
+    max-height: calc(100dvh - 44px);
+    overflow: hidden;
+  }
+
+  .new-dashboard:not(.dashboard-layout-alarm) {
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+  }
+
+  .dash-mobile-chrome {
+    display: block;
+    flex-shrink: 0;
+    padding: 8px 12px 6px;
+  }
+
+  .dash-mobile-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 3px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .dash-mobile-nav button {
+    min-height: 32px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .dash-mobile-nav button[aria-selected="true"] {
+    background: var(--pmcs-accent-dim);
+    color: var(--pmcs-accent-bright);
+  }
+
+  .dash-mobile-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+  }
+
+  .dash-mobile-back button {
+    flex-shrink: 0;
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid var(--pmcs-accent-border);
+    background: var(--pmcs-accent-dim);
+    color: var(--pmcs-accent-bright);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .dash-mobile-back-title {
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .new-dashboard.dashboard-layout-default .dash-body {
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto;
+    overflow: hidden;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .new-dashboard.dashboard-layout-default .dash-body > * {
+    max-height: 100%;
+    min-height: 0;
+  }
+
+  .dashboard-layout-default.dashboard-mobile-list .dash-map-panel,
+  .dashboard-layout-default.dashboard-mobile-list .dash-detail-slot,
+  .dashboard-layout-default.dashboard-mobile-map .dash-sidebar,
+  .dashboard-layout-default.dashboard-mobile-map .dash-detail-slot,
+  .dashboard-layout-default.dashboard-mobile-detail .dash-sidebar,
+  .dashboard-layout-default.dashboard-mobile-detail .dash-map-panel {
+    display: none;
+  }
+
+  .dashboard-layout-default.dashboard-mobile-detail .dash-detail-slot {
+    display: flex;
+  }
+
+  .dashboard-layout-default.dashboard-mobile-list .dash-sidebar,
+  .dashboard-layout-default.dashboard-mobile-detail .dash-detail {
+    height: 100%;
+    max-height: none;
+    border-bottom: none;
+  }
+
+  .dashboard-layout-default.dashboard-mobile-detail .dash-detail {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .dashboard-layout-default.dashboard-mobile-map .dash-map-panel {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .dashboard-layout-default.dashboard-mobile-map .dash-map-panel .korea-map-wrapper {
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    flex: 1 1 auto;
   }
 }
 
@@ -9985,6 +10240,51 @@ body.pmcs-control-room .global-header:hover {
 .remote-session-status--linked .remote-session-timer-value {
   color: #86efac;
   font-size: 16px;
+}
+
+.remote-session-status--closed {
+  border-color: rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.remote-session-status--closed .remote-session-label {
+  color: rgba(226, 232, 240, 0.72);
+}
+
+.remote-session-dot--off {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+.remote-session-open-btn {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  color: #e0f2fe;
+  background: rgba(56, 189, 248, 0.16);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.remote-session-open-btn:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.26);
+  border-color: rgba(56, 189, 248, 0.7);
+}
+
+.remote-session-open-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.remote-session-error {
+  font-size: 11px;
+  color: #fca5a5;
+  white-space: nowrap;
 }
 
 .history-section-sub {

@@ -9,9 +9,17 @@ import { z } from "zod";
 import { requireAdmin } from "../middleware/authenticate.js";
 import { commandService, CommandError } from "../services/commandService.js";
 import { faultService } from "../services/faultService.js";
+import { notifyAdminAlerts } from "../services/adminAlertService.js";
 import { settingsService, SettingsError } from "../services/settingsService.js";
 import { wsHub } from "../lib/wsHub.js";
 import * as viewingState from "../lib/viewingState.js";
+import {
+  detectModuleStatusAlerts,
+  faultAlertLine,
+  faultCodeAlertLine,
+  statusAlertLine,
+  type AlertLine,
+} from "../lib/moduleAlerts.js";
 
 type ReceiverOptions = { receiverApiKey: string };
 
@@ -236,6 +244,13 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
     });
   };
 
+  const mailAdminAlerts = (installationId: string, lines: AlertLine[]) => {
+    if (lines.length === 0) return;
+    void notifyAdminAlerts({ installationId, lines }).catch((err: unknown) => {
+      server.log.warn({ err }, "admin alert mail failed");
+    });
+  };
+
   /* 더 구체적인 경로를 먼저 등록 (POST /faults 가 /faults/critical 을 가리지 않도록) */
   server.post("/faults/critical", async (request, reply) => {
     if (!hasValidApiKey(request)) {
@@ -263,6 +278,9 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       }
       return reply.status(400).send({ message: "Invalid iccid" });
     }
+    const isNewRaise =
+      event === "RAISE" &&
+      (await faultService.isNewFaultRaise(identity.installationId, faultCode));
     await faultService.upsertReceiverFaultState({
       installationId: identity.installationId,
       fault: {
@@ -272,6 +290,11 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       },
       criticalChannel: true,
     });
+    if (isNewRaise) {
+      mailAdminAlerts(identity.installationId, [
+        faultCodeAlertLine(faultCode, eventName),
+      ]);
+    }
     notifyCriticalFault({
       installationId: identity.installationId,
       iccid: iccid.trim().replace(/[\s-]/g, ""),
@@ -312,11 +335,22 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       }
       return reply.status(400).send({ message: "Invalid iccid" });
     }
+    const newRaises = [];
+    for (const fault of parsed.data.faults) {
+      if (fault.event !== "RAISE") continue;
+      if (await faultService.isNewFaultRaise(identity.installationId, fault.faultCode)) {
+        newRaises.push(fault);
+      }
+    }
     await faultService.upsertReceiverFaultStates({
       installationId: identity.installationId,
       faults: parsed.data.faults,
       criticalChannel: false,
     });
+    mailAdminAlerts(
+      identity.installationId,
+      newRaises.map((fault) => faultCodeAlertLine(fault.faultCode, fault.eventName)),
+    );
     return reply.status(201).send({ ok: true });
   });
 
@@ -390,6 +424,10 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       }
     }
 
+    const previousModuleStatus = identity.installationId
+      ? await deviceService.getStoredModuleStatus(identity.installationId)
+      : null;
+
     const device = await deviceService.upsertFromPayload({
       device_id: identity.installationId ?? undefined,
       value: body.value,
@@ -448,12 +486,39 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
         module: f.module,
         desc: typeof f.desc === "string" ? f.desc : "",
       }));
+    const freshFaults: { module: number; desc: string }[] = [];
     if (validFaults.length > 0 && identity.installationId) {
+      for (const fault of validFaults) {
+        const seen = await faultService.hasRecentIdenticalFault({
+          installationId: identity.installationId,
+          module: fault.module,
+          desc: fault.desc,
+        });
+        if (!seen) freshFaults.push(fault);
+      }
       await faultService.saveFaults({
         installationId: identity.installationId,
         iccid: typeof body.iccid === "string" ? body.iccid : null,
         faults: validFaults,
       });
+    }
+
+    if (identity.installationId) {
+      const faultByModule = new Map(freshFaults.map((fault) => [fault.module, fault.desc]));
+      const statusAlerts = detectModuleStatusAlerts(
+        previousModuleStatus,
+        device?.moduleStatus,
+      );
+      const covered = new Set<number>();
+      const lines = statusAlerts.map((alert) => {
+        const note = faultByModule.get(alert.moduleIndex);
+        if (note !== undefined) covered.add(alert.moduleIndex);
+        return statusAlertLine(alert, note);
+      });
+      for (const fault of freshFaults) {
+        if (!covered.has(fault.module)) lines.push(faultAlertLine(fault.module, fault.desc));
+      }
+      mailAdminAlerts(identity.installationId, lines);
     }
 
     if (identity.installationId) {
@@ -465,8 +530,11 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
 
     // Compact ACK for HMI modem buffer (~2KB). Do NOT echo the request body —
     // echoing ~900B telemetry roughly doubles the response and truncates the read.
+    // Also true while a command is pending, so a command outliving the remote
+    // window (e.g. REMOTE_WINDOW_SECONDS < COMMAND_TTL_SECONDS) still gets polled.
     const adminSessionActive = identity.installationId
-      ? await viewingState.isAdminSessionActive(identity.installationId)
+      ? (await viewingState.isAdminSessionActive(identity.installationId)) ||
+        (await commandService.hasPending(identity.installationId))
       : false;
 
     // HMI just received adminSessionActive in this ACK (session signaled).
@@ -615,7 +683,18 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
           },
           "Command created",
         );
-        return reply.status(201).send({ command: cmd });
+        const until = await viewingState.openRemoteWindow(
+          cmd.installationId,
+          request.user.userId,
+        );
+        wsHub.broadcast({
+          type: "admin_session_opened",
+          installationId: cmd.installationId,
+          until: until.toISOString(),
+        });
+        return reply
+          .status(201)
+          .send({ command: cmd, remoteWindowUntil: until.toISOString() });
       } catch (error) {
         if (error instanceof CommandError) {
           return reply

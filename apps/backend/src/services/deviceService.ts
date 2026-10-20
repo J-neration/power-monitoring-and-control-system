@@ -439,6 +439,15 @@ export const deviceService = {
     return withModuleType(d);
   },
 
+  /** 수신 직전 모듈 상태. 행이 없으면 null (첫 수신은 알림하지 않음). */
+  getStoredModuleStatus: async (installationId: string): Promise<number[] | null> => {
+    const row = await prisma.device.findUnique({
+      where: { installationId },
+      select: { moduleStatus: true },
+    });
+    return row?.moduleStatus ?? null;
+  },
+
   /* =====================================================
    * Main entry: upsert telemetry from HMI payload
    * - Ensures Site/Installation exist (from registry)

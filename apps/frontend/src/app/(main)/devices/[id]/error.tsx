@@ -31,9 +31,6 @@ export default function DeviceDetailError({
       <section className="scada-panel" style={{ padding: 24 }}>
         <h1 className="chart-title">장비를 불러오지 못했습니다</h1>
         <p className="device-settings-empty">화면을 그리는 중 문제가 발생했습니다.</p>
-        {error.digest ? (
-          <p className="device-settings-empty">오류 코드: {error.digest}</p>
-        ) : null}
         <button type="button" className="device-settings-save" onClick={retry}>
           다시 시도
         </button>

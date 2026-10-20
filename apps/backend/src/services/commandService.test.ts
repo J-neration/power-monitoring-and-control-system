@@ -156,6 +156,27 @@ test("invalid module/power are rejected", async () => {
   );
 });
 
+test("hasPending is true only until the HMI polls an unexpired command", async () => {
+  const repo = new InMemoryRepo();
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+
+  assert.equal(await service.hasPending("PSVG-RNDTEST5"), false);
+
+  await service.create({ installationId: "PSVG-RNDTEST5", module: 0, power: "refresh" });
+  assert.equal(await service.hasPending("PSVG-RNDTEST5"), true);
+
+  await service.poll("PSVG-RNDTEST5");
+  assert.equal(await service.hasPending("PSVG-RNDTEST5"), false);
+
+  await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 1,
+    power: "refresh",
+    expiresAt: new Date(Date.now() - 1000),
+  });
+  assert.equal(await service.hasPending("PSVG-RNDTEST5"), false);
+});
+
 test("no pending command returns sentinel payload", async () => {
   const repo = new InMemoryRepo();
   const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });

@@ -211,7 +211,40 @@ const mergeFaultLists = (
     .slice(0, limit);
 };
 
+/** 같은 모듈·같은 설명이 이 시간 안에 이미 있으면 메일을 다시 보내지 않는다. */
+export const IDENTICAL_FAULT_QUIET_MS = 60 * 60 * 1000;
+
 export const faultService = {
+  /** 활성 RAISE 가 이미 있으면 false. 없거나 CLEAR 이후면 true. */
+  isNewFaultRaise: async (installationId: string, faultCode: number): Promise<boolean> => {
+    const row = await prisma.moduleFaultState.findUnique({
+      where: { installationId_faultCode: { installationId, faultCode } },
+      select: { lastEvent: true },
+    });
+    return row?.lastEvent !== "RAISE";
+  },
+
+  hasRecentIdenticalFault: async (params: {
+    installationId: string;
+    module: number;
+    desc?: string;
+    withinMs?: number;
+  }): Promise<boolean> => {
+    const desc = (params.desc ?? "").trim().slice(0, 48);
+    const row = await prisma.faultEvent.findFirst({
+      where: {
+        installationId: params.installationId,
+        module: params.module,
+        desc,
+        occurredAt: {
+          gte: new Date(Date.now() - (params.withinMs ?? IDENTICAL_FAULT_QUIET_MS)),
+        },
+      },
+      select: { id: true },
+    });
+    return row != null;
+  },
+
   /** HMI POST /receiver 에서 faults 배열이 있을 때 일괄 저장 */
   saveFaults: async (params: {
     installationId: string;
