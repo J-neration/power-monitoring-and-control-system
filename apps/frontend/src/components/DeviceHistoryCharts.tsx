@@ -94,8 +94,6 @@ export default function DeviceHistoryCharts({
         const margin =
           r.availableMargin ??
           (totalCap != null && opCap != null ? totalCap - opCap : null);
-        const idleCap =
-          opCap != null && rpCap != null ? Math.max(0, opCap - rpCap) : null;
 
         const row: Record<string, unknown> = {
           time: fmtChartTime(r.recordedAt),
@@ -125,7 +123,7 @@ export default function DeviceHistoryCharts({
           hBefore: r.uncompH ?? null,
           hAfter: r.compH ?? null,
           reactive: rpCap,
-          idle: idleCap,
+          operating: opCap,
           margin,
         };
 
@@ -143,7 +141,9 @@ export default function DeviceHistoryCharts({
         return row;
       });
 
-      const cap = rows.some((d) => d.reactive != null || d.idle != null);
+      const cap = rows.some(
+        (d) => d.reactive != null || d.operating != null || d.margin != null,
+      );
 
       return {
         data: rows,
@@ -352,21 +352,18 @@ export default function DeviceHistoryCharts({
                     name: "무효 전력",
                     stroke: CHART_COLORS.accent,
                     fill: "url(#capR)",
-                    stackId: "cap",
                   },
                   {
-                    dataKey: "idle",
+                    dataKey: "operating",
                     name: "운전 용량",
                     stroke: CHART_COLORS.blue,
                     fill: "url(#capI)",
-                    stackId: "cap",
                   },
                   {
                     dataKey: "margin",
                     name: "가용 여유",
                     stroke: CHART_COLORS.gridMuted,
                     fill: "url(#capM)",
-                    stackId: "cap",
                   },
                 ]}
                 yUnit={capUnit === "A" ? " A" : " kvar"}
@@ -374,7 +371,7 @@ export default function DeviceHistoryCharts({
               />
               <div className="capacity-legend-row">
                 <span className="cap-badge cap-reactive">무효 전력 발생</span>
-                <span className="cap-badge cap-idle">운전 여유</span>
+                <span className="cap-badge cap-idle">운전 용량</span>
                 <span className="cap-badge cap-margin">가용 마진</span>
               </div>
             </ChartCard>
