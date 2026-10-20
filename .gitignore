@@ -21,3 +21,17 @@ coverage
 # ── 로그 ─────────────────────────────────────────────────────────────
 *.log
 *.sqlite
+
+# ── Terraform ───────────────────────────────────────────────────────
+# 상태·플랜 파일에는 리소스 정보와 비밀 값이 들어갈 수 있으므로 커밋하지 않는다.
+# .terraform.lock.hcl(프로바이더 버전 고정)은 커밋한다.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

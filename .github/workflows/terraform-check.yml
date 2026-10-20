@@ -1,0 +1,45 @@
+# infra/terraform 이 바뀌면 형식(fmt)과 문법·참조(validate)를 검사한다.
+# AWS 자격 증명 없이 돈다 (backend 없이 init). plan·apply는 로컬에서 승인 후에만 한다.
+
+name: Terraform check
+
+on:
+  pull_request:
+    paths:
+      - "infra/terraform/**"
+      - ".github/workflows/terraform-check.yml"
+  push:
+    branches:
+      - dev
+      - main
+    paths:
+      - "infra/terraform/**"
+      - ".github/workflows/terraform-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: fmt + validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.5
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive -diff infra/terraform
+
+      - name: terraform validate (each root)
+        run: |
+          set -euo pipefail
+          for root in infra/terraform/envs/*/*/; do
+            echo "::group::${root}"
+            terraform -chdir="${root}" init -backend=false -input=false
+            terraform -chdir="${root}" validate
+            echo "::endgroup::"
+          done
