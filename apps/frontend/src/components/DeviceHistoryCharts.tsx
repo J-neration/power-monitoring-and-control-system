@@ -56,6 +56,8 @@ type Props = {
   hours: number;
   model?: string;
   faults?: FaultEvent[];
+  /** 이력 점에 totalCapacity가 없을 때 쓰는 설비용량 */
+  facilityTotal?: number | null;
 };
 
 export default function DeviceHistoryCharts({
@@ -63,6 +65,7 @@ export default function DeviceHistoryCharts({
   hours,
   model,
   faults = [],
+  facilityTotal = null,
 }: Props) {
   const [subTab, setSubTab] = useState<SubTab>("pf");
 
@@ -88,14 +91,17 @@ export default function DeviceHistoryCharts({
         v != null ? Math.round(v * 10) / 10 : null;
 
       const rows = readings.map((r) => {
-        const totalCap = r.totalCapacity ?? null;
+        const reportedTotal = r.totalCapacity ?? null;
+        const totalCap =
+          reportedTotal != null && reportedTotal > 0
+            ? reportedTotal
+            : facilityTotal != null && facilityTotal > 0
+              ? facilityTotal
+              : null;
         const opCap = r.operatingCapacity ?? null;
         const rpCap = r.reactivePowerCapacity ?? null;
         const margin =
-          r.availableMargin ??
-          (totalCap != null && opCap != null ? totalCap - opCap : null);
-        const idleCap =
-          opCap != null && rpCap != null ? Math.max(0, opCap - rpCap) : null;
+          totalCap != null && opCap != null ? totalCap - opCap : null;
 
         const row: Record<string, unknown> = {
           time: fmtChartTime(r.recordedAt),
@@ -125,7 +131,7 @@ export default function DeviceHistoryCharts({
           hBefore: r.uncompH ?? null,
           hAfter: r.compH ?? null,
           reactive: rpCap,
-          idle: idleCap,
+          operating: opCap,
           margin,
         };
 
@@ -143,7 +149,9 @@ export default function DeviceHistoryCharts({
         return row;
       });
 
-      const cap = rows.some((d) => d.reactive != null || d.idle != null);
+      const cap = rows.some(
+        (d) => d.reactive != null || d.operating != null || d.margin != null,
+      );
 
       return {
         data: rows,
@@ -152,7 +160,7 @@ export default function DeviceHistoryCharts({
         maxFans: maxFan,
         hasCapData: cap,
       };
-    }, [readings]);
+    }, [facilityTotal, readings]);
 
   const dataDateLabel = formatDataDateRangeLabel(readings);
 
@@ -352,21 +360,18 @@ export default function DeviceHistoryCharts({
                     name: "무효 전력",
                     stroke: CHART_COLORS.accent,
                     fill: "url(#capR)",
-                    stackId: "cap",
                   },
                   {
-                    dataKey: "idle",
+                    dataKey: "operating",
                     name: "운전 용량",
                     stroke: CHART_COLORS.blue,
                     fill: "url(#capI)",
-                    stackId: "cap",
                   },
                   {
                     dataKey: "margin",
                     name: "가용 여유",
                     stroke: CHART_COLORS.gridMuted,
                     fill: "url(#capM)",
-                    stackId: "cap",
                   },
                 ]}
                 yUnit={capUnit === "A" ? " A" : " kvar"}
@@ -374,7 +379,7 @@ export default function DeviceHistoryCharts({
               />
               <div className="capacity-legend-row">
                 <span className="cap-badge cap-reactive">무효 전력 발생</span>
-                <span className="cap-badge cap-idle">운전 여유</span>
+                <span className="cap-badge cap-idle">운전 용량</span>
                 <span className="cap-badge cap-margin">가용 마진</span>
               </div>
             </ChartCard>

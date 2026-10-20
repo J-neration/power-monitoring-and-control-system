@@ -509,7 +509,12 @@ export function buildWatchFacts(input: {
     .map((r) => num(r.reactivePowerCapacity))
     .filter((v): v is number => v != null);
   const margin = readings
-    .map((r) => num(r.availableMargin))
+    .map((r) => {
+      const total = num(r.totalCapacity);
+      const op = num(r.operatingCapacity);
+      if (total == null || op == null) return null;
+      return total - op;
+    })
     .filter((v): v is number => v != null);
   const opRatios = operatingRatioSamples(readings);
   const opRatioStats = statsFromSamples(opRatios, 3);

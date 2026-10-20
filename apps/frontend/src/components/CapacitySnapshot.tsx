@@ -37,20 +37,11 @@ export default function CapacitySnapshot({
 }) {
   const capUnit = device.model === "paf" ? "A" : "kvar";
   const moduleSum = sumModuleCapacity(device.moduleCapacity, capUnit);
-  const reportedTotal = device.totalCapacity;
-  const usingModuleSum = !(reportedTotal != null && reportedTotal > 0);
-  const totalCap = facilityCapacity(reportedTotal, moduleSum);
+  const totalCap = facilityCapacity(device.totalCapacity, moduleSum);
   const capOk = hasCapTelemetry(device) || totalCap != null;
   const opCap = device.operatingCapacity ?? null;
-  const headroom = usingModuleSum
-    ? totalCap != null && opCap != null
-      ? roundPct(totalCap - opCap)
-      : null
-    : device.availableMargin != null
-      ? roundPct(device.availableMargin)
-      : totalCap != null && opCap != null
-        ? roundPct(totalCap - opCap)
-        : null;
+  const headroom =
+    totalCap != null && opCap != null ? roundPct(totalCap - opCap) : null;
   const isShort = headroom != null && headroom < 0;
   const headroomAbs = headroom != null ? Math.abs(headroom) : null;
   const opPct = totalCap != null ? pctOf(opCap, totalCap) : null;
