@@ -1,18 +1,10 @@
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../../prisma/generated/client/client.js";
+import { prisma } from "../lib/prisma.js";
 import {
   buildAdminAlertMail,
   isAlertMailExcludedSite,
   type AlertLine,
 } from "../lib/moduleAlerts.js";
 import { sendAlertMail } from "./alertMailer.js";
-
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({
-    connectionString:
-      process.env.DATABASE_URL ?? "postgresql://pmcs:pmcs@localhost:5432/pmcs",
-  }),
-});
 
 export const notifyAdminAlerts = async (params: {
   installationId: string;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { serverApiBase } from "../../../../lib/serverApiBase";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
+const API_BASE = serverApiBase();
 
 const COOKIE_NAME = "pmcs_token";
 const COOKIE_MAX_AGE = 60 * 60 * 8; // 8시간 (JWT 만료와 동일)
@@ -9,11 +10,25 @@ const IP_MAX_FAILURES = 30;
 const IP_WINDOW_MS = 15 * 60 * 1000;
 const ipBuckets = new Map<string, { failures: number; windowStart: number }>();
 
-const clientIp = (request: NextRequest): string =>
-  request.headers.get("x-nf-client-connection-ip") ??
-  request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-  request.headers.get("x-real-ip") ??
-  "";
+/** 앞단 프록시 홉 수 (AWS ALB 뒤 = 1). 미설정이면 Netlify 기준의 기존 판별을 쓴다. */
+const TRUSTED_PROXY_HOPS = Number(process.env.TRUSTED_PROXY_HOPS) || 0;
+
+const clientIp = (request: NextRequest): string => {
+  if (TRUSTED_PROXY_HOPS > 0) {
+    // 프록시가 덧붙인 오른쪽 항목만 믿는다 — 왼쪽 항목과 다른 IP 헤더는 클라이언트가 위조할 수 있다.
+    const hops = (request.headers.get("x-forwarded-for") ?? "")
+      .split(",")
+      .map((ip) => ip.trim())
+      .filter(Boolean);
+    return hops.at(-TRUSTED_PROXY_HOPS) ?? "";
+  }
+  return (
+    request.headers.get("x-nf-client-connection-ip") ??
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip") ??
+    ""
+  );
+};
 
 const ipLockMessage = "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해 주세요.";
 
