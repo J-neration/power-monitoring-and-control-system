@@ -1,6 +1,7 @@
 # 허용 흐름:  인터넷 →443/80→ ALB →3000→ frontend →4000→ api →5432→ RDS
 #                              ALB →4000→ api (/ws, /receiver)
-# 아웃바운드 443은 ECR·Secrets Manager·CloudWatch·GuardDuty 에이전트와 장애 웹훅용(NAT 경유).
+# 아웃바운드 443은 ECR·Secrets Manager·CloudWatch·GuardDuty 에이전트와 장애 웹훅용(NAT 경유),
+# api의 587은 관리자 알림 메일(SMTP)용.
 
 resource "aws_security_group" "alb" {
   name        = "${local.name_prefix}-alb"
@@ -130,6 +131,16 @@ resource "aws_vpc_security_group_egress_rule" "api_https_out" {
   ip_protocol       = "tcp"
   from_port         = 443
   to_port           = 443
+}
+
+# 관리자 알림 메일(nodemailer, SMTP STARTTLS). 일반 SMTP 서비스든 Amazon SES의 SMTP 접속이든 587을 쓴다.
+resource "aws_vpc_security_group_egress_rule" "api_smtp_out" {
+  security_group_id = aws_security_group.api.id
+  description       = "Admin alert mail via SMTP submission (STARTTLS)"
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "tcp"
+  from_port         = 587
+  to_port           = 587
 }
 
 # db: 인바운드는 api 보안 그룹에서만, 아웃바운드 규칙은 없음

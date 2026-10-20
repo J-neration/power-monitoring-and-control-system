@@ -11,6 +11,9 @@ module "ecr" {
 # ── 시크릿 (값은 Terraform 밖에서 콘솔로 입력한다. 상태·코드에 남지 않게) ─────
 # pmcs-dev/api  : JSON {DATABASE_URL, MIGRATE_DATABASE_URL, RECEIVER_API_KEY, CRITICAL_FAULT_WEBHOOK_URL}
 # pmcs-dev/jwt  : JSON {JWT_SECRET}  (백엔드 JWT_SECRET = 프론트 AUTH_JWT_SECRET)
+# pmcs-dev/alert-mail : JSON {SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, ALERT_EMAIL_TO}
+#   관리자 알림 메일. 수신자 주소가 들어가므로 공개 저장소(코드)가 아니라 시크릿에 둔다.
+#   메일을 안 쓰면 모든 키를 빈 문자열로 둔다 — 백엔드가 발송을 건너뛴다.
 # 키가 하나라도 빠지면 태스크가 시작되지 않는다. 웹훅을 안 쓰면 빈 문자열로 둔다.
 
 resource "aws_secretsmanager_secret" "api" {
@@ -23,6 +26,13 @@ resource "aws_secretsmanager_secret" "api" {
 resource "aws_secretsmanager_secret" "jwt" {
   name                    = "${local.name_prefix}/jwt"
   description             = "JWT signing secret shared by the API (JWT_SECRET) and the frontend middleware (AUTH_JWT_SECRET)"
+  kms_key_id              = aws_kms_key.app.arn
+  recovery_window_in_days = 7
+}
+
+resource "aws_secretsmanager_secret" "alert_mail" {
+  name                    = "${local.name_prefix}/alert-mail"
+  description             = "Admin alert mail over SMTP: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, ALERT_EMAIL_TO"
   kms_key_id              = aws_kms_key.app.arn
   recovery_window_in_days = 7
 }
@@ -110,8 +120,18 @@ module "api" {
     RECEIVER_API_KEY           = "${aws_secretsmanager_secret.api.arn}:RECEIVER_API_KEY::"
     CRITICAL_FAULT_WEBHOOK_URL = "${aws_secretsmanager_secret.api.arn}:CRITICAL_FAULT_WEBHOOK_URL::"
     JWT_SECRET                 = "${aws_secretsmanager_secret.jwt.arn}:JWT_SECRET::"
+    SMTP_HOST                  = "${aws_secretsmanager_secret.alert_mail.arn}:SMTP_HOST::"
+    SMTP_PORT                  = "${aws_secretsmanager_secret.alert_mail.arn}:SMTP_PORT::"
+    SMTP_USER                  = "${aws_secretsmanager_secret.alert_mail.arn}:SMTP_USER::"
+    SMTP_PASS                  = "${aws_secretsmanager_secret.alert_mail.arn}:SMTP_PASS::"
+    SMTP_FROM                  = "${aws_secretsmanager_secret.alert_mail.arn}:SMTP_FROM::"
+    ALERT_EMAIL_TO             = "${aws_secretsmanager_secret.alert_mail.arn}:ALERT_EMAIL_TO::"
   }
-  secret_arns = [aws_secretsmanager_secret.api.arn, aws_secretsmanager_secret.jwt.arn]
+  secret_arns = [
+    aws_secretsmanager_secret.api.arn,
+    aws_secretsmanager_secret.jwt.arn,
+    aws_secretsmanager_secret.alert_mail.arn,
+  ]
   kms_key_arn = aws_kms_key.app.arn
 
   subnet_ids         = module.network.private_subnet_ids

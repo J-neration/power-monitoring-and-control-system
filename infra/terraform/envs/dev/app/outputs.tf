@@ -30,6 +30,10 @@ output "jwt_secret_arn" {
   value = aws_secretsmanager_secret.jwt.arn
 }
 
+output "alert_mail_secret_arn" {
+  value = aws_secretsmanager_secret.alert_mail.arn
+}
+
 output "ecs_cluster_name" {
   value = aws_ecs_cluster.this.name
 }
