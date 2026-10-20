@@ -56,6 +56,8 @@ type Props = {
   hours: number;
   model?: string;
   faults?: FaultEvent[];
+  /** 이력 점에 totalCapacity가 없을 때 쓰는 설비용량 */
+  facilityTotal?: number | null;
 };
 
 export default function DeviceHistoryCharts({
@@ -63,6 +65,7 @@ export default function DeviceHistoryCharts({
   hours,
   model,
   faults = [],
+  facilityTotal = null,
 }: Props) {
   const [subTab, setSubTab] = useState<SubTab>("pf");
 
@@ -88,12 +91,17 @@ export default function DeviceHistoryCharts({
         v != null ? Math.round(v * 10) / 10 : null;
 
       const rows = readings.map((r) => {
-        const totalCap = r.totalCapacity ?? null;
+        const reportedTotal = r.totalCapacity ?? null;
+        const totalCap =
+          reportedTotal != null && reportedTotal > 0
+            ? reportedTotal
+            : facilityTotal != null && facilityTotal > 0
+              ? facilityTotal
+              : null;
         const opCap = r.operatingCapacity ?? null;
         const rpCap = r.reactivePowerCapacity ?? null;
         const margin =
-          r.availableMargin ??
-          (totalCap != null && opCap != null ? totalCap - opCap : null);
+          totalCap != null && opCap != null ? totalCap - opCap : null;
 
         const row: Record<string, unknown> = {
           time: fmtChartTime(r.recordedAt),
@@ -152,7 +160,7 @@ export default function DeviceHistoryCharts({
         maxFans: maxFan,
         hasCapData: cap,
       };
-    }, [readings]);
+    }, [facilityTotal, readings]);
 
   const dataDateLabel = formatDataDateRangeLabel(readings);
 

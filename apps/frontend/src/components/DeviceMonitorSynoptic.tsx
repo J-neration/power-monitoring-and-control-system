@@ -20,18 +20,12 @@ function hasCapTelemetry(device: DeviceWithInstallation) {
 function CapacityMini({ device }: { device: DeviceWithInstallation }) {
   const capUnit = device.model === "paf" ? "A" : "kvar";
   const moduleSum = sumModuleCapacity(device.moduleCapacity, capUnit);
-  const reportedTotal = device.totalCapacity;
-  const usingModuleSum = !(reportedTotal != null && reportedTotal > 0);
-  const totalCap = facilityCapacity(reportedTotal, moduleSum);
+  const totalCap = facilityCapacity(device.totalCapacity, moduleSum);
   const capOk = hasCapTelemetry(device) || totalCap != null;
   const opCap = device.operatingCapacity ?? null;
   const rpCap = device.reactivePowerCapacity ?? null;
-  const margin = usingModuleSum
-    ? totalCap != null && opCap != null
-      ? totalCap - opCap
-      : null
-    : (device.availableMargin ??
-      (totalCap != null && opCap != null ? totalCap - opCap : null));
+  const margin =
+    totalCap != null && opCap != null ? totalCap - opCap : null;
 
   if (!capOk || totalCap == null || totalCap <= 0) {
     return (
