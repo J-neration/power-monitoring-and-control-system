@@ -153,8 +153,9 @@ module "api" {
 }
 
 # 마이그레이션 전용 작업 정의 (서비스 없음). 배포 때 run-task로 한 번 실행한다.
-# MIGRATE_DATABASE_URL은 스키마 변경 권한이 있는 계정으로, sslmode=verify-full과
-# sslrootcert(위 CA 파일)를 넣는다 — Prisma 마이그레이션 엔진은 DATABASE_SSL_CA_FILE을 읽지 않는다.
+# MIGRATE_DATABASE_URL은 스키마 소유 계정(pmcs_migrator)으로, Prisma 마이그레이션 엔진의 검증 옵션
+# sslmode=require&sslcert=<위 CA 파일>&sslaccept=strict 를 붙인다(scripts/aws-migrate/setup-db-roles.sh 가 만든다).
+# 이 엔진은 DATABASE_SSL_CA_FILE을 읽지 않고, sslmode=verify-full·sslrootcert 는 무시해 검증이 되지 않는다.
 module "api_migrate" {
   source = "../../../modules/ecs-service"
 
@@ -176,6 +177,31 @@ module "api_migrate" {
   }
   secret_arns = [aws_secretsmanager_secret.api.arn]
   kms_key_arn = aws_kms_key.app.arn
+
+  log_retention_days = local.log_retention_days
+}
+
+# RDS 터널 전용 작업 정의 (서비스 없음). scripts/aws-migrate/open-db-tunnel.sh 가 run-task 로 띄우고
+# SSM 포트 포워딩으로 이 Mac → RDS 를 잇는다. 시크릿을 받지 않으며 1시간 뒤 스스로 끝난다.
+# api 보안 그룹으로 실행되므로 RDS 5432 에만 닿는다.
+module "db_tunnel" {
+  source = "../../../modules/ecs-service"
+
+  name_prefix      = local.name_prefix
+  name             = "db-tunnel"
+  cluster_arn      = aws_ecs_cluster.this.arn
+  image            = local.api_image
+  cpu              = 256
+  memory           = 512
+  cpu_architecture = local.cpu_architecture
+  create_service   = false
+  command          = ["sleep", "3600"]
+
+  kms_key_arn = aws_kms_key.app.arn
+
+  enable_execute_command        = true
+  execute_command_log_group_arn = aws_cloudwatch_log_group.ecs_exec.arn
+  execute_command_kms_key_arn   = aws_kms_key.app.arn
 
   log_retention_days = local.log_retention_days
 }
