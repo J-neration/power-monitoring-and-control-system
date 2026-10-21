@@ -1,5 +1,4 @@
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../../prisma/generated/client/client.js";
+import { prisma } from "./prisma.js";
 
 /**
  * DB-backed admin remote window (`Installation.adminSessionActive`).
@@ -15,13 +14,6 @@ import { PrismaClient } from "../../prisma/generated/client/client.js";
 /** Window must cover one telemetry cycle (~10 min) plus a few polls. */
 export const REMOTE_WINDOW_MS =
   Number(process.env.REMOTE_WINDOW_SECONDS ?? 900) * 1000;
-
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({
-    connectionString:
-      process.env.DATABASE_URL ?? "postgresql://pmcs:pmcs@localhost:5432/pmcs",
-  }),
-});
 
 /** Open (or extend) the remote window from now. Returns when it closes. */
 export async function openRemoteWindow(

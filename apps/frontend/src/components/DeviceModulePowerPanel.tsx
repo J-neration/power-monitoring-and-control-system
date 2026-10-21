@@ -7,6 +7,7 @@ import {
   moduleTelemetrySuggestsOn,
 } from "../lib/moduleStatus";
 import { useWsEvents } from "../hooks/useWsEvents";
+import { displayModuleCapacity } from "../lib/ratedKvar";
 
 const MODULE_SLOT_COUNT = 6;
 // Command TTL (900s) + margin: the first command waits for the next telemetry (~10 min).
@@ -231,7 +232,11 @@ export default function DeviceModulePowerPanel({
             const code = moduleStatus?.[i];
             const telemetryOn = moduleTelemetrySuggestsOn(code);
             const slotActive = i < activeSlots;
-            const cap = moduleCapacity?.[i];
+            const rawCap = moduleCapacity?.[i];
+            const cap =
+              rawCap != null && Number.isFinite(rawCap)
+                ? displayModuleCapacity(rawCap, capUnit)
+                : null;
             const switchClass = telemetryOn
               ? "module-power-switch module-power-switch--telemetry-on"
               : "module-power-switch module-power-switch--telemetry-off";

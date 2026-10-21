@@ -16,6 +16,7 @@ import DeviceSideIdentity from "./DeviceSideIdentity";
 import type { DeviceWithInstallation } from "../types/site";
 import type { TelemetryReading } from "../types/site";
 import type { FaultEvent } from "../lib/api";
+import { facilityCapacity, sumModuleCapacity } from "../lib/ratedKvar";
 import {
   DEMO_HISTORY_INSTALLATION_ID,
   buildDemoHistoryReadings,
@@ -223,6 +224,13 @@ export default function DeviceDetailTabs({
           hours={hours}
           model={device.model}
           faults={faults}
+          facilityTotal={facilityCapacity(
+            device.totalCapacity,
+            sumModuleCapacity(
+              device.moduleCapacity,
+              device.model === "paf" ? "A" : "kvar",
+            ),
+          )}
         />
       )}
 

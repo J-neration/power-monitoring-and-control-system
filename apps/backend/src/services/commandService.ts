@@ -1,5 +1,4 @@
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient, type Prisma } from "../../prisma/generated/client/client.js";
+import { type Prisma } from "../../prisma/generated/client/client.js";
 import type {
   DeviceCommand,
   DeviceCommandPower,
@@ -12,13 +11,7 @@ import {
   resolveModuleTypeForSetBasic,
   SETTINGS_READONLY_KEYS,
 } from "../lib/deviceSettingsKeys.js";
-
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({
-    connectionString:
-      process.env.DATABASE_URL ?? "postgresql://pmcs:pmcs@localhost:5432/pmcs",
-  }),
-});
+import { prisma } from "../lib/prisma.js";
 
 export const NO_COMMAND = { id: "", module: -1, power: "" } as const;
 
