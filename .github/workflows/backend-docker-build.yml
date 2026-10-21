@@ -90,9 +90,10 @@ jobs:
 
   # AWS ECS 로 옮길 프론트엔드 컨테이너 이미지. 지금 운영(Netlify)과는 무관하며,
   # 전환 전까지 이미지가 깨지지 않았는지만 확인한다.
+  # ECS Fargate 가 ARM64(Graviton)라 ARM 러너에서 빌드한다 (공개 저장소는 무료).
   frontend-image:
     name: docker build (AWS 프론트엔드)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
 
@@ -106,6 +107,25 @@ jobs:
           push: false
           cache-from: type=gha,scope=frontend-image
           cache-to: type=gha,mode=max,scope=frontend-image
+
+  # AWS ECS 용 백엔드 이미지 (apps/backend/Dockerfile). Railway 는 루트 Dockerfile 을 쓰므로
+  # 운영과는 무관하며, 전환 전까지 이미지가 깨지지 않았는지만 확인한다.
+  backend-image:
+    name: docker build (AWS 백엔드)
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          push: false
+          cache-from: type=gha,scope=backend-image
+          cache-to: type=gha,mode=max,scope=backend-image
 
   build:
     name: docker build (Railway와 동일)
