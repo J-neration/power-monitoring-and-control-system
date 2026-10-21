@@ -89,6 +89,13 @@ function kstYear(input = new Date()): number {
   return new Date(input.getTime() + 9 * 60 * 60 * 1000).getUTCFullYear();
 }
 
+function todayStartLocal(input = new Date()): string {
+  const year = input.getFullYear();
+  const month = String(input.getMonth() + 1).padStart(2, "0");
+  const day = String(input.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}T00:00`;
+}
+
 function axisTime(iso: string, resolution: Resolution, spansYears: boolean): string {
   if (resolution === "daily") {
     return spansYears ? formatKstShortDate(iso) : formatKstMonthDay(iso);
@@ -195,10 +202,13 @@ export default function DeviceHistoryCharts({
   const aggLabel = AGGS.find((item) => item.key === activeAgg)?.label ?? "평균";
   const resLabel = resolution === "raw" ? "10분" : resolution === "hourly" ? "1시간" : "1일";
   const periodLabel = PERIODS.find((item) => item.key === period)?.label ?? "일간";
+  const rangeLabel = `${resLabel}${resolution === "raw" ? "" : ` ${aggLabel}`}`;
   const hoursLabel =
     resolution === "raw" && period === "day" && !start
-      ? `최근 ${hours}시간`
-      : `${periodLabel} · ${resLabel}${resolution === "raw" ? "" : ` ${aggLabel}`}`;
+      ? `최근 ${hours}시간 · 10분`
+      : period === "day"
+        ? `${periodLabel} · ${rangeLabel}`
+        : rangeLabel;
 
   const chartReadings = demoDay ? readings : remote?.points ?? (period === "day" && !start ? readings : []);
   const spansYears = useMemo(() => {
@@ -332,10 +342,10 @@ export default function DeviceHistoryCharts({
   const dataDateLabel = formatDataDateRangeLabel(chartReadings);
   const coverageLabel =
     remote && remote.coverage != null && !demoDay
-      ? `수집률 ${Math.round(remote.coverage * 100)}%`
+      ? `수집률 ${Math.min(100, Math.round(remote.coverage * 100))}%`
       : "";
   const gapLabel = remote && remote.gapCount > 0 ? `누락 ${remote.gapCount}` : "";
-  const yearForMonths = /^\d{4}$/.test(start) ? Number(start) : kstYear();
+  const todayStart = todayStartLocal();
 
   const rangeBar = (
     <div className="history-range-bar">
@@ -384,13 +394,33 @@ export default function DeviceHistoryCharts({
         </div>
       ) : null}
       {period === "day" ? (
-        <input
-          className="history-range-input"
-          type="datetime-local"
-          aria-label="일간 시작 시각"
-          value={start}
-          onChange={(event) => setStart(event.target.value)}
-        />
+        <>
+          <input
+            className="history-range-input"
+            type="datetime-local"
+            aria-label="일간 시작 시각"
+            value={start}
+            onChange={(event) => setStart(event.target.value)}
+          />
+          <div className="monitor-view-chips" role="group" aria-label="일간 범위">
+            <button
+              type="button"
+              className={`monitor-view-chip${!start ? " active" : ""}`}
+              aria-pressed={!start}
+              onClick={() => setStart("")}
+            >
+              최근 24시간
+            </button>
+            <button
+              type="button"
+              className={`monitor-view-chip${start === todayStart ? " active" : ""}`}
+              aria-pressed={start === todayStart}
+              onClick={() => setStart(todayStart)}
+            >
+              오늘
+            </button>
+          </div>
+        </>
       ) : null}
       {period === "week" ? (
         <input
@@ -421,25 +451,6 @@ export default function DeviceHistoryCharts({
           value={start}
           onChange={(event) => setStart(event.target.value)}
         />
-      ) : null}
-      {period === "year" ? (
-        <div className="monitor-view-chips history-month-chips">
-          {Array.from({ length: 12 }, (_, index) => (
-            <button
-              key={index + 1}
-              type="button"
-              className="monitor-view-chip"
-              onClick={() => {
-                setPeriod("month");
-                setStart(
-                  `${yearForMonths}-${String(index + 1).padStart(2, "0")}`,
-                );
-              }}
-            >
-              {index + 1}월
-            </button>
-          ))}
-        </div>
       ) : null}
     </div>
   );
@@ -521,7 +532,7 @@ export default function DeviceHistoryCharts({
       <div className="device-history-body device-charts-grid">
         {subTab === "power" && (
           <>
-            <ChartCard title="S (kVA)" subtitle="— 보상 전 / 후" wide>
+            <ChartCard title="S (kVA)" subtitle={`— 보상 전 / 후 · ${hoursLabel}`} wide>
               <HistoryAreaChart
                 data={data}
                 grads={[
@@ -533,7 +544,7 @@ export default function DeviceHistoryCharts({
                 faults={faults}
               />
             </ChartCard>
-            <ChartCard title="P (kW)" subtitle="— 보상 전 / 후" wide>
+            <ChartCard title="P (kW)" subtitle={`— 보상 전 / 후 · ${hoursLabel}`} wide>
               <HistoryAreaChart
                 data={data}
                 grads={[
@@ -545,7 +556,7 @@ export default function DeviceHistoryCharts({
                 faults={faults}
               />
             </ChartCard>
-            <ChartCard title="Q (kvar)" subtitle="— 보상 전 / 후" wide>
+            <ChartCard title="Q (kvar)" subtitle={`— 보상 전 / 후 · ${hoursLabel}`} wide>
               <HistoryAreaChart
                 data={data}
                 grads={[
@@ -557,7 +568,7 @@ export default function DeviceHistoryCharts({
                 faults={faults}
               />
             </ChartCard>
-            <ChartCard title="H (kvar)" subtitle="— 보상 전 / 후" wide>
+            <ChartCard title="H (kvar)" subtitle={`— 보상 전 / 후 · ${hoursLabel}`} wide>
               <HistoryAreaChart
                 data={data}
                 grads={[

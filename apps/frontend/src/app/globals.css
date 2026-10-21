@@ -9414,6 +9414,97 @@ body.pmcs-control-room .global-header:hover {
 
   .hmi-compare-head {
     flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .hmi-compare-flow,
+  .hmi-compare-bus {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .hmi-compare-bus {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hmi-compare-bus-phases {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .hmi-compare-bus-phase {
+    min-width: 0;
+    justify-content: center;
+    padding: 4px 4px;
+    gap: 4px;
+  }
+
+  .hmi-compare-stack {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    gap: 14px;
+  }
+
+  .hmi-compare-bays {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 8px;
+  }
+
+  .hmi-compare-bay {
+    overflow: visible;
+    padding: 10px 12px 12px;
+  }
+
+  .hmi-compare-spine {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .hmi-delta-head {
+    flex: 1 0 100%;
+    text-align: left;
+  }
+
+  .hmi-delta-cell {
+    flex: 1 1 calc(25% - 6px);
+    min-width: 68px;
+    padding: 6px 4px;
+  }
+
+  .hmi-compare-cols,
+  .hmi-compare-row {
+    grid-template-columns: minmax(76px, 1.15fr) repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .hmi-compare-row .metric-value,
+  .hmi-compare-sum-cell .metric-value {
+    font-size: 16px;
+  }
+
+  .hmi-compare-tag {
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+
+  .hmi-compare-sum {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hmi-power-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hmi-power-cell-val .metric-value {
+    font-size: 18px;
   }
 
   .hmi-rail {
@@ -9626,12 +9717,16 @@ body.pmcs-control-room .global-header:hover {
 
   .hmi-compare-cols,
   .hmi-compare-row {
-    grid-template-columns: minmax(48px, 0.8fr) repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(68px, 1.1fr) repeat(3, minmax(0, 1fr));
     gap: 4px;
   }
 
   .hmi-compare-row .metric-value {
-    font-size: 12px;
+    font-size: 14px;
+  }
+
+  .hmi-delta-cell {
+    flex-basis: calc(50% - 6px);
   }
 
   .hmi-compare-metric-unit {
@@ -9743,14 +9838,6 @@ body.pmcs-control-room .global-header:hover {
   cursor: default;
 }
 
-.history-month-chips {
-  height: auto;
-  flex-wrap: wrap;
-}
-
-.history-month-chips .monitor-view-chip {
-  height: 28px;
-}
 .history-energy-note {
   margin: 0 0 8px;
   font-size: 12px;
@@ -12084,6 +12171,10 @@ body.pmcs-control-room .global-header:hover {
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+.history-area-chart .recharts-surface {
+  overflow: visible;
 }
 
 .history-chart-legend {

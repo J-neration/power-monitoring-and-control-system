@@ -260,7 +260,8 @@ export function estimateEnergy(
 
 function coverageOf(sampleCount: number, expectedCount: number): number {
   if (expectedCount <= 0) return 0;
-  return sampleCount / expectedCount;
+  // 공칭 간격보다 자주 들어오면 건수가 기대치를 넘는다. 수집률은 100%가 상한이다.
+  return Math.min(1, sampleCount / expectedCount);
 }
 
 export function aggregateSamples(
