@@ -1,0 +1,24 @@
+# apps/backend/Dockerfile 전용 (빌드 컨텍스트 = 저장소 루트)
+**/node_modules
+**/dist
+**/prisma/generated
+.git
+.github
+.vscode
+.claude
+.agents
+docs
+infra
+scripts
+*.md
+.DS_Store
+**/.DS_Store
+*.log
+
+# 프론트엔드 소스는 필요 없지만, 빌드 단계의 yarn 워크스페이스 설치에 package.json 은 있어야 한다.
+apps/frontend/**
+!apps/frontend/package.json
+
+# 시크릿이 이미지에 들어가는 것 방지
+**/.env
+**/.env.*
