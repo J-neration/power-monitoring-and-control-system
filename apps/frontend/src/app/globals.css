@@ -13001,6 +13001,7 @@ body.pmcs-control-room .global-header:hover {
   min-width: 148px;
   height: 36px;
   padding: 0 18px;
+  white-space: nowrap;
   border-radius: var(--pmcs-radius);
   border: 1px solid rgba(45, 212, 191, 0.55);
   background: rgba(45, 212, 191, 0.22);

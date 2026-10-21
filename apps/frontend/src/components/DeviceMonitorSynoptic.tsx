@@ -23,8 +23,7 @@ function CapacityMini({ device }: { device: DeviceWithInstallation }) {
   const opCap = device.operatingCapacity ?? null;
   const rpCap = device.reactivePowerCapacity ?? null;
   const margin =
-    device.availableMargin ??
-    (totalCap != null && opCap != null ? totalCap - opCap : null);
+    totalCap != null && opCap != null ? totalCap - opCap : null;
 
   if (!capOk || totalCap == null) {
     return (

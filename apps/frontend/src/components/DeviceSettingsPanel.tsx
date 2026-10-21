@@ -528,11 +528,12 @@ export default function DeviceSettingsPanel({
   };
 
   const commandLocked = busy || pendingCommandId !== null;
+  const moduleNo = (currentRow ? Number(currentRow.mod) : selectedMod) + 1;
   const saveLabel = busy
     ? "등록 중…"
     : pendingCommandId
       ? "HMI 응답 대기 중…"
-      : "변경 사항 적용";
+      : `모듈 ${moduleNo} 변경사항 적용`;
   const editableFields = fieldDefs.filter((f) => !f.readOnly);
   const useSlotPicker = hasVisibleModuleSlots(moduleStatus, numOfMods);
 

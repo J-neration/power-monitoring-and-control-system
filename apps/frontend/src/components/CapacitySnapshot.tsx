@@ -39,11 +39,7 @@ export default function CapacitySnapshot({
   const totalCap = device.totalCapacity ?? device.capacity ?? null;
   const opCap = device.operatingCapacity ?? null;
   const headroom =
-    device.availableMargin != null
-      ? roundPct(device.availableMargin)
-      : totalCap != null && opCap != null
-        ? roundPct(totalCap - opCap)
-        : null;
+    totalCap != null && opCap != null ? roundPct(totalCap - opCap) : null;
   const isShort = headroom != null && headroom < 0;
   const headroomAbs = headroom != null ? Math.abs(headroom) : null;
   const opPct = totalCap != null ? pctOf(opCap, totalCap) : null;
