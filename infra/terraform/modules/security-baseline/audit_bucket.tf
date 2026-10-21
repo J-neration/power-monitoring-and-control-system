@@ -1,5 +1,6 @@
-# CloudTrail·Config 기록을 모으는 감사 로그 버킷.
+# CloudTrail 기록을 모으는 감사 로그 버킷.
 # Object Lock(거버넌스 모드)으로 잠긴 기간에는 관리자도 기록을 지우거나 덮어쓸 수 없다.
+# AWS Config는 기본 보존 기간이 걸린 버킷에 쓸 수 없어 config_bucket.tf의 별도 버킷을 쓴다.
 
 resource "aws_s3_bucket" "audit" {
   bucket              = "${var.name_prefix}-audit-logs-${local.account_id}"
@@ -129,41 +130,6 @@ data "aws_iam_policy_document" "audit_bucket" {
       test     = "StringEquals"
       variable = "aws:SourceArn"
       values   = [local.trail_arn]
-    }
-  }
-
-  statement {
-    sid       = "ConfigBucketCheck"
-    actions   = ["s3:GetBucketAcl", "s3:ListBucket"]
-    resources = [aws_s3_bucket.audit.arn]
-    principals {
-      type        = "Service"
-      identifiers = ["config.amazonaws.com"]
-    }
-    condition {
-      test     = "StringEquals"
-      variable = "aws:SourceAccount"
-      values   = [local.account_id]
-    }
-  }
-
-  statement {
-    sid       = "ConfigWrite"
-    actions   = ["s3:PutObject"]
-    resources = ["${aws_s3_bucket.audit.arn}/config/AWSLogs/${local.account_id}/Config/*"]
-    principals {
-      type        = "Service"
-      identifiers = ["config.amazonaws.com"]
-    }
-    condition {
-      test     = "StringEquals"
-      variable = "s3:x-amz-acl"
-      values   = ["bucket-owner-full-control"]
-    }
-    condition {
-      test     = "StringEquals"
-      variable = "aws:SourceAccount"
-      values   = [local.account_id]
     }
   }
 }

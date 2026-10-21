@@ -1,4 +1,4 @@
-# Security Hub 점검의 근거가 되는 리소스 구성 기록. 기록은 감사 로그 버킷의 config/ 아래로 간다.
+# Security Hub 점검의 근거가 되는 리소스 구성 기록. 기록은 Config 전용 버킷(config_bucket.tf)으로 간다.
 
 resource "aws_iam_service_linked_role" "config" {
   count            = var.create_config_service_linked_role ? 1 : 0
@@ -23,8 +23,7 @@ resource "aws_config_configuration_recorder" "this" {
 
 resource "aws_config_delivery_channel" "this" {
   name           = "${var.name_prefix}-delivery"
-  s3_bucket_name = aws_s3_bucket.audit.id
-  s3_key_prefix  = "config"
+  s3_bucket_name = aws_s3_bucket.config.id
   s3_kms_key_arn = aws_kms_key.security.arn
 
   snapshot_delivery_properties {
@@ -33,7 +32,8 @@ resource "aws_config_delivery_channel" "this" {
 
   depends_on = [
     aws_config_configuration_recorder.this,
-    aws_s3_bucket_policy.audit,
+    aws_s3_bucket_policy.config,
+    aws_s3_bucket_server_side_encryption_configuration.config,
   ]
 }
 
