@@ -13,6 +13,9 @@ module "security" {
   alert_emails        = local.alert_emails
 
   create_config_service_linked_role = var.create_config_service_linked_role
+
+  # dev DB에는 Neon dev 테스트 데이터만 있다. 로그인 이상 탐지는 유지한다.
+  enable_rds_data_monitoring = false
 }
 
 variable "enable_cis_standard" {
