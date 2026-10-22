@@ -27,7 +27,10 @@ DB_IDENTIFIER="$NAME_PREFIX-db"
 DB_NAME="${DB_NAME:-pmcs}"
 APP_ROLE=pmcs_app
 MIGRATOR_ROLE=pmcs_migrator
+# 사람이 데이터를 둘러볼 때 쓰는 조회 전용 계정 (setup-readonly-role.sh)
+READONLY_ROLE=pmcs_readonly
 API_SECRET_ID="$NAME_PREFIX/api"
+READONLY_SECRET_ID="$NAME_PREFIX/db-readonly"
 # ECS 이미지 안의 RDS CA 번들 경로 (apps/backend/Dockerfile)
 IMAGE_RDS_CA=/app/apps/backend/certs/rds-global-bundle.pem
 # Prisma 마이그레이션 엔진은 sslcert 파일의 "첫 번째" 인증서만 읽는다. 전체 묶음(첫 인증서가 sa-east-1)을
