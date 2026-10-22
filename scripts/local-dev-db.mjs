@@ -122,10 +122,21 @@ const containerName = aws(["ecs", "describe-task-definition", "--task-definition
 let taskArn = null;
 let session = null;
 let cleanedUp = false;
+// aws ssm start-session 은 session-manager-plugin 을 자식으로 띄운다. aws 만 끄면 plugin 이 남아 포트를 계속 잡으므로
+// 자식까지 함께 끈다 (Windows: taskkill /T, Mac·Linux: pkill -P 로 자식 먼저).
+const stopSession = () => {
+  if (!session || session.exitCode !== null || session.signalCode !== null) return;
+  if (process.platform === "win32") {
+    spawnSync("taskkill", ["/PID", String(session.pid), "/T", "/F"], { stdio: "ignore", windowsHide: true });
+    return;
+  }
+  spawnSync("pkill", ["-TERM", "-P", String(session.pid)], { stdio: "ignore" });
+  session.kill("SIGTERM");
+};
 const cleanup = () => {
   if (cleanedUp) return;
   cleanedUp = true;
-  if (session && session.exitCode === null) session.kill();
+  stopSession();
   if (taskArn) {
     aws(["ecs", "stop-task", "--cluster", NAME_PREFIX, "--task", taskArn, "--reason", "dev:aws-db closed"], { quiet: true });
     log("터널 태스크를 종료했습니다.");
@@ -137,7 +148,8 @@ const cleanup = () => {
 };
 process.on("exit", cleanup);
 for (const signal of ["SIGINT", "SIGTERM", "SIGHUP", "SIGBREAK"]) {
-  process.on(signal, () => process.exit(130));
+  // 사용자가 닫는 것은 정상 종료다. 0 으로 끝내야 yarn 이 오류 메시지를 띄우지 않는다.
+  process.on(signal, () => process.exit(0));
 }
 
 // ── env 파일 ──────────────────────────────────────────────────────
@@ -218,6 +230,7 @@ session = spawn(
   { stdio: "inherit", windowsHide: true },
 );
 session.on("exit", (code) => {
+  if (cleanedUp) return;
   log(code === 0 ? "터널 세션이 끝났습니다." : `터널 세션이 끊겼습니다 (코드 ${code}). 다시 열려면 yarn dev:aws-db`);
   process.exit(code ?? 0);
 });
