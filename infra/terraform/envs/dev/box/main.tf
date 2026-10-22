@@ -81,9 +81,10 @@ resource "aws_security_group" "box" {
   tags        = { Name = local.name }
 }
 
+# 규칙 설명에는 작은따옴표를 쓸 수 없다(AWS API 가 거부).
 resource "aws_vpc_security_group_ingress_rule" "http" {
   security_group_id = aws_security_group.box.id
-  description       = "Let's Encrypt HTTP-01 and redirect to HTTPS"
+  description       = "Lets Encrypt HTTP-01 and redirect to HTTPS"
   ip_protocol       = "tcp"
   from_port         = 80
   to_port           = 80
@@ -101,7 +102,7 @@ resource "aws_vpc_security_group_ingress_rule" "https" {
 
 resource "aws_vpc_security_group_egress_rule" "all" {
   security_group_id = aws_security_group.box.id
-  description       = "ECR, SSM, S3, CloudWatch, Let's Encrypt, SMTP"
+  description       = "ECR, SSM, S3, CloudWatch, Lets Encrypt, SMTP"
   ip_protocol       = "-1"
   cidr_ipv4         = "0.0.0.0/0"
 }
