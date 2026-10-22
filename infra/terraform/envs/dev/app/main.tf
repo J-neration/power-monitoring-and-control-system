@@ -57,16 +57,24 @@ data "aws_iam_policy_document" "app_key" {
   }
 }
 
-resource "aws_kms_key" "app" {
-  description             = "${local.name_prefix} application data (RDS, secrets, ECR, logs)"
-  enable_key_rotation     = true
-  deletion_window_in_days = 30
-  policy                  = data.aws_iam_policy_document.app_key.json
+# 이 키와 ECR 저장소는 dev 서버 1대형(envs/dev/box)으로 넘겼다(2026-10-23). 이미지가 이 키로
+# 암호화돼 있어 ECS dev 를 지워도 남아야 한다. 이 루트는 이제 참조만 한다.
+data "aws_kms_key" "app" {
+  key_id = "alias/${local.name_prefix}-app"
 }
 
-resource "aws_kms_alias" "app" {
-  name          = "alias/${local.name_prefix}-app"
-  target_key_id = aws_kms_key.app.key_id
+removed {
+  from = aws_kms_key.app
+  lifecycle {
+    destroy = false
+  }
+}
+
+removed {
+  from = aws_kms_alias.app
+  lifecycle {
+    destroy = false
+  }
 }
 
 # ── 네트워크 ────────────────────────────────────────────────────────
@@ -82,5 +90,5 @@ module "network" {
   # dev 비용 절감(2026-10-22 결정): NAT 없이 ECS 태스크를 공개 서브넷에 두고 공인 IP로 밖에 나간다.
   # 들어오는 연결은 보안 그룹이 ALB에서 오는 것만 허용한다. prod는 비공개 서브넷 + NAT.
   enable_nat_gateway = false
-  kms_key_arn        = aws_kms_key.app.arn
+  kms_key_arn        = data.aws_kms_key.app.arn
 }

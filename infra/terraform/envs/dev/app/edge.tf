@@ -9,8 +9,11 @@ module "edge" {
   api_hostname          = var.api_hostname
   frontend_port         = local.frontend_port
   api_port              = local.api_port
-  kms_key_arn           = aws_kms_key.app.arn
+  kms_key_arn           = data.aws_kms_key.app.arn
 
   # dev 비용 절감(2026-10-22 결정): WAF는 prod에만 둔다. api 도메인은 ALB 규칙으로 /receiver만 서버에 닿는다.
   enable_waf = false
+
+  # ECS dev 를 없애기 위해 삭제 방지를 끈다(2026-10-23, 서버 1대형으로 전환).
+  deletion_protection = false
 }

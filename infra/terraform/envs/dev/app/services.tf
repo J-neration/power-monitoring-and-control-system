@@ -1,11 +1,16 @@
 # ── 이미지 저장소 ───────────────────────────────────────────────────
 
-module "ecr" {
-  source = "../../../modules/ecr"
+# 저장소는 envs/dev/box 로 넘겼다(2026-10-23). 이 루트는 참조만 한다.
+removed {
+  from = module.ecr
+  lifecycle {
+    destroy = false
+  }
+}
 
-  name_prefix  = local.name_prefix
-  repositories = ["api", "frontend"]
-  kms_key_arn  = aws_kms_key.app.arn
+data "aws_ecr_repository" "this" {
+  for_each = toset(["api", "frontend"])
+  name     = "${local.name_prefix}/${each.key}"
 }
 
 # ── 시크릿 (값은 Terraform 밖에서 콘솔로 입력한다. 상태·코드에 남지 않게) ─────
@@ -19,14 +24,14 @@ module "ecr" {
 resource "aws_secretsmanager_secret" "api" {
   name                    = "${local.name_prefix}/api"
   description             = "API runtime secrets: DATABASE_URL, MIGRATE_DATABASE_URL, RECEIVER_API_KEY, CRITICAL_FAULT_WEBHOOK_URL"
-  kms_key_id              = aws_kms_key.app.arn
+  kms_key_id              = data.aws_kms_key.app.arn
   recovery_window_in_days = 7
 }
 
 resource "aws_secretsmanager_secret" "jwt" {
   name                    = "${local.name_prefix}/jwt"
   description             = "JWT signing secret shared by the API (JWT_SECRET) and the frontend middleware (AUTH_JWT_SECRET)"
-  kms_key_id              = aws_kms_key.app.arn
+  kms_key_id              = data.aws_kms_key.app.arn
   recovery_window_in_days = 7
 }
 
@@ -34,7 +39,7 @@ resource "aws_secretsmanager_secret" "jwt" {
 resource "aws_secretsmanager_secret" "db_readonly" {
   name                    = "${local.name_prefix}/db-readonly"
   description             = "Read-only DB login for people browsing data over the SSM tunnel: username, password, dbname"
-  kms_key_id              = aws_kms_key.app.arn
+  kms_key_id              = data.aws_kms_key.app.arn
   recovery_window_in_days = 7
 }
 
@@ -43,14 +48,14 @@ resource "aws_secretsmanager_secret" "db_readonly" {
 resource "aws_secretsmanager_secret" "db_local" {
   name                    = "${local.name_prefix}/db-local"
   description             = "DB login for local development (yarn dev) over the SSM tunnel: username, password, dbname"
-  kms_key_id              = aws_kms_key.app.arn
+  kms_key_id              = data.aws_kms_key.app.arn
   recovery_window_in_days = 7
 }
 
 resource "aws_secretsmanager_secret" "alert_mail" {
   name                    = "${local.name_prefix}/alert-mail"
   description             = "Admin alert mail over SMTP: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, ALERT_EMAIL_TO"
-  kms_key_id              = aws_kms_key.app.arn
+  kms_key_id              = data.aws_kms_key.app.arn
   recovery_window_in_days = 7
 }
 
@@ -64,7 +69,7 @@ resource "aws_service_discovery_http_namespace" "this" {
 resource "aws_cloudwatch_log_group" "ecs_exec" {
   name              = "/ecs/${local.name_prefix}/exec-sessions"
   retention_in_days = 90
-  kms_key_id        = aws_kms_key.app.arn
+  kms_key_id        = data.aws_kms_key.app.arn
 }
 
 resource "aws_ecs_cluster" "this" {
@@ -80,7 +85,7 @@ resource "aws_ecs_cluster" "this" {
   # ECS Exec 세션은 KMS로 암호화하고, 입력한 명령과 출력을 로그로 남긴다.
   configuration {
     execute_command_configuration {
-      kms_key_id = aws_kms_key.app.arn
+      kms_key_id = data.aws_kms_key.app.arn
       logging    = "OVERRIDE"
 
       log_configuration {
@@ -120,7 +125,7 @@ locals {
 # ── API ─────────────────────────────────────────────────────────────
 
 locals {
-  api_image = "${module.ecr.repository_urls["api"]}:${var.api_image_tag}"
+  api_image = "${data.aws_ecr_repository.this["api"].repository_url}:${var.api_image_tag}"
 
   # 도메인이 정해지기 전에는 CORS 허용 목록에 쓸 실제 주소가 없다. 브라우저는 BFF(같은 출처)로만
   # API를 부르므로 동작에는 영향이 없고, 도메인이 정해지면 실제 app 주소로 바뀐다.
@@ -173,7 +178,7 @@ module "api" {
     aws_secretsmanager_secret.jwt.arn,
     aws_secretsmanager_secret.alert_mail.arn,
   ]
-  kms_key_arn = aws_kms_key.app.arn
+  kms_key_arn = data.aws_kms_key.app.arn
 
   subnet_ids         = local.task_subnet_ids
   assign_public_ip   = local.task_assign_public_ip
@@ -190,7 +195,7 @@ module "api" {
 
   enable_execute_command        = true
   execute_command_log_group_arn = aws_cloudwatch_log_group.ecs_exec.arn
-  execute_command_kms_key_arn   = aws_kms_key.app.arn
+  execute_command_kms_key_arn   = data.aws_kms_key.app.arn
 
   log_retention_days = local.log_retention_days
 }
@@ -220,7 +225,7 @@ module "api_migrate" {
     DATABASE_URL = "${aws_secretsmanager_secret.api.arn}:MIGRATE_DATABASE_URL::"
   }
   secret_arns = [aws_secretsmanager_secret.api.arn]
-  kms_key_arn = aws_kms_key.app.arn
+  kms_key_arn = data.aws_kms_key.app.arn
 
   log_retention_days = local.log_retention_days
 }
@@ -241,11 +246,11 @@ module "db_tunnel" {
   create_service   = false
   command          = ["sleep", "3600"]
 
-  kms_key_arn = aws_kms_key.app.arn
+  kms_key_arn = data.aws_kms_key.app.arn
 
   enable_execute_command        = true
   execute_command_log_group_arn = aws_cloudwatch_log_group.ecs_exec.arn
-  execute_command_kms_key_arn   = aws_kms_key.app.arn
+  execute_command_kms_key_arn   = data.aws_kms_key.app.arn
 
   log_retention_days = local.log_retention_days
 }
@@ -258,7 +263,7 @@ module "frontend" {
   name_prefix = local.name_prefix
   name        = "frontend"
   cluster_arn = local.service_cluster_arn
-  image       = "${module.ecr.repository_urls["frontend"]}:${var.frontend_image_tag}"
+  image       = "${data.aws_ecr_repository.this["frontend"].repository_url}:${var.frontend_image_tag}"
   cpu         = 512
   memory      = 1024
 
@@ -275,7 +280,7 @@ module "frontend" {
     AUTH_JWT_SECRET = "${aws_secretsmanager_secret.jwt.arn}:JWT_SECRET::"
   }
   secret_arns = [aws_secretsmanager_secret.jwt.arn]
-  kms_key_arn = aws_kms_key.app.arn
+  kms_key_arn = data.aws_kms_key.app.arn
 
   subnet_ids         = local.task_subnet_ids
   assign_public_ip   = local.task_assign_public_ip
