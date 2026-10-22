@@ -16,10 +16,12 @@ resource "aws_db_parameter_group" "this" {
   name_prefix = "${local.identifier}-pg16-"
   family      = "postgres16"
 
-  # SSL이 아닌 연결은 거부한다.
+  # SSL이 아닌 연결은 거부한다. PG16은 1이 기본값이라 AWS가 system·pending-reboot로 돌려주므로,
+  # 적용 방식을 맞춰 두지 않으면 plan마다 변경으로 나온다.
   parameter {
-    name  = "rds.force_ssl"
-    value = "1"
+    name         = "rds.force_ssl"
+    value        = "1"
+    apply_method = "pending-reboot"
   }
   parameter {
     name  = "log_connections"
