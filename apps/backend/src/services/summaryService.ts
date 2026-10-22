@@ -1,5 +1,5 @@
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Prisma, PrismaClient } from "../../prisma/generated/client/client.js";
+import { Prisma } from "../../prisma/generated/client/client.js";
+import { prisma } from "../lib/prisma.js";
 import { addDays, addHours, kstDateKey, kstDayStart, kstHourStart } from "../lib/kstBuckets.js";
 import { type ResolvedHistory } from "../lib/historyRange.js";
 import { retentionConfig } from "../lib/retentionConfig.js";
@@ -17,13 +17,6 @@ import {
   type RawSample,
   type SummaryPayload,
 } from "../lib/telemetryAggregate.js";
-
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({
-    connectionString:
-      process.env.DATABASE_URL ?? "postgresql://pmcs:pmcs@localhost:5432/pmcs",
-  }),
-});
 
 const SUMMARY_MISSING = "SUMMARY_SCHEMA_MISSING";
 
