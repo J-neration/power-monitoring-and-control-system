@@ -1,28 +1,6 @@
 # 이미지 저장소(ECR)와 그 암호화 키. 원래 app 루트(ECS dev)가 만들었고, ECS dev 를 없애면서
-# 이 루트로 넘겼다(2026-10-23, 아래 import). 이미지가 이 키로 암호화돼 있어 키를 지우면 이미지를 못 받는다.
+# 이 루트로 넘겼다(2026-10-23, import). 이미지가 이 키로 암호화돼 있어 키를 지우면 이미지를 못 받는다.
 # 키 설명·정책은 넘겨받을 때 그대로 두었다(정책의 CloudWatch Logs 항목은 이제 쓰이지 않는다).
-
-import {
-  to = aws_kms_key.app
-  id = "f1795ddd-fb6c-410e-a8bf-6d1f0fce52a0"
-}
-
-import {
-  to = aws_kms_alias.app
-  id = "alias/pmcs-dev-app"
-}
-
-import {
-  for_each = toset(["api", "frontend"])
-  to       = module.ecr.aws_ecr_repository.this[each.key]
-  id       = "pmcs-dev/${each.key}"
-}
-
-import {
-  for_each = toset(["api", "frontend"])
-  to       = module.ecr.aws_ecr_lifecycle_policy.this[each.key]
-  id       = "pmcs-dev/${each.key}"
-}
 
 data "aws_iam_policy_document" "app_key" {
   statement {

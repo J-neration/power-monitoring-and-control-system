@@ -3,8 +3,8 @@
 #   1. S3 의 설정 파일(compose.yml·Caddyfile·settings.env 등)을 /opt/pmcs/config 로 받는다.
 #   2. SSM 시크릿 파라미터와 settings.env 를 합쳐 /opt/pmcs/config/.env(600)를 만든다.
 #   3. 이미지를 받고, Postgres → 마이그레이션 → API·프론트·Caddy 순으로 올린다.
-# DB 가 비어 있으면 마이그레이션·앱을 띄우지 않는다. 데이터 이전(scripts/dev-box/copy-from-rds.sh) 전에
-# 빈 스키마가 생기면 이전이 막히기 때문이다. 빈 DB 로 새로 시작하려면 ALLOW_EMPTY_DB=1.
+# DB 가 비어 있으면 마이그레이션·앱을 띄우지 않는다. 서버를 새로 만들었을 때 S3 백업을 복원하기 전에
+# 빈 스키마가 생기면 복원이 꼬이기 때문이다. 빈 DB 로 새로 시작하려면 ALLOW_EMPTY_DB=1.
 set -euo pipefail
 
 # shellcheck source=/dev/null
@@ -41,7 +41,7 @@ compose up -d --wait postgres
 tables=$(compose exec -T postgres psql -U postgres -d pmcs -tAc \
   "select count(*) from information_schema.tables where table_schema = 'public'")
 if [ "$tables" = 0 ] && [ "${ALLOW_EMPTY_DB:-0}" != 1 ]; then
-  log "DB 가 비어 있어 앱을 띄우지 않았습니다. scripts/dev-box/copy-from-rds.sh 로 데이터를 옮긴 뒤 다시 배포하세요."
+  log "DB 가 비어 있어 앱을 띄우지 않았습니다. S3 백업을 복원한 뒤 다시 배포하세요(scripts/dev-box/README.md)."
   log "(빈 DB 로 새로 시작하려면 ALLOW_EMPTY_DB=1 pmcs-deploy)"
   exit 0
 fi
