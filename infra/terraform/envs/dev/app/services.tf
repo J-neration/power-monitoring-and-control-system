@@ -86,6 +86,28 @@ resource "aws_ecs_cluster" "this" {
   }
 }
 
+# dev 비용 절감(2026-10-22 결정): 서비스는 FARGATE_SPOT(최대 70% 저렴, 가끔 교체됨), 일회성 태스크
+# (마이그레이션·DB 터널)는 run-task 에서 FARGATE 로 띄운다.
+resource "aws_ecs_cluster_capacity_providers" "this" {
+  cluster_name       = aws_ecs_cluster.this.name
+  capacity_providers = ["FARGATE", "FARGATE_SPOT"]
+
+  default_capacity_provider_strategy {
+    capacity_provider = "FARGATE_SPOT"
+    weight            = 1
+  }
+}
+
+locals {
+  # FARGATE_SPOT 서비스는 용량 공급자가 클러스터에 붙은 뒤에 만들어야 하므로, 이 값을 거쳐 순서를 보장한다.
+  service_cluster_arn = aws_ecs_cluster_capacity_providers.this.cluster_name == aws_ecs_cluster.this.name ? aws_ecs_cluster.this.arn : null
+
+  # NAT 가 없는 dev 에서는 태스크를 공개 서브넷에 두고 공인 IP 로 밖에 나간다(들어오는 연결은 보안 그룹이 막음).
+  task_subnet_ids       = module.network.public_subnet_ids
+  task_assign_public_ip = true
+  task_use_fargate_spot = true
+}
+
 # ── API ─────────────────────────────────────────────────────────────
 
 locals {
@@ -101,7 +123,7 @@ module "api" {
 
   name_prefix = local.name_prefix
   name        = "api"
-  cluster_arn = aws_ecs_cluster.this.arn
+  cluster_arn = local.service_cluster_arn
   image       = local.api_image
   cpu         = 512
   memory      = 1024
@@ -144,7 +166,9 @@ module "api" {
   ]
   kms_key_arn = aws_kms_key.app.arn
 
-  subnet_ids         = module.network.private_subnet_ids
+  subnet_ids         = local.task_subnet_ids
+  assign_public_ip   = local.task_assign_public_ip
+  use_fargate_spot   = local.task_use_fargate_spot
   security_group_ids = [aws_security_group.api.id]
   desired_count      = var.api_desired_count
   # HTTPS 리스너가 없으면 대상 그룹이 ALB에 붙지 않아 서비스에 연결할 수 없다.
@@ -224,7 +248,7 @@ module "frontend" {
 
   name_prefix = local.name_prefix
   name        = "frontend"
-  cluster_arn = aws_ecs_cluster.this.arn
+  cluster_arn = local.service_cluster_arn
   image       = "${module.ecr.repository_urls["frontend"]}:${var.frontend_image_tag}"
   cpu         = 512
   memory      = 1024
@@ -244,7 +268,9 @@ module "frontend" {
   secret_arns = [aws_secretsmanager_secret.jwt.arn]
   kms_key_arn = aws_kms_key.app.arn
 
-  subnet_ids         = module.network.private_subnet_ids
+  subnet_ids         = local.task_subnet_ids
+  assign_public_ip   = local.task_assign_public_ip
+  use_fargate_spot   = local.task_use_fargate_spot
   security_group_ids = [aws_security_group.frontend.id]
   desired_count      = var.frontend_desired_count
   target_group_arn   = module.edge.tls_enabled ? module.edge.frontend_target_group_arn : null

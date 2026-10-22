@@ -11,6 +11,7 @@ dev 는 Neon **dev** 브랜치 → RDS dev 만 허용하며, 운영 데이터는
 | 1 | `open-db-tunnel.sh` | 터널 전용 ECS 태스크를 띄우고 `localhost:15432` → RDS 로 SSM 포트 포워딩. 창을 열어 둔 채 다른 터미널에서 2~3 진행 |
 | 2 | `setup-db-roles.sh` | DB 계정 `pmcs_migrator`(스키마 소유)·`pmcs_app`(데이터 읽기·쓰기만) 생성, 접속 주소를 시크릿 `pmcs-<env>/api` 에 저장 |
 | 3 | `copy-data.sh` | Neon public 스키마를 RDS 로 복사(한 트랜잭션), 앱 계정 권한 부여, 행 수 비교 |
+| 3b | `run-migrate-task.sh` | 마이그레이션 태스크를 한 번 실행하고 결과(종료 코드·로그 끝)를 보여 줌. 새 이미지를 배포할 때마다 서비스보다 먼저 |
 | 4 | (마무리) | 터널 창에서 Ctrl+C (태스크 자동 종료) → 시크릿의 나머지 키 입력 → API 서비스 태스크 수 1 |
 
 ```sh

@@ -49,7 +49,7 @@ infra/terraform/
   `/pmcs-dev/security/alert-emails`(StringList, 쉼표 구분)에 넣으면 security 루트가 읽어
   SNS 이메일 구독을 만든다. 구독마다 확인 메일의 링크를 눌러야 경보가 온다.
 - **마이그레이션**: API 서비스는 Railway와 달리 부팅 시 마이그레이션을 하지 않습니다.
-  배포 때 `pmcs-dev-api-migrate` 작업 정의를 `aws ecs run-task`로 한 번 실행합니다.
+  배포 때 `pmcs-dev-api-migrate` 작업 정의를 한 번 실행합니다: `PMCS_ENV=dev scripts/aws-migrate/run-migrate-task.sh`
 
 계정마다 상태 버킷과 KMS 키가 따로 있고, 루트(bootstrap·security·app)마다 상태 파일이
 따로 있어 한 루트의 실수가 다른 루트의 리소스를 건드리지 않습니다.

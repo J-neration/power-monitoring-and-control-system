@@ -9,7 +9,7 @@ locals {
   public_cidrs   = [for i in range(local.az_count) : cidrsubnet(var.vpc_cidr, 8, i)]
   private_cidrs  = [for i in range(local.az_count) : cidrsubnet(var.vpc_cidr, 8, 10 + i)]
   isolated_cidrs = [for i in range(local.az_count) : cidrsubnet(var.vpc_cidr, 8, 20 + i)]
-  nat_count      = var.single_nat_gateway ? 1 : local.az_count
+  nat_count      = var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : local.az_count) : 0
 }
 
 data "aws_region" "current" {}
@@ -104,7 +104,7 @@ resource "aws_route_table" "private" {
 }
 
 resource "aws_route" "private_nat" {
-  count                  = local.az_count
+  count                  = var.enable_nat_gateway ? local.az_count : 0
   route_table_id         = aws_route_table.private[count.index].id
   destination_cidr_block = "0.0.0.0/0"
   nat_gateway_id         = aws_nat_gateway.this[var.single_nat_gateway ? 0 : count.index].id

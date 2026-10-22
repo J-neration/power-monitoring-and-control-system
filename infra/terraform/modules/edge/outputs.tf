@@ -39,5 +39,5 @@ output "acm_validation_records" {
 }
 
 output "web_acl_arn" {
-  value = aws_wafv2_web_acl.this.arn
+  value = var.enable_waf ? aws_wafv2_web_acl.this[0].arn : null
 }
