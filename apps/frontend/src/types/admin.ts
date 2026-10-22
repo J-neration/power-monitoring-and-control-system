@@ -13,6 +13,8 @@ export type SiteListFromApi = {
 export type SiteListInstallationFromApi = {
   id: string;
   label: string;
+  /** 선택. 예: PAF 400Y-100C */
+  moduleName?: string | null;
   /** ADMIN 토큰일 때만 포함 */
   iccid?: string | null;
   device: unknown | null;

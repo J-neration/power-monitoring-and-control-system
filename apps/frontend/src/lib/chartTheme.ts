@@ -25,12 +25,18 @@ export const PF_QTY = {
   otherDim: "rgba(148, 163, 184, 0.35)",
 } as const;
 
-export const TEMP_THRESHOLDS = {
+export const TEMP_THRESHOLDS: {
+  areaWarn: number;
+  areaAlarm: number;
+  /** 모듈은 40°C 주의가 없다. 경보만 본다. */
+  moduleWarn: number | null;
+  moduleAlarm: number;
+} = {
   areaWarn: 35,
   areaAlarm: 40,
-  moduleWarn: 40,
+  moduleWarn: null,
   moduleAlarm: 90,
-} as const;
+};
 
 /** 주위온도 -40°C = 센서 미부착 */
 export const AREA_TEMP_DISCONNECTED_C = -40;

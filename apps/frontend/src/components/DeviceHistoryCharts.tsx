@@ -727,18 +727,20 @@ export default function DeviceHistoryCharts({
                     fontSize: 10,
                   }}
                 />
-                <ReferenceLine
-                  y={TEMP_THRESHOLDS.areaAlarm}
-                  stroke={CHART_COLORS.danger}
-                  {...TEMP_ALARM_REF}
-                  label={{
-                    value: `경보 ${TEMP_THRESHOLDS.areaAlarm}°C`,
-                    position: "right",
-                    fill: CHART_COLORS.danger,
-                    fontSize: 10,
-                    fontWeight: 600,
-                  }}
-                />
+                {TEMP_THRESHOLDS.areaAlarm != null ? (
+                  <ReferenceLine
+                    y={TEMP_THRESHOLDS.areaAlarm}
+                    stroke={CHART_COLORS.danger}
+                    {...TEMP_ALARM_REF}
+                    label={{
+                      value: `경보 ${TEMP_THRESHOLDS.areaAlarm}°C`,
+                      position: "right",
+                      fill: CHART_COLORS.danger,
+                      fontSize: 10,
+                      fontWeight: 600,
+                    }}
+                  />
+                ) : null}
               </HistoryAreaChart>
             </ChartCard>
             <ChartCard title="모듈 온도 (°C)" subtitle={`— ${hoursLabel}`} wide>

@@ -54,18 +54,32 @@ describe("extractWatchAnomalies", () => {
     assert.equal(grid[0]?.level, "danger");
   });
 
-  it("flags ambient and module temperature bands", () => {
-    const area = extractWatchAnomalies(
+  it("flags ambient caution at 35°C, alarm at 40°C, and module alarm at 90°C", () => {
+    const moduleOnly = extractWatchAnomalies(
+      factsFrom([{ ...healthy, moduleTemp: [49.3] }]),
+    );
+    assert.equal(moduleOnly.some((a) => a.code === "module_temp_high"), false);
+
+    const areaWarn = extractWatchAnomalies(
       factsFrom([{ ...healthy, areaTemp: [36] }]),
     );
-    assert.equal(area[0]?.code, "area_temp_high");
-    assert.equal(area[0]?.level, "warn");
+    assert.equal(areaWarn[0]?.code, "area_temp_high");
+    assert.equal(areaWarn[0]?.level, "warn");
+    assert.match(areaWarn[0]?.message ?? "", /주의 35°C/);
+
+    const areaAlarm = extractWatchAnomalies(
+      factsFrom([{ ...healthy, areaTemp: [40] }]),
+    );
+    assert.equal(areaAlarm[0]?.code, "area_temp_high");
+    assert.equal(areaAlarm[0]?.level, "danger");
+    assert.match(areaAlarm[0]?.message ?? "", /경보 40°C/);
 
     const module = extractWatchAnomalies(
       factsFrom([{ ...healthy, moduleTemp: [91] }]),
     );
     assert.equal(module[0]?.code, "module_temp_high");
     assert.equal(module[0]?.level, "danger");
+    assert.match(module[0]?.message ?? "", /경보 90°C/);
   });
 
   it("flags comm lost, empty history, and active faults", () => {

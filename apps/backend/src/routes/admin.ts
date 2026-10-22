@@ -71,9 +71,20 @@ const updateSiteSchema = z.object({
   address: z.string().min(1),
 });
 
+const moduleNameField = z.union([
+  z.string().trim().max(80, "품목명은 80자 이하여야 합니다."),
+  z.null(),
+]);
+
 const createInstallationSchema = z.object({
   id: z.string().optional(),
   label: z.string().min(1),
+  moduleName: moduleNameField.optional(),
+});
+
+const setInstallationModuleNameSchema = z.object({
+  /** null 또는 빈 문자열이면 모듈명 제거 */
+  moduleName: moduleNameField,
 });
 
 const createClientOptionSchema = z.object({
@@ -214,6 +225,7 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
         id: parsed.data.id,
         siteId,
         label: parsed.data.label,
+        moduleName: parsed.data.moduleName,
       });
       return reply.status(201).send({ installation });
     } catch (err: unknown) {
@@ -235,6 +247,34 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
     if (!ok) return reply.status(404).send({ message: "설치지점을 찾을 수 없습니다." });
     return reply.status(204).send();
   });
+
+  /* ── PATCH /admin/installations/:installationId/module-name ── 모듈명 */
+  server.patch(
+    "/installations/:installationId/module-name",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const { installationId } = request.params as { installationId: string };
+      const parsed = setInstallationModuleNameSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          message: firstZodMessage(parsed.error),
+          errors: parsed.error.flatten(),
+        });
+      }
+      const result = await siteService.setInstallationModuleName(
+        installationId,
+        parsed.data.moduleName,
+      );
+      if (!result.ok) {
+        return reply.status(404).send({ message: "설치지점을 찾을 수 없습니다." });
+      }
+      return reply.send({
+        ok: true,
+        installationId,
+        moduleName: parsed.data.moduleName?.trim() || null,
+      });
+    },
+  );
 
   /* ── PATCH /admin/installations/:installationId/iccid ── USIM ↔ 설치지점 */
   server.patch(

@@ -669,24 +669,27 @@ export default function DeviceDetailCharts({
                         fontSize: 10,
                       }}
                     />
-                    <ReferenceLine
-                      y={TEMP_THRESHOLDS.areaAlarm}
-                      stroke={CHART_COLORS.danger}
-                      {...TEMP_ALARM_REF}
-                      label={{
-                        value: `경보 ${TEMP_THRESHOLDS.areaAlarm}°C`,
-                        position: "right",
-                        fill: CHART_COLORS.danger,
-                        fontSize: 10,
-                        fontWeight: 600,
-                      }}
-                    />
+                    {TEMP_THRESHOLDS.areaAlarm != null ? (
+                      <ReferenceLine
+                        y={TEMP_THRESHOLDS.areaAlarm}
+                        stroke={CHART_COLORS.danger}
+                        {...TEMP_ALARM_REF}
+                        label={{
+                          value: `경보 ${TEMP_THRESHOLDS.areaAlarm}°C`,
+                          position: "right",
+                          fill: CHART_COLORS.danger,
+                          fontSize: 10,
+                          fontWeight: 600,
+                        }}
+                      />
+                    ) : null}
                     <Bar dataKey="온도" radius={[4, 4, 0, 0]} barSize={36}>
                       {areaTempData.map((entry, i) => (
                         <Cell
                           key={i}
                           fill={
                             entry.온도 != null &&
+                            TEMP_THRESHOLDS.areaAlarm != null &&
                             entry.온도 >= TEMP_THRESHOLDS.areaAlarm
                               ? CHART_COLORS.danger
                               : entry.온도 != null &&
@@ -754,7 +757,8 @@ export default function DeviceDetailCharts({
                           fill={
                             entry.온도 >= TEMP_THRESHOLDS.moduleAlarm
                               ? CHART_COLORS.danger
-                              : entry.온도 >= TEMP_THRESHOLDS.moduleWarn
+                              : TEMP_THRESHOLDS.moduleWarn != null &&
+                                  entry.온도 >= TEMP_THRESHOLDS.moduleWarn
                                 ? CHART_COLORS.warn
                                 : CHART_COLORS.accent
                           }

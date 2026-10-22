@@ -1627,6 +1627,7 @@ export const InstallationScalarFieldEnum = {
   siteId: 'siteId',
   label: 'label',
   iccid: 'iccid',
+  moduleName: 'moduleName',
   webSettingsActive: 'webSettingsActive',
   webSettingsHeartbeatAt: 'webSettingsHeartbeatAt',
   adminSessionActive: 'adminSessionActive',

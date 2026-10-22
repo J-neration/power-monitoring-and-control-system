@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import type { ClientOptionFromApi, SiteListFromApi } from "../../types/admin";
 import { CLIENT_LABELS } from "../../data/clients";
 
@@ -42,6 +42,7 @@ function toSiteRows(initialSites: SiteListFromApi[] | null | undefined): SiteRow
             {
               installationId: i.id,
               label: i.label ?? "",
+              moduleName: typeof i.moduleName === "string" ? i.moduleName : "",
               iccid: typeof i.iccid === "string" ? i.iccid : "",
             },
           ];
@@ -83,6 +84,7 @@ const REGION_OPTIONS = [
 type InstRow = {
   installationId: string;
   label: string;
+  moduleName: string;
   iccid: string;
 };
 
@@ -233,6 +235,7 @@ export default function AdminSitesPanel({
     type: "ok" | "err";
     text: string;
   } | null>(null);
+  const flashRef = useRef<HTMLParagraphElement | null>(null);
   const flashClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rowFeedbackTimers = useRef<
     Record<string, ReturnType<typeof setTimeout>>
@@ -252,10 +255,15 @@ export default function AdminSitesPanel({
 
   // 설치지점 추가 폼 (siteId별)
   const [addInstFor, setAddInstFor] = useState<string | null>(null);
-  const [newInst, setNewInst] = useState({ id: "", label: "" });
+  const [newInst, setNewInst] = useState({ id: "", label: "", moduleName: "" });
   const [addingInst, setAddingInst] = useState(false);
   /** siteId → 설치지점 추가 직후 인라인 피드백 */
   const [instAddFeedback, setInstAddFeedback] = useState<
+    Record<string, { type: "ok" | "err"; text: string }>
+  >({});
+
+  const [savingModuleName, setSavingModuleName] = useState<string | null>(null);
+  const [moduleNameFeedback, setModuleNameFeedback] = useState<
     Record<string, { type: "ok" | "err"; text: string }>
   >({});
 
@@ -277,6 +285,11 @@ export default function AdminSitesPanel({
   });
   const [editCustomClient, setEditCustomClient] = useState("");
   const [savingSite, setSavingSite] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (flash?.type !== "err") return;
+    flashRef.current?.scrollIntoView({ behavior: "auto", block: "nearest" });
+  }, [flash]);
 
   function showFlash(type: "ok" | "err", text: string) {
     const withMark =
@@ -481,12 +494,13 @@ export default function AdminSitesPanel({
           body: JSON.stringify({
             id: newInst.id || undefined,
             label: newInst.label,
+            moduleName: newInst.moduleName.trim() || null,
           }),
         },
       );
       const data = (await res.json().catch(() => ({}))) as {
         message?: string;
-        installation?: { id: string; label: string };
+        installation?: { id: string; label: string; moduleName?: string | null };
       };
       if (!res.ok) {
         const msg = data.message ?? `오류 (${res.status})`;
@@ -505,6 +519,10 @@ export default function AdminSitesPanel({
                   {
                     installationId: created.id,
                     label: created.label,
+                    moduleName:
+                      typeof created.moduleName === "string"
+                        ? created.moduleName
+                        : newInst.moduleName.trim(),
                     iccid: "",
                   },
                 ],
@@ -512,7 +530,7 @@ export default function AdminSitesPanel({
             : s,
         ),
       );
-      setNewInst({ id: "", label: "" });
+      setNewInst({ id: "", label: "", moduleName: "" });
       setAddInstFor(null);
       setTimedFeedback(
         siteId,
@@ -574,6 +592,65 @@ export default function AdminSitesPanel({
     }
   }
 
+  // ── 품목명 저장 ───────────────────────────────────────
+  async function handleSaveModuleName(instId: string, rawName: string) {
+    setSavingModuleName(instId);
+    const moduleName = rawName.trim();
+    try {
+      const res = await fetch(
+        `/api/admin/installations/${encodeURIComponent(instId)}/module-name`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ moduleName: moduleName === "" ? null : moduleName }),
+        },
+      );
+      const data = (await res.json().catch(() => ({}))) as { message?: string };
+      if (!res.ok) {
+        const msg = data.message ?? `저장 실패 (${res.status})`;
+        setTimedFeedback(instId, "err", msg, setModuleNameFeedback);
+        showFlash("err", msg);
+        return;
+      }
+      setSites((prev) =>
+        prev.map((s) => ({
+          ...s,
+          installations: s.installations.map((i) =>
+            i.installationId === instId ? { ...i, moduleName } : i,
+          ),
+        })),
+      );
+      setTimedFeedback(instId, "ok", "저장 완료", setModuleNameFeedback);
+      showFlash("ok", moduleName ? "품목명이 저장되었습니다." : "품목명이 비워졌습니다.");
+    } catch {
+      setTimedFeedback(instId, "err", "네트워크 오류", setModuleNameFeedback);
+      showFlash("err", "네트워크 오류");
+    } finally {
+      setSavingModuleName(null);
+    }
+  }
+
+  function updateModuleName(siteId: string, instId: string, value: string) {
+    setModuleNameFeedback((prev) => {
+      if (!prev[instId]) return prev;
+      const next = { ...prev };
+      delete next[instId];
+      return next;
+    });
+    setSites((prev) =>
+      prev.map((s) =>
+        s.siteId === siteId
+          ? {
+              ...s,
+              installations: s.installations.map((i) =>
+                i.installationId === instId ? { ...i, moduleName: value } : i,
+              ),
+            }
+          : s,
+      ),
+    );
+  }
+
   // ── ICCID 저장 ────────────────────────────────────────
   async function handleSaveIccid(instId: string, rawIccid: string) {
     setSavingIccid(instId);
@@ -629,6 +706,7 @@ export default function AdminSitesPanel({
     <div className="admin-sites-wrap">
       {flash && (
         <p
+          ref={flashRef}
           className={`admin-iccid-flash admin-sites-flash ${flash.type}`}
           role="status"
           aria-live="polite"
@@ -852,6 +930,7 @@ export default function AdminSitesPanel({
                           <tr>
                             <th>설치지점</th>
                             <th>Installation ID</th>
+                            <th>품목명</th>
                             <th>ICCID (USIM)</th>
                             <th />
                             <th />
@@ -865,6 +944,57 @@ export default function AdminSitesPanel({
                                 <code className="admin-iccid-code">
                                   {inst.installationId}
                                 </code>
+                              </td>
+                              <td>
+                                <div className="admin-sites-module-cell">
+                                  <input
+                                    type="text"
+                                    className="admin-iccid-input admin-module-input"
+                                    value={inst.moduleName}
+                                    onChange={(e) =>
+                                      updateModuleName(
+                                        site.siteId,
+                                        inst.installationId,
+                                        e.target.value,
+                                      )
+                                    }
+                                    placeholder="PAF 400Y-100C"
+                                    autoComplete="off"
+                                    spellCheck={false}
+                                    maxLength={80}
+                                  />
+                                  <button
+                                    type="button"
+                                    className={`admin-iccid-save${
+                                      moduleNameFeedback[inst.installationId]
+                                        ?.type === "ok"
+                                        ? " admin-iccid-save--ok"
+                                        : moduleNameFeedback[inst.installationId]
+                                              ?.type === "err"
+                                          ? " admin-iccid-save--err"
+                                          : ""
+                                    }`}
+                                    disabled={
+                                      savingModuleName === inst.installationId
+                                    }
+                                    onClick={() =>
+                                      handleSaveModuleName(
+                                        inst.installationId,
+                                        inst.moduleName,
+                                      )
+                                    }
+                                  >
+                                    {savingModuleName === inst.installationId
+                                      ? "저장 중…"
+                                      : moduleNameFeedback[inst.installationId]
+                                            ?.type === "ok"
+                                        ? "✓ 완료"
+                                        : moduleNameFeedback[inst.installationId]
+                                              ?.type === "err"
+                                          ? "✕ 실패"
+                                          : "저장"}
+                                  </button>
+                                </div>
                               </td>
                               <td>
                                 <input
@@ -970,6 +1100,18 @@ export default function AdminSitesPanel({
                             setNewInst((p) => ({ ...p, id: e.target.value }))
                           }
                         />
+                        <input
+                          className="admin-sites-input"
+                          placeholder="품목명 (선택, 예: PAF 400Y-100C)"
+                          value={newInst.moduleName}
+                          maxLength={80}
+                          onChange={(e) =>
+                            setNewInst((p) => ({
+                              ...p,
+                              moduleName: e.target.value,
+                            }))
+                          }
+                        />
                         <button
                           type="button"
                           className="admin-iccid-save"
@@ -983,7 +1125,7 @@ export default function AdminSitesPanel({
                           className="admin-sites-cancel-btn"
                           onClick={() => {
                             setAddInstFor(null);
-                            setNewInst({ id: "", label: "" });
+                            setNewInst({ id: "", label: "", moduleName: "" });
                           }}
                         >
                           취소
@@ -1001,7 +1143,7 @@ export default function AdminSitesPanel({
                           className="admin-sites-add-inst-btn"
                           onClick={() => {
                             setAddInstFor(site.siteId);
-                            setNewInst({ id: "", label: "" });
+                            setNewInst({ id: "", label: "", moduleName: "" });
                           }}
                         >
                           + 설치지점 추가

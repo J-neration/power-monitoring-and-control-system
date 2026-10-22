@@ -5,7 +5,8 @@ export const WATCH_THRESHOLDS = {
   thdDanger: 20,
   areaWarn: 35,
   areaAlarm: 40,
-  moduleWarn: 40,
+  /** 모듈은 40°C 주의가 없다. 경보만 본다. */
+  moduleWarn: null as number | null,
   moduleAlarm: 90,
   voltageNominal: 220,
   voltageWarnPct: 0.05,

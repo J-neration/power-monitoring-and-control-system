@@ -150,7 +150,7 @@ function capacityAndThermalAtHour(
   lf: number,
 ) {
   const phase = devicePhase(installationId);
-  // 오후 피크에 주위 온도가 주의선(35°C)을 넘고, 모듈은 주의선(40°C) 근처까지
+  // 오후 피크에 주위 온도가 주의선(35°C)을 넘고, 모듈은 경보(90°C)보다 낮게
   const diurnal = 0.92 + 0.12 * lf;
   const wTemp = registryWave(h, phase + 3.0, 0.05) * diurnal;
   const areaBase = [32.4, 34.8, 33.6, 31.8];

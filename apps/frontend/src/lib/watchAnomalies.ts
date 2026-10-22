@@ -29,12 +29,12 @@ function pfLevel(signed: number | null): WatchAnomalyLevel | null {
 
 function tempLevel(
   max: number | null,
-  warn: number,
-  alarm: number,
+  warn: number | null,
+  alarm: number | null,
 ): WatchAnomalyLevel | null {
   if (max == null) return null;
-  if (max >= alarm) return "danger";
-  if (max >= warn) return "warn";
+  if (alarm != null && max >= alarm) return "danger";
+  if (warn != null && max >= warn) return "warn";
   return null;
 }
 
@@ -284,9 +284,10 @@ export function extractWatchAnomalies(
   }
 
   const areaLv = tempLevel(facts.thermal.areaMax, T.areaWarn, T.areaAlarm);
-  if (areaLv && facts.thermal.areaMax != null) {
+  const areaLimit = areaLv === "danger" ? T.areaAlarm : T.areaWarn;
+  if (areaLv && areaLimit != null && facts.thermal.areaMax != null) {
     const v = facts.thermal.areaMax;
-    const limit = areaLv === "danger" ? T.areaAlarm : T.areaWarn;
+    const limit = areaLimit;
     out.push({
       code: "area_temp_high",
       level: areaLv,
@@ -294,8 +295,8 @@ export function extractWatchAnomalies(
       title: "주위 온도 높음",
       message:
         areaLv === "danger"
-          ? `최근 ${hours}시간 중 최고 ${v}°C · 경보 ${T.areaAlarm}°C`
-          : `최근 ${hours}시간 중 최고 ${v}°C · 주의 ${T.areaWarn}°C`,
+          ? `최근 ${hours}시간 중 최고 ${v}°C · 경보 ${limit}°C`
+          : `최근 ${hours}시간 중 최고 ${v}°C · 주의 ${limit}°C`,
       value: v,
       threshold: limit,
       scope: "window",
@@ -304,9 +305,10 @@ export function extractWatchAnomalies(
   }
 
   const modLv = tempLevel(facts.thermal.moduleMax, T.moduleWarn, T.moduleAlarm);
-  if (modLv && facts.thermal.moduleMax != null) {
+  const modLimit = modLv === "danger" ? T.moduleAlarm : T.moduleWarn;
+  if (modLv && modLimit != null && facts.thermal.moduleMax != null) {
     const v = facts.thermal.moduleMax;
-    const limit = modLv === "danger" ? T.moduleAlarm : T.moduleWarn;
+    const limit = modLimit;
     out.push({
       code: "module_temp_high",
       level: modLv,
@@ -314,8 +316,8 @@ export function extractWatchAnomalies(
       title: "모듈 온도 높음",
       message:
         modLv === "danger"
-          ? `최근 ${hours}시간 중 최고 ${v}°C · 경보 ${T.moduleAlarm}°C`
-          : `최근 ${hours}시간 중 최고 ${v}°C · 주의 ${T.moduleWarn}°C`,
+          ? `최근 ${hours}시간 중 최고 ${v}°C · 경보 ${limit}°C`
+          : `최근 ${hours}시간 중 최고 ${v}°C · 주의 ${limit}°C`,
       value: v,
       threshold: limit,
       scope: "window",

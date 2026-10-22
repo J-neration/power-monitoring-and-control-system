@@ -55,7 +55,11 @@ export function sortSitesByPriority(sites: Site[]): Site[] {
   });
 }
 
-export type StatusFilter = "all" | "fault" | "offline" | "comm_lost";
+export type StatusFilter = "all" | "standby" | "fault" | "offline" | "comm_lost";
+
+function isStandbyStatus(status: DeviceStatus): boolean {
+  return status === "standby" || status === "start";
+}
 
 export function siteMatchesFilter(
   site: Site,
@@ -64,6 +68,7 @@ export function siteMatchesFilter(
   if (filter === "all") return true;
   for (const inst of site.installations) {
     const s = inst.device?.status ?? "offline";
+    if (filter === "standby" && isStandbyStatus(s)) return true;
     if (filter === "fault" && s === "fault") return true;
     if (filter === "offline" && s === "offline") return true;
     if (filter === "comm_lost" && isCommLost(inst.device?.lastSeenAt)) return true;
@@ -77,6 +82,7 @@ export function installationMatchesFilter(
   commLost = false,
 ): boolean {
   if (filter === "all") return true;
+  if (filter === "standby") return isStandbyStatus(status);
   if (filter === "fault") return status === "fault";
   if (filter === "offline") return status === "offline";
   if (filter === "comm_lost") return commLost;

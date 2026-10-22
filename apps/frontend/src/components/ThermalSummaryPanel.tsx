@@ -93,10 +93,14 @@ function windowLabel(readings: TelemetryReading[]): string {
   return hours >= 20 && hours <= 28 ? "최근 24시간" : `최근 ${hours}시간`;
 }
 
-function tone(value: number | null, warn?: number, alarm?: number) {
-  if (value == null || warn == null || alarm == null) return "ok";
-  if (value >= alarm) return "danger";
-  if (value >= warn) return "warn";
+function tone(
+  value: number | null,
+  warn?: number | null,
+  alarm?: number | null,
+) {
+  if (value == null) return "ok";
+  if (alarm != null && value >= alarm) return "danger";
+  if (warn != null && value >= warn) return "warn";
   return "ok";
 }
 
@@ -150,13 +154,13 @@ function Block({
   title: string;
   unit: string;
   stats: SeriesStats;
-  warn?: number;
-  alarm?: number;
+  warn?: number | null;
+  alarm?: number | null;
   channelLabel: string;
   showWarnLabel?: boolean;
   historyLabel: string;
 }) {
-  const hasThreshold = warn != null && alarm != null;
+  const hasThreshold = warn != null || alarm != null;
   const t = tone(stats.lastMax, warn, alarm);
   const when = fmtWhen(stats.maxAt);
   const status = stats.lastMax == null ? null : statusLabel(t, hasThreshold);
@@ -198,11 +202,11 @@ function Block({
                 .join(" · ") || "최고 시각 없음"
             : "기간 이력 없음"}
         </span>
-        {alarm != null ? (
+        {warn != null || alarm != null ? (
           <span>
-            {showWarnLabel && warn != null ? `주의 ${warn}${unit} · ` : null}
-            경보 {alarm}
-            {unit}
+            {showWarnLabel && warn != null ? `주의 ${warn}${unit}` : null}
+            {showWarnLabel && warn != null && alarm != null ? " · " : null}
+            {alarm != null ? `경보 ${alarm}${unit}` : null}
           </span>
         ) : null}
       </footer>
