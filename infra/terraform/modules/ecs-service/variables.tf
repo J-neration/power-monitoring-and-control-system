@@ -89,6 +89,18 @@ variable "desired_count" {
   default     = 0
 }
 
+variable "assign_public_ip" {
+  description = "공개 서브넷에서 NAT 없이 밖에 나갈 때만 true(dev 비용 절감). 들어오는 연결은 보안 그룹이 막는다."
+  type        = bool
+  default     = false
+}
+
+variable "use_fargate_spot" {
+  description = "true면 FARGATE_SPOT으로 띄운다(최대 70% 저렴, 가끔 교체됨). dev 전용. 클러스터에 FARGATE_SPOT 용량 공급자가 있어야 한다."
+  type        = bool
+  default     = false
+}
+
 variable "subnet_ids" {
   type    = list(string)
   default = []

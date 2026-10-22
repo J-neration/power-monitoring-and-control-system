@@ -162,7 +162,7 @@ resource "aws_ecs_service" "this" {
   cluster                 = var.cluster_arn
   task_definition         = aws_ecs_task_definition.this.arn
   desired_count           = var.desired_count
-  launch_type             = "FARGATE"
+  launch_type             = var.use_fargate_spot ? null : "FARGATE"
   platform_version        = "LATEST"
   enable_execute_command  = var.enable_execute_command
   propagate_tags          = "SERVICE"
@@ -170,10 +170,21 @@ resource "aws_ecs_service" "this" {
 
   health_check_grace_period_seconds = var.target_group_arn != null ? var.health_check_grace_period_seconds : null
 
+  # 용량 공급자 전략을 바꾸려면 새 배포가 필요하다(바꿀 때 태스크가 새로 뜬다).
+  force_new_deployment = var.use_fargate_spot
+
+  dynamic "capacity_provider_strategy" {
+    for_each = var.use_fargate_spot ? [1] : []
+    content {
+      capacity_provider = "FARGATE_SPOT"
+      weight            = 1
+    }
+  }
+
   network_configuration {
     subnets          = var.subnet_ids
     security_groups  = var.security_group_ids
-    assign_public_ip = false
+    assign_public_ip = var.assign_public_ip
   }
 
   # 새 버전이 뜨지 못하면 배포를 멈추고 이전 버전으로 되돌린다.

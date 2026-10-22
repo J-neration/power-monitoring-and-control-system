@@ -15,17 +15,13 @@ check_account
 cluster="$NAME_PREFIX"
 task_definition="$NAME_PREFIX-db-tunnel"
 
-subnets=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=$NAME_PREFIX-private-*" \
-  --query 'Subnets[].SubnetId' --output text | tr '\t' ',')
-security_group=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=$NAME_PREFIX-api" \
-  --query 'SecurityGroups[0].GroupId' --output text)
-[ -n "$subnets" ] && [ "$security_group" != None ] || die "private 서브넷 또는 $NAME_PREFIX-api 보안 그룹을 찾지 못했습니다(app 루트가 적용됐는지 확인)."
+network_configuration=$(task_network_configuration)
 db_host=$(db_address)
 
 log "터널 태스크 시작 ($task_definition)"
 task_arn=$(aws ecs run-task --cluster "$cluster" --task-definition "$task_definition" \
   --launch-type FARGATE --enable-execute-command --started-by aws-migrate-tunnel \
-  --network-configuration "awsvpcConfiguration={subnets=[$subnets],securityGroups=[$security_group],assignPublicIp=DISABLED}" \
+  --network-configuration "$network_configuration" \
   --query 'tasks[0].taskArn' --output text)
 [ -n "$task_arn" ] && [ "$task_arn" != None ] || die "태스크를 시작하지 못했습니다."
 

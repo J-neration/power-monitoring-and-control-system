@@ -10,4 +10,7 @@ module "edge" {
   frontend_port         = local.frontend_port
   api_port              = local.api_port
   kms_key_arn           = aws_kms_key.app.arn
+
+  # dev 비용 절감(2026-10-22 결정): WAF는 prod에만 둔다. api 도메인은 ALB 규칙으로 /receiver만 서버에 닿는다.
+  enable_waf = false
 }

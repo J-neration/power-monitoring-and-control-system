@@ -79,5 +79,8 @@ module "network" {
   availability_zones = local.azs
   # dev는 NAT 하나(월 약 $43 절감). prod는 AZ마다 하나.
   single_nat_gateway = true
+  # dev 비용 절감(2026-10-22 결정): NAT 없이 ECS 태스크를 공개 서브넷에 두고 공인 IP로 밖에 나간다.
+  # 들어오는 연결은 보안 그룹이 ALB에서 오는 것만 허용한다. prod는 비공개 서브넷 + NAT.
+  enable_nat_gateway = false
   kms_key_arn        = aws_kms_key.app.arn
 }

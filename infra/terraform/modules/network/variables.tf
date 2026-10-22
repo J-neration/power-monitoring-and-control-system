@@ -22,6 +22,12 @@ variable "single_nat_gateway" {
   default     = false
 }
 
+variable "enable_nat_gateway" {
+  description = "false면 NAT 게이트웨이를 만들지 않는다(dev 비용 절감). 그때 ECS 태스크는 공개 서브넷에서 공인 IP로 밖에 나간다. prod는 true."
+  type        = bool
+  default     = true
+}
+
 variable "flow_log_retention_days" {
   type    = number
   default = 90

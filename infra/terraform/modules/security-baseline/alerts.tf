@@ -70,6 +70,7 @@ resource "aws_cloudwatch_event_target" "guardduty" {
 }
 
 resource "aws_cloudwatch_event_rule" "securityhub" {
+  count       = var.enable_security_hub ? 1 : 0
   name        = "${var.name_prefix}-securityhub-findings"
   description = "New active Security Hub findings rated HIGH or CRITICAL (GuardDuty excluded)"
   event_pattern = jsonencode({
@@ -87,7 +88,8 @@ resource "aws_cloudwatch_event_rule" "securityhub" {
 }
 
 resource "aws_cloudwatch_event_target" "securityhub" {
-  rule      = aws_cloudwatch_event_rule.securityhub.name
+  count     = var.enable_security_hub ? 1 : 0
+  rule      = aws_cloudwatch_event_rule.securityhub[0].name
   target_id = "sns"
   arn       = aws_sns_topic.security_alerts.arn
 }

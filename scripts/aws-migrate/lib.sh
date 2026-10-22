@@ -82,6 +82,25 @@ pg_docker() {
   docker run --rm -i ${net[@]+"${net[@]}"} -e PGPASSWORD "$PG_IMAGE" "$@"
 }
 
+# run-task 로 띄우는 일회성 태스크(DB 터널·마이그레이션)의 네트워크 설정.
+# NAT 가 있으면(prod) 비공개 서브넷, 없으면(dev, 비용 절감) 공개 서브넷 + 공인 IP 로 띄워야 ECR·SSM 에 닿는다.
+# 어느 쪽이든 api 보안 그룹을 쓰므로 들어오는 연결은 막혀 있다.
+task_network_configuration() {
+  local vpc_id nat_count tier assign subnets security_group
+  vpc_id=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=$NAME_PREFIX-vpc" \
+    --query 'Vpcs[0].VpcId' --output text)
+  [ -n "$vpc_id" ] && [ "$vpc_id" != None ] || die "$NAME_PREFIX-vpc 를 찾지 못했습니다(app 루트가 적용됐는지 확인)."
+  nat_count=$(aws ec2 describe-nat-gateways --filter "Name=vpc-id,Values=$vpc_id" "Name=state,Values=pending,available" \
+    --query 'length(NatGateways)' --output text)
+  if [ "$nat_count" -gt 0 ]; then tier=private assign=DISABLED; else tier=public assign=ENABLED; fi
+  subnets=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$vpc_id" "Name=tag:Name,Values=$NAME_PREFIX-$tier-*" \
+    --query 'Subnets[].SubnetId' --output text | tr '\t' ',')
+  security_group=$(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=$vpc_id" "Name=group-name,Values=$NAME_PREFIX-api" \
+    --query 'SecurityGroups[0].GroupId' --output text)
+  [ -n "$subnets" ] && [ "$security_group" != None ] || die "$tier 서브넷 또는 $NAME_PREFIX-api 보안 그룹을 찾지 못했습니다."
+  printf 'awsvpcConfiguration={subnets=[%s],securityGroups=[%s],assignPublicIp=%s}' "$subnets" "$security_group" "$assign"
+}
+
 # 터널을 거쳐 RDS 에 붙는 libpq 연결 문자열 (비밀번호 제외).
 # 터널 주소는 RDS 인증서의 호스트명과 달라 verify-full 이 불가능하므로 sslmode=require 로
 # 암호화만 강제한다. 구간 자체는 SSM 세션으로 한 번 더 암호화된다.

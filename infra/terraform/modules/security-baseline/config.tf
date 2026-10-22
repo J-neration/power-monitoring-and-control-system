@@ -5,7 +5,9 @@ resource "aws_iam_service_linked_role" "config" {
   aws_service_name = "config.amazonaws.com"
 }
 
+# enable_config = false 면 기록을 멈춘다(기록 건당 과금). 버킷과 서비스 연결 역할은 남겨 둔다.
 resource "aws_config_configuration_recorder" "this" {
+  count    = var.enable_config ? 1 : 0
   name     = "${var.name_prefix}-recorder"
   role_arn = "arn:${local.partition}:iam::${local.account_id}:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig"
 
@@ -22,6 +24,7 @@ resource "aws_config_configuration_recorder" "this" {
 }
 
 resource "aws_config_delivery_channel" "this" {
+  count          = var.enable_config ? 1 : 0
   name           = "${var.name_prefix}-delivery"
   s3_bucket_name = aws_s3_bucket.config.id
   s3_kms_key_arn = aws_kms_key.security.arn
@@ -38,7 +41,8 @@ resource "aws_config_delivery_channel" "this" {
 }
 
 resource "aws_config_configuration_recorder_status" "this" {
-  name       = aws_config_configuration_recorder.this.name
+  count      = var.enable_config ? 1 : 0
+  name       = aws_config_configuration_recorder.this[0].name
   is_enabled = true
 
   depends_on = [aws_config_delivery_channel.this]
