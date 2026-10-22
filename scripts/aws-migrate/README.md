@@ -42,6 +42,36 @@ PMCS_ENV=dev scripts/aws-migrate/setup-readonly-role.sh
 DB 프로그램(TablePlus 등)에서 Host `127.0.0.1`, Port `15432`, Database `pmcs`, SSL mode `require`, 사용자·비밀번호는 시크릿 값으로 접속한다.
 권한은 SELECT 뿐이고 세션도 읽기 전용 트랜잭션이 기본이라, 두 겹으로 쓰기가 막힌다. 마이그레이션이 새로 만드는 테이블도 자동으로 조회할 수 있다.
 
+## 로컬 개발을 dev 데이터로 (local-dev-db.sh)
+
+로컬 `yarn dev` 를 AWS dev DB 의 실제 데이터로 돌린다. dev 의 `api-dev.pqms.co.kr` 은 HMI 수신(`/receiver`)만 열려 있어서,
+로컬 화면이 그 주소를 보면 데이터가 나오지 않는다. 대신 로컬 백엔드를 터널로 dev DB 에 붙인다.
+
+```
+로컬 화면(localhost:3000) → 로컬 백엔드(localhost:4000) → 터널(127.0.0.1:15432) → dev RDS
+```
+
+```sh
+# 최초 1회 (관리자): 로컬 개발 계정 pmcs_local 생성 → 로그인 정보는 시크릿 pmcs-dev/db-local
+PMCS_ENV=dev scripts/aws-migrate/open-db-tunnel.sh        # 터미널 A
+PMCS_ENV=dev scripts/aws-migrate/setup-local-role.sh      # 터미널 B, 끝나면 A 에서 Ctrl+C
+
+# 매번: 터미널 A 에서 연결을 열어 두고, 터미널 B 에서 평소처럼 yarn dev (이미 켜져 있으면 재시작)
+aws login --profile pmcs-dev
+yarn dev:aws-db        # 기본 8시간 뒤 자동 종료. TUNNEL_HOURS=4 yarn dev:aws-db 처럼 1~12 지정
+yarn dev
+```
+
+- 연결을 여는 동안만 `apps/backend/.env.development.local`·`apps/frontend/.env.development.local` 이 생긴다(둘 다 git 제외).
+  `.env.development.local` 이 다른 env 파일보다 우선하므로 기존 `.env`·`.env.local` 은 고치지 않는다. Ctrl+C 로 닫으면 지워지고,
+  `yarn dev` 를 재시작하면 원래 설정으로 돌아간다.
+- `pmcs_local` 권한은 앱 계정과 같다(데이터 읽기·쓰기만, 테이블 구조 변경 불가). 로컬에서 `prisma migrate` 를 dev DB 에 돌려도 거부된다.
+  동시 접속 20개·쿼리 60초 제한이 걸려 있다.
+- **로컬에서 바꾼 데이터(설정·명령·Ack 등)는 dev 서버와 같은 DB 에 바로 반영된다.**
+- 집계·알림 메일은 dev 서버가 이미 하므로 로컬 백엔드에서는 끈다.
+- 로컬 백엔드는 인증서를 RDS 주소 기준으로 검증한다(`DATABASE_SSL_SERVERNAME`). 터널 주소가 127.0.0.1 이어도 검증이 유지된다.
+- 비용: 터널 태스크가 떠 있는 동안 시간당 약 $0.02 (닫으면 즉시 종료).
+
 ## 필요한 것
 
 - AWS CLI(`aws login --profile pmcs-dev`), `jq`, Docker Desktop
@@ -62,6 +92,7 @@ DB 프로그램(TablePlus 등)에서 Host `127.0.0.1`, Port `15432`, Database `p
 |---|---|
 | 앱 (`DATABASE_URL`) | sslmode 없이, `DATABASE_SSL_CA_FILE` 로 RDS 인증서와 호스트명을 검증 |
 | 마이그레이션 (`MIGRATE_DATABASE_URL`) | `sslmode=require&sslcert=<CA>&sslaccept=strict` — Prisma 마이그레이션 엔진은 `verify-full`·`sslrootcert` 를 무시하므로 이 형식이어야 검증됩니다. 또 `sslcert` 파일의 첫 인증서만 읽어서, 전체 묶음 대신 서울 루트 하나만 담은 `certs/rds-ap-northeast-2-rsa2048-g1.pem` 을 씁니다 |
+| 로컬 백엔드 (`local-dev-db.sh`, 터널 경유) | `DATABASE_SSL_CA_FILE` + `DATABASE_SSL_SERVERNAME=<RDS 주소>` — 127.0.0.1 로 붙어도 RDS 인증서와 호스트명을 검증 |
 | 이 스크립트들 (터널 경유) | `sslmode=require`. 터널 주소가 인증서 호스트명과 달라 검증 대신 암호화만 강제하며, 구간은 SSM 이 한 번 더 암호화합니다 |
 
 ## 로컬 리허설

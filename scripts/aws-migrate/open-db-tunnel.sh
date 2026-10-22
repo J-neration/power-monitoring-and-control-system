@@ -2,7 +2,7 @@
 # RDS 로 가는 임시 터널을 연다: 이 Mac localhost:$TUNNEL_PORT → (SSM, 암호화) → ECS 태스크 → RDS:5432
 #
 # RDS 는 인터넷 경로가 없는 격리 서브넷에 있어 직접 접속할 수 없다. 그래서 api 보안 그룹으로
-# 터널 전용 태스크(pmcs-<env>-db-tunnel, 1시간 뒤 스스로 종료)를 띄우고 SSM 포트 포워딩을 건다.
+# 터널 전용 태스크(pmcs-<env>-db-tunnel, TUNNEL_HOURS 시간 뒤 스스로 종료. 기본 1시간)를 띄우고 SSM 포트 포워딩을 건다.
 # 이 창을 닫거나 Ctrl+C 를 누르면 태스크도 바로 정리한다. 다른 터미널에서 나머지 스크립트를 실행한다.
 #
 # 필요: aws CLI, session-manager-plugin (brew install --cask session-manager-plugin), jq
@@ -15,13 +15,25 @@ check_account
 cluster="$NAME_PREFIX"
 task_definition="$NAME_PREFIX-db-tunnel"
 
+case "$TUNNEL_HOURS" in
+  [1-9] | 1[0-2]) ;;
+  *) die "TUNNEL_HOURS 는 1~12 사이 정수여야 합니다: $TUNNEL_HOURS" ;;
+esac
+
 network_configuration=$(task_network_configuration)
 db_host=$(db_address)
 
-log "터널 태스크 시작 ($task_definition)"
+# GuardDuty 런타임 감시가 켜져 있으면 태스크에 aws-guardduty-agent 컨테이너가 함께 붙고, 순서는 정해져 있지 않다.
+# 그래서 containers[0] 이 아니라 작업 정의의 컨테이너 이름으로 찾는다.
+container_name=$(aws ecs describe-task-definition --task-definition "$task_definition" \
+  --query 'taskDefinition.containerDefinitions[0].name' --output text)
+overrides=$(jq -nc --arg name "$container_name" --arg seconds "$((TUNNEL_HOURS * 3600))" \
+  '{containerOverrides: [{name: $name, command: ["sleep", $seconds]}]}')
+
+log "터널 태스크 시작 ($task_definition, 최대 ${TUNNEL_HOURS}시간)"
 task_arn=$(aws ecs run-task --cluster "$cluster" --task-definition "$task_definition" \
   --launch-type FARGATE --enable-execute-command --started-by aws-migrate-tunnel \
-  --network-configuration "$network_configuration" \
+  --network-configuration "$network_configuration" --overrides "$overrides" \
   --query 'tasks[0].taskArn' --output text)
 [ -n "$task_arn" ] && [ "$task_arn" != None ] || die "태스크를 시작하지 못했습니다."
 
@@ -32,11 +44,6 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 aws ecs wait tasks-running --cluster "$cluster" --tasks "$task_arn"
-
-# GuardDuty 런타임 감시가 켜져 있으면 태스크에 aws-guardduty-agent 컨테이너가 함께 붙고, 순서는 정해져 있지 않다.
-# 그래서 containers[0] 이 아니라 작업 정의의 컨테이너 이름으로 찾는다.
-container_name=$(aws ecs describe-task-definition --task-definition "$task_definition" \
-  --query 'taskDefinition.containerDefinitions[0].name' --output text)
 
 agent=""
 for _ in $(seq 1 36); do
