@@ -27,6 +27,20 @@ export SOURCE_DATABASE_URL='postgresql://...neon.tech/neondb?sslmode=require'   
 scripts/aws-migrate/copy-data.sh
 ```
 
+## 데이터 둘러보기 (조회 전용 계정)
+
+사람이 RDS 데이터를 볼 때는 조회만 되는 `pmcs_readonly` 계정을 쓴다. 한 번만 만들면 되고, 다시 실행하면 비밀번호가 바뀐다.
+
+```sh
+# 터미널 A: 터널
+PMCS_ENV=dev scripts/aws-migrate/open-db-tunnel.sh
+# 터미널 B: 계정 생성 (최초 1회) → 로그인 정보는 시크릿 pmcs-dev/db-readonly
+PMCS_ENV=dev scripts/aws-migrate/setup-readonly-role.sh
+```
+
+DB 프로그램(TablePlus 등)에서 Host `127.0.0.1`, Port `15432`, Database `pmcs`, SSL mode `require`, 사용자·비밀번호는 시크릿 값으로 접속한다.
+권한은 SELECT 뿐이고 세션도 읽기 전용 트랜잭션이 기본이라, 두 겹으로 쓰기가 막힌다. 마이그레이션이 새로 만드는 테이블도 자동으로 조회할 수 있다.
+
 ## 필요한 것
 
 - AWS CLI(`aws login --profile pmcs-dev`), `jq`, Docker Desktop

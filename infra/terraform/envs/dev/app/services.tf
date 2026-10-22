@@ -30,6 +30,14 @@ resource "aws_secretsmanager_secret" "jwt" {
   recovery_window_in_days = 7
 }
 
+# 사람이 터널로 데이터를 둘러볼 때 쓰는 조회 전용 DB 계정. 값은 scripts/aws-migrate/setup-readonly-role.sh 가 넣는다.
+resource "aws_secretsmanager_secret" "db_readonly" {
+  name                    = "${local.name_prefix}/db-readonly"
+  description             = "Read-only DB login for people browsing data over the SSM tunnel: username, password, dbname"
+  kms_key_id              = aws_kms_key.app.arn
+  recovery_window_in_days = 7
+}
+
 resource "aws_secretsmanager_secret" "alert_mail" {
   name                    = "${local.name_prefix}/alert-mail"
   description             = "Admin alert mail over SMTP: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, ALERT_EMAIL_TO"
