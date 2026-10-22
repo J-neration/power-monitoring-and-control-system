@@ -10,7 +10,7 @@
 # 환경별 값과 시크릿은 이미지에 굽지 않고 ECS 작업 정의에서 넣는다.
 
 # ── 1. 빌드: 루트 Dockerfile 과 같은 방식으로 설치·컴파일 ─────────────────
-FROM node:22.14.0-slim AS build
+FROM node:22.23.4-trixie-slim AS build
 WORKDIR /app
 
 COPY package.json yarn.lock ./
@@ -25,7 +25,7 @@ COPY apps/backend/ apps/backend/
 RUN yarn workspace @pmcs/backend build
 
 # ── 2. 운영 의존성: 백엔드 package.json 만으로 설치 (lockfile 버전 그대로) ───
-FROM node:22.14.0-slim AS deps
+FROM node:22.23.4-trixie-slim AS deps
 WORKDIR /app/apps/backend
 
 COPY yarn.lock ./
@@ -35,7 +35,7 @@ COPY apps/backend/prisma/schema.prisma prisma/schema.prisma
 RUN yarn install --production --frozen-lockfile && yarn cache clean
 
 # ── 3. 실행 이미지 ──────────────────────────────────────────────────────
-FROM node:22.14.0-slim
+FROM node:22.23.4-trixie-slim
 ENV NODE_ENV=production
 WORKDIR /app
 

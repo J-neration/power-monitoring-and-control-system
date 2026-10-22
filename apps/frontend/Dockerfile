@@ -5,7 +5,7 @@
 # 환경별 값은 이미지에 굽지 않는다 — 같은 이미지를 dev·prod 에 그대로 쓰고,
 # API_BASE_INTERNAL · AUTH_JWT_SECRET · TRUSTED_PROXY_HOPS 는 ECS 작업 정의에서 넣는다.
 
-FROM node:22.14.0-slim AS build
+FROM node:22.23.4-trixie-slim AS build
 WORKDIR /app
 
 COPY package.json yarn.lock ./
@@ -25,7 +25,7 @@ ENV NEXT_CSP_ENFORCE=$NEXT_CSP_ENFORCE
 
 RUN yarn workspace @pmcs/frontend build
 
-FROM node:22.14.0-slim
+FROM node:22.23.4-trixie-slim
 WORKDIR /app
 
 ENV NODE_ENV=production \
