@@ -56,7 +56,7 @@ net=()
 [ -n "${PG_DOCKER_NETWORK:-}" ] && net=(--network "$PG_DOCKER_NETWORK")
 # public 스키마만 덤프하면 "CREATE SCHEMA public;" 이 들어가는데, RDS 에는 이미 있고 만들 권한도 없다.
 # 그래서 SQL 텍스트 형식으로 덤프하고 그 한 줄만 뺀 뒤, 한 트랜잭션으로 적용한다.
-docker run --rm "${net[@]}" -e SOURCE_DATABASE_URL "$PG_IMAGE" \
+docker run --rm ${net[@]+"${net[@]}"} -e SOURCE_DATABASE_URL "$PG_IMAGE" \
   sh -c 'pg_dump "$SOURCE_DATABASE_URL" --schema=public --no-owner --no-privileges' |
   sed '/^CREATE SCHEMA public;$/d' |
   pg_docker psql "$target" -v ON_ERROR_STOP=1 --single-transaction -q >/dev/null
