@@ -20,10 +20,13 @@ pmcs-dev 를 EC2 t4g.small 1대 + docker compose(Caddy · API · 프론트 · Po
 5. 다른 터미널에서 `PMCS_ENV=dev scripts/aws-migrate/open-db-tunnel.sh` (RDS 터널), 이어서
    `scripts/dev-box/copy-from-rds.sh` — RDS → 서버 복사, 행 수 비교.
 6. `scripts/dev-box/deploy.sh` — 마이그레이션 확인 후 앱 시작. `https://box-app-dev.pqms.co.kr` 에서 로그인·이력·실시간 확인.
-7. 전환: `terraform.tfvars` 의 `app_hosts`·`api_hosts` 에 `app-dev`·`api-dev` 를 더해 apply → `deploy.sh`
+7. 전환: 시험 기간에도 HMI 는 RDS 로 보내므로, 먼저 RDS 터널을 열고
+   `REPLACE=1 scripts/dev-box/copy-from-rds.sh && scripts/dev-box/deploy.sh` 로 서버 DB 를 최신으로 바꾼다
+   (서버 API 를 멈추고, 기존 데이터 삭제와 복원을 한 트랜잭션으로 한다).
+   이어서 `terraform.tfvars` 의 `app_hosts`·`api_hosts` 에 `app-dev`·`api-dev` 를 더해 apply → `deploy.sh`
    → 가비아의 `app-dev`·`api-dev` 를 CNAME(ALB)에서 A(고정 IP)로 바꾼다. 몇 분 안에 Caddy 가 인증서를 받는다.
    HMI 가 Let's Encrypt 인증서를 받아들이는지 수신 로그로 확인한다.
-   - 5 와 7 사이에 HMI 가 RDS 에 보낸 데이터는 옮겨지지 않는다(dev 라 허용). 줄이려면 5~7 을 이어서 한다.
+   - 다시 복사한 뒤 레코드가 바뀔 때까지 HMI 가 RDS 에 보낸 몇 건은 옮겨지지 않는다(dev 라 허용).
 8. 되돌리기: 가비아 레코드를 다시 CNAME(ALB)로. ECS dev 는 1주일 동안 그대로 둔다.
 
 ## 평소 작업
