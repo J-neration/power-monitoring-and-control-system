@@ -46,7 +46,7 @@ scripts/aws-migrate/copy-data.sh
 | 접속 | 방식 |
 |---|---|
 | 앱 (`DATABASE_URL`) | sslmode 없이, `DATABASE_SSL_CA_FILE` 로 RDS 인증서와 호스트명을 검증 |
-| 마이그레이션 (`MIGRATE_DATABASE_URL`) | `sslmode=require&sslcert=<CA>&sslaccept=strict` — Prisma 마이그레이션 엔진은 `verify-full`·`sslrootcert` 를 무시하므로 이 형식이어야 검증됩니다 |
+| 마이그레이션 (`MIGRATE_DATABASE_URL`) | `sslmode=require&sslcert=<CA>&sslaccept=strict` — Prisma 마이그레이션 엔진은 `verify-full`·`sslrootcert` 를 무시하므로 이 형식이어야 검증됩니다. 또 `sslcert` 파일의 첫 인증서만 읽어서, 전체 묶음 대신 서울 루트 하나만 담은 `certs/rds-ap-northeast-2-rsa2048-g1.pem` 을 씁니다 |
 | 이 스크립트들 (터널 경유) | `sslmode=require`. 터널 주소가 인증서 호스트명과 달라 검증 대신 암호화만 강제하며, 구간은 SSM 이 한 번 더 암호화합니다 |
 
 ## 로컬 리허설
