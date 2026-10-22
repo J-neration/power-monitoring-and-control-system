@@ -53,9 +53,11 @@ resource "aws_cloudwatch_log_group" "ecs_exec" {
 resource "aws_ecs_cluster" "this" {
   name = local.name_prefix
 
+  # Container Insights는 지표당 과금이라 dev에서는 끈다(태스크가 돌면 월 약 $20).
+  # 서비스별 CPU·메모리 사용률은 기본 지표(AWS/ECS)로 무료로 볼 수 있다. prod에서 다시 정한다.
   setting {
     name  = "containerInsights"
-    value = "enabled"
+    value = "disabled"
   }
 
   # ECS Exec 세션은 KMS로 암호화하고, 입력한 명령과 출력을 로그로 남긴다.
