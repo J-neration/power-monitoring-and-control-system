@@ -1,7 +1,8 @@
 # Neon → AWS RDS 데이터 이전
 
-3단계(dev 전환)와 운영 컷오버에서 Neon 의 데이터를 RDS 로 옮기는 스크립트입니다.
-dev 는 Neon **dev** 브랜치 → RDS dev 만 허용하며, 운영 데이터는 dev 로 복사하지 않습니다.
+운영 컷오버에서 Neon 의 데이터를 RDS 로 옮기는 스크립트입니다. 2026-10 dev 전환(Neon dev → RDS dev)에 썼고,
+그 dev RDS 는 2026-10-23 서버 1대형으로 옮기며 지웠습니다. 이제 이 스크립트들은 `PMCS_ENV=prod` 용이며,
+운영 데이터는 dev 로 복사하지 않습니다.
 
 ## 순서
 
@@ -44,35 +45,7 @@ DB 프로그램(TablePlus 등)에서 Host `127.0.0.1`, Port `15432`, Database `p
 
 ## 로컬 개발을 dev 데이터로 (yarn dev:aws-db)
 
-로컬 `yarn dev` 를 AWS dev DB 의 실제 데이터로 돌린다. dev 의 `api-dev.pqms.co.kr` 은 HMI 수신(`/receiver`)만 열려 있어서,
-로컬 화면이 그 주소를 보면 데이터가 나오지 않는다. 대신 로컬 백엔드를 터널로 dev DB 에 붙인다.
-팀원은 대부분 Windows 라서 이 부분만 Node 스크립트(`scripts/local-dev-db.mjs`, Windows·Mac 공용)로 되어 있다.
-
-```
-로컬 화면(localhost:3000) → 로컬 백엔드(localhost:4000) → 터널(127.0.0.1:15432) → dev RDS
-```
-
-```sh
-# 최초 1회 (관리자, Mac): 로컬 개발 계정 pmcs_local 생성 → 로그인 정보는 시크릿 pmcs-dev/db-local
-PMCS_ENV=dev scripts/aws-migrate/open-db-tunnel.sh        # 터미널 A
-PMCS_ENV=dev scripts/aws-migrate/setup-local-role.sh      # 터미널 B, 끝나면 A 에서 Ctrl+C
-
-# 매번 (누구나, Windows·Mac): 터미널 A 에서 연결을 열어 두고, 터미널 B 에서 평소처럼 yarn dev (이미 켜져 있으면 재시작)
-aws login --profile pmcs-dev
-yarn dev:aws-db        # 기본 8시간 뒤 자동 종료. 1~12시간은 TUNNEL_HOURS 로 지정
-yarn dev
-```
-
-- 필요: AWS CLI v2(2.32 이상, `aws login` 지원), Session Manager plugin. Docker·jq·bash 는 필요 없다.
-- 연결을 여는 동안만 `apps/backend/.env.development.local`·`apps/frontend/.env.development.local` 이 생긴다(둘 다 git 제외).
-  `.env.development.local` 이 다른 env 파일보다 우선하므로 기존 `.env`·`.env.local` 은 고치지 않는다.
-  Ctrl+C·창 닫기·연결 끊김 시 지워지고, `yarn dev` 를 재시작하면 원래 설정으로 돌아간다.
-- `pmcs_local` 권한은 앱 계정과 같다(데이터 읽기·쓰기만, 테이블 구조 변경 불가). 로컬에서 `prisma migrate` 를 dev DB 에 돌려도 거부된다.
-  동시 접속 20개·쿼리 60초 제한이 걸려 있다.
-- **로컬에서 바꾼 데이터(설정·명령·Ack 등)는 dev 서버와 같은 DB 에 바로 반영된다.**
-- 집계·알림 메일은 dev 서버가 이미 하므로 로컬 백엔드에서는 끈다.
-- 로컬 백엔드는 인증서를 RDS 주소 기준으로 검증한다(`DATABASE_SSL_SERVERNAME`). 터널 주소가 127.0.0.1 이어도 검증이 유지된다.
-- 비용: 터널 태스크가 떠 있는 동안 시간당 약 $0.02 (닫으면 즉시 종료).
+dev 는 2026-10-23 부터 서버 1대형이라 RDS 터널을 쓰지 않는다. `scripts/dev-box/README.md` 참고.
 
 ## 필요한 것
 
