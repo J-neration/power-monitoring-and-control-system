@@ -8,26 +8,9 @@ source "$(dirname "$0")/lib.sh"
 require aws jq
 check_account
 
-id=$(box_instance_id)
 cmd="/usr/local/bin/pmcs-deploy"
 [ "${ALLOW_EMPTY_DB:-0}" = 1 ] && cmd="ALLOW_EMPTY_DB=1 $cmd"
 
-log "$BOX_NAME($id) 에서 pmcs-deploy 실행"
-command_id=$(aws ssm send-command --instance-ids "$id" --document-name AWS-RunShellScript \
-  --comment "pmcs-deploy" --timeout-seconds 900 \
-  --parameters "$(jq -n --arg c "$cmd" '{commands: [$c], executionTimeout: ["900"]}')" \
-  --query Command.CommandId --output text)
-
-status=Pending
-while :; do
-  sleep 5
-  status=$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$id" \
-    --query Status --output text 2>/dev/null || echo Pending)
-  case "$status" in Pending | InProgress | Delayed) continue ;; esac
-  break
-done
-
-aws ssm get-command-invocation --command-id "$command_id" --instance-id "$id" \
-  --query '[StandardOutputContent, StandardErrorContent]' --output text
-[ "$status" = Success ] || die "pmcs-deploy 실패: $status (출력이 잘렸으면 CloudWatch 로그 ${NAME_PREFIX}/box/* 를 확인)"
+log "$BOX_NAME 에서 pmcs-deploy 실행"
+run_on_box "$cmd" pmcs-deploy
 log "완료"
