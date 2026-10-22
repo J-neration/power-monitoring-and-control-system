@@ -149,7 +149,7 @@ export const siteService = {
     return installation;
   },
 
-  /* ─── 설치지점 모듈명 등록·해제 (빈 값이면 제거) ─── */
+  /* ─── 설치지점 품목명 등록·해제 (빈 값이면 제거) ─── */
   setInstallationModuleName: async (
     installationId: string,
     moduleName: string | null,

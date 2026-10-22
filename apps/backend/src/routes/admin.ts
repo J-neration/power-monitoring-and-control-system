@@ -83,7 +83,7 @@ const createInstallationSchema = z.object({
 });
 
 const setInstallationModuleNameSchema = z.object({
-  /** null 또는 빈 문자열이면 모듈명 제거 */
+  /** null 또는 빈 문자열이면 품목명 제거 */
   moduleName: moduleNameField,
 });
 
@@ -248,7 +248,7 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
     return reply.status(204).send();
   });
 
-  /* ── PATCH /admin/installations/:installationId/module-name ── 모듈명 */
+  /* ── PATCH /admin/installations/:installationId/module-name ── 품목명 */
   server.patch(
     "/installations/:installationId/module-name",
     { preHandler: requireAdmin },
