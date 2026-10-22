@@ -18,10 +18,11 @@ resource "aws_guardduty_detector_feature" "rds" {
   status      = "ENABLED"
 
   # RDS 데이터 활동 감시: 쿼리 패턴으로 대량 조회·데이터 삭제·악성 IP 접근을 탐지한다.
-  # GuardDuty가 RDS 보호와 함께 기본으로 켜는 기능이라 명시해 둔다(없으면 Terraform이 끄려 한다).
+  # GuardDuty가 RDS 보호와 함께 기본으로 켜는 기능이라 상태를 명시한다(vCPU당 월 $3).
+  # 고객 데이터가 없는 dev는 끄고, prod는 켠다.
   additional_configuration {
     name   = "RDS_DATA_RISK"
-    status = "ENABLED"
+    status = var.enable_rds_data_monitoring ? "ENABLED" : "DISABLED"
   }
 }
 

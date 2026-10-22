@@ -38,3 +38,9 @@ variable "alert_emails" {
   type        = list(string)
   default     = []
 }
+
+variable "enable_rds_data_monitoring" {
+  description = "GuardDuty RDS 데이터 활동 감시(RDS_DATA_RISK). vCPU당 월 $3라 고객 데이터가 없는 dev는 끈다."
+  type        = bool
+  default     = true
+}

@@ -37,3 +37,27 @@ resource "aws_accessanalyzer_analyzer" "account" {
   analyzer_name = "${var.name_prefix}-access-analyzer"
   type          = "ACCOUNT"
 }
+
+# 조직 관리 계정이 OrganizationAccountAccessRole을 맡을 수 있는 것은 비상 접근용으로 의도한 것이라 보관 처리한다.
+# 다른 주체가 이 역할을 맡을 수 있게 바뀌면 새 결과로 다시 알린다.
+data "aws_organizations_organization" "current" {}
+
+resource "aws_accessanalyzer_archive_rule" "org_access_role" {
+  analyzer_name = aws_accessanalyzer_analyzer.account.analyzer_name
+  rule_name     = "org-management-access-role"
+
+  filter {
+    criteria = "resource"
+    eq       = ["arn:${local.partition}:iam::${local.account_id}:role/OrganizationAccountAccessRole"]
+  }
+  filter {
+    criteria = "principal.AWS"
+    eq       = [data.aws_organizations_organization.current.master_account_id]
+  }
+}
+
+# SSM 문서를 계정 밖으로 공개 공유하지 못하게 막는다 (Security Hub SSM.7).
+resource "aws_ssm_service_setting" "block_public_document_sharing" {
+  setting_id    = "arn:${local.partition}:ssm:${local.region}:${local.account_id}:servicesetting/ssm/documents/console/public-sharing-permission"
+  setting_value = "Disable"
+}
