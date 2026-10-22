@@ -67,8 +67,25 @@ const madeByUs = (file) => readFileSync(file, "utf8").startsWith(MARKER);
 // ── 확인 ──────────────────────────────────────────────────────────
 
 if (!Number.isInteger(HOURS) || HOURS < 1 || HOURS > 12) die(`TUNNEL_HOURS 는 1~12 사이 정수여야 합니다: ${HOURS}`);
+
+// Windows: 설치 전에 열어 둔 터미널(Git Bash·VS Code)은 설치 프로그램이 바꾼 PATH 를 모른다.
+// 기본 설치 위치를 PATH 에 더해 둔다. aws CLI 도 이 PATH 로 session-manager-plugin 을 찾는다.
+if (process.platform === "win32") {
+  const programFiles = process.env.ProgramFiles || "C:\\Program Files";
+  const known = [
+    path.join(programFiles, "Amazon", "AWSCLIV2"),
+    path.join(programFiles, "Amazon", "SessionManagerPlugin", "bin"),
+  ];
+  const current = (process.env.PATH || "").toLowerCase().split(";");
+  const missing = known.filter((dir) => existsSync(dir) && !current.includes(dir.toLowerCase()));
+  if (missing.length > 0) process.env.PATH = [process.env.PATH, ...missing].join(";");
+}
+
 if (spawnSync("session-manager-plugin", ["--version"], { windowsHide: true }).error) {
-  die("Session Manager plugin 이 없습니다. 가이드의 '로컬 개발 환경 연결' 단원대로 설치하세요.");
+  die(
+    "Session Manager plugin 이 없습니다. 설치 후 터미널(VS Code 포함)을 모두 닫고 다시 열어 보세요. " +
+      "그래도 같으면 설치 파일을 관리자 권한으로 다시 실행하세요.",
+  );
 }
 if (!existsSync(caFile)) die(`RDS CA 파일이 없습니다: ${caFile}`);
 for (const file of [backendEnv, frontendEnv]) {
