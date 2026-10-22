@@ -26,7 +26,7 @@ target=$(target_conninfo "$MIGRATOR_ROLE")
 
 net=()
 [ -n "${PG_DOCKER_NETWORK:-}" ] && net=(--network "$PG_DOCKER_NETWORK")
-source_psql() { docker run --rm -i "${net[@]}" -e SOURCE_DATABASE_URL "$PG_IMAGE" sh -c 'psql "$SOURCE_DATABASE_URL" -v ON_ERROR_STOP=1 -tA'; }
+source_psql() { docker run --rm -i ${net[@]+"${net[@]}"} -e SOURCE_DATABASE_URL "$PG_IMAGE" sh -c 'psql "$SOURCE_DATABASE_URL" -v ON_ERROR_STOP=1 -tA'; }
 
 tables=$(echo "select table_name from information_schema.tables
   where table_schema = 'public' and table_type = 'BASE TABLE' order by 1;" | source_psql)

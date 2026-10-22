@@ -71,7 +71,8 @@ master_secret_arn() {
 pg_docker() {
   local net=()
   [ -n "${PG_DOCKER_NETWORK:-}" ] && net=(--network "$PG_DOCKER_NETWORK")
-  docker run --rm -i "${net[@]}" -e PGPASSWORD "$PG_IMAGE" "$@"
+  # macOS 기본 bash 3.2 는 set -u 에서 빈 배열 "${net[@]}" 을 unbound 로 본다.
+  docker run --rm -i ${net[@]+"${net[@]}"} -e PGPASSWORD "$PG_IMAGE" "$@"
 }
 
 # 터널을 거쳐 RDS 에 붙는 libpq 연결 문자열 (비밀번호 제외).
