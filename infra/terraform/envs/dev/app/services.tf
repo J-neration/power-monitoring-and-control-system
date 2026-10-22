@@ -38,6 +38,15 @@ resource "aws_secretsmanager_secret" "db_readonly" {
   recovery_window_in_days = 7
 }
 
+# 로컬 백엔드(yarn dev)가 터널로 dev DB 에 붙을 때 쓰는 계정. 값은 scripts/aws-migrate/setup-local-role.sh 가 넣는다.
+# dev 전용 — prod 에는 만들지 않는다.
+resource "aws_secretsmanager_secret" "db_local" {
+  name                    = "${local.name_prefix}/db-local"
+  description             = "DB login for local development (yarn dev) over the SSM tunnel: username, password, dbname"
+  kms_key_id              = aws_kms_key.app.arn
+  recovery_window_in_days = 7
+}
+
 resource "aws_secretsmanager_secret" "alert_mail" {
   name                    = "${local.name_prefix}/alert-mail"
   description             = "Admin alert mail over SMTP: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, ALERT_EMAIL_TO"

@@ -10,6 +10,7 @@
     "dev:free-port": "node scripts/free-port.mjs 4000",
     "dev:frontend": "cross-env NODE_ENV=development yarn workspace @pmcs/frontend dev",
     "dev:backend": "cross-env NODE_ENV=development yarn workspace @pmcs/backend dev",
+    "dev:aws-db": "node scripts/local-dev-db.mjs",
     "build": "yarn workspace @pmcs/frontend build && yarn workspace @pmcs/backend build",
     "lint": "yarn workspace @pmcs/frontend lint && yarn workspace @pmcs/backend lint",
     "typecheck": "yarn workspace @pmcs/backend typecheck",

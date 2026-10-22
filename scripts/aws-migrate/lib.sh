@@ -4,6 +4,7 @@
 #   PMCS_ENV        dev(기본) | prod — 대상 AWS 계정과 리소스 이름(pmcs-<env>-*)을 정한다.
 #   AWS_PROFILE     기본 pmcs-<env>
 #   TUNNEL_PORT     open-db-tunnel.sh 가 여는 로컬 포트 (기본 15432)
+#   TUNNEL_HOURS    터널 태스크가 스스로 종료되기까지의 시간 (기본 1, 최대 12)
 #   TARGET_HOST     RDS 에 닿는 주소. 기본은 터널(host.docker.internal:$TUNNEL_PORT).
 #   TARGET_PORT
 #   PG_IMAGE        psql·pg_dump 를 실행할 이미지 (기본 postgres:16). 로컬에 psql 설치 불필요.
@@ -31,6 +32,9 @@ MIGRATOR_ROLE=pmcs_migrator
 READONLY_ROLE=pmcs_readonly
 API_SECRET_ID="$NAME_PREFIX/api"
 READONLY_SECRET_ID="$NAME_PREFIX/db-readonly"
+# 로컬 백엔드(yarn dev)가 터널로 dev DB 에 붙을 때 쓰는 계정 (setup-local-role.sh, scripts/local-dev-db.mjs)
+LOCAL_ROLE=pmcs_local
+LOCAL_SECRET_ID="$NAME_PREFIX/db-local"
 # ECS 이미지 안의 RDS CA 번들 경로 (apps/backend/Dockerfile)
 IMAGE_RDS_CA=/app/apps/backend/certs/rds-global-bundle.pem
 # Prisma 마이그레이션 엔진은 sslcert 파일의 "첫 번째" 인증서만 읽는다. 전체 묶음(첫 인증서가 sa-east-1)을
@@ -39,6 +43,7 @@ IMAGE_RDS_CA=/app/apps/backend/certs/rds-global-bundle.pem
 IMAGE_RDS_MIGRATE_CA=/app/apps/backend/certs/rds-ap-northeast-2-rsa2048-g1.pem
 
 TUNNEL_PORT="${TUNNEL_PORT:-15432}"
+TUNNEL_HOURS="${TUNNEL_HOURS:-1}"
 TARGET_HOST="${TARGET_HOST:-host.docker.internal}"
 TARGET_PORT="${TARGET_PORT:-$TUNNEL_PORT}"
 PG_IMAGE="${PG_IMAGE:-postgres:16}"
