@@ -7,3 +7,7 @@ api_hostname = "api-dev.pqms.co.kr"
 #   docker buildx build --platform linux/arm64 --provenance=false --sbom=false --push ...
 api_image_tag      = "4385ad7-arm64"
 frontend_image_tag = "4385ad7-arm64"
+
+# 서비스 태스크 수. 0이면 Fargate 비용 없음(서비스·작업 정의만 남음).
+api_desired_count      = 1
+frontend_desired_count = 1
