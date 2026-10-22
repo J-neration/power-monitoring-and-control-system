@@ -6,7 +6,7 @@
 #   (로컬에서 prisma migrate 를 dev DB 에 실수로 돌려도 거부된다). 앞으로 생기는 테이블에도 자동으로 붙는다.
 # - 동시 접속 20개, 쿼리 60초 제한으로 로컬 실수가 dev 서버를 막지 않게 한다.
 # - 비밀번호는 여기서 무작위로 만들어 시크릿에 바로 넣고, 화면·파일에 남기지 않는다.
-#   다시 실행하면 비밀번호가 바뀐다(교체). 이미 켜 둔 로컬 연결은 local-dev-db.sh 를 다시 실행하면 된다.
+#   다시 실행하면 비밀번호가 바뀐다(교체). 이미 켜 둔 로컬 연결은 yarn dev:aws-db 를 다시 실행하면 된다.
 # - dev 전용이다. 운영(prod) DB 에는 로컬 계정을 만들지 않는다.
 #
 # 필요: open-db-tunnel.sh 로 터널이 열려 있을 것, setup-db-roles.sh 실행 완료(pmcs_migrator 존재),
@@ -64,7 +64,7 @@ trap 'rm -rf "$work_dir"' EXIT
 umask 077
 jq -n --arg u "$LOCAL_ROLE" --arg p "$local_password" --arg d "$DB_NAME" \
   '{username: $u, password: $p, dbname: $d,
-    note: "로컬 백엔드 전용. scripts/aws-migrate/local-dev-db.sh 가 읽어 쓴다."}' >"$work_dir/secret.json"
+    note: "로컬 백엔드 전용. yarn dev:aws-db (scripts/local-dev-db.mjs) 가 읽어 쓴다."}' >"$work_dir/secret.json"
 aws secretsmanager put-secret-value --secret-id "$LOCAL_SECRET_ID" \
   --secret-string "file://$work_dir/secret.json" >/dev/null
 unset local_password

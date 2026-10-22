@@ -1870,7 +1870,7 @@ export type $InstallationPayload<ExtArgs extends runtime.Types.Extensions.Intern
      */
     iccid: string | null
     /**
-     * 설치 장비 모듈명 (예: PAF 400Y-100C). 선택 입력이며 나중에 관리자 화면에서 추가·수정할 수 있다.
+     * 설치 장비 품목명 (예: PAF 400Y-100C). 선택 입력이며 나중에 관리자 화면에서 추가·수정할 수 있다.
      */
     moduleName: string | null
     /**

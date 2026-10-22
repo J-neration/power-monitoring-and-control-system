@@ -32,7 +32,7 @@ MIGRATOR_ROLE=pmcs_migrator
 READONLY_ROLE=pmcs_readonly
 API_SECRET_ID="$NAME_PREFIX/api"
 READONLY_SECRET_ID="$NAME_PREFIX/db-readonly"
-# 로컬 백엔드(yarn dev)가 터널로 dev DB 에 붙을 때 쓰는 계정 (setup-local-role.sh, local-dev-db.sh)
+# 로컬 백엔드(yarn dev)가 터널로 dev DB 에 붙을 때 쓰는 계정 (setup-local-role.sh, scripts/local-dev-db.mjs)
 LOCAL_ROLE=pmcs_local
 LOCAL_SECRET_ID="$NAME_PREFIX/db-local"
 # ECS 이미지 안의 RDS CA 번들 경로 (apps/backend/Dockerfile)
