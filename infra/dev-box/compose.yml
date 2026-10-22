@@ -1,0 +1,143 @@
+# dev "서버 1대형"(EC2 1대 + docker compose). infra/terraform/envs/dev/box 가 S3 로 올리고,
+# 서버의 pmcs-deploy 가 /opt/pmcs/config 로 내려받아 실행한다. 변수는 /opt/pmcs/.env 에서 온다
+# (settings.env = Terraform 이 만든 주소·이미지 태그, 나머지 = SSM 시크릿 파라미터).
+#
+# 서버 밖으로 열린 포트는 Caddy 의 80·443 뿐이다. Postgres 는 서버 자신(127.0.0.1)에만 열려,
+# 관리자가 SSM 포트 포워딩으로만 붙는다.
+
+# 컨테이너 로그는 CloudWatch Logs(${LOG_GROUP_PREFIX}/<서비스>)로 보낸다. 서비스마다 options 로 그룹을 정한다.
+x-logging: &logging
+  driver: awslogs
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    command: ["postgres", "-c", "max_connections=60", "-c", "shared_buffers=256MB"]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: pmcs
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      # initdb/01-roles.sh 가 처음 한 번 앱 계정을 만들 때 쓴다.
+      MIGRATOR_DB_PASSWORD: ${MIGRATOR_DB_PASSWORD:?}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?}
+      READONLY_DB_PASSWORD: ${READONLY_DB_PASSWORD:?}
+      LOCAL_DB_PASSWORD: ${LOCAL_DB_PASSWORD:?}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - /data/postgres:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # TCP 로 확인한다. 첫 초기화 중 임시 서버는 소켓으로만 받으므로, 초기화가 끝나기 전에 준비됨으로 보지 않는다.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d pmcs"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    logging:
+      <<: *logging
+      options:
+        awslogs-region: ${AWS_REGION}
+        awslogs-group: ${LOG_GROUP_PREFIX}/postgres
+
+  # 배포 때 pmcs-deploy 가 한 번 실행한다 (docker compose run --rm migrate).
+  migrate:
+    image: ${API_IMAGE:?}
+    profiles: ["tools"]
+    command: ["sh", "-c", "cd apps/backend && npx prisma migrate deploy"]
+    environment:
+      DATABASE_URL: postgresql://pmcs_migrator:${MIGRATOR_DB_PASSWORD}@postgres:5432/pmcs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging:
+      <<: *logging
+      options:
+        awslogs-region: ${AWS_REGION}
+        awslogs-group: ${LOG_GROUP_PREFIX}/api
+
+  api:
+    image: ${API_IMAGE:?}
+    restart: unless-stopped
+    command: ["node", "apps/backend/dist/src/index.js"]
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "4000"
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:?}
+      # Caddy 한 단계만 거친다.
+      TRUST_PROXY_HOPS: "1"
+      WS_PING_INTERVAL_MS: "30000"
+      WS_REQUIRE_AUTH: "true"
+      DATABASE_URL: postgresql://pmcs_app:${APP_DB_PASSWORD}@postgres:5432/pmcs
+      DATABASE_POOL_MAX: "10"
+      LOG_LEVEL: info
+      RECEIVER_API_KEY: ${RECEIVER_API_KEY:?}
+      JWT_SECRET: ${JWT_SECRET:?}
+      CRITICAL_FAULT_WEBHOOK_URL: ${CRITICAL_FAULT_WEBHOOK_URL:-}
+      # 비워 두면 관리자 알림 메일을 보내지 않는다.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 20s
+    logging:
+      <<: *logging
+      options:
+        awslogs-region: ${AWS_REGION}
+        awslogs-group: ${LOG_GROUP_PREFIX}/api
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?}
+    restart: unless-stopped
+    environment:
+      # BFF 가 서버에서 API 를 부를 주소 (compose 네트워크 안)
+      API_BASE_INTERNAL: http://api:4000
+      TRUSTED_PROXY_HOPS: "1"
+      AUTH_JWT_SECRET: ${JWT_SECRET:?}
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 20s
+    logging:
+      <<: *logging
+      options:
+        awslogs-region: ${AWS_REGION}
+        awslogs-group: ${LOG_GROUP_PREFIX}/frontend
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APP_HOSTS: ${APP_HOSTS:?}
+      API_HOSTS: ${API_HOSTS:?}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Let's Encrypt 인증서·계정 키. 서버를 다시 만들어도 남도록 데이터 볼륨에 둔다.
+      - /data/caddy:/data
+    depends_on:
+      - api
+      - frontend
+    logging:
+      <<: *logging
+      options:
+        awslogs-region: ${AWS_REGION}
+        awslogs-group: ${LOG_GROUP_PREFIX}/caddy
