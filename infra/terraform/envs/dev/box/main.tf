@@ -18,20 +18,11 @@ locals {
   log_group_prefix = "/${local.name_prefix}/box"
   log_services     = ["caddy", "api", "frontend", "postgres"]
 
-  ecr_registry = split("/", data.aws_ecr_repository.api.repository_url)[0]
+  ecr_registry = split("/", module.ecr.repository_urls["api"])[0]
 }
 
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
-
-# 이미지는 app 루트가 만든 ECR 저장소를 그대로 쓴다.
-data "aws_ecr_repository" "api" {
-  name = "${local.name_prefix}/api"
-}
-
-data "aws_ecr_repository" "frontend" {
-  name = "${local.name_prefix}/frontend"
-}
 
 # ── 네트워크: 공개 서브넷 하나 (VPC·서브넷·IGW 는 무료) ─────────────────
 
@@ -191,8 +182,8 @@ locals {
     APP_HOSTS=${join(", ", var.app_hosts)}
     API_HOSTS=${join(", ", var.api_hosts)}
     FRONTEND_ORIGIN=${join(",", [for h in var.app_hosts : "https://${h}"])}
-    API_IMAGE=${data.aws_ecr_repository.api.repository_url}:${var.api_image_tag}
-    FRONTEND_IMAGE=${data.aws_ecr_repository.frontend.repository_url}:${var.frontend_image_tag}
+    API_IMAGE=${module.ecr.repository_urls["api"]}:${var.api_image_tag}
+    FRONTEND_IMAGE=${module.ecr.repository_urls["frontend"]}:${var.frontend_image_tag}
   EOT
 }
 
@@ -269,7 +260,7 @@ data "aws_iam_policy_document" "box" {
       "ecr:BatchGetImage",
       "ecr:GetDownloadUrlForLayer",
     ]
-    resources = [data.aws_ecr_repository.api.arn, data.aws_ecr_repository.frontend.arn]
+    resources = values(module.ecr.repository_arns)
   }
   statement {
     sid       = "ReadConfig"

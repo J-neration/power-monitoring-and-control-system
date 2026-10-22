@@ -7,7 +7,7 @@ output "acm_validation_records" {
 }
 
 output "ecr_repository_urls" {
-  value = module.ecr.repository_urls
+  value = { for k, r in data.aws_ecr_repository.this : k => r.repository_url }
 }
 
 output "nat_public_ips" {
