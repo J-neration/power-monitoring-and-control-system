@@ -30,6 +30,10 @@ MIGRATOR_ROLE=pmcs_migrator
 API_SECRET_ID="$NAME_PREFIX/api"
 # ECS 이미지 안의 RDS CA 번들 경로 (apps/backend/Dockerfile)
 IMAGE_RDS_CA=/app/apps/backend/certs/rds-global-bundle.pem
+# Prisma 마이그레이션 엔진은 sslcert 파일의 "첫 번째" 인증서만 읽는다. 전체 묶음(첫 인증서가 sa-east-1)을
+# 주면 서울 RDS 인증서 검증에 실패하므로, 서울 RDS 루트(rds-ca-rsa2048-g1) 하나만 담은 파일을 쓴다.
+# RDS 의 CA 를 바꾸면(rsa4096·ecc384) 이 파일도 그 루트로 바꿔야 한다.
+IMAGE_RDS_MIGRATE_CA=/app/apps/backend/certs/rds-ap-northeast-2-rsa2048-g1.pem
 
 TUNNEL_PORT="${TUNNEL_PORT:-15432}"
 TARGET_HOST="${TARGET_HOST:-host.docker.internal}"

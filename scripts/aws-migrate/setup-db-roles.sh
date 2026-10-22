@@ -82,7 +82,7 @@ GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO $APP_ROLE;
 SQL
 
 app_url="postgresql://$APP_ROLE:$app_password@$db_host:5432/$DB_NAME"
-migrate_url="postgresql://$MIGRATOR_ROLE:$migrator_password@$db_host:5432/$DB_NAME?sslmode=require&sslcert=$IMAGE_RDS_CA&sslaccept=strict"
+migrate_url="postgresql://$MIGRATOR_ROLE:$migrator_password@$db_host:5432/$DB_NAME?sslmode=require&sslcert=$IMAGE_RDS_MIGRATE_CA&sslaccept=strict"
 
 if [ "$LOCAL_REHEARSAL" = 1 ]; then
   log "로컬 리허설: 시크릿은 쓰지 않았습니다."

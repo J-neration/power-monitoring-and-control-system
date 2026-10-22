@@ -156,8 +156,9 @@ module "api" {
 
 # 마이그레이션 전용 작업 정의 (서비스 없음). 배포 때 run-task로 한 번 실행한다.
 # MIGRATE_DATABASE_URL은 스키마 소유 계정(pmcs_migrator)으로, Prisma 마이그레이션 엔진의 검증 옵션
-# sslmode=require&sslcert=<위 CA 파일>&sslaccept=strict 를 붙인다(scripts/aws-migrate/setup-db-roles.sh 가 만든다).
+# sslmode=require&sslcert=<CA 파일>&sslaccept=strict 를 붙인다(scripts/aws-migrate/setup-db-roles.sh 가 만든다).
 # 이 엔진은 DATABASE_SSL_CA_FILE을 읽지 않고, sslmode=verify-full·sslrootcert 는 무시해 검증이 되지 않는다.
+# 또 sslcert 파일의 첫 인증서만 읽으므로 전체 묶음이 아닌 certs/rds-ap-northeast-2-rsa2048-g1.pem 을 쓴다.
 module "api_migrate" {
   source = "../../../modules/ecs-service"
 
