@@ -5,8 +5,8 @@ api_hostname = "api-dev.pqms.co.kr"
 
 # ECR 이미지 태그(<커밋>-arm64). 단일 매니페스트로 올려야 ECR 기본 스캔이 동작한다:
 #   docker buildx build --platform linux/arm64 --provenance=false --sbom=false --push ...
-api_image_tag      = "4385ad7-arm64"
-frontend_image_tag = "4385ad7-arm64"
+api_image_tag      = "74a11de-arm64"
+frontend_image_tag = "74a11de-arm64"
 
 # 서비스 태스크 수. 0이면 Fargate 비용 없음(서비스·작업 정의만 남음).
 api_desired_count      = 1
