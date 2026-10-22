@@ -1,0 +1,24 @@
+# dev 서버 1대형의 앞단. Let's Encrypt 인증서를 자동으로 받고 갱신한다(HTTP-01, 80 포트).
+# APP_HOSTS·API_HOSTS 는 Terraform(envs/dev/box)의 주소 목록이다("a.pqms.co.kr, b.pqms.co.kr").
+# 가비아에서 그 주소가 이 서버의 고정 IP 를 가리킨 뒤에야 인증서가 나온다.
+# ECS dev 의 ALB 규칙과 같다: app 은 /ws → API, 나머지 → 프론트 / api 는 /receiver 만.
+
+{$APP_HOSTS} {
+	@ws path /ws /ws/*
+	handle @ws {
+		reverse_proxy api:4000
+	}
+	handle {
+		reverse_proxy frontend:3000
+	}
+}
+
+{$API_HOSTS} {
+	@receiver path /receiver /receiver/*
+	handle @receiver {
+		reverse_proxy api:4000
+	}
+	handle {
+		respond 404
+	}
+}
