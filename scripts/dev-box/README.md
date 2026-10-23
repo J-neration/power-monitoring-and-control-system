@@ -17,8 +17,14 @@ pmcs-dev 는 EC2 t4g.small 1대 + docker compose(Caddy · API · 프론트 · Po
 
 ## 평소 작업
 
-- **배포**: `envs/dev/box/terraform.tfvars` 의 이미지 태그를 바꿔 plan → 승인 → apply(S3 의 settings.env 갱신)
-  → `scripts/dev-box/deploy.sh`. 이미지는 `docker buildx build --platform linux/arm64 --provenance=false --sbom=false --push`.
+- **배포 (자동)**: dev 에 앱 코드(`apps/**`, `package.json`, `yarn.lock`)가 병합되면 GitHub Actions
+  [`deploy-dev-box.yml`](../../.github/workflows/deploy-dev-box.yml)이 arm64 이미지 `<커밋 7자리>-arm64` 를 ECR 에 올리고,
+  스캔에서 Critical 이 0건이면 SSM `/pmcs-dev/box/image-tag` 에 태그를 쓴 뒤 서버에서 `pmcs-deploy` 를 실행한다.
+  권한은 GitHub OIDC 역할 `pmcs-dev-github-deploy`(dev 브랜치 전용, `envs/dev/box/deploy.tf`)로 받는다.
+  수동 실행은 Actions → Deploy dev box → Run workflow (dev 브랜치).
+- **되돌리기**: `TAG=<이전 태그> scripts/dev-box/deploy.sh`. 이전 태그는 Actions 실행 요약에 적혀 있다.
+  설정·시크릿만 바꿨다면 `scripts/dev-box/deploy.sh` (지금 태그로 다시 배포).
+  tfvars 의 `initial_image_tag` 는 파라미터의 첫 값일 뿐이라, 바꿔도 배포되지 않는다.
 - **로그**: CloudWatch 로그 그룹 `/pmcs-dev/box/{api,frontend,caddy,postgres}`.
   API 의 "request completed" 줄에는 URL 이 없으니, 같은 `reqId` 의 "incoming request" 줄과 맞춰 본다.
 - **서버 셸**: `aws ssm start-session --target <instance_id>` 후 `sudo -i`.

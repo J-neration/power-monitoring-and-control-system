@@ -3,5 +3,5 @@
 app_hosts = ["app-dev.pqms.co.kr"]
 api_hosts = ["api-dev.pqms.co.kr"]
 
-api_image_tag      = "74a11de-arm64"
-frontend_image_tag = "74a11de-arm64"
+# 배포 태그는 SSM /pmcs-dev/box/image-tag 에 있다(CI·deploy.sh 가 씀). 이 값은 첫 값·비상용이다.
+initial_image_tag = "74a11de-arm64"

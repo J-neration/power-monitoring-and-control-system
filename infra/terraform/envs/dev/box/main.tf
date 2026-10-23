@@ -182,8 +182,9 @@ locals {
     APP_HOSTS=${join(", ", var.app_hosts)}
     API_HOSTS=${join(", ", var.api_hosts)}
     FRONTEND_ORIGIN=${join(",", [for h in var.app_hosts : "https://${h}"])}
-    API_IMAGE=${module.ecr.repository_urls["api"]}:${var.api_image_tag}
-    FRONTEND_IMAGE=${module.ecr.repository_urls["frontend"]}:${var.frontend_image_tag}
+    API_IMAGE=${module.ecr.repository_urls["api"]}:${var.initial_image_tag}
+    FRONTEND_IMAGE=${module.ecr.repository_urls["frontend"]}:${var.initial_image_tag}
+    IMAGE_TAG_PARAM=${aws_ssm_parameter.image_tag.name}
   EOT
 }
 
@@ -285,7 +286,7 @@ data "aws_iam_policy_document" "box" {
   statement {
     sid       = "ReadSecrets"
     actions   = ["ssm:GetParameter"]
-    resources = [aws_ssm_parameter.env.arn]
+    resources = [aws_ssm_parameter.env.arn, aws_ssm_parameter.image_tag.arn]
   }
   statement {
     sid       = "ContainerLogs"
