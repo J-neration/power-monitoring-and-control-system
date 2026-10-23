@@ -16,25 +16,90 @@
 
 name: Build check (Railway · Netlify)
 
-# paths 필터를 두지 않는다. 백엔드/프론트엔드 어느 쪽이 바뀌든 이 워크플로가
-# 떠야 하고, 각 잡이 자기 몫만 검사한다. (예전에는 백엔드 경로만 걸려 있어서
-# 프론트엔드만 바뀐 푸시에서는 아무 검사도 돌지 않았다.)
+# - push는 dev·main만 검사한다. 기능 브랜치는 PR에서 검사한다 (브랜치 push까지 돌면
+#   같은 변경을 세 번 빌드하고, 캐시가 없는 브랜치 실행이 PR 화면에 4~10분 걸려 있었다).
+#   PR 없이 push만 하는 브랜치는 .githooks/pre-push 가 대신 검사한다.
+# - 워크플로 단위 paths 필터는 두지 않는다. 대신 첫 잡(changes)이 바뀐 경로를 판정하고,
+#   각 잡은 자기 몫의 경로가 바뀐 경우에만 돈다. 수동 실행은 전부 돈다.
 on:
   push:
+    branches:
+      - dev
+      - main
   pull_request:
   workflow_dispatch:
 
-# 같은 브랜치에서 연속 푸시하면 이전 실행은 취소 (PR과 push 중복 실행도 정리)
+# 같은 브랜치에서 연속 푸시하면 이전 실행은 취소
 concurrency:
   group: backend-docker-build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # 바뀐 파일로 어느 잡을 돌릴지 정한다. 외부 액션 없이 git diff 만 쓴다.
+  #   PR    : 병합 미리보기 커밋(refs/pull/N/merge)과 첫 부모(지금의 대상 브랜치)의 차이
+  #   push  : 직전 tip(event.before)과 이번 tip의 차이. before 를 모르면 전부 돈다.
+  # 경로 목록은 각 빌드가 실제로 읽는 파일과 같다 (Dockerfile 의 COPY, railway.toml 의 watchPatterns).
+  changes:
+    name: 바뀐 경로 판정
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      railway: ${{ steps.filter.outputs.railway }}
+      aws_backend: ${{ steps.filter.outputs.aws_backend }}
+      aws_frontend: ${{ steps.filter.outputs.aws_frontend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: filter
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          all=false
+          changed=""
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            all=true
+          elif [ "$EVENT" = "pull_request" ]; then
+            changed=$(git diff --name-only HEAD^1 HEAD)
+          elif [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
+            || ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            all=true
+          else
+            changed=$(git diff --name-only "$BEFORE" "$GITHUB_SHA")
+          fi
+
+          # 공용 매니페스트나 이 워크플로가 바뀌면 모든 잡이 영향을 받는다.
+          shared='^(package\.json|yarn\.lock|\.node-version|\.github/workflows/backend-docker-build\.yml)$'
+          out() {
+            if [ "$all" = true ] || grep -qE "$2|$shared" <<<"$changed"; then
+              echo "$1=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "$1=false" >> "$GITHUB_OUTPUT"
+            fi
+          }
+          out backend '^apps/backend/'
+          out frontend '^apps/frontend/|^netlify\.toml$'
+          out railway '^apps/backend/|^apps/frontend/package\.json$|^Dockerfile$|^\.dockerignore$|^railway\.toml$'
+          out aws_backend '^apps/backend/|^apps/frontend/package\.json$'
+          out aws_frontend '^apps/frontend/|^apps/backend/package\.json$'
+
+          {
+            echo "### 바뀐 경로 판정"
+            if [ "$all" = true ]; then echo "전체 검사 (${EVENT})"; else echo '```'; echo "${changed:-(없음)}"; echo '```'; fi
+            echo '```'; cat "$GITHUB_OUTPUT"; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   # 운영 빌드(tsconfig.json)는 테스트를 제외하므로, 테스트 파일의 타입 에러는
   # docker build가 잡지 못한다. 그 몫을 이 잡이 맡는다.
   # (로컬에서는 .githooks/pre-push 가 푸시 전에 같은 검사를 돌린다.)
   typecheck:
     name: 타입 검사 (테스트 포함)
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -63,6 +128,8 @@ jobs:
   # (Netlify 체크는 "Deploy failed" 만 보여주고 원인 로그는 Netlify 대시보드에 있다.)
   frontend:
     name: next build (Netlify와 동일)
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -88,11 +155,16 @@ jobs:
             echo "로컬에서 \`yarn workspace @pmcs/frontend build\` 로 같은 결과를 볼 수 있습니다."
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # AWS ECS 로 옮길 프론트엔드 컨테이너 이미지. 지금 운영(Netlify)과는 무관하며,
-  # 전환 전까지 이미지가 깨지지 않았는지만 확인한다.
-  # ECS Fargate 가 ARM64(Graviton)라 ARM 러너에서 빌드한다 (공개 저장소는 무료).
+  # docker 빌드 캐시(type=gha)는 dev push 에서만 쓴다. PR·main 은 읽기만 한다.
+  # 저장소 캐시 한도는 10GB인데 Railway 이미지 캐시 하나가 약 4GB라, PR·브랜치마다 쓰면
+  # 서로 밀어내서 dev push 가 매번 처음부터 빌드했다 (AWS 프론트엔드 4~6분).
+  # PR 은 대상 브랜치(dev)의 캐시를 읽을 수 있다.
+
+  # AWS 프론트엔드 컨테이너 이미지 (dev 서버가 쓰는 arm64). 지금 운영(Netlify)과는 무관하다.
   frontend-image:
     name: docker build (AWS 프론트엔드)
+    needs: changes
+    if: needs.changes.outputs.aws_frontend == 'true'
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
@@ -106,12 +178,14 @@ jobs:
           file: apps/frontend/Dockerfile
           push: false
           cache-from: type=gha,scope=frontend-image
-          cache-to: type=gha,mode=max,scope=frontend-image
+          cache-to: ${{ github.event_name == 'push' && github.ref == 'refs/heads/dev' && 'type=gha,mode=max,scope=frontend-image' || '' }}
 
-  # AWS ECS 용 백엔드 이미지 (apps/backend/Dockerfile). Railway 는 루트 Dockerfile 을 쓰므로
-  # 운영과는 무관하며, 전환 전까지 이미지가 깨지지 않았는지만 확인한다.
+  # AWS 백엔드 이미지 (apps/backend/Dockerfile, arm64). Railway 는 루트 Dockerfile 을 쓰므로
+  # 운영과는 무관하다.
   backend-image:
     name: docker build (AWS 백엔드)
+    needs: changes
+    if: needs.changes.outputs.aws_backend == 'true'
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
@@ -125,10 +199,14 @@ jobs:
           file: apps/backend/Dockerfile
           push: false
           cache-from: type=gha,scope=backend-image
-          cache-to: type=gha,mode=max,scope=backend-image
+          cache-to: ${{ github.event_name == 'push' && github.ref == 'refs/heads/dev' && 'type=gha,mode=max,scope=backend-image' || '' }}
 
+  # Railway 운영이 쓰는 루트 Dockerfile. main 은 PR 없이 반영되고 Railway 빌드와 동시에 돌아
+  # 사전 경고가 되지 못하므로, dev·PR 단계에서 잡는 것이 운영 보호의 핵심이다.
   build:
     name: docker build (Railway와 동일)
+    needs: changes
+    if: needs.changes.outputs.railway == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -143,7 +221,7 @@ jobs:
           file: Dockerfile
           push: false
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: ${{ github.event_name == 'push' && github.ref == 'refs/heads/dev' && 'type=gha,mode=max' || '' }}
 
       - name: 실패 안내
         if: failure()
