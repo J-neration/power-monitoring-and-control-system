@@ -15,7 +15,8 @@ Railway 빌드 로그는 Railway 대시보드에서만 보인다. 그래서 백�
 [`.github/workflows/backend-docker-build.yml`](../.github/workflows/backend-docker-build.yml)이
 **Railway와 동일한 Dockerfile로** 이미지를 미리 빌드한다.
 
-- 백엔드 관련 파일이 바뀐 푸시/PR마다 실행된다
+- PR과 dev·main 푸시에서, 그 빌드가 읽는 파일(Railway는 `railway.toml`의 watchPatterns와 같은 경로)이 바뀌었을 때 실행된다
+- 기능 브랜치 푸시만으로는 돌지 않는다. PR을 열면 돌고, 그 전에는 `.githooks/pre-push`가 같은 검사를 로컬에서 한다
 - 실패하면 **그 커밋을 푸시한 사람에게 GitHub이 자동으로 메일을 보낸다** — Railway 계정이 없어도 된다
 - 메일의 링크를 열면 Railway 빌드 로그와 같은 내용이 그대로 보인다
 - PR에는 빨간 X로 표시되므로, 깨진 채로 머지되는 것도 막힌다
