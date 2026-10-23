@@ -1,11 +1,20 @@
 "use client";
 
+import { formatMetric } from "../../lib/metricThreshold";
+import { isLowLoadCurrent } from "../../lib/lowLoad";
+import { ThdInfoTip, ThdLowLoadBadge } from "../ThdLoadNotice";
 import { useGaugeEnter } from "./useGaugeEnter";
 
 type Props = {
   label: string;
   before?: number | null;
   after?: number | null;
+  /** 이 상의 부하전류 (A). THDi와 함께 본다. */
+  loadCurrent?: number | null;
+  /** 부모 제목에 안내가 있으면 게이지마다 아이콘을 두지 않는다. */
+  showInfo?: boolean;
+  /** 카드 범례가 있으면 게이지 안 범례는 뺀다. */
+  showLegend?: boolean;
 };
 
 const PAD = 14;
@@ -74,16 +83,47 @@ function fmt(v: number) {
   return `${v.toFixed(1)}%`;
 }
 
-export default function ThdArcGauge({ label, before, after }: Props) {
+function LoadLine({ amps }: { amps?: number | null }) {
+  const low = isLowLoadCurrent(amps);
+  const text = formatMetric(amps, 1);
+  return (
+    <div className={`thd-load-line${low ? " is-low" : ""}`}>
+      <span className="thd-load-kicker">부하</span>
+      <span className="thd-load-amps">
+        {text === "-" ? "—" : `${text} A`}
+      </span>
+      {low ? <ThdLowLoadBadge /> : null}
+    </div>
+  );
+}
+
+export default function ThdArcGauge({
+  label,
+  before,
+  after,
+  loadCurrent,
+  showInfo = true,
+  showLegend = true,
+}: Props) {
   const b = finite(before);
   const a = finite(after);
   const enter = useGaugeEnter(950, 80);
+  const low = isLowLoadCurrent(loadCurrent);
+  const title = (
+    <span className="ring-gauge-title">
+      {label}
+      {showInfo ? <ThdInfoTip /> : null}
+    </span>
+  );
 
   if (b == null && a == null) {
     return (
-      <article className="ring-gauge thd-arc-gauge ring-gauge--empty">
-        <span className="ring-gauge-title">{label}</span>
+      <article
+        className={`ring-gauge thd-arc-gauge ring-gauge--empty${low ? " is-low-load" : ""}`}
+      >
+        {title}
         <p className="ring-gauge-muted">데이터 없음</p>
+        <LoadLine amps={loadCurrent} />
       </article>
     );
   }
@@ -100,8 +140,8 @@ export default function ThdArcGauge({ label, before, after }: Props) {
   const rightIn = polar(1, R_IN);
 
   return (
-    <article className="ring-gauge thd-arc-gauge">
-      <span className="ring-gauge-title">{label}</span>
+    <article className={`ring-gauge thd-arc-gauge${low ? " is-low-load" : ""}`}>
+      {title}
       <div className="thd-arc-plot">
         <svg
           viewBox={`0 0 ${VB.w} ${VB.h}`}
@@ -173,16 +213,18 @@ export default function ThdArcGauge({ label, before, after }: Props) {
         </svg>
       </div>
       <div className="thd-arc-caption">
-        <div className="thd-arc-legend">
-          <span className="thd-arc-leg">
-            <span className="thd-arc-leg-swatch thd-arc-leg-swatch--out" aria-hidden />
-            바깥 · 보상 전
-          </span>
-          <span className="thd-arc-leg">
-            <span className="thd-arc-leg-swatch thd-arc-leg-swatch--in" aria-hidden />
-            안쪽 · 보상 후
-          </span>
-        </div>
+        {showLegend ? (
+          <div className="thd-arc-legend">
+            <span className="thd-arc-leg">
+              <span className="thd-arc-leg-swatch thd-arc-leg-swatch--out" aria-hidden />
+              바깥 · 보상 전
+            </span>
+            <span className="thd-arc-leg">
+              <span className="thd-arc-leg-swatch thd-arc-leg-swatch--in" aria-hidden />
+              안쪽 · 보상 후
+            </span>
+          </div>
+        ) : null}
         <div className="ring-gauge-values">
           <span className="ring-gauge-before" style={{ color: beforeColor }}>
             {b != null ? fmt(b) : "—"}
@@ -192,6 +234,7 @@ export default function ThdArcGauge({ label, before, after }: Props) {
             {a != null ? fmt(a) : "—"}
           </span>
         </div>
+        <LoadLine amps={loadCurrent} />
       </div>
     </article>
   );

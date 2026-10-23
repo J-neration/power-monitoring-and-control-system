@@ -38,6 +38,7 @@ import {
 import PfNeedleGauge from "./charts/PfNeedleGauge";
 import PfQtyMix from "./charts/PfQtyMix";
 import ThdArcGauge from "./charts/ThdArcGauge";
+import { ThdInfoTip } from "./ThdLoadNotice";
 
 export type DeviceChartSection = "pf" | "thd" | "unbalance" | "thermal";
 function ThdBarLegend() {
@@ -408,6 +409,7 @@ export default function DeviceDetailCharts({
       {section === "thd" && (
         <ChartCard
           title="상별 THDi (%)"
+          titleExtra={<ThdInfoTip />}
           subtitle="— 바깥 보상 전 · 안쪽 보상 후"
           fill
           legend={<ThdGaugeLegend />}
@@ -417,16 +419,25 @@ export default function DeviceDetailCharts({
               label="THDi L1"
               before={device.loadCurrentTHDL1}
               after={device.gridCurrentTHDL1}
+              loadCurrent={device.loadCurrentL1}
+              showInfo={false}
+              showLegend={false}
             />
             <ThdArcGauge
               label="THDi L2"
               before={device.loadCurrentTHDL2}
               after={device.gridCurrentTHDL2}
+              loadCurrent={device.loadCurrentL2}
+              showInfo={false}
+              showLegend={false}
             />
             <ThdArcGauge
               label="THDi L3"
               before={device.loadCurrentTHDL3}
               after={device.gridCurrentTHDL3}
+              loadCurrent={device.loadCurrentL3}
+              showInfo={false}
+              showLegend={false}
             />
           </div>
         </ChartCard>

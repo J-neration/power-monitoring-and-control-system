@@ -7,6 +7,7 @@ import { CLIENT_LABELS } from "../../data/clients";
 import LteSignalIndicator from "../LteSignalIndicator";
 import CommLostBadge from "../CommLostBadge";
 import MetricValue from "../MetricValue";
+import { ThdLabel, ThdPhaseValue } from "../ThdLoadNotice";
 import InstallationSparkline from "../InstallationSparkline";
 import {
   deriveSiteStatus,
@@ -184,17 +185,28 @@ export default function SiteSummaryPanel({
                   <MetricValue value={d?.gridCurrentL2} />
                   <MetricValue value={d?.gridCurrentL3} />
                 </div>
-                <div className="sit-row sit-row-pf">
-                  <span className="sit-label">TPF / DPF</span>
-                  <MetricValue value={d?.tpf2} suffix="%" />
-                  <MetricValue value={d?.dpf2} suffix="%" />
+                <div className="sit-row">
+                  <span className="sit-label">TPF / DPF (%)</span>
+                  <MetricValue value={d?.tpf2} />
+                  <MetricValue value={d?.dpf2} />
                   <span />
                 </div>
                 <div className="sit-row">
-                  <span className="sit-label">Grid THD (%)</span>
-                  <MetricValue value={d?.gridCurrentTHDL1} kind="thd" />
-                  <MetricValue value={d?.gridCurrentTHDL2} kind="thd" />
-                  <MetricValue value={d?.gridCurrentTHDL3} kind="thd" />
+                  <span className="sit-label">
+                    <ThdLabel>Grid THD (%)</ThdLabel>
+                  </span>
+                  <ThdPhaseValue
+                    value={d?.gridCurrentTHDL1}
+                    current={d?.gridCurrentL1}
+                  />
+                  <ThdPhaseValue
+                    value={d?.gridCurrentTHDL2}
+                    current={d?.gridCurrentL2}
+                  />
+                  <ThdPhaseValue
+                    value={d?.gridCurrentTHDL3}
+                    current={d?.gridCurrentL3}
+                  />
                 </div>
                 {showSparklines && (
                   <div className="site-inst-trends">

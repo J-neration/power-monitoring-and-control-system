@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import type { Site, Device, DeviceStatus } from "../../types/site";
 import { CLIENT_LABELS } from "../../data/clients";
 import MetricValue from "../MetricValue";
+import { ThdLabel, ThdPhaseValue } from "../ThdLoadNotice";
 import SiteInstTrends from "../SiteInstTrends";
 import LteSignalIndicator from "../LteSignalIndicator";
 import CommLostBadge from "../CommLostBadge";
@@ -217,10 +218,21 @@ export default function SitePageView({ site }: { site: Site }) {
                     <MetricValue value={d?.gridCurrentL3} />
                   </div>
                   <div className="site-inst-readout-row">
-                    <span className="site-inst-readout-lbl">THD</span>
-                    <MetricValue value={d?.gridCurrentTHDL1} kind="thd" />
-                    <MetricValue value={d?.gridCurrentTHDL2} kind="thd" />
-                    <MetricValue value={d?.gridCurrentTHDL3} kind="thd" />
+                    <span className="site-inst-readout-lbl">
+                      <ThdLabel>THD</ThdLabel>
+                    </span>
+                    <ThdPhaseValue
+                      value={d?.gridCurrentTHDL1}
+                      current={d?.gridCurrentL1}
+                    />
+                    <ThdPhaseValue
+                      value={d?.gridCurrentTHDL2}
+                      current={d?.gridCurrentL2}
+                    />
+                    <ThdPhaseValue
+                      value={d?.gridCurrentTHDL3}
+                      current={d?.gridCurrentL3}
+                    />
                   </div>
                   <div className="site-inst-readout-row site-inst-readout-row--single">
                     <span className="site-inst-readout-lbl">TPF</span>
