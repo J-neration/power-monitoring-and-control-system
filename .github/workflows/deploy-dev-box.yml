@@ -1,0 +1,169 @@
+# dev 병합 → arm64 이미지 빌드·ECR 푸시 → 취약점 확인 → dev 서버(pmcs-dev-box) 배포.
+#
+# AWS 권한은 GitHub OIDC 로 받는다 (장기 키 없음). 역할 pmcs-dev-github-deploy 는 이 저장소의 dev 브랜치에서
+# 돈 실행만 받을 수 있고, ECR 두 저장소 푸시 · 태그 파라미터 쓰기 · 서버에서 pmcs-deploy 한 명령만 할 수 있다
+# (infra/terraform/envs/dev/box/deploy.tf). 역할 ARN 은 저장소 시크릿 AWS_DEV_DEPLOY_ROLE_ARN 에 있다.
+#
+# 되돌리기: 관리자 Mac 에서 TAG=<이전 태그> scripts/dev-box/deploy.sh (scripts/dev-box/README.md).
+# 운영(main → prod) 배포는 prod 인프라와 함께 5단계에서 만든다. 이 워크플로는 dev 전용이다.
+
+name: Deploy dev box
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - "apps/**"
+      - "package.json"
+      - "yarn.lock"
+      - ".node-version"
+      - ".github/workflows/deploy-dev-box.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+# 배포는 겹치지 않게 한 번에 하나씩. 도는 중인 배포는 취소하지 않는다(마이그레이션 도중 끊기지 않게).
+concurrency:
+  group: deploy-dev-box
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-northeast-2
+  NAME_PREFIX: pmcs-dev
+  APP_URL: https://app-dev.pqms.co.kr
+  API_URL: https://api-dev.pqms.co.kr
+
+jobs:
+  image:
+    name: 이미지 (${{ matrix.app }})
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      matrix:
+        include:
+          - app: api
+            dockerfile: apps/backend/Dockerfile
+            cache: backend-image
+          - app: frontend
+            dockerfile: apps/frontend/Dockerfile
+            cache: frontend-image
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: tag
+        run: echo "tag=${GITHUB_SHA::7}-arm64" >> "$GITHUB_OUTPUT"
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEV_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          mask-aws-account-id: true
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ECR 태그는 덮어쓸 수 없다(IMMUTABLE). 같은 커밋을 다시 돌리면 빌드를 건너뛴다.
+      - id: exists
+        env:
+          REPO: ${{ env.NAME_PREFIX }}/${{ matrix.app }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          if aws ecr describe-images --repository-name "$REPO" --image-ids imageTag="$TAG" >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"; echo "$REPO:$TAG 가 이미 있어 빌드를 건너뜁니다."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.exists.outputs.skip != 'true'
+        uses: docker/setup-buildx-action@v3
+
+      # provenance·sbom 을 끄면 단일 매니페스트가 올라가 ECR 기본 스캔이 이미지를 검사한다
+      # (켜 두면 OCI index 가 올라가 스캔되지 않는다).
+      - if: steps.exists.outputs.skip != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/arm64
+          push: true
+          provenance: false
+          sbom: false
+          tags: ${{ steps.ecr.outputs.registry }}/${{ env.NAME_PREFIX }}/${{ matrix.app }}:${{ steps.tag.outputs.tag }}
+          cache-from: type=gha,scope=${{ matrix.cache }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.cache }}
+
+      - name: 취약점 확인 (Critical 이 있으면 배포하지 않음)
+        env:
+          REPO: ${{ env.NAME_PREFIX }}/${{ matrix.app }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          aws ecr wait image-scan-complete --repository-name "$REPO" --image-id imageTag="$TAG"
+          counts=$(aws ecr describe-image-scan-findings --repository-name "$REPO" --image-id imageTag="$TAG" \
+            --query 'imageScanFindings.findingSeverityCounts' --output json)
+          critical=$(jq -r '.CRITICAL // 0' <<<"$counts")
+          {
+            echo "### $REPO:$TAG 스캔"
+            echo '```'; echo "$counts"; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$critical" != 0 ]; then
+            echo "::error::$REPO:$TAG 에 Critical 취약점 $critical 건 — 배포하지 않습니다."
+            exit 1
+          fi
+
+  deploy:
+    name: dev 서버 배포
+    needs: image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEV_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          mask-aws-account-id: true
+
+      - name: 태그 기록 후 pmcs-deploy 실행
+        env:
+          TAG: ${{ needs.image.outputs.tag }}
+        run: |
+          set -euo pipefail
+          previous=$(aws ssm get-parameter --name "/$NAME_PREFIX/box/image-tag" --query Parameter.Value --output text)
+          aws ssm put-parameter --name "/$NAME_PREFIX/box/image-tag" --value "$TAG" --overwrite >/dev/null
+          echo "이미지 태그 $previous → $TAG"
+          echo "되돌리기: TAG=$previous scripts/dev-box/deploy.sh" >> "$GITHUB_STEP_SUMMARY"
+
+          id=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=$NAME_PREFIX-box" "Name=instance-state-name,Values=running" \
+            --query 'Reservations[0].Instances[0].InstanceId' --output text)
+          if [ -z "$id" ] || [ "$id" = None ]; then
+            echo "::error::실행 중인 $NAME_PREFIX-box 가 없습니다."
+            exit 1
+          fi
+
+          command_id=$(aws ssm send-command --instance-ids "$id" --document-name "$NAME_PREFIX-box-deploy" \
+            --comment "deploy $TAG" --timeout-seconds 900 --query Command.CommandId --output text)
+          while :; do
+            sleep 10
+            status=$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$id" \
+              --query Status --output text 2>/dev/null || echo Pending)
+            case "$status" in Pending | InProgress | Delayed) continue ;; esac
+            break
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$id" \
+            --query '[StandardOutputContent, StandardErrorContent]' --output text
+          if [ "$status" != Success ]; then
+            echo "::error::pmcs-deploy 실패: $status (CloudWatch 로그 /$NAME_PREFIX/box/* 확인)"
+            exit 1
+          fi
+
+      - name: 외부 확인 (app-dev 로그인 화면 200, 수신 주소 키 없이 401)
+        run: |
+          set -euo pipefail
+          login=$(curl -s -o /dev/null -w '%{http_code}' --retry 5 --retry-delay 5 --retry-all-errors "$APP_URL/login")
+          receiver=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/receiver")
+          echo "app-dev /login → $login, api-dev /receiver(키 없음) → $receiver"
+          [ "$login" = 200 ] && [ "$receiver" = 401 ]

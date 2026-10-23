@@ -14,3 +14,12 @@ output "bucket" {
 output "env_parameter" {
   value = aws_ssm_parameter.env.name
 }
+
+output "deploy_role_arn" {
+  description = "GitHub 저장소 시크릿 AWS_DEV_DEPLOY_ROLE_ARN 에 넣는 값"
+  value       = aws_iam_role.deploy.arn
+}
+
+output "image_tag_parameter" {
+  value = aws_ssm_parameter.image_tag.name
+}

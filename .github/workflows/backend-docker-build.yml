@@ -159,12 +159,15 @@ jobs:
   # 저장소 캐시 한도는 10GB인데 Railway 이미지 캐시 하나가 약 4GB라, PR·브랜치마다 쓰면
   # 서로 밀어내서 dev push 가 매번 처음부터 빌드했다 (AWS 프론트엔드 4~6분).
   # PR 은 대상 브랜치(dev)의 캐시를 읽을 수 있다.
+  #
+  # AWS 이미지 두 개는 push 에서 돌지 않는다. dev push 에서는 deploy-dev-box.yml 이 같은 이미지를
+  # 빌드해 ECR 에 올리고 캐시(scope 동일)도 쓴다. main 은 아직 AWS 이미지를 쓰지 않는다.
 
   # AWS 프론트엔드 컨테이너 이미지 (dev 서버가 쓰는 arm64). 지금 운영(Netlify)과는 무관하다.
   frontend-image:
     name: docker build (AWS 프론트엔드)
     needs: changes
-    if: needs.changes.outputs.aws_frontend == 'true'
+    if: needs.changes.outputs.aws_frontend == 'true' && github.event_name != 'push'
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
@@ -178,14 +181,13 @@ jobs:
           file: apps/frontend/Dockerfile
           push: false
           cache-from: type=gha,scope=frontend-image
-          cache-to: ${{ github.event_name == 'push' && github.ref == 'refs/heads/dev' && 'type=gha,mode=max,scope=frontend-image' || '' }}
 
   # AWS 백엔드 이미지 (apps/backend/Dockerfile, arm64). Railway 는 루트 Dockerfile 을 쓰므로
   # 운영과는 무관하다.
   backend-image:
     name: docker build (AWS 백엔드)
     needs: changes
-    if: needs.changes.outputs.aws_backend == 'true'
+    if: needs.changes.outputs.aws_backend == 'true' && github.event_name != 'push'
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
@@ -199,7 +201,6 @@ jobs:
           file: apps/backend/Dockerfile
           push: false
           cache-from: type=gha,scope=backend-image
-          cache-to: ${{ github.event_name == 'push' && github.ref == 'refs/heads/dev' && 'type=gha,mode=max,scope=backend-image' || '' }}
 
   # Railway 운영이 쓰는 루트 Dockerfile. main 은 PR 없이 반영되고 Railway 빌드와 동시에 돌아
   # 사전 경고가 되지 못하므로, dev·PR 단계에서 잡는 것이 운영 보호의 핵심이다.

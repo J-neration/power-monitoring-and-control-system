@@ -17,8 +17,26 @@ cfg=/opt/pmcs/config
 mkdir -p "$cfg"
 aws s3 sync --delete --only-show-errors "s3://$BUCKET/config/" "$cfg/"
 chmod 755 "$cfg/initdb" "$cfg"/initdb/*.sh
+before=$(sha256sum /usr/local/bin/pmcs-deploy 2>/dev/null | cut -d' ' -f1 || true)
 install -m 755 "$cfg/pmcs-deploy.sh" /usr/local/bin/pmcs-deploy
 install -m 755 "$cfg/pmcs-backup.sh" /usr/local/bin/pmcs-backup
+# S3 에 새 pmcs-deploy 가 있었다면, 지금 도는 것은 이전 버전이므로 새 버전으로 다시 시작한다.
+if [ -z "${PMCS_DEPLOY_REEXEC:-}" ] && [ "$before" != "$(sha256sum /usr/local/bin/pmcs-deploy | cut -d' ' -f1)" ]; then
+  log "새 pmcs-deploy 로 다시 시작"
+  PMCS_DEPLOY_REEXEC=1 exec /usr/local/bin/pmcs-deploy "$@"
+fi
+
+# 배포할 이미지 태그는 SSM 파라미터(IMAGE_TAG_PARAM)가 정한다. CI 와 scripts/dev-box/deploy.sh 가 쓴다.
+# 값이 이상하면 멈춘다 — settings.env 의 첫 값으로 조용히 되돌아가면 옛 버전이 배포되기 때문이다.
+tag_param=$(sed -n 's/^IMAGE_TAG_PARAM=//p' "$cfg/settings.env")
+tag=""
+if [ -n "$tag_param" ]; then
+  tag=$(aws ssm get-parameter --name "$tag_param" --query Parameter.Value --output text)
+  if ! [[ "$tag" =~ ^[0-9a-f]{7,40}-arm64$ ]]; then
+    log "SSM $tag_param 의 이미지 태그가 형식(<커밋>-arm64)에 맞지 않습니다: $tag"
+    exit 4
+  fi
+fi
 
 umask 077
 secrets=$(aws ssm get-parameter --name "$ENV_PARAM" --with-decryption --query Parameter.Value --output text)
@@ -28,6 +46,10 @@ if ! grep -q '^POSTGRES_PASSWORD=' <<<"$secrets"; then
 fi
 { cat "$cfg/settings.env"; echo "$secrets"; } >"$cfg/.env"
 unset secrets
+if [ -n "$tag" ]; then
+  sed -i -E "s#^((API|FRONTEND)_IMAGE=[^:]+):.*#\1:$tag#" "$cfg/.env"
+  log "이미지 태그 $tag"
+fi
 
 compose() { docker compose --project-name pmcs --project-directory "$cfg" -f "$cfg/compose.yml" "$@"; }
 

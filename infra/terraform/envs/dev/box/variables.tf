@@ -8,13 +8,12 @@ variable "api_hosts" {
   type        = list(string)
 }
 
-variable "api_image_tag" {
-  description = "ECR pmcs-dev/api 이미지 태그 (<커밋>-arm64)"
+variable "initial_image_tag" {
+  description = <<-EOT
+    SSM 파라미터 image-tag 의 첫 값이자, 파라미터를 못 읽을 때 쓰는 이미지 태그(<커밋>-arm64).
+    평소 배포 태그는 CI 와 scripts/dev-box/deploy.sh 가 파라미터에 쓴다. 이 값을 바꿔도 배포되지 않는다.
+  EOT
   type        = string
-}
-
-variable "frontend_image_tag" {
-  type = string
 }
 
 variable "instance_type" {
