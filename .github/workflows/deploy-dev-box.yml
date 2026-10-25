@@ -41,6 +41,7 @@ jobs:
     name: 이미지 (${{ matrix.app }})
     runs-on: ubuntu-24.04-arm
     strategy:
+      fail-fast: false
       matrix:
         include:
           - app: api
@@ -102,9 +103,31 @@ jobs:
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
           set -euo pipefail
-          aws ecr wait image-scan-complete --repository-name "$REPO" --image-id imageTag="$TAG"
-          counts=$(aws ecr describe-image-scan-findings --repository-name "$REPO" --image-id imageTag="$TAG" \
-            --query 'imageScanFindings.findingSeverityCounts' --output json)
+          # push 직후에는 스캔이 아직 없다(ScanNotFoundException). aws ecr wait 는 이것을 실패로 끝내므로
+          # 직접 5초마다 최대 5분 기다린다. 스캔 자체가 실패하면 멈춘다.
+          status=""
+          for _ in $(seq 1 60); do
+            if out=$(aws ecr describe-image-scan-findings --repository-name "$REPO" --image-id imageTag="$TAG" \
+              --output json 2>&1); then
+              status=$(jq -r '.imageScanStatus.status' <<<"$out")
+              case "$status" in
+                COMPLETE) break ;;
+                FAILED | UNSUPPORTED_IMAGE)
+                  echo "::error::$REPO:$TAG 스캔 실패: $(jq -r '.imageScanStatus.description' <<<"$out")"
+                  exit 1
+                  ;;
+              esac
+            elif ! grep -q ScanNotFoundException <<<"$out"; then
+              echo "$out"
+              exit 1
+            fi
+            sleep 5
+          done
+          if [ "$status" != COMPLETE ]; then
+            echo "::error::$REPO:$TAG 스캔이 5분 안에 끝나지 않았습니다 (마지막 상태: ${status:-없음})."
+            exit 1
+          fi
+          counts=$(jq '.imageScanFindings.findingSeverityCounts // {}' <<<"$out")
           critical=$(jq -r '.CRITICAL // 0' <<<"$counts")
           {
             echo "### $REPO:$TAG 스캔"
