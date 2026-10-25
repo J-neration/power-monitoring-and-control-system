@@ -100,6 +100,8 @@ export type DeviceWithInstallation = Device & {
     installation: {
       id: string;
       label: string;
+      /** 선택 품목명. 예: PAF 400Y-100C */
+      moduleName?: string | null;
       site: {
         id: string;
         name: string;

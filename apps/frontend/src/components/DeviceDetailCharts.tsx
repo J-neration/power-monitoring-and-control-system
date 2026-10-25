@@ -38,6 +38,7 @@ import {
 import PfNeedleGauge from "./charts/PfNeedleGauge";
 import PfQtyMix from "./charts/PfQtyMix";
 import ThdArcGauge from "./charts/ThdArcGauge";
+import { ThdInfoTip } from "./ThdLoadNotice";
 
 export type DeviceChartSection = "pf" | "thd" | "unbalance" | "thermal";
 function ThdBarLegend() {
@@ -408,6 +409,7 @@ export default function DeviceDetailCharts({
       {section === "thd" && (
         <ChartCard
           title="상별 THDi (%)"
+          titleExtra={<ThdInfoTip />}
           subtitle="— 바깥 보상 전 · 안쪽 보상 후"
           fill
           legend={<ThdGaugeLegend />}
@@ -417,16 +419,25 @@ export default function DeviceDetailCharts({
               label="THDi L1"
               before={device.loadCurrentTHDL1}
               after={device.gridCurrentTHDL1}
+              loadCurrent={device.loadCurrentL1}
+              showInfo={false}
+              showLegend={false}
             />
             <ThdArcGauge
               label="THDi L2"
               before={device.loadCurrentTHDL2}
               after={device.gridCurrentTHDL2}
+              loadCurrent={device.loadCurrentL2}
+              showInfo={false}
+              showLegend={false}
             />
             <ThdArcGauge
               label="THDi L3"
               before={device.loadCurrentTHDL3}
               after={device.gridCurrentTHDL3}
+              loadCurrent={device.loadCurrentL3}
+              showInfo={false}
+              showLegend={false}
             />
           </div>
         </ChartCard>
@@ -669,24 +680,27 @@ export default function DeviceDetailCharts({
                         fontSize: 10,
                       }}
                     />
-                    <ReferenceLine
-                      y={TEMP_THRESHOLDS.areaAlarm}
-                      stroke={CHART_COLORS.danger}
-                      {...TEMP_ALARM_REF}
-                      label={{
-                        value: `경보 ${TEMP_THRESHOLDS.areaAlarm}°C`,
-                        position: "right",
-                        fill: CHART_COLORS.danger,
-                        fontSize: 10,
-                        fontWeight: 600,
-                      }}
-                    />
+                    {TEMP_THRESHOLDS.areaAlarm != null ? (
+                      <ReferenceLine
+                        y={TEMP_THRESHOLDS.areaAlarm}
+                        stroke={CHART_COLORS.danger}
+                        {...TEMP_ALARM_REF}
+                        label={{
+                          value: `경보 ${TEMP_THRESHOLDS.areaAlarm}°C`,
+                          position: "right",
+                          fill: CHART_COLORS.danger,
+                          fontSize: 10,
+                          fontWeight: 600,
+                        }}
+                      />
+                    ) : null}
                     <Bar dataKey="온도" radius={[4, 4, 0, 0]} barSize={36}>
                       {areaTempData.map((entry, i) => (
                         <Cell
                           key={i}
                           fill={
                             entry.온도 != null &&
+                            TEMP_THRESHOLDS.areaAlarm != null &&
                             entry.온도 >= TEMP_THRESHOLDS.areaAlarm
                               ? CHART_COLORS.danger
                               : entry.온도 != null &&
@@ -754,7 +768,8 @@ export default function DeviceDetailCharts({
                           fill={
                             entry.온도 >= TEMP_THRESHOLDS.moduleAlarm
                               ? CHART_COLORS.danger
-                              : entry.온도 >= TEMP_THRESHOLDS.moduleWarn
+                              : TEMP_THRESHOLDS.moduleWarn != null &&
+                                  entry.온도 >= TEMP_THRESHOLDS.moduleWarn
                                 ? CHART_COLORS.warn
                                 : CHART_COLORS.accent
                           }

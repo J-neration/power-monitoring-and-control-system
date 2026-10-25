@@ -1,0 +1,78 @@
+#!/bin/bash
+# 처음 부팅할 때 한 번 실행된다(cloud-init). 바꿔도 이미 있는 서버에는 다시 적용되지 않는다
+# (main.tf 의 ignore_changes). 앱 설정 변경은 S3 설정 파일 + pmcs-deploy 로 한다.
+set -euxo pipefail
+
+# ── Docker + compose 플러그인 ────────────────────────────────────────
+dnf install -y docker
+mkdir -p /usr/local/lib/docker/cli-plugins
+curl -fsSL --retry 10 --retry-all-errors -o /usr/local/lib/docker/cli-plugins/docker-compose \
+  "https://github.com/docker/compose/releases/download/${compose_version}/docker-compose-linux-aarch64"
+echo "${compose_sha256}  /usr/local/lib/docker/cli-plugins/docker-compose" | sha256sum -c -
+chmod 755 /usr/local/lib/docker/cli-plugins/docker-compose
+systemctl enable --now docker
+
+# ── 메모리 여유 (2GB 서버에 Postgres·API·Next 를 함께 돌린다) ─────────
+if [ ! -f /swapfile ]; then
+  dd if=/dev/zero of=/swapfile bs=1M count=2048
+  chmod 600 /swapfile
+  mkswap /swapfile
+fi
+swapon /swapfile || true
+grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >>/etc/fstab
+
+# ── 데이터 볼륨 (/data: Postgres 데이터, Caddy 인증서) ───────────────
+# 서버를 다시 만들어도 이 볼륨은 남는다. 처음 붙었을 때만 포맷한다.
+dev="/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_${data_volume_id}"
+for _ in $(seq 1 60); do [ -e "$dev" ] && break; sleep 5; done
+[ -e "$dev" ]
+blkid "$dev" >/dev/null || mkfs.xfs -L pmcsdata "$dev"
+mkdir -p /data
+grep -q 'LABEL=pmcsdata' /etc/fstab || echo 'LABEL=pmcsdata /data xfs defaults,nofail 0 2' >>/etc/fstab
+mount -a
+# Postgres 이미지는 uid 999 로 데이터 디렉터리를 쓴다.
+mkdir -p /data/postgres /data/caddy
+
+# ── 설정 ─────────────────────────────────────────────────────────────
+mkdir -p /etc/pmcs /opt/pmcs
+cat >/etc/pmcs/box.conf <<'CONF'
+BUCKET=${bucket}
+ENV_PARAM=${env_param}
+AWS_REGION=${region}
+ECR_REGISTRY=${ecr_registry}
+CONF
+
+# ── 매일 백업 (03:00 KST) ────────────────────────────────────────────
+cat >/etc/systemd/system/pmcs-backup.service <<'UNIT'
+[Unit]
+Description=PMCS dev DB backup to S3
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/pmcs-backup
+UNIT
+cat >/etc/systemd/system/pmcs-backup.timer <<'UNIT'
+[Unit]
+Description=Daily PMCS dev DB backup
+
+[Timer]
+OnCalendar=*-*-* 18:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+UNIT
+systemctl daemon-reload
+systemctl enable --now pmcs-backup.timer
+
+# ── 첫 배포 ──────────────────────────────────────────────────────────
+# 시크릿이 아직 비어 있으면 pmcs-deploy 가 안내만 하고 끝난다(코드 3). 부팅은 실패로 보지 않는다.
+# 고정 IP 가 붙는 순간 잠깐 끊길 수 있어 몇 번 다시 시도한다.
+for _ in 1 2 3 4 5; do
+  aws s3 cp --region "${region}" "s3://${bucket}/config/pmcs-deploy.sh" /usr/local/bin/pmcs-deploy && break
+  sleep 10
+done
+chmod 755 /usr/local/bin/pmcs-deploy
+/usr/local/bin/pmcs-deploy || echo "pmcs-deploy exit $? — scripts/dev-box/init-env.sh 후 scripts/dev-box/deploy.sh 로 다시 실행"

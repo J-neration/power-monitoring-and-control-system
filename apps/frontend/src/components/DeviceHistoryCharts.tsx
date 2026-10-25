@@ -1,19 +1,25 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ReferenceLine } from "recharts";
 import ChartCard from "./charts/ChartCard";
 import HistoryAreaChart from "./charts/HistoryAreaChart";
 import type { FaultEvent } from "../lib/api";
 import {
   CHART_COLORS,
-  fmtChartTime,
   TEMP_ALARM_REF,
   TEMP_CHART_MARGIN_RIGHT,
   TEMP_THRESHOLDS,
   TEMP_WARN_REF,
   areaTempOrNull,
 } from "../lib/chartTheme";
+import {
+  formatKstClock,
+  formatKstMonthDay,
+  formatKstMonthDayHour,
+  formatKstShortDate,
+} from "../lib/kstTime";
+import { DEMO_HISTORY_INSTALLATION_ID } from "../lib/demoHistoryReadings";
 import type { TelemetryReading } from "../types/site";
 
 const TEMP_COLORS = [
@@ -26,6 +32,36 @@ const TEMP_COLORS = [
 ];
 
 type SubTab = "pf" | "power" | "thd" | "capacity" | "temp";
+type Period = "day" | "week" | "month" | "year";
+type Agg = "avg" | "min" | "max";
+type Resolution = "raw" | "hourly" | "daily";
+type RangeValue = number | Array<number | null> | null;
+type RangedReading = TelemetryReading & {
+  metricMin?: Record<string, RangeValue>;
+  metricMax?: Record<string, RangeValue>;
+};
+type ChartSeries = {
+  dataKey: string;
+  name: string;
+  stroke: string;
+  fill: string;
+  dashed?: boolean;
+  dash?: string;
+  stackId?: string;
+};
+
+const PERIODS: { key: Period; label: string }[] = [
+  { key: "day", label: "일간" },
+  { key: "week", label: "주간" },
+  { key: "month", label: "월간" },
+  { key: "year", label: "연간" },
+];
+
+const AGGS: { key: Agg; label: string }[] = [
+  { key: "min", label: "최소" },
+  { key: "avg", label: "평균" },
+  { key: "max", label: "최대" },
+];
 
 const SUB_TABS: { key: SubTab; label: string }[] = [
   { key: "pf", label: "역률" },
@@ -34,6 +70,39 @@ const SUB_TABS: { key: SubTab; label: string }[] = [
   { key: "capacity", label: "용량" },
   { key: "temp", label: "온도" },
 ];
+
+type HistoryPayload = {
+  resolution: Resolution;
+  source: string;
+  from: string;
+  to: string;
+  coverage: number | null;
+  gapCount: number;
+  sampleCount: number;
+  expectedCount: number;
+  energy: { uncompKwh: number | null; compKwh: number | null; estimated: boolean };
+  points: TelemetryReading[];
+  message?: string;
+};
+
+function kstYear(input = new Date()): number {
+  return new Date(input.getTime() + 9 * 60 * 60 * 1000).getUTCFullYear();
+}
+
+function todayStartLocal(input = new Date()): string {
+  const year = input.getFullYear();
+  const month = String(input.getMonth() + 1).padStart(2, "0");
+  const day = String(input.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}T00:00`;
+}
+
+function axisTime(iso: string, resolution: Resolution, spansYears: boolean): string {
+  if (resolution === "daily") {
+    return spansYears ? formatKstShortDate(iso) : formatKstMonthDay(iso);
+  }
+  if (resolution === "hourly") return formatKstMonthDayHour(iso);
+  return formatKstClock(iso);
+}
 
 function formatDataDateRangeLabel(readings: TelemetryReading[]): string {
   let minT = Infinity;
@@ -52,6 +121,7 @@ function formatDataDateRangeLabel(readings: TelemetryReading[]): string {
 }
 
 type Props = {
+  installationId: string;
   readings: TelemetryReading[];
   hours: number;
   model?: string;
@@ -61,6 +131,7 @@ type Props = {
 };
 
 export default function DeviceHistoryCharts({
+  installationId,
   readings,
   hours,
   model,
@@ -68,82 +139,188 @@ export default function DeviceHistoryCharts({
   facilityTotal = null,
 }: Props) {
   const [subTab, setSubTab] = useState<SubTab>("pf");
+  const [period, setPeriod] = useState<Period>("day");
+  const [aggregation, setAggregation] = useState<Agg>("avg");
+  const [detail, setDetail] = useState(false);
+  const [start, setStart] = useState("");
+  const [remote, setRemote] = useState<HistoryPayload | null>(null);
+  const [loading, setLoading] = useState(
+    () => installationId !== DEMO_HISTORY_INSTALLATION_ID,
+  );
+  const [error, setError] = useState<string | null>(null);
+
+  const demoDay =
+    installationId === DEMO_HISTORY_INSTALLATION_ID && period === "day" && !start;
+  const resolution: Resolution =
+    remote?.resolution ??
+    (period === "day" || (period === "week" && detail) ? "raw" : period === "week" ? "hourly" : "daily");
+
+  useEffect(() => {
+    if (demoDay) {
+      setRemote(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+    const ac = new AbortController();
+    const params = new URLSearchParams({
+      period,
+      aggregation: "avg",
+      resolution: period === "week" && detail ? "raw" : "auto",
+    });
+    if (start) {
+      params.set(
+        "start",
+        period === "day" && start.includes("T") ? new Date(start).toISOString() : start,
+      );
+    }
+    setLoading(true);
+    setError(null);
+    fetch(`/api/devices/${encodeURIComponent(installationId)}/history?${params}`, {
+      signal: ac.signal,
+      cache: "no-store",
+    })
+      .then(async (res) => {
+        const body = (await res.json()) as HistoryPayload;
+        if (!res.ok) throw new Error(body.message || "이력을 불러오지 못했습니다.");
+        if (!ac.signal.aborted) setRemote(body);
+      })
+      .catch((err: unknown) => {
+        if (ac.signal.aborted) return;
+        setRemote(null);
+        setError(err instanceof Error ? err.message : "이력을 불러오지 못했습니다.");
+      })
+      .finally(() => {
+        if (!ac.signal.aborted) setLoading(false);
+      });
+    return () => ac.abort();
+  }, [demoDay, detail, installationId, period, start]);
 
   const capUnit = model === "paf" ? "A" : "kvar";
-  const hoursLabel = `최근 ${hours}시간`;
+  const aggDisabled = resolution === "raw";
+  const activeAgg: Agg = aggDisabled ? "avg" : aggregation;
+  const aggLabel = AGGS.find((item) => item.key === activeAgg)?.label ?? "평균";
+  const resLabel = resolution === "raw" ? "10분" : resolution === "hourly" ? "1시간" : "1일";
+  const periodLabel = PERIODS.find((item) => item.key === period)?.label ?? "일간";
+  const rangeLabel = `${resLabel}${resolution === "raw" ? "" : ` ${aggLabel}`}`;
+  const hoursLabel =
+    resolution === "raw" && period === "day" && !start
+      ? `최근 ${hours}시간 · 10분`
+      : period === "day"
+        ? `${periodLabel} · ${rangeLabel}`
+        : rangeLabel;
+
+  const chartReadings = demoDay ? readings : remote?.points ?? (period === "day" && !start ? readings : []);
+  const spansYears = useMemo(() => {
+    const years = new Set(
+      chartReadings.map(
+        (row) => new Date(new Date(row.recordedAt).getTime() + 9 * 60 * 60 * 1000).getUTCFullYear(),
+      ),
+    );
+    return years.size > 1;
+  }, [chartReadings]);
 
   const { data, maxAreaSensors, maxModSensors, maxFans, hasCapData } =
     useMemo(() => {
       const maxArea = Math.max(
-        ...readings.map((r) => r.areaTemp?.length ?? 0),
+        ...chartReadings.map((r) => r.areaTemp?.length ?? 0),
         0,
       );
       const maxMod = Math.max(
-        ...readings.map((r) => r.moduleTemp?.length ?? 0),
+        ...chartReadings.map((r) => r.moduleTemp?.length ?? 0),
         0,
       );
       const maxFan = Math.max(
-        ...readings.map((r) => r.fanSpeed?.length ?? 0),
+        ...chartReadings.map((r) => r.fanSpeed?.length ?? 0),
         0,
       );
 
-      const pfPct = (v: number | null | undefined) =>
-        v != null ? Math.round(v * 10) / 10 : null;
+      const pfPct = (v: number) => Math.round(v * 10) / 10;
+      const ranged = (value: unknown, format?: (n: number) => number) => {
+        if (typeof value !== "number" || !Number.isFinite(value)) return null;
+        return format ? format(value) : value;
+      };
+      const picked = (reading: RangedReading, metric: string) => {
+        if (activeAgg === "min") return reading.metricMin?.[metric];
+        if (activeAgg === "max") return reading.metricMax?.[metric];
+        return reading[metric as keyof TelemetryReading];
+      };
+      const putScalar = (
+        row: Record<string, unknown>,
+        chartKey: string,
+        metric: string,
+        reading: RangedReading,
+        format?: (n: number) => number,
+      ) => {
+        row[chartKey] = ranged(picked(reading, metric), format);
+      };
+      const putIndex = (
+        row: Record<string, unknown>,
+        chartKey: string,
+        metric: "areaTemp" | "moduleTemp" | "fanSpeed",
+        index: number,
+        reading: RangedReading,
+        accept: (value: number) => number | null,
+      ) => {
+        const bag = picked(reading, metric);
+        const value = Array.isArray(bag) ? ranged(bag[index]) : null;
+        row[chartKey] = value == null ? null : accept(value);
+      };
 
-      const rows = readings.map((r) => {
-        const reportedTotal = r.totalCapacity ?? null;
+      const rows = chartReadings.map((reading) => {
+        const r = reading as RangedReading;
+        const reportedTotal = ranged(picked(r, "totalCapacity"));
         const totalCap =
           reportedTotal != null && reportedTotal > 0
             ? reportedTotal
             : facilityTotal != null && facilityTotal > 0
               ? facilityTotal
               : null;
-        const opCap = r.operatingCapacity ?? null;
-        const rpCap = r.reactivePowerCapacity ?? null;
+        const opCap = ranged(picked(r, "operatingCapacity"));
         const margin =
           totalCap != null && opCap != null ? totalCap - opCap : null;
 
         const row: Record<string, unknown> = {
-          time: fmtChartTime(r.recordedAt),
+          time: axisTime(r.recordedAt, resolution, spansYears),
           recordedAt: r.recordedAt,
-          vL1: r.vL1 ?? null,
-          vL2: r.vL2 ?? null,
-          vL3: r.vL3 ?? null,
-          loadCurrentL1: r.loadCurrentL1 ?? null,
-          loadCurrentL2: r.loadCurrentL2 ?? null,
-          loadCurrentL3: r.loadCurrentL3 ?? null,
-          thdBeforeL1: r.loadCurrentTHDL1 ?? null,
-          thdAfterL1: r.gridCurrentTHDL1 ?? null,
-          thdBeforeL2: r.loadCurrentTHDL2 ?? null,
-          thdAfterL2: r.gridCurrentTHDL2 ?? null,
-          thdBeforeL3: r.loadCurrentTHDL3 ?? null,
-          thdAfterL3: r.gridCurrentTHDL3 ?? null,
-          tpfBefore: pfPct(r.tpf1),
-          tpfAfter: pfPct(r.tpf2),
-          dpfBefore: pfPct(r.dpf1),
-          dpfAfter: pfPct(r.dpf2),
-          sBefore: r.uncompS ?? null,
-          sAfter: r.compS ?? null,
-          pBefore: r.uncompP ?? null,
-          pAfter: r.compP ?? null,
-          qBefore: r.uncompQ ?? null,
-          qAfter: r.compQ ?? null,
-          hBefore: r.uncompH ?? null,
-          hAfter: r.compH ?? null,
-          reactive: rpCap,
           operating: opCap,
           margin,
         };
+        putScalar(row, "vL1", "vL1", r);
+        putScalar(row, "vL2", "vL2", r);
+        putScalar(row, "vL3", "vL3", r);
+        putScalar(row, "loadCurrentL1", "loadCurrentL1", r);
+        putScalar(row, "loadCurrentL2", "loadCurrentL2", r);
+        putScalar(row, "loadCurrentL3", "loadCurrentL3", r);
+        putScalar(row, "thdBeforeL1", "loadCurrentTHDL1", r);
+        putScalar(row, "thdAfterL1", "gridCurrentTHDL1", r);
+        putScalar(row, "thdBeforeL2", "loadCurrentTHDL2", r);
+        putScalar(row, "thdAfterL2", "gridCurrentTHDL2", r);
+        putScalar(row, "thdBeforeL3", "loadCurrentTHDL3", r);
+        putScalar(row, "thdAfterL3", "gridCurrentTHDL3", r);
+        putScalar(row, "tpfBefore", "tpf1", r, pfPct);
+        putScalar(row, "tpfAfter", "tpf2", r, pfPct);
+        putScalar(row, "dpfBefore", "dpf1", r, pfPct);
+        putScalar(row, "dpfAfter", "dpf2", r, pfPct);
+        putScalar(row, "sBefore", "uncompS", r);
+        putScalar(row, "sAfter", "compS", r);
+        putScalar(row, "pBefore", "uncompP", r);
+        putScalar(row, "pAfter", "compP", r);
+        putScalar(row, "qBefore", "uncompQ", r);
+        putScalar(row, "qAfter", "compQ", r);
+        putScalar(row, "hBefore", "uncompH", r);
+        putScalar(row, "hAfter", "compH", r);
+        putScalar(row, "reactive", "reactivePowerCapacity", r);
+        row.margin = margin;
 
         for (let i = 0; i < maxArea; i++) {
-          row[`area${i}`] = areaTempOrNull(r.areaTemp?.[i]);
+          putIndex(row, `area${i}`, "areaTemp", i, r, (value) => areaTempOrNull(value));
         }
         for (let i = 0; i < maxMod; i++) {
-          const modVal = r.moduleTemp?.[i] ?? null;
-          row[`mod${i}`] = modVal != null && modVal >= 0 ? modVal : null;
+          putIndex(row, `mod${i}`, "moduleTemp", i, r, (value) => (value >= 0 ? value : null));
         }
         for (let i = 0; i < maxFan; i++) {
-          row[`fan${i}`] = r.fanSpeed?.[i] ?? null;
+          putIndex(row, `fan${i}`, "fanSpeed", i, r, (value) => value);
         }
 
         return row;
@@ -160,9 +337,123 @@ export default function DeviceHistoryCharts({
         maxFans: maxFan,
         hasCapData: cap,
       };
-    }, [facilityTotal, readings]);
+    }, [activeAgg, chartReadings, facilityTotal, resolution, spansYears]);
 
-  const dataDateLabel = formatDataDateRangeLabel(readings);
+  const dataDateLabel = formatDataDateRangeLabel(chartReadings);
+  const coverageLabel =
+    remote && remote.coverage != null && !demoDay
+      ? `수집률 ${Math.min(100, Math.round(remote.coverage * 100))}%`
+      : "";
+  const gapLabel = remote && remote.gapCount > 0 ? `누락 ${remote.gapCount}` : "";
+  const todayStart = todayStartLocal();
+
+  const rangeBar = (
+    <div className="history-range-bar">
+      <div className="monitor-view-chips" role="tablist" aria-label="조회 기간">
+        {PERIODS.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={period === key}
+            className={`monitor-view-chip${period === key ? " active" : ""}`}
+            onClick={() => {
+              setPeriod(key);
+              setStart("");
+              setDetail(false);
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="monitor-view-chips" role="group" aria-label="집계값">
+        {AGGS.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            className={`monitor-view-chip${activeAgg === key ? " active" : ""}`}
+            aria-pressed={activeAgg === key}
+            disabled={aggDisabled && key !== "avg"}
+            title={aggDisabled && key !== "avg" ? "10분 원본에는 구간 최소·최대가 없습니다" : undefined}
+            onClick={() => setAggregation(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {period === "week" ? (
+        <div className="monitor-view-chips">
+          <button
+            type="button"
+            className={`monitor-view-chip${detail ? " active" : ""}`}
+            onClick={() => setDetail((value) => !value)}
+          >
+            10분 상세
+          </button>
+        </div>
+      ) : null}
+      {period === "day" ? (
+        <>
+          <input
+            className="history-range-input"
+            type="datetime-local"
+            aria-label="일간 시작 시각"
+            value={start}
+            onChange={(event) => setStart(event.target.value)}
+          />
+          <div className="monitor-view-chips" role="group" aria-label="일간 범위">
+            <button
+              type="button"
+              className={`monitor-view-chip${!start ? " active" : ""}`}
+              aria-pressed={!start}
+              onClick={() => setStart("")}
+            >
+              최근 24시간
+            </button>
+            <button
+              type="button"
+              className={`monitor-view-chip${start === todayStart ? " active" : ""}`}
+              aria-pressed={start === todayStart}
+              onClick={() => setStart(todayStart)}
+            >
+              오늘
+            </button>
+          </div>
+        </>
+      ) : null}
+      {period === "week" ? (
+        <input
+          className="history-range-input"
+          type="date"
+          aria-label="주간 시작일"
+          value={start}
+          onChange={(event) => setStart(event.target.value)}
+        />
+      ) : null}
+      {period === "month" ? (
+        <input
+          className="history-range-input"
+          type="month"
+          aria-label="월 선택"
+          value={start}
+          onChange={(event) => setStart(event.target.value)}
+        />
+      ) : null}
+      {period === "year" ? (
+        <input
+          className="history-range-input"
+          type="number"
+          min={2020}
+          max={2100}
+          aria-label="연도 선택"
+          placeholder={String(kstYear())}
+          value={start}
+          onChange={(event) => setStart(event.target.value)}
+        />
+      ) : null}
+    </div>
+  );
 
   const nav = (
     <nav className="monitor-view-nav" aria-label="이력 화면">
@@ -180,29 +471,43 @@ export default function DeviceHistoryCharts({
           </button>
         ))}
       </div>
-      {dataDateLabel ? (
+      {dataDateLabel && !loading ? (
         <p className="history-data-date-line" aria-label="데이터 기준 날짜">
-          {dataDateLabel}
+          {[dataDateLabel, coverageLabel, gapLabel].filter(Boolean).join(" · ")}
         </p>
       ) : null}
     </nav>
   );
 
-  if (readings.length === 0) {
+  if (loading) {
     return (
       <div className="device-monitor-board">
+        {rangeBar}
+        {nav}
+        <div className="history-loading" role="status" aria-live="polite" aria-busy="true">
+          <span className="history-loading-spinner" aria-hidden />
+          <span className="history-loading-label">이력을 불러오는 중</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!chartReadings.some((row) => !(row as { gap?: boolean }).gap)) {
+    return (
+      <div className="device-monitor-board">
+        {rangeBar}
         {nav}
         <div className="chart-card chart-card-wide history-empty">
-          <p>최근 {hours}시간 수신된 데이터가 없습니다.</p>
+          <p>{error ?? `${hoursLabel} 수신된 데이터가 없습니다.`}</p>
           <p className="history-empty-sub">
-            HMI에서 데이터를 전송하면 여기에 그래프가 표시됩니다.
+            누락된 구간은 선이 끊긴 채로 표시됩니다.
           </p>
         </div>
       </div>
     );
   }
 
-  const beforeAfter = (beforeKey: string, afterKey: string, beforeColor: string, afterColor: string, gradB: string, gradA: string) => [
+  const beforeAfter = (beforeKey: string, afterKey: string, beforeColor: string, afterColor: string, gradB: string, gradA: string): ChartSeries[] => [
     {
       dataKey: beforeKey,
       name: "보상 전",
@@ -220,12 +525,14 @@ export default function DeviceHistoryCharts({
 
   return (
     <div className="device-monitor-board">
+      {rangeBar}
       {nav}
+      {error ? <p className="history-energy-note">{error}</p> : null}
 
       <div className="device-history-body device-charts-grid">
         {subTab === "power" && (
           <>
-            <ChartCard title="S (kVA)" subtitle="— 보상 전 / 후" wide>
+            <ChartCard title="S (kVA)" subtitle={`— 보상 전 / 후 · ${hoursLabel}`} wide>
               <HistoryAreaChart
                 data={data}
                 grads={[
@@ -237,7 +544,7 @@ export default function DeviceHistoryCharts({
                 faults={faults}
               />
             </ChartCard>
-            <ChartCard title="P (kW)" subtitle="— 보상 전 / 후" wide>
+            <ChartCard title="P (kW)" subtitle={`— 보상 전 / 후 · ${hoursLabel}`} wide>
               <HistoryAreaChart
                 data={data}
                 grads={[
@@ -249,7 +556,7 @@ export default function DeviceHistoryCharts({
                 faults={faults}
               />
             </ChartCard>
-            <ChartCard title="Q (kvar)" subtitle="— 보상 전 / 후" wide>
+            <ChartCard title="Q (kvar)" subtitle={`— 보상 전 / 후 · ${hoursLabel}`} wide>
               <HistoryAreaChart
                 data={data}
                 grads={[
@@ -261,7 +568,7 @@ export default function DeviceHistoryCharts({
                 faults={faults}
               />
             </ChartCard>
-            <ChartCard title="H (kvar)" subtitle="— 보상 전 / 후" wide>
+            <ChartCard title="H (kvar)" subtitle={`— 보상 전 / 후 · ${hoursLabel}`} wide>
               <HistoryAreaChart
                 data={data}
                 grads={[
@@ -420,18 +727,20 @@ export default function DeviceHistoryCharts({
                     fontSize: 10,
                   }}
                 />
-                <ReferenceLine
-                  y={TEMP_THRESHOLDS.areaAlarm}
-                  stroke={CHART_COLORS.danger}
-                  {...TEMP_ALARM_REF}
-                  label={{
-                    value: `경보 ${TEMP_THRESHOLDS.areaAlarm}°C`,
-                    position: "right",
-                    fill: CHART_COLORS.danger,
-                    fontSize: 10,
-                    fontWeight: 600,
-                  }}
-                />
+                {TEMP_THRESHOLDS.areaAlarm != null ? (
+                  <ReferenceLine
+                    y={TEMP_THRESHOLDS.areaAlarm}
+                    stroke={CHART_COLORS.danger}
+                    {...TEMP_ALARM_REF}
+                    label={{
+                      value: `경보 ${TEMP_THRESHOLDS.areaAlarm}°C`,
+                      position: "right",
+                      fill: CHART_COLORS.danger,
+                      fontSize: 10,
+                      fontWeight: 600,
+                    }}
+                  />
+                ) : null}
               </HistoryAreaChart>
             </ChartCard>
             <ChartCard title="모듈 온도 (°C)" subtitle={`— ${hoursLabel}`} wide>

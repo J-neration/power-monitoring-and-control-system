@@ -83,16 +83,19 @@ export default function DeviceMonitorBoard({
               label="THDi L1"
               before={device.loadCurrentTHDL1}
               after={device.gridCurrentTHDL1}
+              loadCurrent={device.loadCurrentL1}
             />
             <ThdArcGauge
               label="THDi L2"
               before={device.loadCurrentTHDL2}
               after={device.gridCurrentTHDL2}
+              loadCurrent={device.loadCurrentL2}
             />
             <ThdArcGauge
               label="THDi L3"
               before={device.loadCurrentTHDL3}
               after={device.gridCurrentTHDL3}
+              loadCurrent={device.loadCurrentL3}
             />
           </div>
           <div className="device-monitor-overview-cap">

@@ -13,6 +13,14 @@ module "security" {
   alert_emails        = local.alert_emails
 
   create_config_service_linked_role = var.create_config_service_linked_role
+
+  # dev DB에는 Neon dev 테스트 데이터만 있다. 로그인 이상 탐지는 유지한다.
+  enable_rds_data_monitoring = false
+
+  # dev 비용 절감(2026-10-22 결정): 설정 점검(Security Hub)과 그 근거인 Config 기록은 prod에만 둔다.
+  # 작업 기록(CloudTrail)과 침해 탐지(GuardDuty)는 dev에서도 유지한다.
+  enable_security_hub = false
+  enable_config       = false
 }
 
 variable "enable_cis_standard" {

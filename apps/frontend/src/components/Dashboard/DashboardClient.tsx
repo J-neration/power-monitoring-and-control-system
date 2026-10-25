@@ -53,6 +53,7 @@ type MobilePane = "list" | "map" | "detail";
 
 const FILTER_OPTIONS: { id: StatusFilter; label: string }[] = [
   { id: "all", label: "전체" },
+  { id: "standby", label: "대기" },
   { id: "fault", label: "이상" },
   { id: "offline", label: "오프라인" },
   { id: "comm_lost", label: "통신 끊김" },
@@ -480,7 +481,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                     <button
                       key={opt.id}
                       type="button"
-                      className={`sidebar-filter-chip${statusFilter === opt.id ? " active" : ""}${opt.id === "fault" ? " sidebar-filter-chip--fault" : ""}${opt.id === "offline" ? " sidebar-filter-chip--offline" : ""}${opt.id === "comm_lost" ? " sidebar-filter-chip--comm-lost" : ""}`}
+                      className={`sidebar-filter-chip${statusFilter === opt.id ? " active" : ""}${opt.id === "standby" ? " sidebar-filter-chip--standby" : ""}${opt.id === "fault" ? " sidebar-filter-chip--fault" : ""}${opt.id === "offline" ? " sidebar-filter-chip--offline" : ""}${opt.id === "comm_lost" ? " sidebar-filter-chip--comm-lost" : ""}`}
                       onClick={() => setStatusFilter(opt.id)}
                     >
                       {opt.label}

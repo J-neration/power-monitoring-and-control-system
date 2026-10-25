@@ -1,5 +1,7 @@
 import type { DeviceWithInstallation } from "../types/site";
+import { isLowLoadCurrent } from "../lib/lowLoad";
 import MetricValue from "./MetricValue";
+import { ThdInfoTip, ThdLowLoadBadge } from "./ThdLoadNotice";
 
 type Props = {
   device: DeviceWithInstallation;
@@ -31,17 +33,20 @@ function CompareMetric({
   unit,
   kind,
   digits,
+  lowLoad = false,
 }: {
   value?: number | null;
   unit: string;
   kind?: Kind;
   digits?: number;
+  lowLoad?: boolean;
 }) {
   const has = value != null && Number.isFinite(value);
   return (
     <span className={`hmi-compare-metric${unit === "%" ? " is-pct" : ""}`}>
       <MetricValue value={value} kind={kind} digits={digits} />
       {has ? <span className="hmi-compare-metric-unit">{unit}</span> : null}
+      {lowLoad ? <ThdLowLoadBadge /> : null}
     </span>
   );
 }
@@ -55,6 +60,10 @@ function PhaseRow({
   l3,
   kind,
   digits = 1,
+  info = false,
+  lowL1 = false,
+  lowL2 = false,
+  lowL3 = false,
 }: {
   tag: string;
   name?: string;
@@ -64,16 +73,21 @@ function PhaseRow({
   l3?: number | null;
   kind?: Kind;
   digits?: number;
+  info?: boolean;
+  lowL1?: boolean;
+  lowL2?: boolean;
+  lowL3?: boolean;
 }) {
   return (
     <div className="hmi-compare-row">
       <span className="hmi-compare-tag">
         {tag}
+        {info ? <ThdInfoTip /> : null}
         {name ? <span className="hmi-compare-name">{name}</span> : null}
       </span>
-      <CompareMetric value={l1} unit={unit} kind={kind} digits={digits} />
-      <CompareMetric value={l2} unit={unit} kind={kind} digits={digits} />
-      <CompareMetric value={l3} unit={unit} kind={kind} digits={digits} />
+      <CompareMetric value={l1} unit={unit} kind={kind} digits={digits} lowLoad={lowL1} />
+      <CompareMetric value={l2} unit={unit} kind={kind} digits={digits} lowLoad={lowL2} />
+      <CompareMetric value={l3} unit={unit} kind={kind} digits={digits} lowLoad={lowL3} />
     </div>
   );
 }
@@ -151,6 +165,10 @@ function PhaseBay({
         l2={thd.l2}
         l3={thd.l3}
         kind="thd"
+        info
+        lowL1={isLowLoadCurrent(current.l1)}
+        lowL2={isLowLoadCurrent(current.l2)}
+        lowL3={isLowLoadCurrent(current.l3)}
       />
       <div className="hmi-compare-rule" />
       <PfSum tpf={tpf} dpf={dpf} />

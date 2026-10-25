@@ -1,4 +1,4 @@
-# 위협 탐지. 기본(CloudTrail·VPC Flow·DNS 분석)에 더해 S3 데이터 이벤트, RDS 로그인 이상,
+# 위협 탐지. 기본(CloudTrail·VPC Flow·DNS 분석)에 더해 S3 데이터 이벤트, RDS 로그인·데이터 활동 이상,
 # ECS Fargate 런타임 감시(에이전트는 GuardDuty가 사이드카로 자동 관리)를 켠다.
 
 resource "aws_guardduty_detector" "this" {
@@ -16,6 +16,14 @@ resource "aws_guardduty_detector_feature" "rds" {
   detector_id = aws_guardduty_detector.this.id
   name        = "RDS_LOGIN_EVENTS"
   status      = "ENABLED"
+
+  # RDS 데이터 활동 감시: 쿼리 패턴으로 대량 조회·데이터 삭제·악성 IP 접근을 탐지한다.
+  # GuardDuty가 RDS 보호와 함께 기본으로 켜는 기능이라 상태를 명시한다(vCPU당 월 $3).
+  # 고객 데이터가 없는 dev는 끄고, prod는 켠다.
+  additional_configuration {
+    name   = "RDS_DATA_RISK"
+    status = var.enable_rds_data_monitoring ? "ENABLED" : "DISABLED"
+  }
 }
 
 resource "aws_guardduty_detector_feature" "runtime" {

@@ -20,34 +20,30 @@ infra/terraform/
     dev/                pmcs-dev 계정(035680193225)
       bootstrap/        상태 저장소. 가장 먼저, 한 번만
       security/         계정 보안 기반
-      app/              앱 인프라 (KMS, 보안 그룹, Secrets, ECS 클러스터와 위 모듈들)
-    prod/               pmcs-prod 계정(887664351558). dev 검증 후 같은 모듈로 작성
+      box/              dev 서버 1대형: EC2 + docker compose, ECR (scripts/dev-box/README.md)
+    prod/               pmcs-prod 계정(887664351558). 위 모듈로 작성 (ECS·ALB·WAF·RDS)
 ```
 
-적용 순서는 `bootstrap` → `security` → `app`입니다. `security`와 `app`은 서로의 상태를
-참조하지 않아 따로 plan·apply할 수 있습니다.
+적용 순서는 `bootstrap` → `security` → `box`입니다. 루트끼리 서로의 상태를 참조하지 않아 따로 plan·apply할 수 있습니다.
 
-## app 루트의 현재 상태와 다음 단계
+## dev 와 prod
 
-- **도메인 전**: `app_hostname`·`api_hostname`이 비어 있으면 ACM 인증서와 HTTPS 리스너를
-  만들지 않고, ALB 80 포트는 모든 요청에 404를 돌려줍니다. ECS 서비스도 ALB에 붙지 않습니다.
-- **도메인이 정해지면**: `terraform.tfvars`에 두 주소를 넣고 apply → 출력 `acm_validation_records`의
-  CNAME을 DNS에 등록 → 인증서 발급 후 HTTPS 리스너와 경로 규칙이 생깁니다. app·api 주소는
-  출력 `alb_dns_name`을 가리키게 합니다.
-- **태스크 수**: 이미지와 시크릿 값이 준비되기 전에는 `api_desired_count`·`frontend_desired_count`가
-  0이라 Fargate 비용이 들지 않습니다(3단계에서 1로 올림).
-- **시크릿 값**: Terraform은 빈 시크릿만 만듭니다. 값은 콘솔에서 직접 입력합니다.
-  - `pmcs-dev/api`: `DATABASE_URL`, `MIGRATE_DATABASE_URL`, `RECEIVER_API_KEY`, `CRITICAL_FAULT_WEBHOOK_URL`
-  - `pmcs-dev/jwt`: `JWT_SECRET` (백엔드 `JWT_SECRET`, 프론트 `AUTH_JWT_SECRET`에 같이 쓰임)
-  - `pmcs-dev/alert-mail`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `ALERT_EMAIL_TO`
-    (관리자 알림 메일. 안 쓰면 모두 빈 문자열. API는 587 포트로만 메일 서버에 나갈 수 있다)
-- **CPU 아키텍처**: Fargate는 ARM64(Graviton)로 돈다(x86보다 약 20% 저렴). 이미지는
-  `docker build --platform linux/arm64 ...`로 만든다. Apple Silicon Mac에서는 기본값이다.
-- **보안 경보 이메일**: 저장소가 공개라 코드에 두지 않는다. SSM 파라미터
-  `/pmcs-dev/security/alert-emails`(StringList, 쉼표 구분)에 넣으면 security 루트가 읽어
-  SNS 이메일 구독을 만든다. 구독마다 확인 메일의 링크를 눌러야 경보가 온다.
-- **마이그레이션**: API 서비스는 Railway와 달리 부팅 시 마이그레이션을 하지 않습니다.
-  배포 때 `pmcs-dev-api-migrate` 작업 정의를 `aws ecs run-task`로 한 번 실행합니다.
+dev 는 비용 때문에 서버 1대(`envs/dev/box`, 월 약 $22)로 돈다. 2026-10-22~23 에는 prod 와 같은 모듈로 만든
+ECS·ALB·RDS dev(`envs/dev/app`)를 실제로 돌려 검증했고, 서버 1대형으로 옮긴 뒤 지웠다(코드는 git 이력, 커밋 7494501).
+prod 의 app 루트는 그 코드를 바탕으로 작성한다. 그때 확인한 것:
+
+- **도메인·인증서**: 가비아 DNS 라 ACM 검증 CNAME 과 서비스 CNAME(→ ALB)을 수동으로 넣는다. apex 는 ALB 를 가리킬 수 없다.
+- **시크릿 값**: Terraform 은 빈 시크릿만 만들고 값은 콘솔·스크립트로 넣는다.
+  `<env>/api`: `DATABASE_URL`, `MIGRATE_DATABASE_URL`, `RECEIVER_API_KEY`, `CRITICAL_FAULT_WEBHOOK_URL` /
+  `<env>/jwt`: `JWT_SECRET` / `<env>/alert-mail`: `SMTP_*`, `ALERT_EMAIL_TO`.
+- **CPU 아키텍처**: ARM64(Graviton). 이미지는 `docker buildx build --platform linux/arm64 --provenance=false --sbom=false`
+  로 단일 매니페스트를 올려야 ECR 기본 스캔이 된다. API 는 `apps/backend/Dockerfile`(Railway 용 루트 `Dockerfile` 아님).
+- **마이그레이션**: API 는 부팅 시 마이그레이션을 하지 않고 `scripts/aws-migrate/run-migrate-task.sh` 로 따로 돌린다.
+  Prisma 마이그레이션 엔진은 `sslcert` 의 첫 인증서만 읽으므로 서울 RDS 루트 하나만 든 파일을 쓴다(`scripts/aws-migrate/lib.sh`).
+- **ECS 서비스는 리스너 규칙보다 먼저 만들어지면 실패**한다(대상 그룹이 ALB 에 안 붙음) → edge 출력에 `depends_on`.
+- **GuardDuty 런타임 감시**가 ECS 태스크에 사이드카를 붙이고, VPC 에 인터페이스 엔드포인트를 만든다.
+  컨테이너는 이름으로 찾고, VPC 를 지울 때는 그 엔드포인트를 먼저 지운다.
+- **보안 경보 이메일**: 저장소가 공개라 코드에 두지 않고 SSM 파라미터 `/<env>/security/alert-emails`(StringList)에서 읽는다.
 
 계정마다 상태 버킷과 KMS 키가 따로 있고, 루트(bootstrap·security·app)마다 상태 파일이
 따로 있어 한 루트의 실수가 다른 루트의 리소스를 건드리지 않습니다.
@@ -91,7 +87,7 @@ terraform {
 ```
 
 다른 루트도 같은 버킷을 쓰고 `key`만 `security/terraform.tfstate`,
-`app/terraform.tfstate`로 바꿉니다. 잠금은 S3 네이티브 잠금(`use_lockfile`)이라
+`box/terraform.tfstate`로 바꿉니다. 잠금은 S3 네이티브 잠금(`use_lockfile`)이라
 DynamoDB 테이블이 필요 없습니다.
 
 ## 지키는 규칙

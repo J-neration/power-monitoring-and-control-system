@@ -42,6 +42,8 @@ export default function DeviceSideIdentity({
     model: device.model,
     moduleType,
   });
+  const itemName = device.installation?.moduleName?.trim() ?? "";
+  const specLine = [spec, itemName].filter(Boolean).join(" · ");
 
   useEffect(() => {
     if (!isAdmin || nestedModuleType(device)) return;
@@ -70,7 +72,7 @@ export default function DeviceSideIdentity({
             {STATUS_LABEL[device.status]}
           </span>
         </div>
-        {spec ? <p className="device-side-identity-spec">{spec}</p> : null}
+        {specLine ? <p className="device-side-identity-spec">{specLine}</p> : null}
         <p className="device-side-identity-id">
           {site?.region ?? "-"} · {device.installationId}
         </p>

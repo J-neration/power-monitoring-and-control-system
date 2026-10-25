@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { cookies } from "next/headers";
-import LiveClock from "../../components/Dashboard/LiveClock";
 import LogoutButton from "../../components/LogoutButton";
 import SessionTimeoutGuard from "../../components/SessionTimeoutGuard";
 import SystemStatusBar from "../../components/SystemStatusBar";
@@ -88,39 +87,40 @@ export default async function MainLayout({
     <>
       <SessionTimeoutGuard />
       <header className="global-header">
-        <div className="global-header-left">
+        <div className="global-header-brand">
           <Link href="/" className="global-logo">
             <Image
               src="/logo.png"
-              alt="Power Quality Monitoring System"
-              width={32}
-              height={15}
+              alt=""
+              width={22}
+              height={10}
               priority
             />
-            <span className="global-logo-text">Power Quality Monitoring System</span>
+            <span className="global-logo-text">PrimeSolution</span>
           </Link>
         </div>
 
-        <div className="global-header-center">
-          <SystemStatusBar />
-        </div>
+        <p className="global-header-title">Power Quality Monitoring System</p>
 
         <div className="global-header-right">
-          <LiveClock />
-          {user && (
-            <div className="header-user-info">
-              {user.role === "ADMIN" ? (
-                <Link href="/admin/sites" target="_blank" className="global-header-admin-link">
-                  관리자 패널
-                </Link>
-              ) : (
-                <span className="header-user-role">
-                  {ROLE_LABEL[user.role] ?? user.role}
-                </span>
-              )}
-              <span className="header-username">{displayName}</span>
-            </div>
-          )}
+          <SystemStatusBar />
+          {user ? (
+            <>
+              <span className="global-header-sep" aria-hidden />
+              <div className="header-user-info">
+                {user.role === "ADMIN" ? (
+                  <Link href="/admin/sites" target="_blank" className="global-header-admin-link">
+                    관리자 패널
+                  </Link>
+                ) : (
+                  <span className="header-user-role">
+                    {ROLE_LABEL[user.role] ?? user.role}
+                  </span>
+                )}
+                <span className="header-username">{displayName}</span>
+              </div>
+            </>
+          ) : null}
           <LogoutButton />
         </div>
       </header>

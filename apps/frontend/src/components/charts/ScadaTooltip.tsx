@@ -4,9 +4,9 @@ import { fmtChartDateTime, withChartUnit } from "../../lib/chartTheme";
 
 type PayloadEntry = {
   name?: string;
-  value?: number | string;
+  value?: number | string | null;
   color?: string;
-  payload?: { recordedAt?: string };
+  payload?: { recordedAt?: string; gap?: boolean };
 };
 
 type Props = {
@@ -23,13 +23,17 @@ export default function ScadaTooltip({ active, payload, label, unit }: Props) {
   const timeLabel = recordedAt
     ? fmtChartDateTime(recordedAt)
     : String(label ?? "");
+  const missing =
+    payload[0]?.payload?.gap === true ||
+    payload.every((entry) => entry.value == null || entry.value === "");
 
   return (
     <div className="scada-chart-tooltip">
       <p className="scada-chart-tooltip-time">{timeLabel}</p>
+      {missing ? <p className="scada-chart-tooltip-missing">데이터 없음</p> : null}
       <ul className="scada-chart-tooltip-list">
         {payload.map((entry, i) => {
-          if (entry.value == null) return null;
+          if (entry.value == null || entry.value === "") return null;
           const val =
             typeof entry.value === "number"
               ? entry.value.toFixed(2)

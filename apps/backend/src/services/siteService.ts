@@ -29,6 +29,12 @@ const deriveSiteStatus = (devices: { status: string }[]) => {
   return "running";
 };
 
+function normalizeModuleName(raw: string | null | undefined) {
+  if (raw == null) return null;
+  const trimmed = raw.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
 function withModuleTypeOnDevice<
   T extends {
     device: Parameters<typeof withLiveDeviceFields>[0] | null;
@@ -57,6 +63,7 @@ export const siteService = {
       const enrichedInstallations = site.installations.map((inst) => ({
         id: inst.id,
         label: inst.label,
+        moduleName: inst.moduleName ?? null,
         ...(ctx.role === "ADMIN" ? { iccid: inst.iccid ?? null } : {}),
         device: withModuleTypeOnDevice(inst),
       }));
@@ -120,11 +127,17 @@ export const siteService = {
     id?: string;
     siteId: string;
     label: string;
+    moduleName?: string | null;
   }) => {
     const id = data.id?.trim();
     if (!id) throw new Error("Installation id is required");
     const installation = await prisma.installation.create({
-      data: { id, siteId: data.siteId, label: data.label },
+      data: {
+        id,
+        siteId: data.siteId,
+        label: data.label,
+        moduleName: normalizeModuleName(data.moduleName),
+      },
     });
     await prisma.device.create({
       data: {
@@ -134,6 +147,23 @@ export const siteService = {
       },
     });
     return installation;
+  },
+
+  /* ─── 설치지점 품목명 등록·해제 (빈 값이면 제거) ─── */
+  setInstallationModuleName: async (
+    installationId: string,
+    moduleName: string | null,
+  ): Promise<{ ok: true } | { ok: false; error: "NOT_FOUND" }> => {
+    const inst = await prisma.installation.findUnique({
+      where: { id: installationId },
+      select: { id: true },
+    });
+    if (!inst) return { ok: false, error: "NOT_FOUND" };
+    await prisma.installation.update({
+      where: { id: installationId },
+      data: { moduleName: normalizeModuleName(moduleName) },
+    });
+    return { ok: true };
   },
 
   /* ─── 설치지점 삭제 (Device/Telemetry cascade) ─── */

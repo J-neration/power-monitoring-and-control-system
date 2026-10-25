@@ -46,6 +46,12 @@ variable "log_retention_days" {
   default = 90
 }
 
+variable "enable_waf" {
+  description = "false면 WAF 없이 ALB만 둔다(dev 비용 절감, 월 약 $13). api 도메인은 여전히 ALB 규칙으로 /receiver만 서버에 닿고 나머지는 404. prod는 true."
+  type        = bool
+  default     = true
+}
+
 variable "deletion_protection" {
   type    = bool
   default = true

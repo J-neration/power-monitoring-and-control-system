@@ -1,11 +1,37 @@
-import { FastifyPluginAsync } from "fastify";
+import { FastifyPluginAsync, type FastifyReply, type FastifyRequest } from "fastify";
 import { deviceService } from "../services/deviceService.js";
 import { watchFactsService } from "../services/watchFactsService.js";
 import { authenticate, requireAdmin } from "../middleware/authenticate.js";
+import { toUserContext } from "../modules/auth/auth.service.js";
+import type { JwtPayload } from "../modules/auth/auth.types.js";
 import { faultService } from "../services/faultService.js";
 import { settingsService } from "../services/settingsService.js";
 import * as viewingState from "../lib/viewingState.js";
 import { wsHub } from "../lib/wsHub.js";
+import { resolveHistoryQuery } from "../lib/historyRange.js";
+import { ARRAY_METRICS, SCALAR_METRICS } from "../lib/telemetryAggregate.js";
+import { retentionConfig } from "../lib/retentionConfig.js";
+import { getDeviceHistory } from "../services/summaryService.js";
+
+const historyPreHandler = async (request: FastifyRequest, reply: FastifyReply) => {
+  const authHeader = request.headers.authorization;
+  if (authHeader?.startsWith("Bearer ")) {
+    try {
+      const payload = request.server.jwt.verify<JwtPayload>(authHeader.slice("Bearer ".length));
+      request.user = toUserContext(payload);
+      return;
+    } catch {
+      /* Railway 토큰은 로컬 서명과 다를 수 있다. */
+    }
+  }
+  const peer = request.socket.remoteAddress ?? "";
+  const loopback = peer === "127.0.0.1" || peer === "::1" || peer === "::ffff:127.0.0.1";
+  if (process.env.NODE_ENV !== "production" && loopback) {
+    request.user = { role: "ADMIN", userId: "local-dev", username: "local-dev" };
+    return;
+  }
+  return reply.status(401).send({ message: "인증이 필요합니다." });
+};
 
 export const deviceRoutes: FastifyPluginAsync = async (server) => {
   server.get("/", { preHandler: authenticate }, async (request) => {
@@ -147,6 +173,52 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
       return reply.status(404).send({ message: "Device not found" });
     }
     return report;
+  });
+
+  /**
+   * GET /devices/:id/history
+   * period=day|week|month|year 에 따라 raw / hourly / daily 를 고른다.
+   * 기존 /readings 는 그대로 둔다.
+   * 로컬 개발에서 Railway가 이 라우트 없이 404를 주면, Next가 루프백으로 다시 호출한다.
+   * 그 토큰은 Railway 서명일 수 있어, 개발 모드의 루프백만 관리자로 읽기를 허용한다.
+   */
+  server.get("/:id/history", { preHandler: historyPreHandler }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const query = request.query as {
+      period?: string;
+      metric?: string;
+      start?: string;
+      startDate?: string;
+      end?: string;
+      endDate?: string;
+      aggregation?: string;
+      resolution?: string;
+    };
+    const metric = query.metric?.trim();
+    if (
+      metric &&
+      !SCALAR_METRICS.includes(metric as (typeof SCALAR_METRICS)[number]) &&
+      !ARRAY_METRICS.includes(metric as (typeof ARRAY_METRICS)[number])
+    ) {
+      return reply.status(400).send({ message: "알 수 없는 metric 입니다." });
+    }
+    const resolved = resolveHistoryQuery({
+      period: query.period,
+      aggregation: query.aggregation,
+      resolution: query.resolution,
+      start: query.start ?? query.startDate,
+      end: query.end ?? query.endDate,
+      intervalMinutes: retentionConfig().intervalMinutes,
+    });
+    if (!resolved.ok) {
+      return reply.status(400).send({ message: resolved.message });
+    }
+    const device = await deviceService.get({ id }, request.user);
+    if (!device) {
+      return reply.status(404).send({ message: "Device not found" });
+    }
+    const history = await getDeviceHistory(id, resolved.value);
+    return { ...history, metric: metric ?? null };
   });
 
   server.get("/:id/readings", { preHandler: authenticate }, async (request, reply) => {

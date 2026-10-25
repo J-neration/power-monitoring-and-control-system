@@ -6,6 +6,7 @@ import { deviceService } from "../services/deviceService.js";
 import { siteService } from "../services/siteService.js";
 import { registryService } from "../services/registryService.js";
 import { validatePassword } from "../modules/auth/passwordPolicy.js";
+import { inspectRetention, purgeIfEnabled, runAggregationPass } from "../services/summaryService.js";
 
 const firstZodMessage = (error: z.ZodError) =>
   error.issues[0]?.message ?? "입력값이 올바르지 않습니다.";
@@ -70,9 +71,20 @@ const updateSiteSchema = z.object({
   address: z.string().min(1),
 });
 
+const moduleNameField = z.union([
+  z.string().trim().max(80, "품목명은 80자 이하여야 합니다."),
+  z.null(),
+]);
+
 const createInstallationSchema = z.object({
   id: z.string().optional(),
   label: z.string().min(1),
+  moduleName: moduleNameField.optional(),
+});
+
+const setInstallationModuleNameSchema = z.object({
+  /** null 또는 빈 문자열이면 품목명 제거 */
+  moduleName: moduleNameField,
 });
 
 const createClientOptionSchema = z.object({
@@ -213,6 +225,7 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
         id: parsed.data.id,
         siteId,
         label: parsed.data.label,
+        moduleName: parsed.data.moduleName,
       });
       return reply.status(201).send({ installation });
     } catch (err: unknown) {
@@ -234,6 +247,34 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
     if (!ok) return reply.status(404).send({ message: "설치지점을 찾을 수 없습니다." });
     return reply.status(204).send();
   });
+
+  /* ── PATCH /admin/installations/:installationId/module-name ── 품목명 */
+  server.patch(
+    "/installations/:installationId/module-name",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const { installationId } = request.params as { installationId: string };
+      const parsed = setInstallationModuleNameSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          message: firstZodMessage(parsed.error),
+          errors: parsed.error.flatten(),
+        });
+      }
+      const result = await siteService.setInstallationModuleName(
+        installationId,
+        parsed.data.moduleName,
+      );
+      if (!result.ok) {
+        return reply.status(404).send({ message: "설치지점을 찾을 수 없습니다." });
+      }
+      return reply.send({
+        ok: true,
+        installationId,
+        moduleName: parsed.data.moduleName?.trim() || null,
+      });
+    },
+  );
 
   /* ── PATCH /admin/installations/:installationId/iccid ── USIM ↔ 설치지점 */
   server.patch(
@@ -324,6 +365,41 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
       }
       return reply.status(404).send({ message: "건설사를 찾을 수 없습니다." });
     }
+  });
+
+  /** 원본 삭제 대상 행 수. 삭제하지 않는다. */
+  server.get("/retention/plan", { preHandler: requireAdmin }, async () => {
+    return inspectRetention();
+  });
+
+  /**
+   * RAW_PURGE_ENABLED=true 일 때만 삭제한다.
+   * 기본값은 꺼짐이라 이 호출은 계획만 반환하고 409 가 된다.
+   */
+  server.post("/retention/purge", { preHandler: requireAdmin }, async (_request, reply) => {
+    const plan = await inspectRetention();
+    if (!plan.rawPurgeEnabled && !plan.summaryPurgeEnabled) {
+      return reply.status(409).send({
+        message: "자동 삭제가 꺼져 있습니다. RAW_PURGE_ENABLED 를 켠 뒤에만 삭제됩니다.",
+        plan,
+      });
+    }
+    const result = await purgeIfEnabled();
+    return reply.send(result);
+  });
+
+  /** 닫힌 구간 재집계와 과거 구간 backfill 을 한 번 실행한다. */
+  server.post("/aggregation/run", { preHandler: requireAdmin }, async (_request, reply) => {
+    const result = await runAggregationPass();
+    if (result.message === "SUMMARY_SCHEMA_MISSING") {
+      return reply.status(503).send({
+        message: "요약 테이블이 없습니다. prisma migrate deploy 를 먼저 실행하세요.",
+      });
+    }
+    if (!result.ok) {
+      return reply.status(500).send({ message: result.message });
+    }
+    return reply.send(result);
   });
 
   /* ── Registry: 역할 옵션 ─────────────────────────── */

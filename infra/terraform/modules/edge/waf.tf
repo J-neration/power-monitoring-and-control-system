@@ -21,6 +21,8 @@ locals {
 }
 
 resource "aws_wafv2_web_acl" "this" {
+  count = var.enable_waf ? 1 : 0
+
   name  = "${var.name_prefix}-web-acl"
   scope = "REGIONAL"
 
@@ -189,20 +191,23 @@ resource "aws_wafv2_web_acl" "this" {
 }
 
 resource "aws_wafv2_web_acl_association" "alb" {
+  count        = var.enable_waf ? 1 : 0
   resource_arn = aws_lb.this.arn
-  web_acl_arn  = aws_wafv2_web_acl.this.arn
+  web_acl_arn  = aws_wafv2_web_acl.this[0].arn
 }
 
 # WAF 로그 그룹 이름은 반드시 aws-waf-logs- 로 시작해야 한다.
 resource "aws_cloudwatch_log_group" "waf" {
+  count             = var.enable_waf ? 1 : 0
   name              = "aws-waf-logs-${var.name_prefix}"
   retention_in_days = var.log_retention_days
   kms_key_id        = var.kms_key_arn
 }
 
 resource "aws_wafv2_web_acl_logging_configuration" "this" {
-  resource_arn            = aws_wafv2_web_acl.this.arn
-  log_destination_configs = [aws_cloudwatch_log_group.waf.arn]
+  count                   = var.enable_waf ? 1 : 0
+  resource_arn            = aws_wafv2_web_acl.this[0].arn
+  log_destination_configs = [aws_cloudwatch_log_group.waf[0].arn]
 
   redacted_fields {
     single_header {

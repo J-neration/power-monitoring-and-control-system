@@ -208,13 +208,13 @@ export function StatusCard({ device, compact = false }: StatusCardProps) {
           value={maxOf(device.areaTemp, isAreaTempDisconnected)}
           suffix="°"
           warn={TEMP_THRESHOLDS.areaWarn}
-          alarm={TEMP_THRESHOLDS.areaAlarm}
+          alarm={TEMP_THRESHOLDS.areaAlarm ?? undefined}
         />
         <HealthCell
           label="모듈"
           value={maxOf(device.moduleTemp)}
           suffix="°"
-          warn={TEMP_THRESHOLDS.moduleWarn}
+          warn={TEMP_THRESHOLDS.moduleWarn ?? undefined}
           alarm={TEMP_THRESHOLDS.moduleAlarm}
         />
         <HealthCell

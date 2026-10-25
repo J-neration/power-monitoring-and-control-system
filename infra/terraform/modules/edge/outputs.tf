@@ -11,12 +11,16 @@ output "alb_zone_id" {
   value = aws_lb.this.zone_id
 }
 
+# ECS 서비스는 리스너 규칙에 연결된 대상 그룹만 받는다(아니면 CreateService가 실패한다).
+# 그래서 규칙이 생긴 뒤에 이 값이 넘어가도록 depends_on을 건다.
 output "frontend_target_group_arn" {
-  value = aws_lb_target_group.frontend.arn
+  value      = aws_lb_target_group.frontend.arn
+  depends_on = [aws_lb_listener_rule.app]
 }
 
 output "api_target_group_arn" {
-  value = aws_lb_target_group.api.arn
+  value      = aws_lb_target_group.api.arn
+  depends_on = [aws_lb_listener_rule.app_ws, aws_lb_listener_rule.api_receiver]
 }
 
 output "tls_enabled" {
@@ -35,5 +39,5 @@ output "acm_validation_records" {
 }
 
 output "web_acl_arn" {
-  value = aws_wafv2_web_acl.this.arn
+  value = var.enable_waf ? aws_wafv2_web_acl.this[0].arn : null
 }

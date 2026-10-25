@@ -38,3 +38,21 @@ variable "alert_emails" {
   type        = list(string)
   default     = []
 }
+
+variable "enable_rds_data_monitoring" {
+  description = "GuardDuty RDS 데이터 활동 감시(RDS_DATA_RISK). vCPU당 월 $3라 고객 데이터가 없는 dev는 끈다."
+  type        = bool
+  default     = true
+}
+
+variable "enable_security_hub" {
+  description = "Security Hub(FSBP) 점검. 점검 건당 과금이라 고객 데이터가 없는 dev는 끄고, prod는 켠다."
+  type        = bool
+  default     = true
+}
+
+variable "enable_config" {
+  description = "AWS Config 기록(Security Hub 점검의 근거). 기록 건당 과금. Security Hub를 켜면 함께 켠다."
+  type        = bool
+  default     = true
+}

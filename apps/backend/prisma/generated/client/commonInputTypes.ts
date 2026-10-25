@@ -297,18 +297,31 @@ export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedIntNullableFilter<$PrismaModel>
 }
 
-export type EnumDeviceCommandPowerFilter<$PrismaModel = never> = {
-  equals?: $Enums.DeviceCommandPower | Prisma.EnumDeviceCommandPowerFieldRefInput<$PrismaModel>
-  in?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
-  notIn?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumDeviceCommandPowerFilter<$PrismaModel> | $Enums.DeviceCommandPower
+export type FloatFilter<$PrismaModel = never> = {
+  equals?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  in?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel>
+  notIn?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel>
+  lt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  lte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  gt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  gte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedFloatFilter<$PrismaModel> | number
 }
 
-export type EnumDeviceCommandStatusFilter<$PrismaModel = never> = {
-  equals?: $Enums.DeviceCommandStatus | Prisma.EnumDeviceCommandStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.DeviceCommandStatus[] | Prisma.ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel>
-  notIn?: $Enums.DeviceCommandStatus[] | Prisma.ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumDeviceCommandStatusFilter<$PrismaModel> | $Enums.DeviceCommandStatus
+export type FloatWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  in?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel>
+  notIn?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel>
+  lt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  lte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  gt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  gte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedFloatWithAggregatesFilter<$PrismaModel> | number
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _avg?: Prisma.NestedFloatFilter<$PrismaModel>
+  _sum?: Prisma.NestedFloatFilter<$PrismaModel>
+  _min?: Prisma.NestedFloatFilter<$PrismaModel>
+  _max?: Prisma.NestedFloatFilter<$PrismaModel>
 }
 
 export type JsonNullableFilter<$PrismaModel = never> =
@@ -333,26 +346,6 @@ export type JsonNullableFilterBase<$PrismaModel = never> = {
   gt?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
   gte?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
   not?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | Prisma.JsonNullValueFilter
-}
-
-export type EnumDeviceCommandPowerWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.DeviceCommandPower | Prisma.EnumDeviceCommandPowerFieldRefInput<$PrismaModel>
-  in?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
-  notIn?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumDeviceCommandPowerWithAggregatesFilter<$PrismaModel> | $Enums.DeviceCommandPower
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumDeviceCommandPowerFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumDeviceCommandPowerFilter<$PrismaModel>
-}
-
-export type EnumDeviceCommandStatusWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.DeviceCommandStatus | Prisma.EnumDeviceCommandStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.DeviceCommandStatus[] | Prisma.ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel>
-  notIn?: $Enums.DeviceCommandStatus[] | Prisma.ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumDeviceCommandStatusWithAggregatesFilter<$PrismaModel> | $Enums.DeviceCommandStatus
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumDeviceCommandStatusFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumDeviceCommandStatusFilter<$PrismaModel>
 }
 
 export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
@@ -380,6 +373,40 @@ export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedJsonNullableFilter<$PrismaModel>
   _max?: Prisma.NestedJsonNullableFilter<$PrismaModel>
+}
+
+export type EnumDeviceCommandPowerFilter<$PrismaModel = never> = {
+  equals?: $Enums.DeviceCommandPower | Prisma.EnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  in?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDeviceCommandPowerFilter<$PrismaModel> | $Enums.DeviceCommandPower
+}
+
+export type EnumDeviceCommandStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.DeviceCommandStatus | Prisma.EnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.DeviceCommandStatus[] | Prisma.ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DeviceCommandStatus[] | Prisma.ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDeviceCommandStatusFilter<$PrismaModel> | $Enums.DeviceCommandStatus
+}
+
+export type EnumDeviceCommandPowerWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DeviceCommandPower | Prisma.EnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  in?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDeviceCommandPowerWithAggregatesFilter<$PrismaModel> | $Enums.DeviceCommandPower
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDeviceCommandPowerFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDeviceCommandPowerFilter<$PrismaModel>
+}
+
+export type EnumDeviceCommandStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DeviceCommandStatus | Prisma.EnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.DeviceCommandStatus[] | Prisma.ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DeviceCommandStatus[] | Prisma.ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDeviceCommandStatusWithAggregatesFilter<$PrismaModel> | $Enums.DeviceCommandStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDeviceCommandStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDeviceCommandStatusFilter<$PrismaModel>
 }
 
 export type NestedStringFilter<$PrismaModel = never> = {
@@ -640,6 +667,46 @@ export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedIntNullableFilter<$PrismaModel>
 }
 
+export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  in?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel>
+  notIn?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel>
+  lt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  lte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  gt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  gte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedFloatWithAggregatesFilter<$PrismaModel> | number
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _avg?: Prisma.NestedFloatFilter<$PrismaModel>
+  _sum?: Prisma.NestedFloatFilter<$PrismaModel>
+  _min?: Prisma.NestedFloatFilter<$PrismaModel>
+  _max?: Prisma.NestedFloatFilter<$PrismaModel>
+}
+
+export type NestedJsonNullableFilter<$PrismaModel = never> =
+| Prisma.PatchUndefined<
+    Prisma.Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+    Required<NestedJsonNullableFilterBase<$PrismaModel>>
+  >
+| Prisma.OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+  equals?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | Prisma.JsonNullValueFilter
+  path?: string[]
+  mode?: Prisma.QueryMode | Prisma.EnumQueryModeFieldRefInput<$PrismaModel>
+  string_contains?: string | Prisma.StringFieldRefInput<$PrismaModel>
+  string_starts_with?: string | Prisma.StringFieldRefInput<$PrismaModel>
+  string_ends_with?: string | Prisma.StringFieldRefInput<$PrismaModel>
+  array_starts_with?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | null
+  array_ends_with?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | null
+  array_contains?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | null
+  lt?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
+  lte?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
+  gt?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
+  gte?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
+  not?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | Prisma.JsonNullValueFilter
+}
+
 export type NestedEnumDeviceCommandPowerFilter<$PrismaModel = never> = {
   equals?: $Enums.DeviceCommandPower | Prisma.EnumDeviceCommandPowerFieldRefInput<$PrismaModel>
   in?: $Enums.DeviceCommandPower[] | Prisma.ListEnumDeviceCommandPowerFieldRefInput<$PrismaModel>
@@ -672,30 +739,6 @@ export type NestedEnumDeviceCommandStatusWithAggregatesFilter<$PrismaModel = nev
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumDeviceCommandStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumDeviceCommandStatusFilter<$PrismaModel>
-}
-
-export type NestedJsonNullableFilter<$PrismaModel = never> =
-| Prisma.PatchUndefined<
-    Prisma.Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
-    Required<NestedJsonNullableFilterBase<$PrismaModel>>
-  >
-| Prisma.OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
-
-export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
-  equals?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | Prisma.JsonNullValueFilter
-  path?: string[]
-  mode?: Prisma.QueryMode | Prisma.EnumQueryModeFieldRefInput<$PrismaModel>
-  string_contains?: string | Prisma.StringFieldRefInput<$PrismaModel>
-  string_starts_with?: string | Prisma.StringFieldRefInput<$PrismaModel>
-  string_ends_with?: string | Prisma.StringFieldRefInput<$PrismaModel>
-  array_starts_with?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | null
-  array_ends_with?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | null
-  array_contains?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | null
-  lt?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
-  lte?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
-  gt?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
-  gte?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
-  not?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | Prisma.JsonNullValueFilter
 }
 
 

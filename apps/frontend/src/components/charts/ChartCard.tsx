@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 type Props = {
   title: string;
   subtitle?: string;
+  titleExtra?: ReactNode;
   badge?: string;
   wide?: boolean;
   large?: boolean;
@@ -14,6 +15,7 @@ type Props = {
 export default function ChartCard({
   title,
   subtitle,
+  titleExtra,
   badge,
   wide,
   large,
@@ -29,6 +31,7 @@ export default function ChartCard({
         <div className="scada-chart-card-titles">
           <h3 className="chart-title">
             {title}
+            {titleExtra}
             {subtitle ? (
               <span className="chart-title-sub"> {subtitle}</span>
             ) : null}

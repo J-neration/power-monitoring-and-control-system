@@ -10,7 +10,7 @@ terraform {
 
   backend "s3" {
     bucket       = "pmcs-dev-tfstate-035680193225"
-    key          = "app/terraform.tfstate"
+    key          = "box/terraform.tfstate"
     region       = "ap-northeast-2"
     encrypt      = true
     kms_key_id   = "alias/pmcs-dev-tfstate"
@@ -28,7 +28,7 @@ provider "aws" {
       Project     = "pmcs"
       Environment = "dev"
       ManagedBy   = "terraform"
-      Stack       = "app"
+      Stack       = "box"
     }
   }
 }

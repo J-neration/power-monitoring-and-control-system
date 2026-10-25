@@ -2,6 +2,9 @@
 
 > 작성일: 2026-04-02
 > 목적: Production과 분리된 Dev(테스트) 환경을 구축하여, 개발 중인 코드를 안전하게 검증할 수 있는 배포 파이프라인을 마련
+>
+> **2026-10-23 기록용으로 전환:** dev는 AWS 서버 1대(`app-dev.pqms.co.kr`, [`scripts/dev-box/README.md`](../scripts/dev-box/README.md))로 옮겼다.
+> 이 문서의 Netlify dev 브랜치 배포·PR 미리보기와 Railway dev 자동 배포는 대시보드에서 껐다 (Railway dev 서비스와 브랜치 연결은 운영 중계 검증용으로 남김).
 
 ---
 

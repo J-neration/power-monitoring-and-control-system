@@ -392,6 +392,10 @@ export const ModelName = {
   InstallationDeviceSettings: 'InstallationDeviceSettings',
   Device: 'Device',
   TelemetryRecord: 'TelemetryRecord',
+  TelemetryHourlySummary: 'TelemetryHourlySummary',
+  TelemetryDailySummary: 'TelemetryDailySummary',
+  AggregationState: 'AggregationState',
+  AggregationLog: 'AggregationLog',
   FaultEvent: 'FaultEvent',
   ModuleFaultState: 'ModuleFaultState',
   DeviceCommand: 'DeviceCommand'
@@ -410,7 +414,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "clientOption" | "roleOption" | "site" | "installation" | "installationDeviceSettings" | "device" | "telemetryRecord" | "faultEvent" | "moduleFaultState" | "deviceCommand"
+    modelProps: "user" | "clientOption" | "roleOption" | "site" | "installation" | "installationDeviceSettings" | "device" | "telemetryRecord" | "telemetryHourlySummary" | "telemetryDailySummary" | "aggregationState" | "aggregationLog" | "faultEvent" | "moduleFaultState" | "deviceCommand"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1006,6 +1010,302 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    TelemetryHourlySummary: {
+      payload: Prisma.$TelemetryHourlySummaryPayload<ExtArgs>
+      fields: Prisma.TelemetryHourlySummaryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TelemetryHourlySummaryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryHourlySummaryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TelemetryHourlySummaryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryHourlySummaryPayload>
+        }
+        findFirst: {
+          args: Prisma.TelemetryHourlySummaryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryHourlySummaryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TelemetryHourlySummaryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryHourlySummaryPayload>
+        }
+        findMany: {
+          args: Prisma.TelemetryHourlySummaryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryHourlySummaryPayload>[]
+        }
+        create: {
+          args: Prisma.TelemetryHourlySummaryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryHourlySummaryPayload>
+        }
+        createMany: {
+          args: Prisma.TelemetryHourlySummaryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TelemetryHourlySummaryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryHourlySummaryPayload>[]
+        }
+        delete: {
+          args: Prisma.TelemetryHourlySummaryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryHourlySummaryPayload>
+        }
+        update: {
+          args: Prisma.TelemetryHourlySummaryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryHourlySummaryPayload>
+        }
+        deleteMany: {
+          args: Prisma.TelemetryHourlySummaryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TelemetryHourlySummaryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TelemetryHourlySummaryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryHourlySummaryPayload>[]
+        }
+        upsert: {
+          args: Prisma.TelemetryHourlySummaryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryHourlySummaryPayload>
+        }
+        aggregate: {
+          args: Prisma.TelemetryHourlySummaryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTelemetryHourlySummary>
+        }
+        groupBy: {
+          args: Prisma.TelemetryHourlySummaryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TelemetryHourlySummaryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TelemetryHourlySummaryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TelemetryHourlySummaryCountAggregateOutputType> | number
+        }
+      }
+    }
+    TelemetryDailySummary: {
+      payload: Prisma.$TelemetryDailySummaryPayload<ExtArgs>
+      fields: Prisma.TelemetryDailySummaryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TelemetryDailySummaryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryDailySummaryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TelemetryDailySummaryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryDailySummaryPayload>
+        }
+        findFirst: {
+          args: Prisma.TelemetryDailySummaryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryDailySummaryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TelemetryDailySummaryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryDailySummaryPayload>
+        }
+        findMany: {
+          args: Prisma.TelemetryDailySummaryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryDailySummaryPayload>[]
+        }
+        create: {
+          args: Prisma.TelemetryDailySummaryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryDailySummaryPayload>
+        }
+        createMany: {
+          args: Prisma.TelemetryDailySummaryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TelemetryDailySummaryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryDailySummaryPayload>[]
+        }
+        delete: {
+          args: Prisma.TelemetryDailySummaryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryDailySummaryPayload>
+        }
+        update: {
+          args: Prisma.TelemetryDailySummaryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryDailySummaryPayload>
+        }
+        deleteMany: {
+          args: Prisma.TelemetryDailySummaryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TelemetryDailySummaryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TelemetryDailySummaryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryDailySummaryPayload>[]
+        }
+        upsert: {
+          args: Prisma.TelemetryDailySummaryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TelemetryDailySummaryPayload>
+        }
+        aggregate: {
+          args: Prisma.TelemetryDailySummaryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTelemetryDailySummary>
+        }
+        groupBy: {
+          args: Prisma.TelemetryDailySummaryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TelemetryDailySummaryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TelemetryDailySummaryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TelemetryDailySummaryCountAggregateOutputType> | number
+        }
+      }
+    }
+    AggregationState: {
+      payload: Prisma.$AggregationStatePayload<ExtArgs>
+      fields: Prisma.AggregationStateFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AggregationStateFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationStatePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AggregationStateFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationStatePayload>
+        }
+        findFirst: {
+          args: Prisma.AggregationStateFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationStatePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AggregationStateFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationStatePayload>
+        }
+        findMany: {
+          args: Prisma.AggregationStateFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationStatePayload>[]
+        }
+        create: {
+          args: Prisma.AggregationStateCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationStatePayload>
+        }
+        createMany: {
+          args: Prisma.AggregationStateCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AggregationStateCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationStatePayload>[]
+        }
+        delete: {
+          args: Prisma.AggregationStateDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationStatePayload>
+        }
+        update: {
+          args: Prisma.AggregationStateUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationStatePayload>
+        }
+        deleteMany: {
+          args: Prisma.AggregationStateDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AggregationStateUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AggregationStateUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationStatePayload>[]
+        }
+        upsert: {
+          args: Prisma.AggregationStateUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationStatePayload>
+        }
+        aggregate: {
+          args: Prisma.AggregationStateAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAggregationState>
+        }
+        groupBy: {
+          args: Prisma.AggregationStateGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregationStateGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AggregationStateCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregationStateCountAggregateOutputType> | number
+        }
+      }
+    }
+    AggregationLog: {
+      payload: Prisma.$AggregationLogPayload<ExtArgs>
+      fields: Prisma.AggregationLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AggregationLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AggregationLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationLogPayload>
+        }
+        findFirst: {
+          args: Prisma.AggregationLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AggregationLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationLogPayload>
+        }
+        findMany: {
+          args: Prisma.AggregationLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationLogPayload>[]
+        }
+        create: {
+          args: Prisma.AggregationLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationLogPayload>
+        }
+        createMany: {
+          args: Prisma.AggregationLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AggregationLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationLogPayload>[]
+        }
+        delete: {
+          args: Prisma.AggregationLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationLogPayload>
+        }
+        update: {
+          args: Prisma.AggregationLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.AggregationLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AggregationLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AggregationLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.AggregationLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AggregationLogPayload>
+        }
+        aggregate: {
+          args: Prisma.AggregationLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAggregationLog>
+        }
+        groupBy: {
+          args: Prisma.AggregationLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregationLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AggregationLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregationLogCountAggregateOutputType> | number
+        }
+      }
+    }
     FaultEvent: {
       payload: Prisma.$FaultEventPayload<ExtArgs>
       fields: Prisma.FaultEventFieldRefs
@@ -1327,6 +1627,7 @@ export const InstallationScalarFieldEnum = {
   siteId: 'siteId',
   label: 'label',
   iccid: 'iccid',
+  moduleName: 'moduleName',
   webSettingsActive: 'webSettingsActive',
   webSettingsHeartbeatAt: 'webSettingsHeartbeatAt',
   adminSessionActive: 'adminSessionActive',
@@ -1408,6 +1709,7 @@ export const TelemetryRecordScalarFieldEnum = {
   id: 'id',
   installationId: 'installationId',
   recordedAt: 'recordedAt',
+  receivedAt: 'receivedAt',
   moduleStatus: 'moduleStatus',
   numOfMods: 'numOfMods',
   csq: 'csq',
@@ -1449,6 +1751,65 @@ export const TelemetryRecordScalarFieldEnum = {
 } as const
 
 export type TelemetryRecordScalarFieldEnum = (typeof TelemetryRecordScalarFieldEnum)[keyof typeof TelemetryRecordScalarFieldEnum]
+
+
+export const TelemetryHourlySummaryScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  bucketStart: 'bucketStart',
+  sampleCount: 'sampleCount',
+  expectedCount: 'expectedCount',
+  coverage: 'coverage',
+  metrics: 'metrics',
+  arrayMetrics: 'arrayMetrics',
+  uncompEnergyKwh: 'uncompEnergyKwh',
+  compEnergyKwh: 'compEnergyKwh',
+  energyEstimated: 'energyEstimated',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TelemetryHourlySummaryScalarFieldEnum = (typeof TelemetryHourlySummaryScalarFieldEnum)[keyof typeof TelemetryHourlySummaryScalarFieldEnum]
+
+
+export const TelemetryDailySummaryScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  bucketStart: 'bucketStart',
+  sampleCount: 'sampleCount',
+  expectedCount: 'expectedCount',
+  coverage: 'coverage',
+  metrics: 'metrics',
+  arrayMetrics: 'arrayMetrics',
+  uncompEnergyKwh: 'uncompEnergyKwh',
+  compEnergyKwh: 'compEnergyKwh',
+  energyEstimated: 'energyEstimated',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TelemetryDailySummaryScalarFieldEnum = (typeof TelemetryDailySummaryScalarFieldEnum)[keyof typeof TelemetryDailySummaryScalarFieldEnum]
+
+
+export const AggregationStateScalarFieldEnum = {
+  key: 'key',
+  value: 'value',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AggregationStateScalarFieldEnum = (typeof AggregationStateScalarFieldEnum)[keyof typeof AggregationStateScalarFieldEnum]
+
+
+export const AggregationLogScalarFieldEnum = {
+  id: 'id',
+  kind: 'kind',
+  status: 'status',
+  message: 'message',
+  detail: 'detail',
+  createdAt: 'createdAt'
+} as const
+
+export type AggregationLogScalarFieldEnum = (typeof AggregationLogScalarFieldEnum)[keyof typeof AggregationLogScalarFieldEnum]
 
 
 export const FaultEventScalarFieldEnum = {
@@ -1775,6 +2136,10 @@ export type GlobalOmitConfig = {
   installationDeviceSettings?: Prisma.InstallationDeviceSettingsOmit
   device?: Prisma.DeviceOmit
   telemetryRecord?: Prisma.TelemetryRecordOmit
+  telemetryHourlySummary?: Prisma.TelemetryHourlySummaryOmit
+  telemetryDailySummary?: Prisma.TelemetryDailySummaryOmit
+  aggregationState?: Prisma.AggregationStateOmit
+  aggregationLog?: Prisma.AggregationLogOmit
   faultEvent?: Prisma.FaultEventOmit
   moduleFaultState?: Prisma.ModuleFaultStateOmit
   deviceCommand?: Prisma.DeviceCommandOmit
