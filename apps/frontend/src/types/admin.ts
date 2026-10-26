@@ -17,6 +17,8 @@ export type SiteListInstallationFromApi = {
   moduleName?: string | null;
   /** ADMIN 토큰일 때만 포함 */
   iccid?: string | null;
+  /** 연간 구독 설치지점만 true. 이력 탭의 일·주·월·연 그래프 */
+  historyVisible?: boolean;
   device: unknown | null;
 };
 

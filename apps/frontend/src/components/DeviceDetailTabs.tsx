@@ -103,8 +103,10 @@ export default function DeviceDetailTabs({
 }: Props) {
   const [tab, setTab] = useState<Tab>("monitor");
   const router = useRouter();
-
-  const remoteControlTab = isAdmin && tab === "settings";
+  const historyVisible = device.installation.historyVisible === true;
+  const activeTab: Tab =
+    tab === "analytics" && !historyVisible ? "monitor" : tab;
+  const remoteControlTab = isAdmin && activeTab === "settings";
 
   useWsEvents((msg) => {
     if (
@@ -143,8 +145,8 @@ export default function DeviceDetailTabs({
             <button
               type="button"
               role="tab"
-              aria-selected={tab === "monitor"}
-              className={`device-tab-btn${tab === "monitor" ? " active" : ""}`}
+              aria-selected={activeTab === "monitor"}
+              className={`device-tab-btn${activeTab === "monitor" ? " active" : ""}`}
               onClick={() => setTab("monitor")}
             >
               <span className="device-tab-icon">
@@ -152,24 +154,26 @@ export default function DeviceDetailTabs({
               </span>
               모니터
             </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === "analytics"}
-              className={`device-tab-btn${tab === "analytics" ? " active" : ""}`}
-              onClick={() => setTab("analytics")}
-            >
-              <span className="device-tab-icon">
-                <AnalyticsIcon />
-              </span>
-              이력
-            </button>
+            {historyVisible && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "analytics"}
+                className={`device-tab-btn${activeTab === "analytics" ? " active" : ""}`}
+                onClick={() => setTab("analytics")}
+              >
+                <span className="device-tab-icon">
+                  <AnalyticsIcon />
+                </span>
+                이력
+              </button>
+            )}
             {isAdmin && (
               <button
                 type="button"
                 role="tab"
-                aria-selected={tab === "settings"}
-                className={`device-tab-btn${tab === "settings" ? " active" : ""}`}
+                aria-selected={activeTab === "settings"}
+                className={`device-tab-btn${activeTab === "settings" ? " active" : ""}`}
                 onClick={() => setTab("settings")}
               >
                 <span className="device-tab-icon">
@@ -182,8 +186,8 @@ export default function DeviceDetailTabs({
               <button
                 type="button"
                 role="tab"
-                aria-selected={tab === "faults"}
-                className={`device-tab-btn${tab === "faults" ? " active" : ""}${hasActiveFaults ? " device-tab-btn-fault" : ""}`}
+                aria-selected={activeTab === "faults"}
+                className={`device-tab-btn${activeTab === "faults" ? " active" : ""}${hasActiveFaults ? " device-tab-btn-fault" : ""}`}
                 onClick={() => setTab("faults")}
               >
                 <span className="device-tab-icon">
@@ -209,15 +213,15 @@ export default function DeviceDetailTabs({
         </div>
       </div>
 
-      <div className={`device-detail-tab-body${tab === "monitor" || tab === "analytics" || tab === "settings" ? " device-detail-tab-body--fit" : ""}`}>
-      {tab === "monitor" && (
+      <div className={`device-detail-tab-body${activeTab === "monitor" || activeTab === "analytics" || activeTab === "settings" ? " device-detail-tab-body--fit" : ""}`}>
+      {activeTab === "monitor" && (
         <DeviceMonitorBoard
           device={device}
           readings={readings}
         />
       )}
 
-      {tab === "analytics" && (
+      {activeTab === "analytics" && historyVisible && (
         <DeviceHistoryCharts
           installationId={device.installationId}
           readings={historyReadings}
@@ -234,7 +238,7 @@ export default function DeviceDetailTabs({
         />
       )}
 
-      {tab === "settings" && isAdmin && (
+      {activeTab === "settings" && isAdmin && (
         <div className="device-settings-console">
           <details className="device-settings-help">
             <summary>
@@ -305,7 +309,7 @@ export default function DeviceDetailTabs({
         </div>
       )}
 
-      {tab === "faults" && isAdmin && (
+      {activeTab === "faults" && isAdmin && (
         <DeviceFaultHistory
           installationId={device.installationId}
           faults={faults}

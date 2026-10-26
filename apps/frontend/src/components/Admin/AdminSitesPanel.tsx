@@ -44,6 +44,7 @@ function toSiteRows(initialSites: SiteListFromApi[] | null | undefined): SiteRow
               label: i.label ?? "",
               moduleName: typeof i.moduleName === "string" ? i.moduleName : "",
               iccid: typeof i.iccid === "string" ? i.iccid : "",
+              historyVisible: i.historyVisible === true,
             },
           ];
         }),
@@ -86,6 +87,7 @@ type InstRow = {
   label: string;
   moduleName: string;
   iccid: string;
+  historyVisible: boolean;
 };
 
 type SiteRow = {
@@ -285,6 +287,7 @@ export default function AdminSitesPanel({
   });
   const [editCustomClient, setEditCustomClient] = useState("");
   const [savingSite, setSavingSite] = useState<string | null>(null);
+  const [savingHistory, setSavingHistory] = useState<string | null>(null);
 
   useEffect(() => {
     if (flash?.type !== "err") return;
@@ -354,6 +357,55 @@ export default function AdminSitesPanel({
   function cancelEditSite() {
     setEditingSiteId(null);
     setEditCustomClient("");
+  }
+
+  async function handleHistoryVisible(
+    siteId: string,
+    installationId: string,
+    visible: boolean,
+  ) {
+    const current = sites
+      .find((s) => s.siteId === siteId)
+      ?.installations.find((i) => i.installationId === installationId);
+    if (!current || current.historyVisible === visible) return;
+    setSavingHistory(installationId);
+    try {
+      const res = await fetch(
+        `/api/admin/installations/${encodeURIComponent(installationId)}/history-visible`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ visible }),
+        },
+      );
+      const data = (await res.json().catch(() => ({}))) as { message?: string };
+      if (!res.ok) {
+        showFlash("err", data.message ?? `오류 (${res.status})`);
+        return;
+      }
+      setSites((prev) =>
+        prev.map((s) =>
+          s.siteId === siteId
+            ? {
+                ...s,
+                installations: s.installations.map((i) =>
+                  i.installationId === installationId
+                    ? { ...i, historyVisible: visible }
+                    : i,
+                ),
+              }
+            : s,
+        ),
+      );
+      showFlash(
+        "ok",
+        visible ? "이력 그래프를 보이게 했습니다." : "이력 그래프를 숨겼습니다.",
+      );
+    } catch {
+      showFlash("err", "네트워크 오류");
+    } finally {
+      setSavingHistory(null);
+    }
   }
 
   // ── 현장 수정 ─────────────────────────────────────────
@@ -428,7 +480,11 @@ export default function AdminSitesPanel({
       }
       setSites((prev) => [
         ...prev,
-        { ...payload, siteId: newSite.id, installations: [] },
+        {
+          ...payload,
+          siteId: newSite.id,
+          installations: [],
+        },
       ]);
       setExpanded((prev) => new Set([...prev, newSite.id]));
       setNewSite({
@@ -524,6 +580,7 @@ export default function AdminSitesPanel({
                         ? created.moduleName
                         : newInst.moduleName.trim(),
                     iccid: "",
+                    historyVisible: false,
                   },
                 ],
               }
@@ -933,6 +990,7 @@ export default function AdminSitesPanel({
                             <th>품목명</th>
                             <th>ICCID (USIM)</th>
                             <th />
+                            <th>이력 그래프</th>
                             <th />
                           </tr>
                         </thead>
@@ -1053,6 +1111,44 @@ export default function AdminSitesPanel({
                                       {iccidFeedback[inst.installationId].text}
                                     </span>
                                   ) : null}
+                                </div>
+                              </td>
+                              <td>
+                                <div
+                                  className="admin-history-toggle"
+                                  role="group"
+                                  aria-label={`${inst.label} 이력 그래프`}
+                                >
+                                  <button
+                                    type="button"
+                                    className={`admin-history-toggle-btn${inst.historyVisible ? " is-on" : ""}`}
+                                    aria-pressed={inst.historyVisible}
+                                    disabled={savingHistory === inst.installationId}
+                                    onClick={() =>
+                                      handleHistoryVisible(
+                                        site.siteId,
+                                        inst.installationId,
+                                        true,
+                                      )
+                                    }
+                                  >
+                                    보이기
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={`admin-history-toggle-btn${!inst.historyVisible ? " is-off" : ""}`}
+                                    aria-pressed={!inst.historyVisible}
+                                    disabled={savingHistory === inst.installationId}
+                                    onClick={() =>
+                                      handleHistoryVisible(
+                                        site.siteId,
+                                        inst.installationId,
+                                        false,
+                                      )
+                                    }
+                                  >
+                                    숨기기
+                                  </button>
                                 </div>
                               </td>
                               <td>

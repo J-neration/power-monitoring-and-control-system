@@ -71,6 +71,10 @@ const updateSiteSchema = z.object({
   address: z.string().min(1),
 });
 
+const setHistoryVisibleSchema = z.object({
+  visible: z.boolean(),
+});
+
 const moduleNameField = z.union([
   z.string().trim().max(80, "품목명은 80자 이하여야 합니다."),
   z.null(),
@@ -273,6 +277,27 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
         installationId,
         moduleName: parsed.data.moduleName?.trim() || null,
       });
+    },
+  );
+
+  /* ── PATCH /admin/installations/:installationId/history-visible ── 이력 그래프 */
+  server.patch(
+    "/installations/:installationId/history-visible",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const { installationId } = request.params as { installationId: string };
+      const parsed = setHistoryVisibleSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({ message: "입력값이 올바르지 않습니다." });
+      }
+      const installation = await siteService.setInstallationHistoryVisible(
+        installationId,
+        parsed.data.visible,
+      );
+      if (!installation) {
+        return reply.status(404).send({ message: "설치지점을 찾을 수 없습니다." });
+      }
+      return reply.send({ installation });
     },
   );
 

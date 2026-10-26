@@ -64,6 +64,7 @@ export const siteService = {
         id: inst.id,
         label: inst.label,
         moduleName: inst.moduleName ?? null,
+        historyVisible: inst.historyVisible,
         ...(ctx.role === "ADMIN" ? { iccid: inst.iccid ?? null } : {}),
         device: withModuleTypeOnDevice(inst),
       }));
@@ -111,6 +112,23 @@ export const siteService = {
     return prisma.site.update({
       where: { id: siteId },
       data,
+    });
+  },
+
+  /* ─── 이력 그래프 보이기/숨기기 (연간 구독 설치지점) ─ */
+  setInstallationHistoryVisible: async (
+    installationId: string,
+    historyVisible: boolean,
+  ) => {
+    const inst = await prisma.installation.findUnique({
+      where: { id: installationId },
+      select: { id: true },
+    });
+    if (!inst) return null;
+    return prisma.installation.update({
+      where: { id: installationId },
+      data: { historyVisible },
+      select: { id: true, historyVisible: true },
     });
   },
 
