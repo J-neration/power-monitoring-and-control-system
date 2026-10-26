@@ -173,6 +173,7 @@ locals {
     "initdb/01-roles.sh" = "${local.config_dir}/initdb/01-roles.sh"
     "pmcs-deploy.sh"     = "${local.config_dir}/pmcs-deploy.sh"
     "pmcs-backup.sh"     = "${local.config_dir}/pmcs-backup.sh"
+    "pmcs-health.sh"     = "${local.config_dir}/pmcs-health.sh"
   }
 
   # 비밀이 아닌 설정. 비밀 값은 SSM 파라미터에 있다.
@@ -185,6 +186,7 @@ locals {
     API_IMAGE=${module.ecr.repository_urls["api"]}:${var.initial_image_tag}
     FRONTEND_IMAGE=${module.ecr.repository_urls["frontend"]}:${var.initial_image_tag}
     IMAGE_TAG_PARAM=${aws_ssm_parameter.image_tag.name}
+    HEALTH_METRIC_NAMESPACE=${local.health_namespace}
   EOT
 }
 
@@ -287,6 +289,16 @@ data "aws_iam_policy_document" "box" {
     sid       = "ReadSecrets"
     actions   = ["ssm:GetParameter"]
     resources = [aws_ssm_parameter.env.arn, aws_ssm_parameter.image_tag.arn]
+  }
+  statement {
+    sid       = "HealthMetric"
+    actions   = ["cloudwatch:PutMetricData"]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "cloudwatch:namespace"
+      values   = [local.health_namespace]
+    }
   }
   statement {
     sid       = "ContainerLogs"

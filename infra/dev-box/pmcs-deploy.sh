@@ -20,11 +20,36 @@ chmod 755 "$cfg/initdb" "$cfg"/initdb/*.sh
 before=$(sha256sum /usr/local/bin/pmcs-deploy 2>/dev/null | cut -d' ' -f1 || true)
 install -m 755 "$cfg/pmcs-deploy.sh" /usr/local/bin/pmcs-deploy
 install -m 755 "$cfg/pmcs-backup.sh" /usr/local/bin/pmcs-backup
+install -m 755 "$cfg/pmcs-health.sh" /usr/local/bin/pmcs-health
 # S3 에 새 pmcs-deploy 가 있었다면, 지금 도는 것은 이전 버전이므로 새 버전으로 다시 시작한다.
 if [ -z "${PMCS_DEPLOY_REEXEC:-}" ] && [ "$before" != "$(sha256sum /usr/local/bin/pmcs-deploy | cut -d' ' -f1)" ]; then
   log "새 pmcs-deploy 로 다시 시작"
   PMCS_DEPLOY_REEXEC=1 exec /usr/local/bin/pmcs-deploy "$@"
 fi
+
+# 5분마다 도는 헬스 점검(CloudWatch 지표 Healthy). 서버를 새로 만들 때도 첫 배포에서 설치된다.
+cat >/etc/systemd/system/pmcs-health.service <<'UNIT'
+[Unit]
+Description=PMCS dev box health check (CloudWatch metric Healthy)
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/pmcs-health
+UNIT
+cat >/etc/systemd/system/pmcs-health.timer <<'UNIT'
+[Unit]
+Description=PMCS dev box health check every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target
+UNIT
+systemctl daemon-reload
+systemctl enable --now pmcs-health.timer >/dev/null
 
 # 배포할 이미지 태그는 SSM 파라미터(IMAGE_TAG_PARAM)가 정한다. CI 와 scripts/dev-box/deploy.sh 가 쓴다.
 # 값이 이상하면 멈춘다 — settings.env 의 첫 값으로 조용히 되돌아가면 옛 버전이 배포되기 때문이다.
