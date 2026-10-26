@@ -35,6 +35,22 @@ pmcs-dev 는 EC2 t4g.small 1대 + docker compose(Caddy · API · 프론트 · Po
   레코드가 생기기 전에 Caddy 가 인증서 발급에 실패하면 재시도 간격이 길어지므로, 레코드를 만든 뒤
   서버에서 `... restart caddy` 로 바로 다시 받게 한다. 인증서는 RSA 2048(HMI 호환, Caddyfile `key_type`).
 
+## 알람
+
+`envs/dev/box/alarms.tf` (모듈 `modules/ops-alarms`, prod 도 같은 모듈을 쓴다). 메일은 SNS `pmcs-dev-ops-alerts` →
+`/pmcs-dev/security/alert-emails` 주소로 가며, 울릴 때와 정상으로 돌아올 때 모두 온다. 구독 확인 메일 링크를 눌러야 받는다.
+
+| 알람 | 조건 | 볼 곳 |
+| --- | --- | --- |
+| `pmcs-dev-box-system-check` | AWS 쪽 하드웨어 문제 2분 → **자동 복구**(같은 IP·볼륨) | EC2 콘솔 상태 검사 |
+| `pmcs-dev-box-instance-check` | 운영체제 응답 없음 3분 | EC2 콘솔 → 필요하면 재부팅 |
+| `pmcs-dev-AppUnhealthy` | 서버 안 5분 점검(`pmcs-health`)이 10분 연속 실패하거나 값이 안 옴 | `systemctl status pmcs-health`, `journalctl -u pmcs-health` |
+| `pmcs-dev-ApiErrors` | API 오류 로그(level ≥ 50) 10분 5건 이상 | Logs Insights `/pmcs-dev/box/api` |
+| `pmcs-dev-StaleDevices` | 최근 7일 수신하던 장비가 30분 넘게 끊김, 20분 지속 | Logs Insights: `filter msg = "device freshness" \| fields @timestamp, staleIds` |
+
+장비 끊김 점검은 API 안에서 10분마다 돈다(`DEVICE_FRESHNESS_CHECK_ENABLED`, 기본 꺼짐 — dev compose 에서만 켬).
+기준은 화면의 "통신 끊김"과 같은 30분(`DEVICE_STALE_AFTER_MINUTES`), 감시 대상은 최근 7일 안에 수신한 장비(`DEVICE_FRESHNESS_ACTIVE_DAYS`).
+
 ## DB 보기 · 로컬 개발
 
 `yarn dev:aws-db` 가 이 서버 Postgres 를 이 PC 의 `127.0.0.1:15432` 로 연다(SSM 포트 포워딩, 창을 닫으면 끝남).

@@ -32,6 +32,7 @@ if (env.DATABASE_URL.includes("neon.tech") && nodeEnv !== "production") {
 
 const server = await buildServer(env);
 let stopAggregation = () => {};
+let stopFreshnessCheck = () => {};
 
 let shuttingDown = false;
 const shutdown = async (signal: string) => {
@@ -40,6 +41,7 @@ const shutdown = async (signal: string) => {
   server.log.info(`Shutting down (${signal})…`);
   try {
     stopAggregation();
+    stopFreshnessCheck();
     await server.close();
   } finally {
     process.exit(0);
@@ -53,6 +55,8 @@ try {
   server.log.info(`API listening on http://${env.HOST}:${env.PORT}`);
   const { startAggregationScheduler } = await import("./services/aggregationScheduler.js");
   stopAggregation = startAggregationScheduler(server.log);
+  const { startDeviceFreshnessCheck } = await import("./services/deviceFreshnessCheck.js");
+  stopFreshnessCheck = startDeviceFreshnessCheck(server.log);
 } catch (error) {
   const err = error as NodeJS.ErrnoException;
   if (err?.code === "EADDRINUSE") {

@@ -82,6 +82,8 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-}
       ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-}
+      # 장비 수신 끊김 감시 로그 (알람: envs/dev/box/alarms.tf 의 StaleDevices)
+      DEVICE_FRESHNESS_CHECK_ENABLED: "true"
     depends_on:
       postgres:
         condition: service_healthy
