@@ -317,6 +317,7 @@ export default function DeviceOpsBenefitPanel({
         icon={<WonIcon />}
         kicker="전기요금 절감"
         value={s.costYear != null ? formatKrw(s.costYear) : "—"}
+        unit={s.costYear != null ? "/년" : undefined}
         compare={energyCompare}
         hint={costHint}
         formula={{
