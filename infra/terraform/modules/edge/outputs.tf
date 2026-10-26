@@ -7,6 +7,20 @@ output "alb_dns_name" {
   value       = aws_lb.this.dns_name
 }
 
+output "alb_arn_suffix" {
+  description = "CloudWatch 지표 차원(LoadBalancer)"
+  value       = aws_lb.this.arn_suffix
+}
+
+output "frontend_target_group_arn_suffix" {
+  description = "CloudWatch 지표 차원(TargetGroup)"
+  value       = aws_lb_target_group.frontend.arn_suffix
+}
+
+output "api_target_group_arn_suffix" {
+  value = aws_lb_target_group.api.arn_suffix
+}
+
 output "alb_zone_id" {
   value = aws_lb.this.zone_id
 }
@@ -28,7 +42,7 @@ output "tls_enabled" {
 }
 
 output "acm_validation_records" {
-  description = "도메인 DNS에 등록할 ACM 검증 CNAME 레코드"
+  description = "도메인 DNS에 등록할 ACM 검증 CNAME 레코드 (route53_zone_id 를 주면 자동으로 만들어진다)"
   value = local.tls_enabled ? [
     for o in aws_acm_certificate.this[0].domain_validation_options : {
       name  = o.resource_record_name

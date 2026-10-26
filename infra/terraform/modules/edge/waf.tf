@@ -2,13 +2,15 @@
 #   0  api 도메인은 /receiver만 허용 (도메인이 정해진 뒤)
 #   1~3 IP당 속도 제한: 로그인, HMI 수신, 전체
 #   10~40 AWS 관리형 규칙: 악성 IP, 공통 취약점, 알려진 공격 입력, SQL 인젝션
+#   21  User-Agent 없는 요청은 /receiver 밖에서만 차단 (HMI 펌웨어가 User-Agent 를 보내지 않음)
 # 로그는 차단·카운트된 요청만 남기고, 쿠키·인증 헤더·HMI 키는 가린다.
 
 locals {
   managed_rule_groups = [
     { name = "AWSManagedRulesAmazonIpReputationList", priority = 10, count_rules = [] },
-    # HMI 장비가 User-Agent 없이 보내거나 큰 본문을 보낼 수 있어, dev에서 실제 트래픽을 본 뒤
-    # 차단으로 바꿀지 정한다. 그때까지는 카운트(기록만)로 둔다.
+    # HMI 펌웨어(Quectel 모뎀이 헤더를 직접 만듦)는 User-Agent 를 보내지 않는다. 그래서 NoUserAgent_HEADER 는
+    # 카운트로 두고 아래 21번 규칙이 /receiver 밖에서만 막는다. 본문 8KB 제한(SizeRestrictions_BODY)은 HMI 본문이
+    # 최대 4KB 라 문제없지만, 화면 쪽 요청 크기를 아직 확인하지 않아 카운트로 둔다.
     { name = "AWSManagedRulesCommonRuleSet", priority = 20, count_rules = ["NoUserAgent_HEADER", "SizeRestrictions_BODY"] },
     { name = "AWSManagedRulesKnownBadInputsRuleSet", priority = 30, count_rules = [] },
     { name = "AWSManagedRulesSQLiRuleSet", priority = 40, count_rules = [] },
@@ -178,6 +180,52 @@ resource "aws_wafv2_web_acl" "this" {
       visibility_config {
         cloudwatch_metrics_enabled = true
         metric_name                = rule.value.name
+        sampled_requests_enabled   = true
+      }
+    }
+  }
+
+  dynamic "rule" {
+    for_each = var.block_no_user_agent_outside_receiver ? [1] : []
+    content {
+      name     = "no-user-agent-outside-receiver"
+      priority = 21
+
+      action {
+        block {}
+      }
+
+      statement {
+        and_statement {
+          statement {
+            label_match_statement {
+              scope = "LABEL"
+              key   = "awswaf:managed:aws:core-rule-set:NoUserAgent_Header"
+            }
+          }
+          statement {
+            not_statement {
+              statement {
+                byte_match_statement {
+                  search_string         = "/receiver"
+                  positional_constraint = "STARTS_WITH"
+                  field_to_match {
+                    uri_path {}
+                  }
+                  text_transformation {
+                    priority = 0
+                    type     = "NONE"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "no-user-agent-outside-receiver"
         sampled_requests_enabled   = true
       }
     }

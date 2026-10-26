@@ -26,6 +26,24 @@ variable "api_hostname" {
   default     = null
 }
 
+variable "app_alias_hostnames" {
+  description = "app 과 똑같이 서비스할 추가 주소 (예: 컷오버 전 리허설용 app.<도메인>). 인증서 SAN 에 함께 들어간다."
+  type        = list(string)
+  default     = []
+}
+
+variable "redirect_hostnames" {
+  description = "app_hostname 으로 301 리디렉트할 주소 (예: www.<도메인>). 인증서 SAN 에 함께 들어간다."
+  type        = list(string)
+  default     = []
+}
+
+variable "route53_zone_id" {
+  description = "주소들이 이 Route 53 영역에 있으면 ACM 검증 레코드를 자동으로 만든다. null 이면 출력(acm_validation_records)을 보고 DNS 에 수동으로 넣는다."
+  type        = string
+  default     = null
+}
+
 variable "frontend_port" {
   type    = number
   default = 3000
@@ -48,6 +66,15 @@ variable "log_retention_days" {
 
 variable "enable_waf" {
   description = "false면 WAF 없이 ALB만 둔다(dev 비용 절감, 월 약 $13). api 도메인은 여전히 ALB 규칙으로 /receiver만 서버에 닿고 나머지는 404. prod는 true."
+  type        = bool
+  default     = true
+}
+
+variable "block_no_user_agent_outside_receiver" {
+  description = <<-EOT
+    true 면 User-Agent 없는 요청을 /receiver 밖에서만 막는다. HMI 펌웨어는 User-Agent 를 보내지 않으므로
+    /receiver 는 계속 통과시킨다(관리형 규칙 NoUserAgent_HEADER 는 카운트로 두고, 그 라벨로 판단).
+  EOT
   type        = bool
   default     = true
 }
