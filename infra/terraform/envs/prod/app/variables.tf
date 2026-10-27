@@ -46,3 +46,36 @@ variable "frontend_desired_count" {
   type    = number
   default = 0
 }
+
+variable "receiver_rate_limit" {
+  description = "IP당 5분 동안 허용하는 /receiver 요청 수 (WAF). 현장 장비는 Railway 중계 IP 몇 개로 모여 들어온다."
+  type        = number
+  default     = 600
+}
+
+variable "global_rate_limit" {
+  description = "IP당 5분 동안 허용하는 전체 요청 수 (WAF)"
+  type        = number
+  default     = 2000
+}
+
+# 태스크 크기 (Fargate 조합: 256 CPU → 512/1024/2048 MB, 512 CPU → 1024~4096 MB).
+variable "api_cpu" {
+  type    = number
+  default = 512
+}
+
+variable "api_memory" {
+  type    = number
+  default = 1024
+}
+
+variable "frontend_cpu" {
+  type    = number
+  default = 512
+}
+
+variable "frontend_memory" {
+  type    = number
+  default = 1024
+}

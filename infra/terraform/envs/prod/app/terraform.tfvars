@@ -8,9 +8,16 @@ dns_zone_name       = "pqms.co.kr"
 
 # ECR 이미지 태그(<커밋>-arm64). 단일 매니페스트로 올려야 ECR 기본 스캔이 동작한다:
 #   docker buildx build --platform linux/arm64 --provenance=false --sbom=false --push ...
-api_image_tag      = "initial"
-frontend_image_tag = "initial"
+api_image_tag      = "6344f79-arm64"
+frontend_image_tag = "6344f79-arm64"
 
 # 서비스 태스크 수. 0이면 Fargate 비용 없음(서비스·작업 정의만 남음).
-api_desired_count      = 0
-frontend_desired_count = 0
+api_desired_count      = 1
+frontend_desired_count = 1
+
+# 태스크 크기. 2026-10-27 부하 시험 기준: api 0.25 vCPU 는 초당 약 20건까지(장비 20대가 1초마다) 버틴다.
+# 실시간 전송으로 바꾸기 전에 api_cpu 를 512 이상으로 올릴 것. 메모리는 0.5GB 에서 79%까지 차서 1GB 로 둔다.
+api_cpu         = 256
+api_memory      = 1024
+frontend_cpu    = 256
+frontend_memory = 512
