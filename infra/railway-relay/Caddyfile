@@ -1,0 +1,40 @@
+# Railway 중계. 현장 HMI 펌웨어에는 Railway 주소(pmcsbackend-*.up.railway.app)가 고정돼 있어,
+# 그 주소의 Railway 서비스를 이 중계로 바꿔 HMI 요청(/receiver*)을 AWS 로 넘긴다.
+# Railway 가 TLS 를 끝내고 PORT 로 평문 HTTP 를 넘겨준다.
+# UPSTREAM_HOST(Railway 서비스 변수): dev = api-dev.pqms.co.kr, prod = api.pqms.co.kr
+# x-api-key 는 그대로 넘긴다. AWS 쪽 RECEIVER_API_KEY 를 Railway 때와 같은 값으로 둔다.
+
+{
+	admin off
+	auto_https off
+	servers {
+		# Railway 앞단이 붙인 X-Forwarded-For(장비 IP)를 믿고 그대로 넘긴다.
+		trusted_proxies static private_ranges 100.64.0.0/10
+	}
+}
+
+:{$PORT:8080} {
+	log {
+		output stdout
+		# 요청 헤더에 x-api-key 가 있으므로 로그에서 헤더를 통째로 뺀다.
+		format filter {
+			request>headers delete
+		}
+	}
+
+	@receiver path /receiver /receiver/*
+	handle @receiver {
+		reverse_proxy https://{$UPSTREAM_HOST} {
+			# HMI 는 Host 에 Railway 주소를 넣어 보낸다. AWS(ALB·WAF)는 api 주소만 받으므로 바꾼다.
+			header_up Host {$UPSTREAM_HOST}
+		}
+	}
+
+	handle /relay-health {
+		respond "ok" 200
+	}
+
+	handle {
+		respond 404
+	}
+}
