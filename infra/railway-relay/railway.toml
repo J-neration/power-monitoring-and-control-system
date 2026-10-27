@@ -7,6 +7,8 @@ dockerfilePath = "Dockerfile"
 watchPatterns = ["/infra/railway-relay/**"]
 
 [deploy]
+# 서비스 화면의 Custom Start Command(백엔드용 node ...)보다 이 값이 우선한다. 비우면 그 명령이 돌아 node 가 없어 실패한다.
+startCommand = "caddy run --config /etc/caddy/Caddyfile --adapter caddyfile"
 healthcheckPath = "/relay-health"
 healthcheckTimeout = 30
 restartPolicyType = "ON_FAILURE"

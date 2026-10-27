@@ -21,7 +21,8 @@ Railway 서비스 Settings 에서:
 | Config-as-code → Railway Config File | `/infra/railway-relay/railway.toml` |
 | Variables | `UPSTREAM_HOST` 추가 (dev `api-dev.pqms.co.kr`, prod `api.pqms.co.kr`) |
 
-기존 변수(DATABASE_URL 등)는 되돌릴 때를 위해 그대로 둔다(중계는 쓰지 않는다).
+기존 변수(DATABASE_URL 등)와 화면의 Custom Start Command(`node apps/backend/...`)는 되돌릴 때를 위해 그대로 둔다.
+중계의 시작 명령은 `railway.toml` 의 `startCommand` 가 화면 값보다 우선한다.
 포트는 Railway 가 주는 `PORT` 를 그대로 쓴다(백엔드와 같다). 저장 뒤 Deploy 를 누른다.
 
 **되돌리기**: Root Directory 와 Config File 칸을 비우고 다시 Deploy → 저장소 루트의 `railway.toml`(백엔드)로 돌아간다.
