@@ -48,9 +48,7 @@ const hostLooksLikeDev = (origin: string) => {
   }
 };
 
-export const isDevAlertSite = (
-  env: { PQMS_ALERT_ENV?: string; NODE_ENV?: string; FRONTEND_ORIGIN?: string } = process.env,
-) => {
+export const isDevAlertSite = (env: NodeJS.ProcessEnv = process.env) => {
   const flag = (env.PQMS_ALERT_ENV ?? "").trim().toLowerCase();
   if (flag === "prod" || flag === "production") return false;
   if (flag === "dev" || flag === "development") return true;
@@ -60,7 +58,7 @@ export const isDevAlertSite = (
 
 export const applyDevAlertNotice = <T extends { subject: string; text: string; html?: string }>(
   mail: T,
-  env: { PQMS_ALERT_ENV?: string; NODE_ENV?: string; FRONTEND_ORIGIN?: string } = process.env,
+  env: NodeJS.ProcessEnv = process.env,
 ): T => {
   if (!isDevAlertSite(env)) return mail;
   const banner = `<div style="padding:12px 24px;background:#fef3c7;color:#92400e;font-size:13px;line-height:1.5;">${DEV_ALERT_MAIL_NOTICE}</div>`;
