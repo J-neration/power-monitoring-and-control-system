@@ -57,7 +57,7 @@ function LoginCard() {
         <span className="login-status-dot login-status-dot--live" />
         <span>SYSTEM ONLINE</span>
         <span className="login-status-sep">|</span>
-        <span>PMCS v0.1</span>
+        <span>PQMS v0.1</span>
       </div>
 
       <div className="login-logo">

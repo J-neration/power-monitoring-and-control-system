@@ -136,14 +136,14 @@ export const buildAdminAlertMail = (input: {
     input.lines.length === 1
       ? input.lines[0]?.summary ?? "상태 변경"
       : `상태 변경 ${input.lines.length}건`;
-  const subject = `[PMCS] ${place || input.installationId} — ${subjectBit}`;
+  const subject = `[PQMS] ${place || input.installationId} — ${subjectBit}`;
   const when = formatWhen(input.at);
   const siteName = input.siteName || "-";
   const label = input.installationLabel || "-";
   const region = input.region?.trim() || "-";
 
   const text = [
-    "PMCS 설비 알림",
+    "PQMS 설비 알림",
     "",
     `${place || input.installationId}에서 확인이 필요한 상태 변화가 감지되었습니다.`,
     "",
@@ -158,9 +158,9 @@ export const buildAdminAlertMail = (input: {
     "",
     "모듈 상태가 바뀔 때마다 보냅니다. 통신 끊김은 다시 수신될 때까지 한 번만 보냅니다.",
     "같은 이상 내용은 1시간 동안 반복하지 않습니다.",
-    "PMCS 대시보드에서 해당 설비의 모듈 상태와 이상 이력을 확인해 주십시오.",
+    "PQMS 대시보드에서 해당 설비의 모듈 상태와 이상 이력을 확인해 주십시오.",
     "",
-    "본 메일은 PMCS가 자동으로 발송했습니다.",
+    "본 메일은 PQMS가 자동으로 발송했습니다.",
   ].join("\n");
 
   const items = input.lines
@@ -182,7 +182,7 @@ export const buildAdminAlertMail = (input: {
 <html lang="ko">
 <body style="margin:0;padding:24px;background:#f8fafc;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#0f172a;">
   <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
-    <div style="padding:16px 24px;background:#0f172a;color:#ffffff;font-size:14px;letter-spacing:0.04em;">PMCS 설비 알림</div>
+    <div style="padding:16px 24px;background:#0f172a;color:#ffffff;font-size:14px;letter-spacing:0.04em;">PQMS 설비 알림</div>
     <div style="padding:24px;">
       <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">${escapeHtml(place || input.installationId)}에서 확인이 필요한 상태 변화가 감지되었습니다.</p>
       <table style="border-collapse:collapse;font-size:14px;line-height:1.5;">
@@ -194,7 +194,7 @@ export const buildAdminAlertMail = (input: {
       </table>
       <h2 style="margin:24px 0 8px;font-size:14px;">변경 내용</h2>
       <ol style="margin:0;padding-left:20px;font-size:14px;line-height:1.5;">${items}</ol>
-      <p style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#64748b;">모듈 상태가 바뀔 때마다 보냅니다. 통신 끊김은 다시 수신될 때까지 한 번만 보냅니다. 같은 이상 내용은 1시간 동안 반복하지 않습니다. PMCS 대시보드에서 해당 설비의 모듈 상태와 이상 이력을 확인해 주십시오.</p>
+      <p style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#64748b;">모듈 상태가 바뀔 때마다 보냅니다. 통신 끊김은 다시 수신될 때까지 한 번만 보냅니다. 같은 이상 내용은 1시간 동안 반복하지 않습니다. PQMS 대시보드에서 해당 설비의 모듈 상태와 이상 이력을 확인해 주십시오.</p>
     </div>
   </div>
 </body>

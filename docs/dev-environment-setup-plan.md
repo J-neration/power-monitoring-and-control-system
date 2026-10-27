@@ -78,7 +78,7 @@ Railway는 **Environments** 기능을 제공합니다. 하나의 프로젝트 �
 #### Step 1: Dev 환경 생성
 
 1. [railway.app](https://railway.app) 로그인
-2. PMCS 프로젝트 클릭하여 대시보드 진입
+2. PQMS 프로젝트 클릭하여 대시보드 진입
 3. 상단 우측 **Settings** 탭 클릭
 4. 좌측 메뉴에서 **Environments** 선택
 5. **Create Environment** 버튼 클릭
@@ -163,7 +163,7 @@ Netlify는 **Branch Deploys** 기능으로 브랜치별 자동 배포를 지원�
 #### Step 1: Branch Deploys 활성화
 
 1. [app.netlify.com](https://app.netlify.com) 로그인
-2. PMCS 사이트 선택
+2. PQMS 사이트 선택
 3. **Site configuration** (좌측 메뉴) → **Build & deploy** → **Continuous deployment**
 4. **Branches and deploy contexts** 섹션 찾기 → **Configure** 클릭
 5. 설정 변경:

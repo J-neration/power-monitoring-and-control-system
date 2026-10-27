@@ -34,7 +34,7 @@ locals {
 
 resource "aws_route53_zone" "this" {
   name    = local.domain
-  comment = "PMCS public DNS (moved from Gabia)"
+  comment = "PQMS public DNS (moved from Gabia)"
 
   lifecycle {
     prevent_destroy = true

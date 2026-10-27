@@ -33,6 +33,50 @@ const readConfig = (): SmtpConfig | null => {
 
 export const isAlertMailConfigured = () => readConfig() !== null;
 
+/** 개발 서버 메일 본문·제목에만 붙인다. 운영 주소(pqms.co.kr, app.pqms.co.kr)에는 붙이지 않는다. */
+export const DEV_ALERT_MAIL_NOTICE =
+  "이 메일은 DEV 사이트에서 발송된 테스트용 알림입니다. 운영 설비가 아닙니다.";
+
+const hostLooksLikeDev = (origin: string) => {
+  const trimmed = origin.trim();
+  if (!trimmed) return false;
+  try {
+    const host = new URL(trimmed).hostname.toLowerCase();
+    return host.split(".").some((label) => label === "dev" || label.endsWith("-dev"));
+  } catch {
+    return false;
+  }
+};
+
+export const isDevAlertSite = (
+  env: { PQMS_ALERT_ENV?: string; NODE_ENV?: string; FRONTEND_ORIGIN?: string } = process.env,
+) => {
+  const flag = (env.PQMS_ALERT_ENV ?? "").trim().toLowerCase();
+  if (flag === "prod" || flag === "production") return false;
+  if (flag === "dev" || flag === "development") return true;
+  if ((env.NODE_ENV ?? "").trim() === "development") return true;
+  return (env.FRONTEND_ORIGIN ?? "").split(",").some(hostLooksLikeDev);
+};
+
+export const applyDevAlertNotice = <T extends { subject: string; text: string; html?: string }>(
+  mail: T,
+  env: { PQMS_ALERT_ENV?: string; NODE_ENV?: string; FRONTEND_ORIGIN?: string } = process.env,
+): T => {
+  if (!isDevAlertSite(env)) return mail;
+  const banner = `<div style="padding:12px 24px;background:#fef3c7;color:#92400e;font-size:13px;line-height:1.5;">${DEV_ALERT_MAIL_NOTICE}</div>`;
+  const html = mail.html
+    ? mail.html.includes("<body")
+      ? mail.html.replace(/<body([^>]*)>/, `<body$1>${banner}`)
+      : `${banner}${mail.html}`
+    : mail.html;
+  return {
+    ...mail,
+    subject: `[DEV 테스트] ${mail.subject}`,
+    text: `${DEV_ALERT_MAIL_NOTICE}\n\n${mail.text}`,
+    ...(html !== undefined ? { html } : {}),
+  };
+};
+
 const getTransporter = (cfg: SmtpConfig) => {
   const key = `${cfg.host}:${cfg.port}:${cfg.user}`;
   if (!transporter || transporterKey !== key) {
@@ -63,12 +107,13 @@ export const sendAlertMail = async (mail: {
     }
     return false;
   }
+  const notice = applyDevAlertNotice(mail);
   await getTransporter(cfg).sendMail({
-    from: `"PMCS" <${cfg.from}>`,
+    from: `"PQMS" <${cfg.from}>`,
     to: cfg.to,
-    subject: mail.subject,
-    text: mail.text,
-    ...(mail.html ? { html: mail.html } : {}),
+    subject: notice.subject,
+    text: notice.text,
+    ...(notice.html ? { html: notice.html } : {}),
   });
   return true;
 };

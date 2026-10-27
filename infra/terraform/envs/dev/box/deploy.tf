@@ -28,7 +28,7 @@ resource "aws_ssm_document" "deploy" {
   document_format = "JSON"
   content = jsonencode({
     schemaVersion = "2.2"
-    description   = "Run pmcs-deploy on the PMCS dev box"
+    description   = "Run pmcs-deploy on the PQMS dev box"
     mainSteps = [{
       action = "aws:runShellScript"
       name   = "pmcsDeploy"

@@ -59,7 +59,7 @@ describe("buildAdminAlertMail", () => {
       at: new Date("2026-10-17T00:00:00Z"),
       lines: [statusAlertLine({ moduleIndex: 2, from: 2, to: 4 })],
     });
-    assert.equal(mail.subject, "[PMCS] 대구 L사 전기실 — 모듈 3 오프라인");
+    assert.equal(mail.subject, "[PQMS] 대구 L사 전기실 — 모듈 3 오프라인");
     assert.match(mail.text, /상태: 가동 → 오프라인/);
     assert.match(mail.text, /설비 ID   : PSVG-1/);
     assert.match(mail.text, /2026-10-17 09:00/);
@@ -77,7 +77,7 @@ describe("buildAdminAlertMail", () => {
         faultAlertLine(4, "Over Temperature"),
       ],
     });
-    assert.equal(mail.subject, "[PMCS] 대구 L사 전기실 — 상태 변경 2건");
+    assert.equal(mail.subject, "[PQMS] 대구 L사 전기실 — 상태 변경 2건");
     assert.match(mail.text, /1\. 모듈 1 대기/);
     assert.match(mail.text, /상태: 가동 → 대기/);
     assert.match(mail.text, /2\. 모듈 5 이상/);

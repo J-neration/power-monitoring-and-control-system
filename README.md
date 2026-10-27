@@ -1,4 +1,4 @@
-# Power Monitoring & Control System (PMCS)
+# PQMS
 
 Full-stack HMI 모니터링 및 제어 애플리케이션입니다.
 

@@ -1,6 +1,6 @@
-# PMCS AWS 인프라 (Terraform)
+# PQMS AWS 인프라 (Terraform)
 
-PMCS를 AWS 서울 리전(`ap-northeast-2`)으로 옮기기 위한 인프라 코드입니다.
+PQMS를 AWS 서울 리전(`ap-northeast-2`)으로 옮기기 위한 인프라 코드입니다.
 이 디렉터리는 Railway(`watchPatterns`)·Docker 이미지·Netlify(`base = apps/frontend`)
 어디에도 포함되지 않으므로, 여기만 바꾼 커밋은 현재 운영 배포에 영향을 주지 않습니다.
 

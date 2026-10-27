@@ -30,7 +30,7 @@ fi
 # 5분마다 도는 헬스 점검(CloudWatch 지표 Healthy). 서버를 새로 만들 때도 첫 배포에서 설치된다.
 cat >/etc/systemd/system/pmcs-health.service <<'UNIT'
 [Unit]
-Description=PMCS dev box health check (CloudWatch metric Healthy)
+Description=PQMS dev box health check (CloudWatch metric Healthy)
 After=docker.service
 
 [Service]
@@ -39,7 +39,7 @@ ExecStart=/usr/local/bin/pmcs-health
 UNIT
 cat >/etc/systemd/system/pmcs-health.timer <<'UNIT'
 [Unit]
-Description=PMCS dev box health check every 5 minutes
+Description=PQMS dev box health check every 5 minutes
 
 [Timer]
 OnBootSec=2min

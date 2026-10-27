@@ -67,7 +67,7 @@ resource "aws_route_table_association" "public" {
 # 들어오는 연결은 HTTP·HTTPS 만. SSH 는 열지 않고 SSM 세션으로 접속한다.
 resource "aws_security_group" "box" {
   name        = local.name
-  description = "PMCS dev box: HTTP/HTTPS in (Caddy), all out"
+  description = "PQMS dev box: HTTP/HTTPS in (Caddy), all out"
   vpc_id      = aws_vpc.box.id
   tags        = { Name = local.name }
 }
@@ -210,7 +210,7 @@ resource "aws_s3_object" "settings" {
 
 resource "aws_ssm_parameter" "env" {
   name        = "/${local.name_prefix}/box/env"
-  description = "PMCS dev box secrets (dotenv). Filled by scripts/dev-box/init-env.sh"
+  description = "PQMS dev box secrets (dotenv). Filled by scripts/dev-box/init-env.sh"
   type        = "SecureString"
   value       = "UNSET"
 

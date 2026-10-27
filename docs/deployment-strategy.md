@@ -1,7 +1,7 @@
 # 배포 전략 리포트
 
 > 작성일: 2026-03-18
-> 대상 시스템: Power Monitoring & Control System (PMCS)
+> 대상 시스템: PQMS
 > 작성 목적: 실제 웹 배포를 위한 플랫폼 선정 및 설정 가이드
 
 ---
