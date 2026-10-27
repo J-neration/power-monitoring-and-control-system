@@ -34,30 +34,29 @@ test("only devices past the threshold are stale", () => {
   assert.deepEqual(report, { active: 4, stale: 2, staleIds: ["A", "B"] });
 });
 
-test("comm lost mail fires on a new gap and not again until data returns", () => {
+test("comm lost mail includes devices already stale, once per gap", () => {
   const now = Date.parse("2026-10-26T00:00:00Z");
   const ago = (min: number) => new Date(now - min * 60_000);
-  const lookback = 10 * 60_000;
-  const staleAfter = 30 * 60_000;
   const oldGap = { installationId: "old", lastSeenAt: ago(180) };
   const freshGap = { installationId: "new", lastSeenAt: ago(35) };
 
-  const first = planCommLostMails([oldGap, freshGap], { seeded: false, alerted: new Set() }, now, staleAfter, lookback);
-  assert.deepEqual(first.remember, ["old"]);
-  assert.deepEqual(first.notify.map((hit) => hit.installationId), ["new"]);
-
-  const alerted = new Set([...first.remember, ...first.notify.map((hit) => hit.installationId)]);
-  const again = planCommLostMails([oldGap, freshGap], { seeded: true, alerted }, now, staleAfter, lookback);
-  assert.deepEqual(again.notify, []);
-
-  const returned = planCommLostMails([oldGap], { seeded: true, alerted }, now, staleAfter, lookback);
-  assert.deepEqual(returned.remember, ["old"]);
-  const droppedAgain = planCommLostMails(
-    [oldGap, freshGap],
-    { seeded: true, alerted: new Set(returned.remember) },
-    now,
-    staleAfter,
-    lookback,
+  const first = planCommLostMails([oldGap, freshGap], { seeded: false, alerted: new Set() });
+  assert.deepEqual(first.remember, []);
+  assert.deepEqual(
+    first.notify.map((hit) => hit.installationId),
+    ["old", "new"],
   );
+
+  const alerted = new Set(first.notify.map((hit) => hit.installationId));
+  const again = planCommLostMails([oldGap, freshGap], { seeded: true, alerted });
+  assert.deepEqual(again.notify, []);
+  assert.deepEqual(again.remember, ["old", "new"]);
+
+  const returned = planCommLostMails([oldGap], { seeded: true, alerted });
+  assert.deepEqual(returned.remember, ["old"]);
+  const droppedAgain = planCommLostMails([oldGap, freshGap], {
+    seeded: true,
+    alerted: new Set(returned.remember),
+  });
   assert.deepEqual(droppedAgain.notify.map((hit) => hit.installationId), ["new"]);
 });
