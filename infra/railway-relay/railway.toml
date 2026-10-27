@@ -1,0 +1,12 @@
+# Railway 중계 서비스 설정. 서비스 Settings 에서 Root Directory = /infra/railway-relay,
+# Config-as-code 경로 = /infra/railway-relay/railway.toml 로 지정한다.
+# 지정하지 않으면 저장소 루트의 railway.toml(백엔드)로 빌드된다.
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+watchPatterns = ["/infra/railway-relay/**"]
+
+[deploy]
+healthcheckPath = "/relay-health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
