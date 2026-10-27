@@ -153,6 +153,10 @@ resource "aws_ecs_task_definition" "this" {
   container_definitions = jsonencode([
     { for k, v in local.container : k => v if v != null }
   ])
+
+  # 배포(CI)는 이미지만 바꾼 새 버전을 직접 등록한다. 상태에 적힌 버전 대신 가장 최근 버전과 비교해,
+  # 이미지 태그(SSM)가 같으면 배포 뒤에도 plan 이 No changes 가 되게 한다.
+  track_latest = true
 }
 
 resource "aws_ecs_service" "this" {

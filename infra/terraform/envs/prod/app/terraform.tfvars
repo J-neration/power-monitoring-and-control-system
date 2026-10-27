@@ -6,10 +6,8 @@ redirect_hostnames  = ["www.pqms.co.kr"]
 api_hostname        = "api.pqms.co.kr"
 dns_zone_name       = "pqms.co.kr"
 
-# ECR 이미지 태그(<커밋>-arm64). 단일 매니페스트로 올려야 ECR 기본 스캔이 동작한다:
-#   docker buildx build --platform linux/arm64 --provenance=false --sbom=false --push ...
-api_image_tag      = "6344f79-arm64"
-frontend_image_tag = "6344f79-arm64"
+# 배포할 이미지 태그는 SSM /pmcs-prod/app/image-tag 가 정한다(deploy.tf). 이 값은 파라미터의 첫 값일 뿐이다.
+initial_image_tag = "6344f79-arm64"
 
 # 서비스 태스크 수. 0이면 Fargate 비용 없음(서비스·작업 정의만 남음).
 api_desired_count      = 1

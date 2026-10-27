@@ -85,8 +85,8 @@ locals {
   task_subnet_ids       = module.network.public_subnet_ids
   task_assign_public_ip = true
 
-  api_image      = "${module.ecr.repository_urls["api"]}:${var.api_image_tag}"
-  frontend_image = "${module.ecr.repository_urls["frontend"]}:${var.frontend_image_tag}"
+  api_image      = "${module.ecr.repository_urls["api"]}:${local.image_tag}"
+  frontend_image = "${module.ecr.repository_urls["frontend"]}:${local.image_tag}"
 
   # 컷오버 전 리허설은 app.pqms.co.kr 로 하므로 둘 다 허용한다. 브라우저는 BFF(같은 출처)로만 API 를 부른다.
   frontend_origins = join(",", [for h in concat([var.app_hostname], var.app_alias_hostnames) : "https://${h}"])

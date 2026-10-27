@@ -25,15 +25,9 @@ variable "dns_zone_name" {
   type        = string
 }
 
-variable "api_image_tag" {
-  description = "ECR pmcs-prod/api 이미지 태그 (첫 이미지를 올린 뒤 지정)"
+variable "initial_image_tag" {
+  description = "SSM 파라미터 image-tag 의 첫 값. 이후에는 배포(CI·scripts/aws-deploy)가 파라미터를 바꾸며, 이 값을 바꿔도 배포되지 않는다."
   type        = string
-  default     = "initial"
-}
-
-variable "frontend_image_tag" {
-  type    = string
-  default = "initial"
 }
 
 variable "api_desired_count" {

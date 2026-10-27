@@ -21,3 +21,11 @@ output "task_role_arn" {
 output "log_group_name" {
   value = aws_cloudwatch_log_group.this.name
 }
+
+output "service_arn" {
+  value = var.create_service ? aws_ecs_service.this[0].id : null
+}
+
+output "log_group_arn" {
+  value = aws_cloudwatch_log_group.this.arn
+}
