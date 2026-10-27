@@ -95,6 +95,8 @@ umask 077
 
 current=$(aws secretsmanager get-secret-value --secret-id "$API_SECRET_ID" \
   --query SecretString --output text 2>/dev/null || echo '{}')
+# 콘솔 일반 텍스트 칸의 기본값 {} 를 지우지 않고 붙여 넣으면 JSON 문서가 둘 이상 이어 붙는다. 하나로 합친다.
+current=$(jq -sc 'add // {}' <<<"$current")
 jq --arg db "$app_url" --arg migrate "$migrate_url" \
   '. + {DATABASE_URL: $db, MIGRATE_DATABASE_URL: $migrate}' <<<"$current" >"$work_dir/secret.json"
 aws secretsmanager put-secret-value --secret-id "$API_SECRET_ID" \

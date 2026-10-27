@@ -47,6 +47,8 @@ TUNNEL_HOURS="${TUNNEL_HOURS:-1}"
 TARGET_HOST="${TARGET_HOST:-host.docker.internal}"
 TARGET_PORT="${TARGET_PORT:-$TUNNEL_PORT}"
 PG_IMAGE="${PG_IMAGE:-postgres:16}"
+# 원본(Neon) 접속은 항상 읽기 전용 트랜잭션으로 연다. 덤프·행 수 비교 모두 읽기만 한다.
+SOURCE_PGOPTIONS="-c default_transaction_read_only=on"
 LOCAL_REHEARSAL="${LOCAL_REHEARSAL:-0}"
 
 log() { printf '\033[1m[aws-migrate]\033[0m %s\n' "$*" >&2; }
@@ -88,7 +90,7 @@ pg_docker() {
 }
 
 # run-task 로 띄우는 일회성 태스크(DB 터널·마이그레이션)의 네트워크 설정.
-# NAT 가 있으면(prod) 비공개 서브넷, 없으면(dev, 비용 절감) 공개 서브넷 + 공인 IP 로 띄워야 ECR·SSM 에 닿는다.
+# NAT 가 있으면 비공개 서브넷, 없으면(지금 prod) 공개 서브넷 + 공인 IP 로 띄워야 ECR·SSM 에 닿는다.
 # 어느 쪽이든 api 보안 그룹을 쓰므로 들어오는 연결은 막혀 있다.
 task_network_configuration() {
   local vpc_id nat_count tier assign subnets security_group
