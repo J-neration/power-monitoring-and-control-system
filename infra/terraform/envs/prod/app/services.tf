@@ -113,18 +113,20 @@ module "api" {
 
   # AGGREGATION_ENABLED 는 코드 기본값(켜짐, Railway prod 와 같음).
   # DEVICE_FRESHNESS_CHECK_ENABLED 는 끈다: prime-parkinglot 처럼 1시간마다 보내는 장비가 있어
-  # 지금 기준(30분)이면 알람이 계속 울린다. 장비별 기준을 정한 뒤 켠다.
+  # 지금 기준(30분)이면 통신 끊김 메일·알람이 계속 울린다. 장비별 기준을 정한 뒤 켠다.
+  # 코드 기본값이 켜짐이라(dev 952f9f3) 값을 명시한다.
   environment = {
-    NODE_ENV             = "production"
-    HOST                 = "0.0.0.0"
-    PORT                 = tostring(local.api_port)
-    FRONTEND_ORIGIN      = local.frontend_origins
-    TRUST_PROXY_HOPS     = "1"
-    WS_PING_INTERVAL_MS  = "30000"
-    WS_REQUIRE_AUTH      = "true"
-    DATABASE_SSL_CA_FILE = local.rds_ca_file
-    DATABASE_POOL_MAX    = "10"
-    LOG_LEVEL            = "info"
+    NODE_ENV                       = "production"
+    DEVICE_FRESHNESS_CHECK_ENABLED = "false"
+    HOST                           = "0.0.0.0"
+    PORT                           = tostring(local.api_port)
+    FRONTEND_ORIGIN                = local.frontend_origins
+    TRUST_PROXY_HOPS               = "1"
+    WS_PING_INTERVAL_MS            = "30000"
+    WS_REQUIRE_AUTH                = "true"
+    DATABASE_SSL_CA_FILE           = local.rds_ca_file
+    DATABASE_POOL_MAX              = "10"
+    LOG_LEVEL                      = "info"
   }
   secrets = {
     DATABASE_URL               = "${aws_secretsmanager_secret.api.arn}:DATABASE_URL::"
