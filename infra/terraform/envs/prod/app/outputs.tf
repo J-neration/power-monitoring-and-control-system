@@ -37,3 +37,12 @@ output "migrate_task_definition_family" {
 output "web_acl_arn" {
   value = module.edge.web_acl_arn
 }
+
+# GitHub 저장소 시크릿 AWS_PROD_BUILD_ROLE_ARN, 환경 aws-prod 시크릿 AWS_PROD_DEPLOY_ROLE_ARN 에 넣는다.
+output "github_build_role_arn" {
+  value = aws_iam_role.github_build.arn
+}
+
+output "github_deploy_role_arn" {
+  value = aws_iam_role.github_deploy.arn
+}

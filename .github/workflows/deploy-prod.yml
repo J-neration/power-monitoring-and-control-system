@@ -1,0 +1,92 @@
+# main 병합 → arm64 이미지 빌드·ECR(pmcs-prod) 푸시 → 취약점 확인 → 승인 → prod ECS 배포.
+#
+# AWS 권한은 GitHub OIDC 로 받는다 (장기 키 없음). 역할은 둘이다 (infra/terraform/envs/prod/app/deploy.tf).
+#   pmcs-prod-github-build  main 브랜치 실행만. ECR 푸시·스캔 읽기. 저장소 시크릿 AWS_PROD_BUILD_ROLE_ARN
+#   pmcs-prod-github-deploy GitHub 환경 aws-prod 실행만(승인자 필요, main 만). 환경 시크릿 AWS_PROD_DEPLOY_ROLE_ARN
+# 승인 화면에서 이미지 스캔 결과(실행 요약)를 본 뒤 Approve 한다.
+#
+# 되돌리기: Actions → Deploy prod → Run workflow (main) 에서 tag 에 이전 태그를 넣는다(빌드 없이 배포).
+# 관리자 Mac 에서는 TAG=<이전 태그> scripts/aws-deploy/ecs-deploy.sh. 마이그레이션은 되돌리지 않는다.
+
+name: Deploy prod
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/**"
+      - "package.json"
+      - "yarn.lock"
+      - ".node-version"
+      - ".github/workflows/deploy-prod.yml"
+      - ".github/workflows/build-images.yml"
+      - "scripts/aws-deploy/**"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "되돌리기용: ECR 에 이미 있는 태그(<커밋>-arm64). 비우면 지금 커밋을 빌드해 배포"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  id-token: write
+
+# 배포는 한 번에 하나씩. 도는 중인 배포는 취소하지 않는다(마이그레이션 도중 끊기지 않게).
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-northeast-2
+  NAME_PREFIX: pmcs-prod
+  APP_URL: https://app.pqms.co.kr
+  API_URL: https://api.pqms.co.kr
+
+jobs:
+  image:
+    name: 이미지
+    if: inputs.tag == ''
+    uses: ./.github/workflows/build-images.yml
+    with:
+      name_prefix: pmcs-prod
+    secrets:
+      role_arn: ${{ secrets.AWS_PROD_BUILD_ROLE_ARN }}
+
+  deploy:
+    name: prod 배포
+    needs: image
+    # 되돌리기(tag 지정)면 빌드를 건너뛰고 바로 배포한다.
+    if: ${{ !cancelled() && (needs.image.result == 'success' || (needs.image.result == 'skipped' && inputs.tag != '')) }}
+    runs-on: ubuntu-latest
+    environment:
+      name: aws-prod
+      url: ${{ env.APP_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_PROD_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          mask-aws-account-id: true
+
+      - name: 마이그레이션 → 서비스 교체 → 태그 기록
+        env:
+          TAG: ${{ inputs.tag || needs.image.outputs.tag }}
+        run: |
+          set -euo pipefail
+          scripts/aws-deploy/ecs-deploy.sh 2>&1 | tee deploy.log
+          {
+            echo "### prod 배포 $TAG"
+            echo '```'; grep -E '→|되돌리기' deploy.log || true; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 외부 확인 (로그인 화면 200, 수신 주소 키 없이 401)
+        run: |
+          set -euo pipefail
+          login=$(curl -s -o /dev/null -w '%{http_code}' --retry 5 --retry-delay 5 --retry-all-errors -A 'pmcs-deploy-check' "$APP_URL/login")
+          receiver=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/receiver")
+          echo "app /login → $login, api /receiver(키 없음) → $receiver"
+          [ "$login" = 200 ] && [ "$receiver" = 401 ]
