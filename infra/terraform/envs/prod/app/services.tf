@@ -101,8 +101,8 @@ module "api" {
   name        = "api"
   cluster_arn = aws_ecs_cluster.this.arn
   image       = local.api_image
-  cpu         = 512
-  memory      = 1024
+  cpu         = var.api_cpu
+  memory      = var.api_memory
 
   cpu_architecture = local.cpu_architecture
 
@@ -223,8 +223,8 @@ module "frontend" {
   name        = "frontend"
   cluster_arn = aws_ecs_cluster.this.arn
   image       = local.frontend_image
-  cpu         = 512
-  memory      = 1024
+  cpu         = var.frontend_cpu
+  memory      = var.frontend_memory
 
   cpu_architecture = local.cpu_architecture
 

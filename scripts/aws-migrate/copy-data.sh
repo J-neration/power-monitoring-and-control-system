@@ -52,11 +52,12 @@ existing=$(pg_docker psql "$target" -tAc \
 
 log "덤프 → 복원 시작 ($SOURCE_LABEL → $PMCS_ENV RDS)"
 # 원본 주소는 컨테이너 환경 변수로만 넘긴다(명령줄·프로세스 목록에 비밀번호가 보이지 않게).
+# 원본 세션은 읽기 전용 트랜잭션으로 연다(SOURCE_PGOPTIONS, lib.sh). owner 계정이어도 원본에 쓰지 못한다.
 net=()
 [ -n "${PG_DOCKER_NETWORK:-}" ] && net=(--network "$PG_DOCKER_NETWORK")
 # public 스키마만 덤프하면 "CREATE SCHEMA public;" 이 들어가는데, RDS 에는 이미 있고 만들 권한도 없다.
 # 그래서 SQL 텍스트 형식으로 덤프하고 그 한 줄만 뺀 뒤, 한 트랜잭션으로 적용한다.
-docker run --rm ${net[@]+"${net[@]}"} -e SOURCE_DATABASE_URL "$PG_IMAGE" \
+docker run --rm ${net[@]+"${net[@]}"} -e SOURCE_DATABASE_URL -e PGOPTIONS="$SOURCE_PGOPTIONS" "$PG_IMAGE" \
   sh -c 'pg_dump "$SOURCE_DATABASE_URL" --schema=public --no-owner --no-privileges' |
   sed '/^CREATE SCHEMA public;$/d' |
   pg_docker psql "$target" -v ON_ERROR_STOP=1 --single-transaction -q >/dev/null
