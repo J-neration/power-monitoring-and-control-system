@@ -12384,6 +12384,8 @@ body.pmcs-control-room .global-header:hover {
   min-width: 0;
 }
 
+.history-area-chart .recharts-responsive-container,
+.history-area-chart .recharts-wrapper,
 .history-area-chart .recharts-surface {
   overflow: visible;
 }

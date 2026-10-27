@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { COMM_LOST_AFTER_MS } from "../lib/commStatus.js";
-import { findStaleDevices, freshnessConfigFrom } from "./deviceFreshnessCheck.js";
+import { findStaleDevices, freshnessConfigFrom, planCommLostMails } from "./deviceFreshnessCheck.js";
 
-test("freshness check is off unless enabled", () => {
-  assert.equal(freshnessConfigFrom({}).enabled, false);
+test("freshness check stays on unless turned off", () => {
+  assert.equal(freshnessConfigFrom({}).enabled, true);
   assert.equal(freshnessConfigFrom({ DEVICE_FRESHNESS_CHECK_ENABLED: "false" }).enabled, false);
   assert.equal(freshnessConfigFrom({ DEVICE_FRESHNESS_CHECK_ENABLED: "true" }).enabled, true);
 });
@@ -32,4 +32,32 @@ test("only devices past the threshold are stale", () => {
     30 * 60_000,
   );
   assert.deepEqual(report, { active: 4, stale: 2, staleIds: ["A", "B"] });
+});
+
+test("comm lost mail fires on a new gap and not again until data returns", () => {
+  const now = Date.parse("2026-10-26T00:00:00Z");
+  const ago = (min: number) => new Date(now - min * 60_000);
+  const lookback = 10 * 60_000;
+  const staleAfter = 30 * 60_000;
+  const oldGap = { installationId: "old", lastSeenAt: ago(180) };
+  const freshGap = { installationId: "new", lastSeenAt: ago(35) };
+
+  const first = planCommLostMails([oldGap, freshGap], { seeded: false, alerted: new Set() }, now, staleAfter, lookback);
+  assert.deepEqual(first.remember, ["old"]);
+  assert.deepEqual(first.notify.map((hit) => hit.installationId), ["new"]);
+
+  const alerted = new Set([...first.remember, ...first.notify.map((hit) => hit.installationId)]);
+  const again = planCommLostMails([oldGap, freshGap], { seeded: true, alerted }, now, staleAfter, lookback);
+  assert.deepEqual(again.notify, []);
+
+  const returned = planCommLostMails([oldGap], { seeded: true, alerted }, now, staleAfter, lookback);
+  assert.deepEqual(returned.remember, ["old"]);
+  const droppedAgain = planCommLostMails(
+    [oldGap, freshGap],
+    { seeded: true, alerted: new Set(returned.remember) },
+    now,
+    staleAfter,
+    lookback,
+  );
+  assert.deepEqual(droppedAgain.notify.map((hit) => hit.installationId), ["new"]);
 });

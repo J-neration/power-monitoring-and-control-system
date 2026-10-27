@@ -48,7 +48,7 @@ pmcs-dev 는 EC2 t4g.small 1대 + docker compose(Caddy · API · 프론트 · Po
 | `pmcs-dev-ApiErrors` | API 오류 로그(level ≥ 50) 10분 5건 이상 | Logs Insights `/pmcs-dev/box/api` |
 | `pmcs-dev-StaleDevices` | 최근 7일 수신하던 장비가 30분 넘게 끊김, 20분 지속 | Logs Insights: `filter msg = "device freshness" \| fields @timestamp, staleIds` |
 
-장비 끊김 점검은 API 안에서 10분마다 돈다(`DEVICE_FRESHNESS_CHECK_ENABLED`, 기본 꺼짐 — dev compose 에서만 켬).
+장비 끊김 점검은 API 안에서 10분마다 돈다(`DEVICE_FRESHNESS_CHECK_ENABLED`, 기본 켜짐. `false` 로만 끈다). 새로 끊기면 관리자 SMTP 메일도 보낸다.
 기준은 화면의 "통신 끊김"과 같은 30분(`DEVICE_STALE_AFTER_MINUTES`), 감시 대상은 최근 7일 안에 수신한 장비(`DEVICE_FRESHNESS_ACTIVE_DAYS`).
 
 ## DB 보기 · 로컬 개발

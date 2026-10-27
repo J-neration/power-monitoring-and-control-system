@@ -1,9 +1,4 @@
 /** HMI moduleStatus: 0 standby · 1 start · 2 running · 3 fault · 4 offline */
-export const MODULE_STANDBY = 0;
-export const MODULE_RUNNING = 2;
-export const MODULE_FAULT = 3;
-export const MODULE_OFFLINE = 4;
-
 const STATUS_LABEL: Record<number, string> = {
   0: "대기",
   1: "기동",
@@ -12,23 +7,20 @@ const STATUS_LABEL: Record<number, string> = {
   4: "오프라인",
 };
 
-/** 시험 중 상태가 자주 바뀌므로 메일을 보내지 않는 현장. */
+/** 출고검사는 시험 중 상태가 자주 바뀌므로 메일을 보내지 않는다. */
 const ALERT_MAIL_EXCLUDED_SITE_IDS = new Set([
   "testing", // 출고검사
-  "prime-rnd-1", // 프라임 연구소
 ]);
 
 export const isAlertMailExcludedSite = (siteId: string | null | undefined) =>
   !!siteId && ALERT_MAIL_EXCLUDED_SITE_IDS.has(siteId);
 
-export type ModuleAlertKind = "offline" | "standby" | "fault";
-
 export type ModuleStatusAlert = {
   /** 0-based module index (모듈 1 = 0) */
   moduleIndex: number;
-  kind: ModuleAlertKind;
-  from: number;
-  to: number;
+  /** 배열에서 빠진 자리는 null */
+  from: number | null;
+  to: number | null;
 };
 
 export type AlertLine = {
@@ -45,10 +37,8 @@ export type AlertLine = {
 const statusLabel = (code: number) => STATUS_LABEL[code] ?? `코드 ${code}`;
 
 /**
- * 이전 상태를 알고 있을 때만 변화를 알린다.
- * - 가동(2) → 오프라인(4)
- * - 가동(2) → 대기(0)
- * - 이상이 아닌 상태에서 이상(3)으로 진입
+ * 이전 상태를 알고 있을 때만 알린다. 첫 수신은 제외.
+ * 값이 하나라도 달라지면 방향과 상관없이 알린다.
  */
 export const detectModuleStatusAlerts = (
   previous: number[] | null | undefined,
@@ -57,34 +47,37 @@ export const detectModuleStatusAlerts = (
   if (!previous?.length || !next?.length) return [];
 
   const alerts: ModuleStatusAlert[] = [];
-  const len = Math.min(previous.length, next.length);
+  const len = Math.max(previous.length, next.length);
   for (let i = 0; i < len; i++) {
-    const from = previous[i];
-    const to = next[i];
-    if (from === undefined || to === undefined || from === to) continue;
-
-    if (from === MODULE_RUNNING && to === MODULE_OFFLINE) {
-      alerts.push({ moduleIndex: i, kind: "offline", from, to });
-    } else if (from === MODULE_RUNNING && to === MODULE_STANDBY) {
-      alerts.push({ moduleIndex: i, kind: "standby", from, to });
-    } else if (to === MODULE_FAULT && from !== MODULE_FAULT) {
-      alerts.push({ moduleIndex: i, kind: "fault", from, to });
-    }
+    const from = i < previous.length ? previous[i]! : null;
+    const to = i < next.length ? next[i]! : null;
+    if (from === to) continue;
+    alerts.push({ moduleIndex: i, from, to });
   }
   return alerts;
 };
 
+const slotLabel = (code: number | null) => (code == null ? "없음" : statusLabel(code));
+
 export const statusAlertLine = (alert: ModuleStatusAlert, note?: string | null): AlertLine => {
   const n = alert.moduleIndex + 1;
-  const toLabel = statusLabel(alert.to);
+  const toLabel = slotLabel(alert.to);
   const detailText = note?.trim();
+  const headline = alert.to == null ? `모듈 ${n} 없음` : `모듈 ${n} ${toLabel}`;
   return {
-    summary: `모듈 ${n} ${toLabel}`,
-    headline: `모듈 ${n} ${toLabel}`,
-    change: `${statusLabel(alert.from)} → ${toLabel}`,
+    summary: headline,
+    headline,
+    change: `${slotLabel(alert.from)} → ${toLabel}`,
     ...(detailText ? { note: detailText } : {}),
   };
 };
+
+/** 통신 끊김 한 건. 다시 수신되기 전까지 호출자는 한 번만 부른다. */
+export const commLostAlertLine = (lastSeenAt: Date, staleAfterMinutes: number): AlertLine => ({
+  summary: "통신 끊김",
+  headline: "통신 끊김",
+  change: `마지막 수신 ${formatWhen(lastSeenAt)} (KST) 이후 ${staleAfterMinutes}분 이상 응답 없음`,
+});
 
 /** 0-based 모듈 번호. desc 가 있으면 본문에 붙인다. */
 export const faultAlertLine = (moduleIndex: number, desc?: string | null): AlertLine => {
@@ -163,7 +156,8 @@ export const buildAdminAlertMail = (input: {
     "[변경 내용]",
     ...input.lines.map(lineText),
     "",
-    "같은 상태는 1시간 동안 중복 발송하지 않습니다.",
+    "모듈 상태가 바뀔 때마다 보냅니다. 통신 끊김은 다시 수신될 때까지 한 번만 보냅니다.",
+    "같은 이상 내용은 1시간 동안 반복하지 않습니다.",
     "PMCS 대시보드에서 해당 설비의 모듈 상태와 이상 이력을 확인해 주십시오.",
     "",
     "본 메일은 PMCS가 자동으로 발송했습니다.",
@@ -200,7 +194,7 @@ export const buildAdminAlertMail = (input: {
       </table>
       <h2 style="margin:24px 0 8px;font-size:14px;">변경 내용</h2>
       <ol style="margin:0;padding-left:20px;font-size:14px;line-height:1.5;">${items}</ol>
-      <p style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#64748b;">같은 상태는 1시간 동안 중복 발송하지 않습니다. PMCS 대시보드에서 해당 설비의 모듈 상태와 이상 이력을 확인해 주십시오.</p>
+      <p style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#64748b;">모듈 상태가 바뀔 때마다 보냅니다. 통신 끊김은 다시 수신될 때까지 한 번만 보냅니다. 같은 이상 내용은 1시간 동안 반복하지 않습니다. PMCS 대시보드에서 해당 설비의 모듈 상태와 이상 이력을 확인해 주십시오.</p>
     </div>
   </div>
 </body>

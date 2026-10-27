@@ -13,6 +13,7 @@ type MailTransport = ReturnType<typeof nodemailer.createTransport>;
 
 let transporter: MailTransport | null = null;
 let transporterKey = "";
+let missingConfigWarned = false;
 
 const readConfig = (): SmtpConfig | null => {
   const host = process.env.SMTP_HOST?.trim() ?? "";
@@ -53,7 +54,15 @@ export const sendAlertMail = async (mail: {
   html?: string;
 }): Promise<boolean> => {
   const cfg = readConfig();
-  if (!cfg) return false;
+  if (!cfg) {
+    if (!missingConfigWarned) {
+      missingConfigWarned = true;
+      console.warn(
+        "admin alert mail skipped: SMTP_HOST, SMTP_USER, SMTP_PASS, ALERT_EMAIL_TO must all be set on this service",
+      );
+    }
+    return false;
+  }
   await getTransporter(cfg).sendMail({
     from: `"PMCS" <${cfg.from}>`,
     to: cfg.to,
