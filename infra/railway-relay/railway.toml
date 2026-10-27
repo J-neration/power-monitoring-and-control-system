@@ -1,0 +1,14 @@
+# Railway 중계 서비스 설정. 서비스 Settings 에서 Root Directory = /infra/railway-relay,
+# Config-as-code 경로 = /infra/railway-relay/railway.toml 로 지정한다.
+# 지정하지 않으면 저장소 루트의 railway.toml(백엔드)로 빌드된다.
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+watchPatterns = ["/infra/railway-relay/**"]
+
+[deploy]
+# 서비스 화면의 Custom Start Command(백엔드용 node ...)보다 이 값이 우선한다. 비우면 그 명령이 돌아 node 가 없어 실패한다.
+startCommand = "caddy run --config /etc/caddy/Caddyfile --adapter caddyfile"
+healthcheckPath = "/relay-health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"

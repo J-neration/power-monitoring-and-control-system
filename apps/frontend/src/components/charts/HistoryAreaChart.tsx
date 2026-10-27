@@ -94,6 +94,12 @@ function domainWhenEmpty(
   return max > min ? [min, max] : [min, min + 10];
 }
 
+/**
+ * "10-27 08:00"은 눈금 가운데에 붙는다. 오른쪽 절반이 SVG 밖으로 나가
+ * 08:00이 잘리지 않도록 끝 여백을 라벨 너비의 절반보다 크게 둔다.
+ */
+const X_END_LABEL_MARGIN = 72;
+
 /** 24시간 이력에서 시작·끝을 포함해 약 6개만 표시 (4시간 간격) */
 function historyTimeTicks(data: Record<string, unknown>[]): string[] {
   const times = data.map((d) => String(d.time ?? ""));
@@ -125,7 +131,7 @@ export default function HistoryAreaChart({
   const resolvedDomain = hasYValues ? yDomain : domainWhenEmpty(yDomain);
   const chartMargin = {
     top: margin?.top ?? 8,
-    right: margin?.right ?? 16,
+    right: Math.max(margin?.right ?? 0, X_END_LABEL_MARGIN),
     left: (margin?.left ?? 0) + (hasYValues ? 0 : 10),
     bottom: margin?.bottom ?? 12,
   };

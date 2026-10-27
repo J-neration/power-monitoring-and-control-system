@@ -380,8 +380,8 @@ function resolveCoords(
   return CITY_COORDS[region] ?? null;
 }
 
-const INITIAL_CENTER: [number, number] = [127.8, 36.45];
-const INITIAL_ZOOM = 1.4;
+const INITIAL_CENTER: [number, number] = [127.75, 35.95];
+const INITIAL_ZOOM = 1;
 const ZOOM_STEP = 1.6;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 10;

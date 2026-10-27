@@ -1,5 +1,6 @@
 # 외부에서 들어오는 유일한 입구: WAF → ALB.
-#   app 도메인: /ws → API(WebSocket), 나머지 → 프론트엔드(BFF)
+#   app 도메인(+ app_alias_hostnames): /ws → API(WebSocket), 나머지 → 프론트엔드(BFF)
+#   redirect_hostnames(예: www): app 도메인으로 301
 #   api 도메인: /receiver만 → API (HMI 수신 전용, 그 외 경로는 WAF가 차단)
 # 도메인이 정해지기 전에는 HTTPS 리스너와 인증서 없이 만들고, 80 포트는 404만 돌려준다.
 
@@ -9,6 +10,9 @@ data "aws_elb_service_account" "current" {}
 locals {
   tls_enabled = var.app_hostname != null && var.api_hostname != null
   account_id  = data.aws_caller_identity.current.account_id
+
+  app_hosts = local.tls_enabled ? concat([var.app_hostname], var.app_alias_hostnames) : []
+  cert_sans = local.tls_enabled ? concat([var.api_hostname], var.app_alias_hostnames, var.redirect_hostnames) : []
 }
 
 # ── 대상 그룹 ───────────────────────────────────────────────────────
@@ -188,7 +192,7 @@ resource "aws_lb_listener" "http" {
 resource "aws_acm_certificate" "this" {
   count                     = local.tls_enabled ? 1 : 0
   domain_name               = var.app_hostname
-  subject_alternative_names = [var.api_hostname]
+  subject_alternative_names = local.cert_sans
   validation_method         = "DNS"
 
   lifecycle {
@@ -196,10 +200,25 @@ resource "aws_acm_certificate" "this" {
   }
 }
 
-# DNS 검증 레코드(출력 acm_validation_records)를 등록해야 끝난다.
+# Route 53 영역이 있으면 검증 레코드를 직접 만든다. 영역의 네임서버가 실제로 쓰이고 있어야(가비아 위임 후) 검증이 끝난다.
+resource "aws_route53_record" "acm_validation" {
+  for_each = local.tls_enabled && var.route53_zone_id != null ? {
+    for o in aws_acm_certificate.this[0].domain_validation_options : o.domain_name => o
+  } : {}
+
+  zone_id         = var.route53_zone_id
+  name            = each.value.resource_record_name
+  type            = each.value.resource_record_type
+  records         = [each.value.resource_record_value]
+  ttl             = 300
+  allow_overwrite = true
+}
+
+# 영역이 없으면 검증 레코드(출력 acm_validation_records)를 DNS 에 수동으로 등록해야 끝난다.
 resource "aws_acm_certificate_validation" "this" {
-  count           = local.tls_enabled ? 1 : 0
-  certificate_arn = aws_acm_certificate.this[0].arn
+  count                   = local.tls_enabled ? 1 : 0
+  certificate_arn         = aws_acm_certificate.this[0].arn
+  validation_record_fqdns = var.route53_zone_id != null ? [for r in aws_route53_record.acm_validation : r.fqdn] : null
 }
 
 resource "aws_lb_listener" "https" {
@@ -220,6 +239,29 @@ resource "aws_lb_listener" "https" {
   }
 }
 
+resource "aws_lb_listener_rule" "redirect" {
+  count        = local.tls_enabled && length(var.redirect_hostnames) > 0 ? 1 : 0
+  listener_arn = aws_lb_listener.https[0].arn
+  priority     = 5
+
+  action {
+    type = "redirect"
+    redirect {
+      host        = var.app_hostname
+      path        = "/#{path}"
+      query       = "#{query}"
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+  condition {
+    host_header {
+      values = var.redirect_hostnames
+    }
+  }
+}
+
 resource "aws_lb_listener_rule" "app_ws" {
   count        = local.tls_enabled ? 1 : 0
   listener_arn = aws_lb_listener.https[0].arn
@@ -231,7 +273,7 @@ resource "aws_lb_listener_rule" "app_ws" {
   }
   condition {
     host_header {
-      values = [var.app_hostname]
+      values = local.app_hosts
     }
   }
   condition {
@@ -252,7 +294,7 @@ resource "aws_lb_listener_rule" "app" {
   }
   condition {
     host_header {
-      values = [var.app_hostname]
+      values = local.app_hosts
     }
   }
 }

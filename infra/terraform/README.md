@@ -1,6 +1,6 @@
-# PMCS AWS 인프라 (Terraform)
+# PQMS AWS 인프라 (Terraform)
 
-PMCS를 AWS 서울 리전(`ap-northeast-2`)으로 옮기기 위한 인프라 코드입니다.
+PQMS를 AWS 서울 리전(`ap-northeast-2`)으로 옮기기 위한 인프라 코드입니다.
 이 디렉터리는 Railway(`watchPatterns`)·Docker 이미지·Netlify(`base = apps/frontend`)
 어디에도 포함되지 않으므로, 여기만 바꾼 커밋은 현재 운영 배포에 영향을 주지 않습니다.
 
@@ -21,18 +21,30 @@ infra/terraform/
       bootstrap/        상태 저장소. 가장 먼저, 한 번만
       security/         계정 보안 기반
       box/              dev 서버 1대형: EC2 + docker compose, ECR (scripts/dev-box/README.md)
-    prod/               pmcs-prod 계정(887664351558). 위 모듈로 작성 (ECS·ALB·WAF·RDS)
+    prod/               pmcs-prod 계정(887664351558). "필수 보안형"(ECS·ALB·WAF·RDS, NAT 없음)
+      bootstrap/        상태 저장소. 가장 먼저, 한 번만
+      security/         계정 보안 기반 (CloudTrail·GuardDuty. Security Hub·Config 는 꺼 둠)
+      dns/              pqms.co.kr Route 53 영역 (가비아에서 옮김). 컷오버 때 app_target 으로 화면 주소를 바꿈
+      app/              ECS·ALB·WAF·RDS·ECR·시크릿·알람
 ```
 
-적용 순서는 `bootstrap` → `security` → `box`입니다. 루트끼리 서로의 상태를 참조하지 않아 따로 plan·apply할 수 있습니다.
+dev 적용 순서는 `bootstrap` → `security` → `box`입니다. 루트끼리 서로의 상태를 참조하지 않아 따로 plan·apply할 수 있습니다.
+
+prod 는 `bootstrap` → `security` → `dns` → **가비아 네임서버를 dns 출력 `name_servers` 로 변경** → `app` 순서입니다.
+app 의 인증서는 Route 53 에 검증 레코드를 만들어 검증하므로, 네임서버가 Route 53 으로 넘어간 뒤에야 apply 가 끝납니다.
+app 은 dns 루트가 만든 영역을 이름(`pqms.co.kr`)으로 찾고, dns 루트는 컷오버 때(`app_target = "aws"`) ALB 를 이름(`pmcs-prod-alb`)으로 찾습니다.
 
 ## dev 와 prod
 
 dev 는 비용 때문에 서버 1대(`envs/dev/box`, 월 약 $22)로 돈다. 2026-10-22~23 에는 prod 와 같은 모듈로 만든
 ECS·ALB·RDS dev(`envs/dev/app`)를 실제로 돌려 검증했고, 서버 1대형으로 옮긴 뒤 지웠다(코드는 git 이력, 커밋 7494501).
-prod 의 app 루트는 그 코드를 바탕으로 작성한다. 그때 확인한 것:
+prod 의 app 루트(`envs/prod/app`)는 그 코드를 바탕으로 작성했다. 그때 확인한 것:
 
-- **도메인·인증서**: 가비아 DNS 라 ACM 검증 CNAME 과 서비스 CNAME(→ ALB)을 수동으로 넣는다. apex 는 ALB 를 가리킬 수 없다.
+- **도메인·인증서**: 가비아 DNS 는 apex 를 ALB 에 연결할 수 없어, prod 는 pqms.co.kr 를 Route 53 으로 옮긴다(`envs/prod/dns`).
+  edge 모듈에 `route53_zone_id` 를 주면 ACM 검증 레코드를 직접 만든다.
+- **HMI 요청**: 펌웨어(Quectel 모뎀)가 HTTP 헤더를 직접 만들며 User-Agent 를 보내지 않는다. WAF 는 User-Agent 없는 요청을
+  `/receiver` 밖에서만 막는다(edge 모듈 `block_no_user_agent_outside_receiver`). 현장 장비는 Railway 중계를 거쳐 오므로
+  WAF 에는 Railway IP 몇 개로 보인다 — 속도 제한은 장비 전체 합계 기준.
 - **시크릿 값**: Terraform 은 빈 시크릿만 만들고 값은 콘솔·스크립트로 넣는다.
   `<env>/api`: `DATABASE_URL`, `MIGRATE_DATABASE_URL`, `RECEIVER_API_KEY`, `CRITICAL_FAULT_WEBHOOK_URL` /
   `<env>/jwt`: `JWT_SECRET` / `<env>/alert-mail`: `SMTP_*`, `ALERT_EMAIL_TO`.
@@ -54,6 +66,7 @@ prod 의 app 루트는 그 코드를 바탕으로 작성한다. 그때 확인한
 
 자격 증명은 코드에 넣지 않습니다. AAM 포털에서 `PmcsDevAdmin` 세션을 연 뒤
 `aws login --profile pmcs-dev`로 로그인하고 아래처럼 실행합니다.
+prod 는 `PmcsProdAdmin` 세션과 `--profile pmcs-prod`, `envs/prod/<루트>` 로 같은 순서입니다.
 
 ```sh
 export AWS_PROFILE=pmcs-dev

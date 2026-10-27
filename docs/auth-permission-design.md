@@ -1,7 +1,7 @@
 # 권한 기반 서비스 레이어 설계 리포트
 
 > 작성일: 2026-03-18
-> 대상 시스템: Power Monitoring & Control System (PMCS)
+> 대상 시스템: PQMS
 > 작성 목적: 구현 전 설계 검토
 
 ---

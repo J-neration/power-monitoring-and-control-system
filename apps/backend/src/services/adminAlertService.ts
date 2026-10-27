@@ -6,18 +6,20 @@ import {
 } from "../lib/moduleAlerts.js";
 import { sendAlertMail } from "./alertMailer.js";
 
+export type AdminAlertResult = "sent" | "empty" | "skipped-site" | "skipped-config";
+
 export const notifyAdminAlerts = async (params: {
   installationId: string;
   lines: AlertLine[];
   at?: Date;
-}): Promise<boolean> => {
-  if (params.lines.length === 0) return false;
+}): Promise<AdminAlertResult> => {
+  if (params.lines.length === 0) return "empty";
 
   const inst = await prisma.installation.findUnique({
     where: { id: params.installationId },
     select: { label: true, site: { select: { id: true, name: true, region: true } } },
   });
-  if (isAlertMailExcludedSite(inst?.site.id)) return false;
+  if (isAlertMailExcludedSite(inst?.site.id)) return "skipped-site";
 
   const mail = buildAdminAlertMail({
     siteName: inst?.site.name ?? "",
@@ -27,5 +29,5 @@ export const notifyAdminAlerts = async (params: {
     at: params.at ?? new Date(),
     lines: params.lines,
   });
-  return sendAlertMail(mail);
+  return (await sendAlertMail(mail)) ? "sent" : "skipped-config";
 };

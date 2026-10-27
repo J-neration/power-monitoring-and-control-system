@@ -67,7 +67,7 @@ resource "aws_route_table_association" "public" {
 # 들어오는 연결은 HTTP·HTTPS 만. SSH 는 열지 않고 SSM 세션으로 접속한다.
 resource "aws_security_group" "box" {
   name        = local.name
-  description = "PMCS dev box: HTTP/HTTPS in (Caddy), all out"
+  description = "PQMS dev box: HTTP/HTTPS in (Caddy), all out"
   vpc_id      = aws_vpc.box.id
   tags        = { Name = local.name }
 }
@@ -173,6 +173,7 @@ locals {
     "initdb/01-roles.sh" = "${local.config_dir}/initdb/01-roles.sh"
     "pmcs-deploy.sh"     = "${local.config_dir}/pmcs-deploy.sh"
     "pmcs-backup.sh"     = "${local.config_dir}/pmcs-backup.sh"
+    "pmcs-health.sh"     = "${local.config_dir}/pmcs-health.sh"
   }
 
   # 비밀이 아닌 설정. 비밀 값은 SSM 파라미터에 있다.
@@ -185,6 +186,7 @@ locals {
     API_IMAGE=${module.ecr.repository_urls["api"]}:${var.initial_image_tag}
     FRONTEND_IMAGE=${module.ecr.repository_urls["frontend"]}:${var.initial_image_tag}
     IMAGE_TAG_PARAM=${aws_ssm_parameter.image_tag.name}
+    HEALTH_METRIC_NAMESPACE=${local.health_namespace}
   EOT
 }
 
@@ -208,7 +210,7 @@ resource "aws_s3_object" "settings" {
 
 resource "aws_ssm_parameter" "env" {
   name        = "/${local.name_prefix}/box/env"
-  description = "PMCS dev box secrets (dotenv). Filled by scripts/dev-box/init-env.sh"
+  description = "PQMS dev box secrets (dotenv). Filled by scripts/dev-box/init-env.sh"
   type        = "SecureString"
   value       = "UNSET"
 
@@ -287,6 +289,16 @@ data "aws_iam_policy_document" "box" {
     sid       = "ReadSecrets"
     actions   = ["ssm:GetParameter"]
     resources = [aws_ssm_parameter.env.arn, aws_ssm_parameter.image_tag.arn]
+  }
+  statement {
+    sid       = "HealthMetric"
+    actions   = ["cloudwatch:PutMetricData"]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "cloudwatch:namespace"
+      values   = [local.health_namespace]
+    }
   }
   statement {
     sid       = "ContainerLogs"

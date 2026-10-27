@@ -1,0 +1,130 @@
+# arm64 이미지 빌드 → ECR 푸시 → 취약점 확인 (Critical 이 있으면 실패). deploy-dev-box.yml 과 deploy-prod.yml 이 부른다.
+# 태그는 <커밋 7자리>-arm64. ECR 태그는 덮어쓸 수 없으므로 같은 커밋을 다시 돌리면 빌드를 건너뛴다.
+#
+# docker 캐시는 dev push 에서만 쓴다(write_cache). 저장소 캐시 한도(10GB)를 넘지 않게 하려는 것이다.
+
+name: Build images
+
+on:
+  workflow_call:
+    inputs:
+      name_prefix:
+        description: "ECR 저장소 앞부분 (pmcs-dev / pmcs-prod)"
+        type: string
+        required: true
+      write_cache:
+        type: boolean
+        default: false
+    secrets:
+      role_arn:
+        description: "ECR 에 푸시할 수 있는 OIDC 역할 ARN"
+        required: true
+    outputs:
+      tag:
+        value: ${{ jobs.image.outputs.tag }}
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  image:
+    name: 이미지 (${{ matrix.app }})
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: api
+            dockerfile: apps/backend/Dockerfile
+            cache: backend-image
+          - app: frontend
+            dockerfile: apps/frontend/Dockerfile
+            cache: frontend-image
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: tag
+        run: echo "tag=${GITHUB_SHA::7}-arm64" >> "$GITHUB_OUTPUT"
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.role_arn }}
+          aws-region: ap-northeast-2
+          mask-aws-account-id: true
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ECR 태그는 덮어쓸 수 없다(IMMUTABLE). 같은 커밋을 다시 돌리면 빌드를 건너뛴다.
+      - id: exists
+        env:
+          REPO: ${{ inputs.name_prefix }}/${{ matrix.app }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          if aws ecr describe-images --repository-name "$REPO" --image-ids imageTag="$TAG" >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"; echo "$REPO:$TAG 가 이미 있어 빌드를 건너뜁니다."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.exists.outputs.skip != 'true'
+        uses: docker/setup-buildx-action@v3
+
+      # provenance·sbom 을 끄면 단일 매니페스트가 올라가 ECR 기본 스캔이 이미지를 검사한다
+      # (켜 두면 OCI index 가 올라가 스캔되지 않는다).
+      - if: steps.exists.outputs.skip != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/arm64
+          push: true
+          provenance: false
+          sbom: false
+          tags: ${{ steps.ecr.outputs.registry }}/${{ inputs.name_prefix }}/${{ matrix.app }}:${{ steps.tag.outputs.tag }}
+          cache-from: type=gha,scope=${{ matrix.cache }}
+          cache-to: ${{ inputs.write_cache && format('type=gha,mode=max,scope={0}', matrix.cache) || '' }}
+
+      - name: 취약점 확인 (Critical 이 있으면 배포하지 않음)
+        env:
+          REPO: ${{ inputs.name_prefix }}/${{ matrix.app }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # push 직후에는 스캔이 아직 없다(ScanNotFoundException). aws ecr wait 는 이것을 실패로 끝내므로
+          # 직접 5초마다 최대 5분 기다린다. 스캔 자체가 실패하면 멈춘다.
+          status=""
+          for _ in $(seq 1 60); do
+            if out=$(aws ecr describe-image-scan-findings --repository-name "$REPO" --image-id imageTag="$TAG" \
+              --output json 2>&1); then
+              status=$(jq -r '.imageScanStatus.status' <<<"$out")
+              case "$status" in
+                COMPLETE) break ;;
+                FAILED | UNSUPPORTED_IMAGE)
+                  echo "::error::$REPO:$TAG 스캔 실패: $(jq -r '.imageScanStatus.description' <<<"$out")"
+                  exit 1
+                  ;;
+              esac
+            elif ! grep -q ScanNotFoundException <<<"$out"; then
+              echo "$out"
+              exit 1
+            fi
+            sleep 5
+          done
+          if [ "$status" != COMPLETE ]; then
+            echo "::error::$REPO:$TAG 스캔이 5분 안에 끝나지 않았습니다 (마지막 상태: ${status:-없음})."
+            exit 1
+          fi
+          counts=$(jq '.imageScanFindings.findingSeverityCounts // {}' <<<"$out")
+          critical=$(jq -r '.CRITICAL // 0' <<<"$counts")
+          {
+            echo "### $REPO:$TAG 스캔"
+            echo '```'; echo "$counts"; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$critical" != 0 ]; then
+            echo "::error::$REPO:$TAG 에 Critical 취약점 $critical 건 — 배포하지 않습니다."
+            exit 1
+          fi

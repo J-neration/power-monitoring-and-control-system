@@ -13,8 +13,8 @@ const logoFont = IBM_Plex_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "PrimeSolution PMCS",
-    template: "%s | PMCS",
+    default: "PrimeSolution PQMS",
+    template: "%s | PQMS",
   },
   description: "Power Monitoring and Control System",
   icons: { icon: "/favicon.png" },

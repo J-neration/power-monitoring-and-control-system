@@ -5,7 +5,7 @@
 # (infra/terraform/envs/dev/box/deploy.tf). 역할 ARN 은 저장소 시크릿 AWS_DEV_DEPLOY_ROLE_ARN 에 있다.
 #
 # 되돌리기: 관리자 Mac 에서 TAG=<이전 태그> scripts/dev-box/deploy.sh (scripts/dev-box/README.md).
-# 운영(main → prod) 배포는 prod 인프라와 함께 5단계에서 만든다. 이 워크플로는 dev 전용이다.
+# 이미지 빌드는 build-images.yml 을 prod(deploy-prod.yml)와 같이 쓴다.
 
 name: Deploy dev box
 
@@ -19,6 +19,7 @@ on:
       - "yarn.lock"
       - ".node-version"
       - ".github/workflows/deploy-dev-box.yml"
+      - ".github/workflows/build-images.yml"
   workflow_dispatch:
 
 permissions:
@@ -38,105 +39,13 @@ env:
 
 jobs:
   image:
-    name: 이미지 (${{ matrix.app }})
-    runs-on: ubuntu-24.04-arm
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - app: api
-            dockerfile: apps/backend/Dockerfile
-            cache: backend-image
-          - app: frontend
-            dockerfile: apps/frontend/Dockerfile
-            cache: frontend-image
-    outputs:
-      tag: ${{ steps.tag.outputs.tag }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - id: tag
-        run: echo "tag=${GITHUB_SHA::7}-arm64" >> "$GITHUB_OUTPUT"
-
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_DEV_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-          mask-aws-account-id: true
-
-      - id: ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      # ECR 태그는 덮어쓸 수 없다(IMMUTABLE). 같은 커밋을 다시 돌리면 빌드를 건너뛴다.
-      - id: exists
-        env:
-          REPO: ${{ env.NAME_PREFIX }}/${{ matrix.app }}
-          TAG: ${{ steps.tag.outputs.tag }}
-        run: |
-          if aws ecr describe-images --repository-name "$REPO" --image-ids imageTag="$TAG" >/dev/null 2>&1; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"; echo "$REPO:$TAG 가 이미 있어 빌드를 건너뜁니다."
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - if: steps.exists.outputs.skip != 'true'
-        uses: docker/setup-buildx-action@v3
-
-      # provenance·sbom 을 끄면 단일 매니페스트가 올라가 ECR 기본 스캔이 이미지를 검사한다
-      # (켜 두면 OCI index 가 올라가 스캔되지 않는다).
-      - if: steps.exists.outputs.skip != 'true'
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ${{ matrix.dockerfile }}
-          platforms: linux/arm64
-          push: true
-          provenance: false
-          sbom: false
-          tags: ${{ steps.ecr.outputs.registry }}/${{ env.NAME_PREFIX }}/${{ matrix.app }}:${{ steps.tag.outputs.tag }}
-          cache-from: type=gha,scope=${{ matrix.cache }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.cache }}
-
-      - name: 취약점 확인 (Critical 이 있으면 배포하지 않음)
-        env:
-          REPO: ${{ env.NAME_PREFIX }}/${{ matrix.app }}
-          TAG: ${{ steps.tag.outputs.tag }}
-        run: |
-          set -euo pipefail
-          # push 직후에는 스캔이 아직 없다(ScanNotFoundException). aws ecr wait 는 이것을 실패로 끝내므로
-          # 직접 5초마다 최대 5분 기다린다. 스캔 자체가 실패하면 멈춘다.
-          status=""
-          for _ in $(seq 1 60); do
-            if out=$(aws ecr describe-image-scan-findings --repository-name "$REPO" --image-id imageTag="$TAG" \
-              --output json 2>&1); then
-              status=$(jq -r '.imageScanStatus.status' <<<"$out")
-              case "$status" in
-                COMPLETE) break ;;
-                FAILED | UNSUPPORTED_IMAGE)
-                  echo "::error::$REPO:$TAG 스캔 실패: $(jq -r '.imageScanStatus.description' <<<"$out")"
-                  exit 1
-                  ;;
-              esac
-            elif ! grep -q ScanNotFoundException <<<"$out"; then
-              echo "$out"
-              exit 1
-            fi
-            sleep 5
-          done
-          if [ "$status" != COMPLETE ]; then
-            echo "::error::$REPO:$TAG 스캔이 5분 안에 끝나지 않았습니다 (마지막 상태: ${status:-없음})."
-            exit 1
-          fi
-          counts=$(jq '.imageScanFindings.findingSeverityCounts // {}' <<<"$out")
-          critical=$(jq -r '.CRITICAL // 0' <<<"$counts")
-          {
-            echo "### $REPO:$TAG 스캔"
-            echo '```'; echo "$counts"; echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          if [ "$critical" != 0 ]; then
-            echo "::error::$REPO:$TAG 에 Critical 취약점 $critical 건 — 배포하지 않습니다."
-            exit 1
-          fi
+    name: 이미지
+    uses: ./.github/workflows/build-images.yml
+    with:
+      name_prefix: pmcs-dev
+      write_cache: true
+    secrets:
+      role_arn: ${{ secrets.AWS_DEV_DEPLOY_ROLE_ARN }}
 
   deploy:
     name: dev 서버 배포
