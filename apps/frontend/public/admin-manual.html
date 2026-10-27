@@ -353,6 +353,24 @@
         font-size: 11px;
       }
 
+      .manual-figure {
+        margin: 16px 0 8px;
+        background: #fff;
+        border-radius: 10px;
+        padding: 12px;
+        border: 1px solid var(--border);
+      }
+      .manual-figure img {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .manual-caption {
+        margin: 8px 0 18px;
+        font-size: 12px;
+        color: var(--text3);
+      }
+
       /* ── 상태 배지 ── */
       .badge {
         display: inline-flex;
@@ -507,6 +525,8 @@
           <div class="sidebar-section-title">현장 설정</div>
           <a class="sidebar-link" href="#add-site">현장 등록</a>
           <a class="sidebar-link" href="#add-installation">설치지점 추가</a>
+          <a class="sidebar-link" href="#install-name-rule">설치지점명 규칙</a>
+          <a class="sidebar-link" href="#module-name-rule">품목명 규칙</a>
           <a class="sidebar-link" href="#iccid">ICCID 매핑</a>
         </div>
         <div class="sidebar-section">
@@ -535,7 +555,7 @@
             HMI 연결, 사용자 계정 관리까지 전체 운영 절차를 안내합니다.
           </div>
           <div class="hero-meta">
-            <span>📅 2026년 4월</span>
+            <span>📅 2026년 10월</span>
             <span>🔐 관리자(ADMIN) 전용</span>
             <span>🌐 http://localhost:3000</span>
           </div>
@@ -770,8 +790,11 @@
             <tbody>
               <tr>
                 <td>설치지점 이름 <span class="req">필수</span></td>
-                <td>대시보드에 표시되는 위치명</td>
-                <td>102동 변전실</td>
+                <td>
+                  대시보드에 표시되는 위치명. 장소 뒤에 모듈 용량을 붙입니다.
+                  아래 설치지점명 규칙을 따릅니다.
+                </td>
+                <td>6층 전기실 100A</td>
               </tr>
               <tr>
                 <td>ID <span class="opt">선택</span></td>
@@ -782,9 +805,10 @@
                 <td>품목명 <span class="opt">선택</span></td>
                 <td>
                   설치 장비의 품목명. 추가 시 비워 두고, 설치지점 목록에서
-                  나중에 입력·저장할 수 있습니다.
+                  나중에 입력·저장할 수 있습니다. 입력할 때는 아래 품목명
+                  규칙을 따릅니다.
                 </td>
-                <td><code>PAF 400Y-100C</code></td>
+                <td><code>PAF 400Y-050C</code></td>
               </tr>
             </tbody>
           </table>
@@ -796,6 +820,183 @@
               규칙을 통일하는 것을 권장합니다.<br />
               예시 패턴: <code>[모델]-[현장약어][번호]</code> →
               <code>PSVG-DONGTAN01</code>
+            </p>
+          </div>
+
+          <h3 id="install-name-rule">설치지점명 규칙</h3>
+          <p>
+            설치지점 이름은 <strong>장소명 + 공백 + 모듈 용량</strong>입니다.
+            용량은 이름 맨 뒤에 둡니다. 장소명은 한글, 영문, 약어, 설비 코드를
+            모두 사용합니다. 같은 현장에서는 표기를 하나로 맞춥니다.
+          </p>
+          <table class="field-table">
+            <thead>
+              <tr>
+                <th>구분</th>
+                <th>이름</th>
+                <th>이유</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>사용</td>
+                <td>6층 전기실 100A</td>
+                <td>한글 장소명 뒤에 용량</td>
+              </tr>
+              <tr>
+                <td>사용</td>
+                <td>6F:AHF 100A</td>
+                <td>영문·약어가 장소명이어도 용량이 뒤에 있음</td>
+              </tr>
+              <tr>
+                <td>사용</td>
+                <td>CP-3M-EHP 150A</td>
+                <td>설비 코드가 장소명이면 뒤에 용량을 붙임</td>
+              </tr>
+              <tr>
+                <td>사용</td>
+                <td>지하1층 변전실 150kvar</td>
+                <td>PSTA는 끝에 kvar</td>
+              </tr>
+              <tr>
+                <td>사용 안 함</td>
+                <td>전기실</td>
+                <td>용량이 없음</td>
+              </tr>
+              <tr>
+                <td>사용 안 함</td>
+                <td>100A 6층 전기실</td>
+                <td>용량이 앞에 있음</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="info-card warn">
+            <div class="info-label">용량 단위</div>
+            <p>
+              PAF(능동형 고조파 필터)는 필터 전류라 끝에 <strong>A</strong>를
+              붙입니다. 예: <code>100A</code>.<br />
+              PSTA(정지형 무효전력 보상)는 보상 용량이라 끝에
+              <strong>kvar</strong>를 붙입니다. 예: <code>150kvar</code>.<br />
+              용량 숫자와 단위 사이에는 공백을 두지 않습니다.
+            </p>
+          </div>
+
+          <h3 id="module-name-rule">품목명 규칙</h3>
+          <p>
+            품목명은 제품 선정표의 칸을 왼쪽부터 이어 붙입니다. 시리즈 뒤에
+            공백을 하나 두고, 전압·상선·용량·타입은 붙입니다. 용량 앞의
+            하이픈은 표의 구분선입니다.
+          </p>
+          <div class="highlight-row">
+            <strong>{시리즈} {전압}{상선}-{용량코드}{타입}</strong><br />
+            사진 예: PAF · 400 · Y · 050 · C → <code>PAF 400Y-050C</code>
+          </div>
+
+          <h3>PAF — 능동형 고조파 필터</h3>
+          <p>
+            필터 용량은 암페어(A)입니다. 용량 코드는 최소 3자리입니다. 15A는
+            <code>015</code>, 50A는 <code>050</code>, 100A는 <code>100</code>,
+            1,600A는 <code>1600</code>입니다.
+          </p>
+          <figure class="manual-figure">
+            <img
+              src="/manual/paf-product-selection.png"
+              alt="PAF 제품 선정표. 시리즈, 사용전압, 상선 구분, 필터 용량, 타입."
+            />
+          </figure>
+          <p class="manual-caption">PAF 제품 선정표. 예시 품목명 PAF 400Y-050C.</p>
+          <table class="field-table">
+            <thead>
+              <tr>
+                <th>칸</th>
+                <th>코드</th>
+                <th>의미</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>시리즈</td>
+                <td>PAF</td>
+                <td>Primesolution Active Harmonic Filter</td>
+              </tr>
+              <tr>
+                <td>사용 전압</td>
+                <td>220 / 400 / 440 / 480 / 690</td>
+                <td>AC 220·400·440·480·690 V</td>
+              </tr>
+              <tr>
+                <td>상선 구분</td>
+                <td>Y / D</td>
+                <td>Y = 3상 4선, D = 3상 3선</td>
+              </tr>
+              <tr>
+                <td>필터 용량</td>
+                <td>015 ~ 1600</td>
+                <td>15A ~ 1,600A. 3자리 미만은 앞에 0</td>
+              </tr>
+              <tr>
+                <td>타입</td>
+                <td>W / C</td>
+                <td>W = 벽부형, C = 캐비넷형</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>PSTA — 정지형 무효전력 보상장치</h3>
+          <p>
+            보상 용량은 kvar입니다. 10kvar는 <code>010</code>, 550kvar는
+            <code>550</code>입니다. 전압·상선·타입 코드는 PAF와 같습니다.
+          </p>
+          <figure class="manual-figure">
+            <img
+              src="/manual/psta-product-selection.png"
+              alt="PSTA 제품 선정표. 시리즈, 사용전압, 상선 구분, 보상 용량, 타입."
+            />
+          </figure>
+          <p class="manual-caption">PSTA 제품 선정표. 예시 품목명 PSTA 400Y-010C.</p>
+          <table class="field-table">
+            <thead>
+              <tr>
+                <th>칸</th>
+                <th>코드</th>
+                <th>의미</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>시리즈</td>
+                <td>PSTA</td>
+                <td>Primesolution Static Synchronous Compensator</td>
+              </tr>
+              <tr>
+                <td>사용 전압</td>
+                <td>220 / 400 / 440 / 480 / 690</td>
+                <td>AC 220·400·440·480·690 V</td>
+              </tr>
+              <tr>
+                <td>상선 구분</td>
+                <td>Y / D</td>
+                <td>Y = 3상 4선, D = 3상 3선</td>
+              </tr>
+              <tr>
+                <td>보상 용량</td>
+                <td>010 ~ 550</td>
+                <td>10kvar ~ 550kvar. 3자리 미만은 앞에 0</td>
+              </tr>
+              <tr>
+                <td>타입</td>
+                <td>W / C</td>
+                <td>W = 벽부형, C = 캐비넷형</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="info-card tip">
+            <div class="info-label">이름과 품목명은 다릅니다</div>
+            <p>
+              설치지점명은 화면에서 장소를 찾는 이름입니다.
+              <code>6층 전기실 100A</code><br />
+              품목명은 그 장소에 설치된 장비 모델입니다.
+              <code>PAF 400Y-100C</code>
             </p>
           </div>
         </section>
@@ -1039,13 +1240,13 @@
             </tbody>
           </table>
 
-          <div class="info-card warn">
-            <div class="info-label">현재 사용자 관리 페이지</div>
+          <div class="info-card tip">
+            <div class="info-label">계정 등록</div>
             <p>
-              사용자 생성·수정·비활성화는 현재 API 수준에서만 지원됩니다. (<code
-                >POST /admin/users</code
-              >, <code>PATCH /admin/users/:id</code>) 웹 UI는 추후 추가
-              예정입니다.
+              관리자 패널의 <strong>유저 관리</strong>(<code>/admin/users</code>)에서
+              <strong>[+ 새 계정 추가]</strong>로 계정을 만듭니다. 역할에 따라
+              건설사 또는 현장을 지정합니다. 만든 계정은 같은 화면에서
+              활성화·비활성화·삭제할 수 있습니다.
             </p>
           </div>
         </section>
@@ -1143,13 +1344,23 @@
             </li>
             <li>현장명, 주소, 건설사 정보 확인</li>
             <li>설치지점(변전실, 전기실 등) 목록과 위치 확인</li>
+            <li>
+              설치지점명은 장소 뒤에 용량을 붙입니다. 예: 6층 전기실 100A,
+              CP-3M-EHP 150A, 지하1층 변전실 150kvar
+            </li>
+            <li>
+              품목명은 선정표대로 만듭니다. 예: PAF 400Y-050C, PSTA 400Y-010C
+            </li>
           </ul>
 
           <h3>어드민 등록 (납품 당일)</h3>
           <ul class="checklist">
             <li>현장 관리 페이지 접속 (<code>/admin/sites</code>)</li>
             <li>새 현장 추가 → ID·이름·건설사·지역·주소 입력 → 저장</li>
-            <li>현장 펼치기 → 설치지점 추가 (변전실·전기실 각각)</li>
+            <li>
+              현장 펼치기 → 설치지점 추가. 이름은 장소+용량, 품목명은 선정표
+              코드
+            </li>
             <li>각 설치지점에 ICCID 입력 → [저장] 클릭 → 성공 메시지 확인</li>
           </ul>
 
