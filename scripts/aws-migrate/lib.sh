@@ -3,6 +3,7 @@
 # 공통 환경 변수
 #   PMCS_ENV        dev(기본) | prod — 대상 AWS 계정과 리소스 이름(pmcs-<env>-*)을 정한다.
 #   AWS_PROFILE     기본 pmcs-<env>
+#   DB_IDENTIFIER   대상 RDS 인스턴스 (기본 pmcs-<env>-db). 복구 시험 때 복구본으로 터널을 열 때 쓴다.
 #   TUNNEL_PORT     open-db-tunnel.sh 가 여는 로컬 포트 (기본 15432)
 #   TUNNEL_HOURS    터널 태스크가 스스로 종료되기까지의 시간 (기본 1, 최대 12)
 #   TARGET_HOST     RDS 에 닿는 주소. 기본은 터널(host.docker.internal:$TUNNEL_PORT).
@@ -24,7 +25,7 @@ export AWS_PROFILE="${AWS_PROFILE:-pmcs-$PMCS_ENV}"
 export AWS_REGION="${AWS_REGION:-ap-northeast-2}"
 
 NAME_PREFIX="pmcs-$PMCS_ENV"
-DB_IDENTIFIER="$NAME_PREFIX-db"
+DB_IDENTIFIER="${DB_IDENTIFIER:-$NAME_PREFIX-db}"
 DB_NAME="${DB_NAME:-pmcs}"
 APP_ROLE=pmcs_app
 MIGRATOR_ROLE=pmcs_migrator
