@@ -1,4 +1,4 @@
-import { FastifyPluginAsync } from "fastify";
+import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 import {
   deviceService,
   ensureInstallationForIccid,
@@ -12,6 +12,7 @@ import { faultService } from "../services/faultService.js";
 import { notifyAdminAlerts } from "../services/adminAlertService.js";
 import { settingsService, SettingsError } from "../services/settingsService.js";
 import { wsHub } from "../lib/wsHub.js";
+import { matchReceiverApiKey } from "../lib/receiverApiKey.js";
 import * as viewingState from "../lib/viewingState.js";
 import {
   detectModuleStatusAlerts,
@@ -21,7 +22,7 @@ import {
   type AlertLine,
 } from "../lib/moduleAlerts.js";
 
-type ReceiverOptions = { receiverApiKey: string };
+type ReceiverOptions = { receiverApiKey: string; previousReceiverApiKey?: string };
 
 type ReceiverBody = {
   device_id?: string;
@@ -204,14 +205,21 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
   server,
   opts,
 ) => {
-  const apiKey = opts.receiverApiKey;
   /** 응답은 호출자가 보낸다 — 여기서도 보내면 이중 send 로 ERR_HTTP_HEADERS_SENT 가 터져
-   *  프로세스가 죽는다(잘못된 키 요청 한 번으로 서버 다운). */
-  const hasValidApiKey = (request: { headers: Record<string, unknown> }) => {
-    const providedKey =
-      (request.headers["x-api-key"] as string | undefined) ?? "";
-    return providedKey === apiKey;
+   *  프로세스가 죽는다(잘못된 키 요청 한 번으로 서버 다운).
+   *  예전 키로 들어온 요청은 로그에 남긴다 — 아직 다시 굽지 않은 HMI 를 찾는 데 쓴다. */
+  const receiverKeyVersion = (request: FastifyRequest) => {
+    const version = matchReceiverApiKey(
+      request.headers["x-api-key"],
+      opts.receiverApiKey,
+      opts.previousReceiverApiKey,
+    );
+    if (version === "previous") {
+      request.log.info({ keyVersion: version }, "receiver previous api key used");
+    }
+    return version;
   };
+  const hasValidApiKey = (request: FastifyRequest) => receiverKeyVersion(request) !== null;
 
   const notifyCriticalFault = (payload: {
     installationId: string;
@@ -356,7 +364,8 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
 
   server.post("/", async (request, reply) => {
     // API Key 검증
-    if (!hasValidApiKey(request)) {
+    const keyVersion = receiverKeyVersion(request);
+    if (!keyVersion) {
       return reply.status(401).send({ message: "Unauthorized" });
     }
 
@@ -405,6 +414,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
         {
           installationId: identity.installationId,
           resolvedVia: identity.resolvedVia,
+          keyVersion,
         },
         "Receiver identity resolved",
       );

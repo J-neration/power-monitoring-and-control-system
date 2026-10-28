@@ -9,7 +9,8 @@ HMI 요청을 AWS 로 넘긴다. 같은 서비스·같은 주소를 그대로 �
 - 나머지 → 404
 - 접속 로그는 Railway 로그에 남고, 요청 헤더(키 포함)는 빼고 남긴다.
 
-AWS 쪽 `RECEIVER_API_KEY` 는 그 Railway 서비스가 쓰던 키와 같아야 한다(dev: AWS dev 키, prod: Railway prod 키).
+AWS 쪽은 HMI 에 들어 있는 키를 받아야 한다. 중계는 키를 검사하지 않고 그대로 넘긴다. 키를 바꾸는 동안에는
+예전 키를 `RECEIVER_API_KEY_PREVIOUS` 로 받는다(scripts/aws-deploy/README.md "HMI 수신 키 교체").
 
 ## Railway 서비스 설정
 

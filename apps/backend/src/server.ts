@@ -41,6 +41,8 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(16),
   RECEIVER_API_KEY: z.string().min(8),
+  /** 키 교체 중에만 둔다. 예전 키도 함께 받아, 현장 HMI 를 다시 구울 때까지 끊기지 않게 한다. */
+  RECEIVER_API_KEY_PREVIOUS: z.string().min(8).optional(),
   // 환경별로 여러 개를 허용한다 (예: dev 백엔드에 dev 사이트 + localhost).
   FRONTEND_ORIGIN: z
     .string()
@@ -140,12 +142,25 @@ export const parseEnv = (env: Record<string, string | undefined>) => {
    *  두는 것은 정상 설정이다. 누락만 잡는다. */
   const requireConfig = (name: SecretName) => readRequired(name, false);
 
+  /** 없어도 되는 시크릿. 비어 있으면 없는 것으로 보고, 개발용 기본값은 배포 환경에서 거부한다. */
+  const optionalSecret = (name: string) => {
+    const value = env[name]?.trim();
+    if (!value) return undefined;
+    if (deployed && value === devFallbacks.RECEIVER_API_KEY) {
+      throw new EnvConfigError(
+        `${name} 가 개발용 기본값 그대로입니다 — 저장소에 공개된 값이라 인증이 없는 것과 같습니다.\n${MISSING_ENV_HINT}`,
+      );
+    }
+    return value;
+  };
+
   const parsed = envSchema.parse({
     PORT: Number(env.PORT ?? "4000"),
     HOST: env.HOST ?? "0.0.0.0",
     DATABASE_URL: requireSecret("DATABASE_URL"),
     JWT_SECRET: requireSecret("JWT_SECRET"),
     RECEIVER_API_KEY: requireSecret("RECEIVER_API_KEY"),
+    RECEIVER_API_KEY_PREVIOUS: optionalSecret("RECEIVER_API_KEY_PREVIOUS"),
     FRONTEND_ORIGIN: requireConfig("FRONTEND_ORIGIN"),
     TRUST_PROXY_HOPS: Number(env.TRUST_PROXY_HOPS?.trim() || "0"),
     WS_PING_INTERVAL_MS: Number(env.WS_PING_INTERVAL_MS?.trim() || "0"),
@@ -221,6 +236,7 @@ export const buildServer = async (env: Env) => {
   await server.register(receiverRoutes, {
     prefix: "/receiver",
     receiverApiKey: env.RECEIVER_API_KEY,
+    previousReceiverApiKey: env.RECEIVER_API_KEY_PREVIOUS,
   });
 
   const { registryService } = await import("./services/registryService.js");
