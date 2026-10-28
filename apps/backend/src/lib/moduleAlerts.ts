@@ -12,8 +12,19 @@ const ALERT_MAIL_EXCLUDED_SITE_IDS = new Set([
   "testing", // 출고검사
 ]);
 
+/**
+ * 프라임솔루션 연구소의 지하주차장만 빼 둔다. 한 시간마다 수신해서
+ * 30분 기준이면 통신 끊김 메일이 반복된다. 같은 현장의 시작실은 보낸다.
+ */
+const ALERT_MAIL_EXCLUDED_INSTALLATION_IDS = new Set([
+  "prime-parkinglot",
+]);
+
 export const isAlertMailExcludedSite = (siteId: string | null | undefined) =>
   !!siteId && ALERT_MAIL_EXCLUDED_SITE_IDS.has(siteId);
+
+export const isAlertMailExcludedInstallation = (installationId: string | null | undefined) =>
+  !!installationId && ALERT_MAIL_EXCLUDED_INSTALLATION_IDS.has(installationId);
 
 export type ModuleStatusAlert = {
   /** 0-based module index (모듈 1 = 0) */
