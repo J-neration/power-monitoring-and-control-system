@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma.js";
 import {
   buildAdminAlertMail,
+  isAlertMailExcludedInstallation,
   isAlertMailExcludedSite,
   type AlertLine,
 } from "../lib/moduleAlerts.js";
@@ -19,7 +20,9 @@ export const notifyAdminAlerts = async (params: {
     where: { id: params.installationId },
     select: { label: true, site: { select: { id: true, name: true, region: true } } },
   });
-  if (isAlertMailExcludedSite(inst?.site.id)) return "skipped-site";
+  if (isAlertMailExcludedSite(inst?.site.id) || isAlertMailExcludedInstallation(params.installationId)) {
+    return "skipped-site";
+  }
 
   const mail = buildAdminAlertMail({
     siteName: inst?.site.name ?? "",

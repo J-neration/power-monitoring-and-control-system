@@ -4,6 +4,7 @@ import {
   buildAdminAlertMail,
   detectModuleStatusAlerts,
   faultAlertLine,
+  isAlertMailExcludedInstallation,
   isAlertMailExcludedSite,
   statusAlertLine,
 } from "./moduleAlerts.js";
@@ -14,6 +15,8 @@ describe("isAlertMailExcludedSite", () => {
     assert.equal(isAlertMailExcludedSite("prime-rnd-1"), false);
     assert.equal(isAlertMailExcludedSite("lotte-haeundae-castle"), false);
     assert.equal(isAlertMailExcludedSite(null), false);
+    assert.equal(isAlertMailExcludedInstallation("prime-parkinglot"), true);
+    assert.equal(isAlertMailExcludedInstallation("prime-rnd-lab"), false);
   });
 });
 
