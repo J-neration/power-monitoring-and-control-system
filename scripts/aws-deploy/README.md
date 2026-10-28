@@ -36,3 +36,19 @@ CPU·메모리·환경 변수·시크릿은 Terraform 으로만 바꾼다(tfvars
 
 배포가 중간에 실패해 새 버전만 남으면 plan 에 작업 정의 교체가 보일 수 있다. 서비스를 바꾸기 전에 실패하면
 스크립트가 새 버전을 등록 취소한다.
+
+## HMI 수신 키 교체
+
+HMI 수신 키(`RECEIVER_API_KEY`)는 환경마다 하나이고 현장 HMI 펌웨어(`REMOTE_HTTPS_API_KEY_PROD`/`_DEV`)에 들어 있다.
+그냥 바꾸면 모든 HMI 가 한꺼번에 끊기므로, 교체하는 동안에는 예전 키를 `RECEIVER_API_KEY_PREVIOUS` 에 두고
+둘 다 받는다. [`rotate-receiver-key.sh`](rotate-receiver-key.sh)가 값을 화면에 내지 않고 바꾼다.
+
+1. (prod, 처음 한 번) `PMCS_ENV=prod scripts/aws-deploy/rotate-receiver-key.sh prepare` → `envs/prod/app` apply
+   (작업 정의가 `RECEIVER_API_KEY_PREVIOUS` 를 읽게 됨). 키 두 개를 받는 API 코드가 배포돼 있어야 한다.
+2. `start` — 새 키를 만들고 예전 키를 옮긴 뒤 API 를 다시 띄운다. 현장 HMI 는 그대로 동작한다.
+3. `copy` — 새 키를 클립보드로. 새로 굽는 펌웨어에 넣는다(HOST 는 `api.pqms.co.kr` / `api-dev.pqms.co.kr`).
+4. `usage` — 예전 키로 보내는 설비 목록. 현장을 다시 구울 때마다 줄어든다.
+5. `finish` — 목록이 비면 예전 키를 지운다. 이때부터 예전 키는 401.
+
+로그에서 직접 볼 때: `filter msg = "Receiver identity resolved" | stats count(*) by installationId, keyVersion`
+(`keyVersion` 이 `previous` 면 예전 키). 데이터 외 요청(명령 조회·Ack 등)은 `receiver previous api key used` 한 줄.
