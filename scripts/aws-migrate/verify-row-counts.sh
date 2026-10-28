@@ -4,6 +4,7 @@
 #
 # 원본이 계속 쓰이는 중이면(예: 컷오버 중 Railway 가 Neon 에 쓰는 동안) 최근 텔레메트리 테이블은
 # 원본이 더 많을 수 있다. 그때는 표를 보고 차이가 그 시간 동안 들어온 행인지 확인한다.
+# ALLOW_SOURCE_AHEAD=1 이면 원본이 더 많은 것은 실패로 보지 않는다(copy-delta.sh 가 나중에 메움).
 
 source "$(dirname "$0")/lib.sh"
 require docker jq
@@ -40,15 +41,24 @@ source_counts=$(echo "$count_sql" | source_psql)
 target_counts=$(echo "$count_sql" | pg_docker psql "$target" -v ON_ERROR_STOP=1 -tA)
 
 mismatch=0
+ahead=0
 printf '%-36s %12s %12s\n' "table" "source" "target"
 while IFS='|' read -r t s; do
   d=$(awk -F'|' -v t="$t" '$1 == t { print $2 }' <<<"$target_counts")
   mark=""
-  [ "$s" = "${d:-missing}" ] || { mark="  ← 불일치"; mismatch=1; }
+  if [ "$s" != "${d:-missing}" ]; then
+    if [ "${ALLOW_SOURCE_AHEAD:-0}" = 1 ] && [ -n "$d" ] && [ "$s" -gt "$d" ]; then
+      mark="  ← 원본이 더 많음(복사 뒤 유입)"; ahead=1
+    else
+      mark="  ← 불일치"; mismatch=1
+    fi
+  fi
   printf '%-36s %12s %12s%s\n' "$t" "$s" "${d:-missing}" "$mark"
 done <<<"$source_counts"
 
-if [ "$mismatch" = 0 ]; then
+if [ "$mismatch" = 0 ] && [ "$ahead" = 1 ]; then
+  log "대상이 원본보다 많은 테이블은 없습니다. 원본이 더 많은 테이블은 copy-delta.sh 로 메웁니다."
+elif [ "$mismatch" = 0 ]; then
   log "모든 테이블의 행 수가 같습니다."
 else
   die "행 수가 다른 테이블이 있습니다."
