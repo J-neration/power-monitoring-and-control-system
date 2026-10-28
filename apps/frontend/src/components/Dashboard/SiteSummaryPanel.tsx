@@ -90,7 +90,6 @@ export default function SiteSummaryPanel({
           <h2 className="detail-site-name">
             <Link
               href={siteHref}
-              target="_blank"
               className="detail-site-name-link"
             >
               {site.name}
@@ -108,7 +107,7 @@ export default function SiteSummaryPanel({
         </div>
       </div>
 
-      <Link href={siteHref} target="_blank" className="detail-site-open">
+      <Link href={siteHref} className="detail-site-open">
         현장 상세보기 →
       </Link>
 
@@ -151,7 +150,6 @@ export default function SiteSummaryPanel({
             <Link
               key={inst.id}
               href={`/devices/${encodeURIComponent(inst.id)}`}
-              target="_blank"
               data-inst-id={inst.id}
               className={`summary-inst-card${isSelected ? " selected" : ""}${commLost ? " summary-inst-card--comm-lost" : ""}`}
             >
@@ -235,7 +233,7 @@ export default function SiteSummaryPanel({
       </div>
 
       {/* Footer link */}
-      <Link href={siteHref} target="_blank" className="summary-more-link">
+      <Link href={siteHref} className="summary-more-link">
         현장 상세보기 →
       </Link>
     </div>

@@ -1448,6 +1448,30 @@ main.dashboard-full {
   padding: 2px 0 6px 0;
 }
 
+.site-group-detail-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 6px 12px 8px 28px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--pmcs-accent-bright);
+  background: var(--pmcs-accent-dim);
+  border: 1px solid var(--pmcs-accent-border);
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+.site-group-detail-link:hover {
+  color: #fff;
+  background: rgba(0, 212, 170, 0.22);
+  border-color: var(--pmcs-accent);
+}
+
 .inst-card {
   display: flex;
   align-items: center;
@@ -9292,6 +9316,12 @@ body.pmcs-control-room .global-header:hover {
   .site-group-client {
     font-size: 11px;
     opacity: 0.5;
+  }
+
+  .site-group-detail-link {
+    min-height: 40px;
+    margin: 8px 12px 10px 24px;
+    font-size: 13px;
   }
 
   .inst-card {

@@ -115,7 +115,6 @@ export default function DashboardAccordion({ regionEntries, selectedRegion }: Pr
                         key={site.id}
                         className="region-device-card"
                         href={`/sites/${encodeURIComponent(site.id)}`}
-                        target="_blank"
                       >
                         <div className="region-device-top">
                           <strong className="region-title">

@@ -9,6 +9,7 @@ import {
   useCallback,
 } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Site } from "../../types/site";
 import type { DeviceStatus } from "../../types/site";
@@ -611,6 +612,12 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                 </summary>
 
                                 <div className="site-group-installations">
+                                  <Link
+                                    href={`/sites/${encodeURIComponent(site.id)}`}
+                                    className="site-group-detail-link"
+                                  >
+                                    현장 상세보기 →
+                                  </Link>
                                   {visibleInstallations.map((inst) => {
                                     const instStatus =
                                       (inst.device?.status as DeviceStatus) ??
