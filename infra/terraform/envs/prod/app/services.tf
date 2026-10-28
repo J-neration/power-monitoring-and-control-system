@@ -112,12 +112,12 @@ module "api" {
   command = ["node", "apps/backend/dist/src/index.js"]
 
   # AGGREGATION_ENABLED 는 코드 기본값(켜짐, Railway prod 와 같음).
-  # DEVICE_FRESHNESS_CHECK_ENABLED 는 끈다: prime-parkinglot 처럼 1시간마다 보내는 장비가 있어
-  # 지금 기준(30분)이면 통신 끊김 메일·알람이 계속 울린다. 장비별 기준을 정한 뒤 켠다.
-  # 코드 기본값이 켜짐이라(dev 952f9f3) 값을 명시한다.
+  # DEVICE_FRESHNESS_CHECK_ENABLED: 30분 넘게 끊긴 설비를 관리자에게 메일로 알린다(코드 기본값도 켜짐).
+  # 1시간마다 보내는 prime-parkinglot 은 메일 대상에서 빠져 있다(lib/moduleAlerts.ts, 1749c5d).
+  # 서버가 새로 뜰 때 이미 끊겨 있는 설비는 한 번 더 메일이 간다(배포 때마다).
   environment = {
     NODE_ENV                       = "production"
-    DEVICE_FRESHNESS_CHECK_ENABLED = "false"
+    DEVICE_FRESHNESS_CHECK_ENABLED = "true"
     HOST                           = "0.0.0.0"
     PORT                           = tostring(local.api_port)
     FRONTEND_ORIGIN                = local.frontend_origins
