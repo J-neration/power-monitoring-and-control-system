@@ -47,6 +47,37 @@ DB 프로그램(TablePlus 등)에서 Host `127.0.0.1`, Port `15432`, Database `p
 
 dev 는 2026-10-23 부터 서버 1대형이라 RDS 터널을 쓰지 않는다. `scripts/dev-box/README.md` 참고.
 
+## 운영 DB 복구 시험 (시점 복구)
+
+운영 RDS 는 자동 백업 14일이라 그 안의 어느 시점으로든 새 인스턴스를 만들 수 있다. 원본은 건드리지 않는다.
+
+```sh
+export AWS_PROFILE=pmcs-prod AWS_REGION=ap-northeast-2
+# 서브넷 그룹·보안 그룹·파라미터 그룹은 원본(pmcs-prod-db)과 같은 값을 describe-db-instances 로 확인해 넣는다
+aws rds restore-db-instance-to-point-in-time --source-db-instance-identifier pmcs-prod-db \
+  --target-db-instance-identifier pmcs-prod-db-restore-test --use-latest-restorable-time \
+  --db-instance-class db.t4g.micro --db-subnet-group-name pmcs-prod-db --vpc-security-group-ids <sg> \
+  --db-parameter-group-name <pg> --no-publicly-accessible --no-multi-az --no-deletion-protection \
+  --tags Key=Purpose,Value=restore-test
+aws rds wait db-instance-available --db-instance-identifier pmcs-prod-db-restore-test
+
+# 터미널 A: 운영 DB, 터미널 B: 복구본
+PMCS_ENV=prod TUNNEL_PORT=15432 scripts/aws-migrate/open-db-tunnel.sh
+PMCS_ENV=prod DB_IDENTIFIER=pmcs-prod-db-restore-test TUNNEL_PORT=15433 scripts/aws-migrate/open-db-tunnel.sh
+
+# 터미널 C: 복구본(원본 자리, 읽기 전용)과 운영 DB 의 행 수 비교. 매시 :05 집계 전후는 피한다
+murl=$(aws secretsmanager get-secret-value --secret-id pmcs-prod/api --query SecretString --output text | jq -r .MIGRATE_DATABASE_URL)
+SOURCE_DATABASE_URL=$(sed -E 's#@[^/]+/([^?]+).*#@host.docker.internal:15433/\1?sslmode=require#' <<<"$murl") \
+  PMCS_ENV=prod TUNNEL_PORT=15432 scripts/aws-migrate/verify-row-counts.sh
+
+# 정리
+aws rds delete-db-instance --db-instance-identifier pmcs-prod-db-restore-test --skip-final-snapshot --delete-automated-backups
+```
+
+2026-10-27 시험(UTC): 요청 23:51 → 복구 완료 00:00:44 → 접속 가능 00:01 (약 10분). 16개 테이블 행 수 일치,
+`pmcs_app` 로그인, 실패한 마이그레이션 없음, 최신 텔레메트리·집계 시각 원본과 같음. 비용 $0.1 미만.
+복구 중 RDS 가 메모리 부족으로 `shared_buffers` 를 자동으로 줄였다는 이벤트가 한 번 나왔다(t4g.micro, 복구본에만).
+
 ## 필요한 것
 
 - AWS CLI(`aws login --profile pmcs-dev`), `jq`, Docker Desktop
