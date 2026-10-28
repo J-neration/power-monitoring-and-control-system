@@ -5,9 +5,9 @@ import {
   isAlertMailExcludedSite,
   type AlertLine,
 } from "../lib/moduleAlerts.js";
-import { sendAlertMail } from "./alertMailer.js";
+import { isDevAlertSite, sendAlertMail } from "./alertMailer.js";
 
-export type AdminAlertResult = "sent" | "empty" | "skipped-site" | "skipped-config";
+export type AdminAlertResult = "sent" | "empty" | "skipped-site" | "skipped-dev" | "skipped-config";
 
 export const notifyAdminAlerts = async (params: {
   installationId: string;
@@ -15,6 +15,7 @@ export const notifyAdminAlerts = async (params: {
   at?: Date;
 }): Promise<AdminAlertResult> => {
   if (params.lines.length === 0) return "empty";
+  if (isDevAlertSite()) return "skipped-dev";
 
   const inst = await prisma.installation.findUnique({
     where: { id: params.installationId },

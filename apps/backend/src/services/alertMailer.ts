@@ -14,6 +14,7 @@ type MailTransport = ReturnType<typeof nodemailer.createTransport>;
 let transporter: MailTransport | null = null;
 let transporterKey = "";
 let missingConfigWarned = false;
+let devSkipWarned = false;
 
 const readConfig = (): SmtpConfig | null => {
   const host = process.env.SMTP_HOST?.trim() ?? "";
@@ -53,6 +54,8 @@ export const isDevAlertSite = (env: NodeJS.ProcessEnv = process.env) => {
   if (flag === "prod" || flag === "production") return false;
   if (flag === "dev" || flag === "development") return true;
   if ((env.NODE_ENV ?? "").trim() === "development") return true;
+  const neonBranch = (env.NEON_BRANCH ?? "").trim().replace(/^["']|["']$/g, "").toLowerCase();
+  if (neonBranch === "dev") return true;
   return (env.FRONTEND_ORIGIN ?? "").split(",").some(hostLooksLikeDev);
 };
 
@@ -89,12 +92,19 @@ const getTransporter = (cfg: SmtpConfig) => {
   return transporter;
 };
 
-/** SMTP 가 없으면 조용히 건너뛴다. 실패는 호출자가 로그한다. */
+/** SMTP 가 없거나 개발 환경이면 보내지 않는다. 실패는 호출자가 로그한다. */
 export const sendAlertMail = async (mail: {
   subject: string;
   text: string;
   html?: string;
 }): Promise<boolean> => {
+  if (isDevAlertSite()) {
+    if (!devSkipWarned) {
+      devSkipWarned = true;
+      console.info("admin alert mail skipped: dev environment does not send alert email");
+    }
+    return false;
+  }
   const cfg = readConfig();
   if (!cfg) {
     if (!missingConfigWarned) {

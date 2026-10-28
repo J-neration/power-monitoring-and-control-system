@@ -23,6 +23,28 @@ describe("isDevAlertSite", () => {
   it("marks a local development process", () => {
     assert.equal(isDevAlertSite({ NODE_ENV: "development", FRONTEND_ORIGIN: "http://localhost:3000" }), true);
   });
+
+  it("marks the dev database even when the public host looks like production", () => {
+    assert.equal(
+      isDevAlertSite({
+        NEON_BRANCH: "dev",
+        NODE_ENV: "production",
+        FRONTEND_ORIGIN: "https://pqms.co.kr",
+      }),
+      true,
+    );
+  });
+
+  it("leaves the production database unmarked", () => {
+    assert.equal(
+      isDevAlertSite({
+        NEON_BRANCH: "main",
+        NODE_ENV: "production",
+        FRONTEND_ORIGIN: "https://pqms.co.kr,https://app.pqms.co.kr",
+      }),
+      false,
+    );
+  });
 });
 
 describe("applyDevAlertNotice", () => {

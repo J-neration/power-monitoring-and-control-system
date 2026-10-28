@@ -123,7 +123,7 @@ export function startDeviceFreshnessCheck(log: FastifyBaseLogger): () => void {
             at: new Date(now),
             lines: [commLostAlertLine(hit.lastSeenAt, staleAfterMinutes)],
           });
-          if (result === "sent" || result === "skipped-site") {
+          if (result === "sent" || result === "skipped-site" || result === "skipped-dev") {
             alerted.add(hit.installationId);
           } else if (result === "skipped-config" && !loggedMissingConfig) {
             loggedMissingConfig = true;
