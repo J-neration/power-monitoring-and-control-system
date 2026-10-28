@@ -90,7 +90,6 @@ export default function AppNav() {
           <Link
             key={item.href}
             href={item.href}
-            target="_blank"
             className={`app-nav-item${isActive(item.href) ? " active" : ""}`}
           >
             <span className="app-nav-icon">{item.icon}</span>

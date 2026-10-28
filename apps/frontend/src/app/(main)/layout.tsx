@@ -109,7 +109,7 @@ export default async function MainLayout({
               <span className="global-header-sep" aria-hidden />
               <div className="header-user-info">
                 {user.role === "ADMIN" ? (
-                  <Link href="/admin/sites" target="_blank" className="global-header-admin-link">
+                  <Link href="/admin/sites" className="global-header-admin-link">
                     관리자 패널
                   </Link>
                 ) : (
