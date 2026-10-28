@@ -4,7 +4,10 @@
 #   서비스 다운   ALB 대상 그룹의 정상 대상이 3분 연속 0 (API·프론트 각각). 서비스가 0대면 만들지 않는다
 #   앱 오류       API 오류 로그 10분 5건 이상 / 서버가 돌려준 5xx 가 5분 10건 이상
 #   DB           남은 저장 공간 2GB 미만 / CPU 15분 평균 80% 초과
-#   장비 끊김     아직 없음 — API 의 DEVICE_FRESHNESS_CHECK_ENABLED 를 장비별 기준으로 정한 뒤 추가한다
+#   수신 끊김     모든 HMI 의 정상 수신이 30분 동안 0건 (중계·WAF·키 문제 등 경로 전체가 막힘)
+#   수신 차단     WAF 수신 속도 제한이 HMI 요청을 1건이라도 막음 (HMI 는 모두 Railway 중계 IP 하나로 들어온다)
+#   집계 실패     시간별 집계가 30분 동안 2번 이상 실패
+#   장비 한 대 끊김 아직 없음 — API 의 DEVICE_FRESHNESS_CHECK_ENABLED 를 장비별 기준으로 정한 뒤 추가한다
 
 data "aws_ssm_parameters_by_path" "security" {
   path = "/${local.name_prefix}/security"
@@ -64,6 +67,24 @@ module "alarms" {
       period         = 600
       description    = "prod API 에 10분 동안 오류 로그가 5건 이상 쌓였습니다. CloudWatch Logs Insights 에서 /ecs/pmcs-prod/api 를 level >= 50 으로 걸러 보세요."
     }
+    # 키가 맞고 장비가 확인된 POST /receiver 마다 한 줄. 2026-10-28 기준 HMI 8대가 10분마다 보내 30분에 약 24건.
+    ReceiverSilent = {
+      log_group_name      = module.api.log_group_name
+      pattern             = "{ $.msg = \"Receiver identity resolved\" }"
+      comparison_operator = "LessThanThreshold"
+      threshold           = 1
+      period              = 900
+      evaluation_periods  = 2
+      treat_missing_data  = "breaching"
+      description         = "prod 가 30분 동안 HMI 데이터를 한 건도 받지 못했습니다. Railway 운영 서비스(중계)의 배포·로그, WAF 차단(pmcs-prod-ReceiverRateLimited), /ecs/pmcs-prod/api 의 /receiver 401 을 차례로 보세요."
+    }
+    AggregationFailed = {
+      log_group_name = module.api.log_group_name
+      pattern        = "{ $.level >= 50 && $.msg = \"telemetry aggregation*\" }"
+      threshold      = 2
+      period         = 1800
+      description    = "prod 시간별 집계가 30분 동안 2번 이상 실패했습니다(그래프의 시간·일 요약이 멈춤). /ecs/pmcs-prod/api 에서 \"telemetry aggregation failed\"·\"crashed\" 를 찾아 보세요."
+    }
   }
 
   metric_alarms = merge(local.service_alarms, {
@@ -88,6 +109,18 @@ module "alarms" {
       period              = 300
       evaluation_periods  = 2
       description         = "prod DB 의 남은 저장 공간이 2GB 미만입니다(최대 100GB 까지 자동으로 늘지만, 상한에 가까운지 확인하세요)."
+    }
+    ReceiverRateLimited = {
+      namespace           = "AWS/WAFV2"
+      metric_name         = "BlockedRequests"
+      dimensions          = { WebACL = split("/", module.edge.web_acl_arn)[2], Region = data.aws_region.current.region, Rule = "rate-limit-receiver" }
+      statistic           = "Sum"
+      comparison_operator = "GreaterThanOrEqualToThreshold"
+      threshold           = 1
+      period              = 300
+      evaluation_periods  = 1
+      treat_missing_data  = "notBreaching"
+      description         = "WAF 수신 속도 제한이 HMI 요청을 막았습니다. HMI 는 모두 Railway 중계 IP 로 들어오므로 그 IP 가 막히면 전체 수신이 끊깁니다. 장비 수나 전송 주기가 늘었다면 terraform.tfvars 의 receiver_rate_limit 을 올리세요."
     }
     DbCpuHigh = {
       namespace           = "AWS/RDS"

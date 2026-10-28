@@ -31,17 +31,20 @@ variable "log_metric_alarms" {
   description = <<-EOT
     로그 지표 필터 + 알람 (이름 → 설정). 지표는 네임스페이스 PMCS/<name_prefix>, 이름 = 키.
     pattern 은 CloudWatch 필터 문법, value 는 "1" 이나 "$.stale" 같은 JSON 필드.
+    로그가 "끊긴" 것을 보려면 comparison_operator = "LessThanThreshold", treat_missing_data = "breaching"
+    (맞는 로그가 없으면 지표 값 자체가 없으므로).
   EOT
   type = map(object({
-    log_group_name     = string
-    pattern            = string
-    value              = optional(string, "1")
-    statistic          = optional(string, "Sum")
-    threshold          = number
-    period             = optional(number, 300)
-    evaluation_periods = optional(number, 1)
-    treat_missing_data = optional(string, "notBreaching")
-    description        = string
+    log_group_name      = string
+    pattern             = string
+    value               = optional(string, "1")
+    statistic           = optional(string, "Sum")
+    comparison_operator = optional(string, "GreaterThanOrEqualToThreshold")
+    threshold           = number
+    period              = optional(number, 300)
+    evaluation_periods  = optional(number, 1)
+    treat_missing_data  = optional(string, "notBreaching")
+    description         = string
   }))
   default = {}
 }
@@ -181,7 +184,7 @@ resource "aws_cloudwatch_metric_alarm" "log" {
   statistic           = each.value.statistic
   period              = each.value.period
   evaluation_periods  = each.value.evaluation_periods
-  comparison_operator = "GreaterThanOrEqualToThreshold"
+  comparison_operator = each.value.comparison_operator
   threshold           = each.value.threshold
   treat_missing_data  = each.value.treat_missing_data
   alarm_actions       = local.actions
