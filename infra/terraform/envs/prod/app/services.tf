@@ -1,6 +1,9 @@
 # ── 시크릿 (값은 Terraform 밖에서 콘솔로 입력한다. 상태·코드에 남지 않게) ─────
-# pmcs-prod/api  : JSON {DATABASE_URL, MIGRATE_DATABASE_URL, RECEIVER_API_KEY, CRITICAL_FAULT_WEBHOOK_URL}
-#   RECEIVER_API_KEY 는 현장 HMI 펌웨어에 고정된 지금 Railway prod 값과 같아야 한다(중계가 키를 그대로 넘김).
+# pmcs-prod/api  : JSON {DATABASE_URL, MIGRATE_DATABASE_URL, RECEIVER_API_KEY, RECEIVER_API_KEY_PREVIOUS,
+#                        CRITICAL_FAULT_WEBHOOK_URL}
+#   RECEIVER_API_KEY 는 HMI 펌웨어의 REMOTE_HTTPS_API_KEY_PROD 와 같아야 한다(Railway 중계도 키를 그대로 넘김).
+#   RECEIVER_API_KEY_PREVIOUS 는 키 교체 중에만 예전 키를 담고 평소에는 빈 문자열이다
+#   (scripts/aws-deploy/rotate-receiver-key.sh).
 # pmcs-prod/jwt  : JSON {JWT_SECRET}  (백엔드 JWT_SECRET = 프론트 AUTH_JWT_SECRET). 새로 발급한다.
 # pmcs-prod/alert-mail : JSON {SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, ALERT_EMAIL_TO}
 #   관리자 알림 메일. 수신자 주소가 들어가므로 공개 저장소(코드)가 아니라 시크릿에 둔다.
@@ -131,6 +134,7 @@ module "api" {
   secrets = {
     DATABASE_URL               = "${aws_secretsmanager_secret.api.arn}:DATABASE_URL::"
     RECEIVER_API_KEY           = "${aws_secretsmanager_secret.api.arn}:RECEIVER_API_KEY::"
+    RECEIVER_API_KEY_PREVIOUS  = "${aws_secretsmanager_secret.api.arn}:RECEIVER_API_KEY_PREVIOUS::"
     CRITICAL_FAULT_WEBHOOK_URL = "${aws_secretsmanager_secret.api.arn}:CRITICAL_FAULT_WEBHOOK_URL::"
     JWT_SECRET                 = "${aws_secretsmanager_secret.jwt.arn}:JWT_SECRET::"
     SMTP_HOST                  = "${aws_secretsmanager_secret.alert_mail.arn}:SMTP_HOST::"

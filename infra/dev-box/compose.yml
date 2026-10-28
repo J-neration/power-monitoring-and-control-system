@@ -73,6 +73,8 @@ services:
       DATABASE_POOL_MAX: "10"
       LOG_LEVEL: info
       RECEIVER_API_KEY: ${RECEIVER_API_KEY:?}
+      # 키 교체 중에만 채운다(scripts/aws-deploy/rotate-receiver-key.sh). 비어 있으면 예전 키를 받지 않는다.
+      RECEIVER_API_KEY_PREVIOUS: ${RECEIVER_API_KEY_PREVIOUS:-}
       JWT_SECRET: ${JWT_SECRET:?}
       CRITICAL_FAULT_WEBHOOK_URL: ${CRITICAL_FAULT_WEBHOOK_URL:-}
       # 비워 두면 관리자 알림 메일을 보내지 않는다.
