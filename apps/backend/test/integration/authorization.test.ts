@@ -159,20 +159,17 @@ describe("data scoping", () => {
     assert.equal("iccid" in clientList[0].installations[0], false);
   });
 
-  // 알려진 문제: /sites 는 ICCID 를 숨기지만 /devices 는 installation 전체를 그대로 내보낸다.
-  // 고치면 todo 를 지운다 — 그때부터는 다시 새면 실패한다.
-  it(
-    "hides the SIM ICCID from non-admins on /devices too",
-    { todo: "deviceService 가 installation.iccid 를 CLIENT/SITE 에게도 반환함" },
-    async () => {
-      const { tokens } = await seedWorld(t.app);
-      const api = http(t.app);
+  it("hides the SIM ICCID from non-admins on /devices too", async () => {
+    const { tokens } = await seedWorld(t.app);
+    const api = http(t.app);
 
-      const one = (await api.get(`/devices/${IDS.lotteInst}`, { token: tokens.client })).json().device;
-      assert.equal(one.installation.iccid, undefined);
+    const adminOne = (await api.get(`/devices/${IDS.lotteInst}`, { token: tokens.admin })).json().device;
+    assert.equal(adminOne.installation.iccid, IDS.lotteIccid);
 
-      const list = (await api.get("/devices", { token: tokens.client })).json().devices;
-      assert.equal(list[0].installation.iccid, undefined);
-    },
-  );
+    const one = (await api.get(`/devices/${IDS.lotteInst}`, { token: tokens.client })).json().device;
+    assert.equal("iccid" in one.installation, false);
+
+    const list = (await api.get("/devices", { token: tokens.client })).json().devices;
+    assert.equal("iccid" in list[0].installation, false);
+  });
 });

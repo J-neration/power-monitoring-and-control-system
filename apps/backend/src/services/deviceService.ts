@@ -256,10 +256,12 @@ function withModuleType<
   T extends {
     moduleStatus: number[] | null;
     lastSeenAt: Date | null;
-    installation: { deviceSettings?: { moduleType: string } | null };
+    installation: { deviceSettings?: { moduleType: string } | null; iccid: string | null };
   },
->(d: T) {
-  const { deviceSettings, ...installation } = d.installation;
+>(d: T, ctx: UserContext) {
+  // SIM ICCID 는 관리자에게만 보인다 (siteService 와 같은 규칙).
+  const { deviceSettings, iccid, ...rest } = d.installation;
+  const installation = ctx.role === "ADMIN" ? { ...rest, iccid } : rest;
   return withLiveDeviceFields(
     { ...d, installation },
     deviceSettings?.moduleType ?? null,
@@ -425,7 +427,7 @@ export const deviceService = {
       orderBy: { installationId: "asc" },
       include: deviceWithSiteInclude,
     });
-    return rows.map((d) => withModuleType(d));
+    return rows.map((d) => withModuleType(d, ctx));
   },
 
   get: async ({ id }: { id: string }, ctx: UserContext) => {
@@ -436,7 +438,7 @@ export const deviceService = {
     if (!d) return null;
     if (!canAccessDevice(ctx, d.installation.site.client, d.installation.siteId))
       return null;
-    return withModuleType(d);
+    return withModuleType(d, ctx);
   },
 
   /** 수신 직전 모듈 상태. 행이 없으면 null (첫 수신은 알림하지 않음). */
