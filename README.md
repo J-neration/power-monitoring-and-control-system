@@ -67,7 +67,7 @@ yarn test            # 단위 + API 통합 (~15초)
 yarn test:e2e        # 브라우저 E2E (Playwright)
 ```
 
-모든 push·PR 에서 GitHub Actions 가 같은 테스트를 돌립니다. 자세한 내용과 테스트 추가 방법은 [`docs/testing.md`](docs/testing.md).
+모든 PR 과 main·dev push 에서 GitHub Actions 가 같은 테스트를 돌립니다. 자세한 내용과 테스트 추가 방법은 [`docs/testing.md`](docs/testing.md).
 
 ---
 

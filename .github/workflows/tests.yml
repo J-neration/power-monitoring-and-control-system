@@ -1,4 +1,4 @@
-# 회귀 테스트 — 모든 push·PR 에서 돈다. 실패하면 푸시한 사람에게 GitHub 가 메일을 보낸다.
+# 회귀 테스트 — 모든 PR 과 main·dev push 에서 돈다. 실패하면 푸시한 사람에게 GitHub 가 메일을 보낸다.
 #
 #   단위 테스트      순수 로직 (DB 없음)                         yarn test:unit
 #   API 통합 테스트  Fastify + 실제 Postgres, 엔드포인트 전체      yarn test:integration
@@ -10,7 +10,9 @@
 name: Tests
 
 on:
+  # 기능 브랜치는 PR 에서 돈다 — push 까지 받으면 같은 커밋을 두 번 돌린다.
   push:
+    branches: [main, dev]
   pull_request:
   workflow_dispatch:
 
