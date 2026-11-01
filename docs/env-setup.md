@@ -34,7 +34,7 @@
 | 프론트 (런타임) | `API_BASE_INTERNAL` | VPC 내부 백엔드 주소 | 서버 코드가 공개 api 도메인을 거치지 않고 백엔드 호출 |
 | 프론트 (런타임) | `AUTH_JWT_SECRET` | 백엔드 `JWT_SECRET` 과 같은 값 | middleware 가 쿠키의 서명·만료까지 확인 |
 | 프론트 (런타임) | `TRUSTED_PROXY_HOPS` | `1` | 로그인 IP 제한에 ALB 가 붙인 IP 만 사용 |
-| 프론트 (빌드) | `NEXT_OUTPUT`, `NEXT_PUBLIC_WS_URL`, `NEXT_CSP_ENFORCE` | `apps/frontend/Dockerfile` 이 설정 | 컨테이너 출력, 같은 출처 `/ws`, CSP (기본 보고 전용) |
+| 프론트 (빌드) | `NEXT_OUTPUT`, `NEXT_PUBLIC_WS_URL`, `NEXT_CSP_ENFORCE` | `apps/frontend/Dockerfile` 이 설정 | 컨테이너 출력, 같은 출처 `/ws`, CSP (기본 차단, `false` 면 보고 전용) |
 
 ## 하지 말 것
 

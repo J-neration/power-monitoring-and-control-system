@@ -10,7 +10,8 @@
     "typecheck": "prisma generate && tsc -p tsconfig.check.json",
     "start": "node dist/src/index.js",
     "lint": "echo \"No linter configured\"",
-    "test": "node --test --import tsx \"src/**/*.test.ts\"",
+    "test": "node ../../scripts/run-tests.mjs src",
+    "test:integration": "node --import tsx test/run-integration.ts",
     "db:migrate:dev": "cross-env NODE_ENV=development prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "cross-env NODE_ENV=development tsx prisma/seed.ts",
@@ -38,6 +39,8 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "22.15.2",
+    "@types/pg": "8.23.1",
+    "@types/ws": "8.18.1",
     "pino-pretty": "10.2.3",
     "tsx": "4.21.0",
     "typescript": "5.9.3"
