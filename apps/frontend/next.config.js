@@ -18,7 +18,7 @@ const contentSecurityPolicy = [
   "object-src 'none'",
 ].join("; ");
 
-// netlify.toml [[headers]] 와 같은 값 + CSP. CSP 는 NEXT_CSP_ENFORCE=true 전까지 보고 전용.
+// netlify.toml [[headers]] 와 같은 값 + CSP. CSP 는 NEXT_CSP_ENFORCE=true 일 때 차단(컨테이너 이미지 기본값), 아니면 보고 전용.
 const securityHeaders = [
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "X-Content-Type-Options", value: "nosniff" },
