@@ -20,7 +20,8 @@ COPY apps/frontend/ apps/frontend/
 ENV NEXT_OUTPUT=standalone \
     NEXT_TELEMETRY_DISABLED=1 \
     NEXT_PUBLIC_WS_URL=/ws
-ARG NEXT_CSP_ENFORCE=false
+# CSP 차단 모드. 위반을 확인해야 할 때만 --build-arg NEXT_CSP_ENFORCE=false 로 보고 전용으로 되돌린다.
+ARG NEXT_CSP_ENFORCE=true
 ENV NEXT_CSP_ENFORCE=$NEXT_CSP_ENFORCE
 
 RUN yarn workspace @pmcs/frontend build
