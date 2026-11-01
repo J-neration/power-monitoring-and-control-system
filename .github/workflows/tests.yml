@@ -1,0 +1,144 @@
+# 회귀 테스트 — 모든 PR 과 main·dev push 에서 돈다. 실패하면 푸시한 사람에게 GitHub 가 메일을 보낸다.
+#
+#   단위 테스트      순수 로직 (DB 없음)                         yarn test:unit
+#   API 통합 테스트  Fastify + 실제 Postgres, 엔드포인트 전체      yarn test:integration
+#   브라우저 E2E     Playwright, 로그인 → 대시보드 → 장치 화면     yarn test:e2e
+#
+# 로컬에서 같은 결과를 보려면 docs/testing.md 참고.
+# DB 는 이 잡 안에서만 사는 일회용 컨테이너다 — Neon/RDS 와 무관하고 시크릿도 쓰지 않는다.
+
+name: Tests
+
+on:
+  # 기능 브랜치는 PR 에서 돈다 — push 까지 받으면 같은 커밋을 두 번 돌린다.
+  push:
+    branches: [main, dev]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: 단위 테스트
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - run: yarn test:unit
+
+      - name: 실패 안내
+        if: failure()
+        run: |
+          {
+            echo "### ❌ 단위 테스트 실패"
+            echo ""
+            echo "로컬에서 \`yarn test:unit\` 으로 같은 결과를 볼 수 있습니다 (DB 불필요)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  integration:
+    name: API 통합 테스트
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: pmcs
+          POSTGRES_PASSWORD: pmcs
+          POSTGRES_DB: pmcs_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U pmcs -d pmcs_test"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - run: yarn test:integration
+
+      - name: 실패 안내
+        if: failure()
+        run: |
+          {
+            echo "### ❌ API 통합 테스트 실패"
+            echo ""
+            echo "API 동작(권한·수신·명령·설정 등)이 기대와 달라졌습니다. 의도한 변경이면 테스트도 함께 고쳐 주세요."
+            echo ""
+            echo "로컬: \`yarn test:db:start\` → \`yarn test:integration\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  e2e:
+    name: 브라우저 E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: pmcs
+          POSTGRES_PASSWORD: pmcs
+          POSTGRES_DB: pmcs_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U pmcs -d pmcs_test"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - name: Playwright 브라우저 설치
+        run: npx playwright install --with-deps chromium
+
+      - run: yarn test:e2e
+
+      - name: 리포트 업로드 (실패 시 스크린샷·trace 포함)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+
+      - name: 실패 안내
+        if: failure()
+        run: |
+          {
+            echo "### ❌ 브라우저 E2E 실패"
+            echo ""
+            echo "이 실행의 **Artifacts → playwright-report** 를 받아 \`npx playwright show-report playwright-report\` 로 열면"
+            echo "실패 시점 스크린샷과 단계별 trace 를 볼 수 있습니다."
+            echo ""
+            echo "로컬: \`yarn test:db:start\` → \`yarn test:e2e\`"
+          } >> "$GITHUB_STEP_SUMMARY"
