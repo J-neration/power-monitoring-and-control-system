@@ -1,8 +1,9 @@
 #!/bin/sh
 #
-# 푸시 "직전"에 타입 검사를 돌려서, 배포가 깨질 코드가 원격에 올라가는 것을 막는다.
-#   - 백엔드 변경 → yarn typecheck  (Railway 배포가 깨지는 것을 막음)
-#   - 프론트엔드 변경 → next build  (Netlify 배포가 깨지는 것을 막음)
+# 푸시 "직전"에 타입 검사와 단위 테스트를 돌려서, 배포가 깨질 코드가 원격에 올라가는 것을 막는다.
+#   - 백엔드 변경 → yarn typecheck + 단위 테스트  (Railway 배포가 깨지는 것을 막음)
+#   - 프론트엔드 변경 → 단위 테스트 + next build  (Netlify 배포가 깨지는 것을 막음)
+# DB 가 필요한 API 통합 테스트·E2E 는 여기서 돌리지 않는다 — GitHub Actions(Tests)가 맡는다.
 # 변경된 쪽만 검사하므로, 한쪽만 건드렸다면 그만큼 빨리 끝난다.
 #
 # 왜 필요한가:
@@ -49,9 +50,21 @@ if [ "$check_backend" = 1 ]; then
     echo "  ✖ 백엔드 타입 에러 — 이대로 푸시하면 Railway 배포가 실패합니다."
     fail=1
   fi
+  echo "[pre-push] 백엔드 단위 테스트 중…"
+  if ! yarn --cwd "$root" workspace @pmcs/backend test; then
+    echo ""
+    echo "  ✖ 백엔드 단위 테스트 실패 — yarn workspace @pmcs/backend test 로 확인하세요."
+    fail=1
+  fi
 fi
 
 if [ "$check_frontend" = 1 ]; then
+  echo "[pre-push] 프론트엔드 단위 테스트 중…"
+  if ! yarn --cwd "$root" workspace @pmcs/frontend test; then
+    echo ""
+    echo "  ✖ 프론트엔드 단위 테스트 실패 — yarn workspace @pmcs/frontend test 로 확인하세요."
+    fail=1
+  fi
   echo "[pre-push] 프론트엔드 빌드 검사 중… (30초~1분 소요)"
   if ! yarn --cwd "$root" workspace @pmcs/frontend build; then
     echo ""
