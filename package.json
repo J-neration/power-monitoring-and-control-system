@@ -16,6 +16,14 @@
     "typecheck": "yarn workspace @pmcs/backend typecheck",
     "hooks:install": "git config core.hooksPath .githooks && echo '[hooks] pre-push 훅 활성화됨 (.githooks)'",
 
+    "test": "yarn test:unit && yarn test:integration",
+    "test:unit": "yarn workspace @pmcs/backend test && yarn workspace @pmcs/frontend test",
+    "test:integration": "yarn workspace @pmcs/backend test:integration",
+    "test:e2e": "playwright test",
+    "test:all": "yarn test && yarn test:e2e",
+    "test:db:start": "docker compose up -d --wait postgres-test",
+    "test:db:stop": "docker compose rm -sf postgres-test",
+
     "db:start": "docker compose up -d postgres",
     "db:stop": "docker compose down",
     "db:migrate:dev": "cross-env NODE_ENV=development yarn workspace @pmcs/backend db:migrate:dev",
@@ -28,6 +36,7 @@
     "db:pull-prod": "node scripts/pull-prod.mjs"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0"
   }

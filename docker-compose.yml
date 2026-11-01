@@ -17,5 +17,26 @@ services:
       timeout: 5s
       retries: 10
 
+  # 통합·E2E 테스트 전용 DB. 테스트가 매번 테이블을 비우므로 개발 DB(5432)와 분리한다.
+  # 데이터는 메모리(tmpfs)에만 두어 컨테이너를 내리면 사라진다.
+  #   yarn test:db:start   /   yarn test:db:stop
+  postgres-test:
+    image: postgres:16
+    container_name: pmcs-postgres-test
+    profiles: ["test"]
+    environment:
+      POSTGRES_USER: pmcs
+      POSTGRES_PASSWORD: pmcs
+      POSTGRES_DB: pmcs_test
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pmcs -d pmcs_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
 volumes:
   pmcs_pgdata:
