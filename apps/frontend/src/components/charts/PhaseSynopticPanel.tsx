@@ -11,6 +11,7 @@ import {
   thdBarColor,
 } from "../../lib/chartTheme";
 import { getPfLevel, getVoltageLevel } from "../../lib/metricThreshold";
+import { isLowLoadCurrent } from "../../lib/lowLoad";
 
 type PhaseRow = {
   label: string;
@@ -22,7 +23,7 @@ type PhaseRow = {
   seriesL1: number[];
   seriesL2: number[];
   seriesL3: number[];
-  strokeFor: (v: number | null | undefined) => string;
+  strokeFor: (v: number | null | undefined, phase?: number) => string;
 };
 
 type ScalarRow = {
@@ -41,8 +42,9 @@ function voltageStroke(v: number | null | undefined) {
   return CHART_COLORS.accent;
 }
 
-function thdStroke(v: number | null | undefined) {
-  return thdBarColor(v ?? null);
+function thdStroke(loadAmps: Array<number | null | undefined>) {
+  return (v: number | null | undefined, phase = 0) =>
+    thdBarColor(v ?? null, isLowLoadCurrent(loadAmps[phase]));
 }
 
 function pfStroke(v: number | null | undefined) {
@@ -84,6 +86,11 @@ export default function PhaseSynopticPanel({
   device: Device;
   readings: TelemetryReading[];
 }) {
+  const thdStrokeFor = thdStroke([
+    device.loadCurrentL1,
+    device.loadCurrentL2,
+    device.loadCurrentL3,
+  ]);
   const phaseRows: PhaseRow[] = [
     {
       label: "전압 (V)",
@@ -129,7 +136,7 @@ export default function PhaseSynopticPanel({
       seriesL1: readingSeries(readings, (r) => r.loadCurrentTHDL1),
       seriesL2: readingSeries(readings, (r) => r.loadCurrentTHDL2),
       seriesL3: readingSeries(readings, (r) => r.loadCurrentTHDL3),
-      strokeFor: thdStroke,
+      strokeFor: thdStrokeFor,
     },
     {
       label: "Grid THD (%)",
@@ -141,7 +148,7 @@ export default function PhaseSynopticPanel({
       seriesL1: readingSeries(readings, (r) => r.gridCurrentTHDL1),
       seriesL2: readingSeries(readings, (r) => r.gridCurrentTHDL2),
       seriesL3: readingSeries(readings, (r) => r.gridCurrentTHDL3),
-      strokeFor: thdStroke,
+      strokeFor: thdStrokeFor,
     },
   ];
 
@@ -202,21 +209,21 @@ export default function PhaseSynopticPanel({
             kind={row.kind}
             suffix={row.suffix}
             series={row.seriesL1}
-            stroke={row.strokeFor(row.l1)}
+            stroke={row.strokeFor(row.l1, 0)}
           />
           <PhaseCell
             value={row.l2}
             kind={row.kind}
             suffix={row.suffix}
             series={row.seriesL2}
-            stroke={row.strokeFor(row.l2)}
+            stroke={row.strokeFor(row.l2, 1)}
           />
           <PhaseCell
             value={row.l3}
             kind={row.kind}
             suffix={row.suffix}
             series={row.seriesL3}
-            stroke={row.strokeFor(row.l3)}
+            stroke={row.strokeFor(row.l3, 2)}
           />
         </div>
       ))}

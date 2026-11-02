@@ -5762,6 +5762,20 @@ main.dashboard-full {
   gap: 5px;
 }
 
+.pf-power-legend-split {
+  width: 1px;
+  height: 14px;
+  padding: 0;
+  flex-shrink: 0;
+  align-self: center;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.device-charts-grid--pf .scada-chart-card-head,
+.device-charts-grid--pf .chart-title {
+  flex-wrap: wrap;
+}
+
 .pf-qty-formula {
   display: inline-flex;
   align-items: center;
@@ -12604,22 +12618,6 @@ body.pmcs-control-room .global-header:hover {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.thd-bar-legend-mark {
-  display: inline-block;
-  width: 8px;
-  height: 12px;
-  border-radius: 2px 2px 0 0;
-  flex-shrink: 0;
-}
-
-.thd-bar-legend-mark--before {
-  background: #94a3b8;
-}
-
-.thd-bar-legend-mark--after {
-  background: #2dd4bf;
 }
 
 .history-area-chart {
