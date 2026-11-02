@@ -399,7 +399,9 @@ export default function AdminSitesPanel({
       );
       showFlash(
         "ok",
-        visible ? "이력 그래프를 보이게 했습니다." : "이력 그래프를 숨겼습니다.",
+        visible
+          ? "고객 계정에 주·월·연 이력을 열었습니다."
+          : "고객 계정에서 주·월·연 이력을 숨겼습니다. 하루 이력은 그대로입니다.",
       );
     } catch {
       showFlash("err", "네트워크 오류");
@@ -990,7 +992,7 @@ export default function AdminSitesPanel({
                             <th>품목명</th>
                             <th>ICCID (USIM)</th>
                             <th />
-                            <th>이력 그래프</th>
+                            <th>주·월·연 이력</th>
                             <th />
                           </tr>
                         </thead>
@@ -1117,7 +1119,8 @@ export default function AdminSitesPanel({
                                 <div
                                   className="admin-history-toggle"
                                   role="group"
-                                  aria-label={`${inst.label} 이력 그래프`}
+                                  aria-label={`${inst.label} 주·월·연 이력`}
+                                  title="고객 계정에만 적용됩니다. 관리자는 항상 일·주·월·연을 봅니다. 하루 이력은 숨기지 않습니다."
                                 >
                                   <button
                                     type="button"

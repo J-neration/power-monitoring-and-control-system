@@ -103,10 +103,9 @@ export default function DeviceDetailTabs({
 }: Props) {
   const [tab, setTab] = useState<Tab>("monitor");
   const router = useRouter();
-  const historyVisible = device.installation.historyVisible === true;
-  const activeTab: Tab =
-    tab === "analytics" && !historyVisible ? "monitor" : tab;
+  const activeTab: Tab = tab;
   const remoteControlTab = isAdmin && activeTab === "settings";
+  const longRangeHistory = isAdmin || device.installation.historyVisible === true;
 
   useWsEvents((msg) => {
     if (
@@ -154,20 +153,18 @@ export default function DeviceDetailTabs({
               </span>
               모니터
             </button>
-            {historyVisible && (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === "analytics"}
-                className={`device-tab-btn${activeTab === "analytics" ? " active" : ""}`}
-                onClick={() => setTab("analytics")}
-              >
-                <span className="device-tab-icon">
-                  <AnalyticsIcon />
-                </span>
-                이력
-              </button>
-            )}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "analytics"}
+              className={`device-tab-btn${activeTab === "analytics" ? " active" : ""}`}
+              onClick={() => setTab("analytics")}
+            >
+              <span className="device-tab-icon">
+                <AnalyticsIcon />
+              </span>
+              이력
+            </button>
             {isAdmin && (
               <button
                 type="button"
@@ -221,13 +218,14 @@ export default function DeviceDetailTabs({
         />
       )}
 
-      {activeTab === "analytics" && historyVisible && (
+      {activeTab === "analytics" && (
         <DeviceHistoryCharts
           installationId={device.installationId}
           readings={historyReadings}
           hours={hours}
           model={device.model}
           faults={faults}
+          longRangeVisible={longRangeHistory}
           facilityTotal={facilityCapacity(
             device.totalCapacity,
             sumModuleCapacity(

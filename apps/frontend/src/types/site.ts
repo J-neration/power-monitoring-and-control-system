@@ -79,7 +79,7 @@ export type Installation = {
   id: string;
   label: string;
   device: Device | null;
-  /** 관리자가 이력 그래프를 보이게 둔 설치지점 */
+  /** 고객 계정에 주·월·연 이력을 연다. 하루 이력은 항상 보인다. */
   historyVisible?: boolean;
 };
 
@@ -104,7 +104,7 @@ export type DeviceWithInstallation = Device & {
       label: string;
       /** 선택 품목명. 예: PAF 400Y-100C */
       moduleName?: string | null;
-      /** 관리자가 이력 그래프를 보이게 둔 설치지점 */
+      /** 고객 계정에 주·월·연 이력을 연다. 하루 이력은 항상 보인다. */
       historyVisible?: boolean;
       site: {
         id: string;

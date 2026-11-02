@@ -115,7 +115,7 @@ export const siteService = {
     });
   },
 
-  /* ─── 이력 그래프 보이기/숨기기 (연간 구독 설치지점) ─ */
+  /* ─── 고객 계정의 주·월·연 이력 보이기/숨기기. 하루 이력은 항상 열린다. ─ */
   setInstallationHistoryVisible: async (
     installationId: string,
     historyVisible: boolean,

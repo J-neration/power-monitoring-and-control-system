@@ -217,10 +217,20 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
     if (!device) {
       return reply.status(404).send({ message: "Device not found" });
     }
-    if (device.installation.historyVisible !== true) {
-      return reply.status(403).send({
-        message: "이 설치지점의 일·주·월·연 이력 그래프는 열려 있지 않습니다.",
-      });
+    const longRangeClosed =
+      request.user.role !== "ADMIN" && device.installation.historyVisible !== true;
+    if (longRangeClosed) {
+      const askedResolution = (query.resolution ?? "auto").trim();
+      const hasEnd = Boolean((query.end ?? query.endDate)?.trim());
+      const dayOnly =
+        resolved.value.period === "day" &&
+        !hasEnd &&
+        (askedResolution === "" || askedResolution === "auto" || askedResolution === "raw");
+      if (!dayOnly) {
+        return reply.status(403).send({
+          message: "이 설치지점의 주·월·연 이력은 고객 계정에 열려 있지 않습니다.",
+        });
+      }
     }
     const history = await getDeviceHistory(id, resolved.value);
     return { ...history, metric: metric ?? null };

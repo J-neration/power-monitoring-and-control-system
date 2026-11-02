@@ -280,7 +280,7 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
     },
   );
 
-  /* ── PATCH /admin/installations/:installationId/history-visible ── 이력 그래프 */
+  /* ── PATCH /admin/installations/:installationId/history-visible ── 고객 계정의 주·월·연 이력 */
   server.patch(
     "/installations/:installationId/history-visible",
     { preHandler: requireAdmin },
