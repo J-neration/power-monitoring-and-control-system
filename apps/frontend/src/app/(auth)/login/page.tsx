@@ -132,7 +132,17 @@ function LoginCard() {
       </form>
 
       <p className="login-footer">
-        PrimeSolution &copy; {new Date().getFullYear()}
+        <span className="login-footer-contact">
+          문의{" "}
+          <a href="tel:031-464-105">031-464-105</a>
+          <span aria-hidden> · </span>
+          <a href="mailto:SPD@primepowersolutions.com">
+            SPD@primepowersolutions.com
+          </a>
+        </span>
+        <span className="login-footer-copy">
+          &copy; {new Date().getFullYear()} PrimeSolution. All rights reserved.
+        </span>
       </p>
     </div>
   );

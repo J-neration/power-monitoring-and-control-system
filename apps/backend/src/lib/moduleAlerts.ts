@@ -1,3 +1,5 @@
+import { WATCH_THRESHOLDS } from "./watchThresholds.js";
+
 /** HMI moduleStatus: 0 standby · 1 start · 2 running · 3 fault · 4 offline */
 const STATUS_LABEL: Record<number, string> = {
   0: "대기",
@@ -32,6 +34,85 @@ export type ModuleStatusAlert = {
   /** 배열에서 빠진 자리는 null */
   from: number | null;
   to: number | null;
+};
+
+/** 대시보드 경보와 같은 값. 주위 40°C, 모듈 90°C. */
+export const AREA_TEMP_ALARM_C = WATCH_THRESHOLDS.areaAlarm;
+export const MODULE_TEMP_ALARM_C = WATCH_THRESHOLDS.moduleAlarm;
+
+export type TemperatureAlert = {
+  kind: "area" | "module";
+  /** 0-based. 주위 1 = 0, 모듈 1 = 0 */
+  index: number;
+  value: number;
+  threshold: number;
+};
+
+/** 센서 오류값. 이력 집계와 같다. */
+const isUsableAreaTemp = (value: number) => Number.isFinite(value) && value > -39.95;
+const isUsableModuleTemp = (value: number) => Number.isFinite(value) && value >= 0;
+
+const risingTemperatureAlerts = (
+  kind: TemperatureAlert["kind"],
+  previous: number[] | null | undefined,
+  next: number[] | null | undefined,
+  threshold: number,
+  usable: (value: number) => boolean,
+): TemperatureAlert[] => {
+  if (!next?.length) return [];
+  const alerts: TemperatureAlert[] = [];
+  for (let i = 0; i < next.length; i++) {
+    const value = next[i]!;
+    if (!usable(value) || value < threshold) continue;
+    const prior = previous && i < previous.length ? previous[i] : undefined;
+    const wasOver = prior != null && usable(prior) && prior >= threshold;
+    if (wasOver) continue;
+    alerts.push({ kind, index: i, value, threshold });
+  }
+  return alerts;
+};
+
+/**
+ * 기준을 넘는 순간만 알린다. 이미 넘은 채로 유지되면 반복하지 않는다.
+ * 기준 아래로 내려간 뒤 다시 넘으면 다시 알린다.
+ * next 가 없으면 그 항목은 이번 수신에 온도가 없던 것으로 보고 건너뛴다.
+ */
+export const detectTemperatureAlerts = (input: {
+  previousArea?: number[] | null;
+  nextArea?: number[] | null;
+  previousModule?: number[] | null;
+  nextModule?: number[] | null;
+}): TemperatureAlert[] => [
+  ...risingTemperatureAlerts(
+    "area",
+    input.previousArea,
+    input.nextArea,
+    AREA_TEMP_ALARM_C,
+    isUsableAreaTemp,
+  ),
+  ...risingTemperatureAlerts(
+    "module",
+    input.previousModule,
+    input.nextModule,
+    MODULE_TEMP_ALARM_C,
+    isUsableModuleTemp,
+  ),
+];
+
+const formatTemp = (value: number) => {
+  const rounded = Math.round(value * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+};
+
+export const temperatureAlertLine = (alert: TemperatureAlert): AlertLine => {
+  const n = alert.index + 1;
+  const kind = alert.kind === "area" ? "주위 온도" : "모듈 온도";
+  const headline = `${kind} ${n} 초과`;
+  return {
+    summary: headline,
+    headline,
+    change: `${formatTemp(alert.value)}°C (기준 ${alert.threshold}°C)`,
+  };
 };
 
 export type AlertLine = {
@@ -168,6 +249,7 @@ export const buildAdminAlertMail = (input: {
     ...input.lines.map(lineText),
     "",
     "모듈 상태가 바뀔 때마다 보냅니다. 통신 끊김은 다시 수신될 때까지 한 번만 보냅니다.",
+    `주위 온도 ${AREA_TEMP_ALARM_C}°C, 모듈 온도 ${MODULE_TEMP_ALARM_C}°C를 넘으면 한 번 보내고, 기준 아래로 내려간 뒤 다시 넘을 때 다시 보냅니다.`,
     "같은 이상 내용은 1시간 동안 반복하지 않습니다.",
     "PQMS 대시보드에서 해당 설비의 모듈 상태와 이상 이력을 확인해 주십시오.",
     "",
@@ -205,7 +287,7 @@ export const buildAdminAlertMail = (input: {
       </table>
       <h2 style="margin:24px 0 8px;font-size:14px;">변경 내용</h2>
       <ol style="margin:0;padding-left:20px;font-size:14px;line-height:1.5;">${items}</ol>
-      <p style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#64748b;">모듈 상태가 바뀔 때마다 보냅니다. 통신 끊김은 다시 수신될 때까지 한 번만 보냅니다. 같은 이상 내용은 1시간 동안 반복하지 않습니다. PQMS 대시보드에서 해당 설비의 모듈 상태와 이상 이력을 확인해 주십시오.</p>
+      <p style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#64748b;">모듈 상태가 바뀔 때마다 보냅니다. 통신 끊김은 다시 수신될 때까지 한 번만 보냅니다. 주위 온도 ${AREA_TEMP_ALARM_C}°C, 모듈 온도 ${MODULE_TEMP_ALARM_C}°C를 넘으면 한 번 보내고, 기준 아래로 내려간 뒤 다시 넘을 때 다시 보냅니다. 같은 이상 내용은 1시간 동안 반복하지 않습니다. PQMS 대시보드에서 해당 설비의 모듈 상태와 이상 이력을 확인해 주십시오.</p>
     </div>
   </div>
 </body>

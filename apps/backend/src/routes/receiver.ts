@@ -16,9 +16,11 @@ import { matchReceiverApiKey } from "../lib/receiverApiKey.js";
 import * as viewingState from "../lib/viewingState.js";
 import {
   detectModuleStatusAlerts,
+  detectTemperatureAlerts,
   faultAlertLine,
   faultCodeAlertLine,
   statusAlertLine,
+  temperatureAlertLine,
   type AlertLine,
 } from "../lib/moduleAlerts.js";
 
@@ -434,9 +436,12 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       }
     }
 
-    const previousModuleStatus = identity.installationId
-      ? await deviceService.getStoredModuleStatus(identity.installationId)
-      : null;
+    const [previousModuleStatus, previousTemps] = identity.installationId
+      ? await Promise.all([
+          deviceService.getStoredModuleStatus(identity.installationId),
+          deviceService.getStoredTemperatures(identity.installationId),
+        ])
+      : [null, null];
 
     const device = await deviceService.upsertFromPayload({
       device_id: identity.installationId ?? undefined,
@@ -527,6 +532,14 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       });
       for (const fault of freshFaults) {
         if (!covered.has(fault.module)) lines.push(faultAlertLine(fault.module, fault.desc));
+      }
+      for (const alert of detectTemperatureAlerts({
+        previousArea: previousTemps?.areaTemp,
+        nextArea: device?.areaTemp,
+        previousModule: previousTemps?.moduleTemp,
+        nextModule: device?.moduleTemp,
+      })) {
+        lines.push(temperatureAlertLine(alert));
       }
       mailAdminAlerts(identity.installationId, lines);
     }

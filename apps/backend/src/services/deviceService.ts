@@ -450,6 +450,20 @@ export const deviceService = {
     return row?.moduleStatus ?? null;
   },
 
+  /** 수신 직전 온도. 행이 없으면 둘 다 null. */
+  getStoredTemperatures: async (
+    installationId: string,
+  ): Promise<{ areaTemp: number[] | null; moduleTemp: number[] | null }> => {
+    const row = await prisma.device.findUnique({
+      where: { installationId },
+      select: { areaTemp: true, moduleTemp: true },
+    });
+    return {
+      areaTemp: row?.areaTemp ?? null,
+      moduleTemp: row?.moduleTemp ?? null,
+    };
+  },
+
   /* =====================================================
    * Main entry: upsert telemetry from HMI payload
    * - Ensures Site/Installation exist (from registry)
