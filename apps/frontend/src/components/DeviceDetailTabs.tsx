@@ -15,6 +15,7 @@ import DeviceWatchSummaryCard from "./DeviceWatchSummaryCard";
 import DeviceSideIdentity from "./DeviceSideIdentity";
 import type { DeviceWithInstallation } from "../types/site";
 import type { TelemetryReading } from "../types/site";
+import type { TimedReading } from "../lib/opsSavings";
 import type { FaultEvent } from "../lib/api";
 import { facilityCapacity, sumModuleCapacity } from "../lib/ratedKvar";
 import {
@@ -84,6 +85,8 @@ const FaultIcon = () => (
 type Props = {
   device: DeviceWithInstallation;
   readings: TelemetryReading[];
+  /** 절감 카드용 최근 30일 시간 평균. 24시간 차트 이력과 별개다. */
+  savingsReadings?: TimedReading[];
   hours: number;
   /** ADMIN만 설정·전원 제어 + Fault 이력 표시 */
   isAdmin?: boolean;
@@ -96,6 +99,7 @@ type Props = {
 export default function DeviceDetailTabs({
   device,
   readings,
+  savingsReadings = [],
   hours,
   isAdmin = false,
   adminUsername,
@@ -215,6 +219,7 @@ export default function DeviceDetailTabs({
         <DeviceMonitorBoard
           device={device}
           readings={readings}
+          savingsReadings={savingsReadings}
         />
       )}
 

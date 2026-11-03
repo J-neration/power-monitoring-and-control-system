@@ -125,12 +125,17 @@ body {
   top: 50%;
   transform: translate(-50%, -50%);
   margin: 0;
-  font-size: 16px;
+  font-family: var(--font-logo), "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  font-size: 18px;
   font-weight: 600;
-  letter-spacing: 0.01em;
-  color: rgba(236, 240, 244, 0.82);
+  letter-spacing: 0.14em;
+  line-height: 1;
   white-space: nowrap;
   pointer-events: none;
+  color: var(--pmcs-accent-bright);
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .global-header-sep {
@@ -3017,10 +3022,18 @@ main.dashboard-full {
 
 .ops-stat-hint {
   font-size: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
   opacity: 0.7;
+}
+
+.ops-stat-hint {
+  white-space: normal;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .ops-stat-num + .ops-stat-hint {
@@ -3327,6 +3340,13 @@ main.dashboard-full {
   font-size: 11px;
   line-height: 1.4;
   color: rgba(255, 255, 255, 0.42);
+}
+
+.ops-info-pop-caption {
+  margin: 10px 0 0;
+  font-size: 10px;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.38);
 }
 
 .ops-info-pop-sources {
