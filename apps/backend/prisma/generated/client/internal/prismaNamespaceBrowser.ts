@@ -65,7 +65,8 @@ export const ModelName = {
   AggregationLog: 'AggregationLog',
   FaultEvent: 'FaultEvent',
   ModuleFaultState: 'ModuleFaultState',
-  DeviceCommand: 'DeviceCommand'
+  DeviceCommand: 'DeviceCommand',
+  OtaFile: 'OtaFile'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -377,6 +378,20 @@ export const DeviceCommandScalarFieldEnum = {
 } as const
 
 export type DeviceCommandScalarFieldEnum = (typeof DeviceCommandScalarFieldEnum)[keyof typeof DeviceCommandScalarFieldEnum]
+
+
+export const OtaFileScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  size: 'size',
+  sha256: 'sha256',
+  data: 'data',
+  downloadToken: 'downloadToken',
+  uploadedBy: 'uploadedBy',
+  createdAt: 'createdAt'
+} as const
+
+export type OtaFileScalarFieldEnum = (typeof OtaFileScalarFieldEnum)[keyof typeof OtaFileScalarFieldEnum]
 
 
 export const SortOrder = {
