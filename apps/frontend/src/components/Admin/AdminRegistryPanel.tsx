@@ -23,7 +23,7 @@ function formatApiError(status: number, message?: string) {
     message?.toLowerCase().includes("not found") &&
     message.includes("/admin/registry")
   ) {
-    return "백엔드에 마스터 데이터 API가 없습니다. 로컬 개발 시 .env.local의 NEXT_PUBLIC_API_BASE를 http://localhost:4000 으로 바꾸고 yarn dev로 백엔드를 재시작하거나, Railway에 최신 백엔드를 배포해 주세요.";
+    return "백엔드에 마스터 데이터 API가 없습니다. 로컬 개발 시 .env.local의 NEXT_PUBLIC_API_BASE를 http://localhost:4000 으로 바꾸고 yarn dev로 백엔드를 재시작하거나, 최신 백엔드를 배포해 주세요.";
   }
   return message ?? `오류 (${status})`;
 }

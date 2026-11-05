@@ -10,7 +10,7 @@ const IP_MAX_FAILURES = 30;
 const IP_WINDOW_MS = 15 * 60 * 1000;
 const ipBuckets = new Map<string, { failures: number; windowStart: number }>();
 
-/** 앞단 프록시 홉 수 (AWS ALB 뒤 = 1). 미설정이면 Netlify 기준의 기존 판별을 쓴다. */
+/** 앞단 프록시 홉 수 (AWS ALB 뒤 = 1, dev·운영 모두 설정). 미설정(로컬)이면 헤더의 첫 항목을 쓴다. */
 const TRUSTED_PROXY_HOPS = Number(process.env.TRUSTED_PROXY_HOPS) || 0;
 
 const clientIp = (request: NextRequest): string => {
@@ -23,7 +23,6 @@ const clientIp = (request: NextRequest): string => {
     return hops.at(-TRUSTED_PROXY_HOPS) ?? "";
   }
   return (
-    request.headers.get("x-nf-client-connection-ip") ??
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     request.headers.get("x-real-ip") ??
     ""

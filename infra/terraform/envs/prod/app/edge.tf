@@ -18,7 +18,7 @@ module "edge" {
   api_port              = local.api_port
   kms_key_arn           = aws_kms_key.app.arn
 
-  # 현장 장비는 Railway 중계를 거쳐 들어오므로 WAF 에는 모두 Railway IP 몇 개로 보인다.
+  # 현장 장비는 LTE 통신사 NAT 를 거쳐 들어오므로 WAF 에는 여러 장비가 같은 IP 몇 개로 보인다.
   # 장비 10여 대 × (10분마다 수신 + 관리자 화면이 열려 있을 때 1분마다 명령 조회)라 5분에 100건을 넘지 않는다.
   # 기본값 600 은 그 합계에도 충분하다. 장비 전송 주기를 줄이면(실시간) 이 한도부터 올려야 한다.
   enable_waf          = true

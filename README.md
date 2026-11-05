@@ -4,7 +4,8 @@ Full-stack HMI 모니터링 및 제어 애플리케이션입니다.
 
 - **Frontend**: Next.js (React) — port `3000`
 - **Backend**: Fastify (Node.js) — port `4000`
-- **Database**: PostgreSQL — Neon (클라우드, 팀 공유)
+- **Database**: PostgreSQL — 운영은 AWS RDS, 개발은 로컬 Docker 또는 dev 서버
+- **Infra**: AWS (운영 ECS·ALB·RDS, dev 서버 1대) — `infra/terraform/`
 - **ORM**: Prisma
 - **Language**: TypeScript
 
@@ -31,17 +32,20 @@ npm install
 
 | 파일 | 용도 |
 |------|------|
-| `apps/backend/.env.development` | 로컬 백엔드 · Neon **dev** |
+| `apps/backend/.env.development` | 로컬 백엔드 · 로컬 Docker DB |
 | `apps/frontend/.env.local` | 로컬 프론트 · API 주소 |
-| `apps/backend/.env.local` | (선택) `db:pull-prod` 용 |
 
-운영 값은 파일에 넣지 않습니다. Railway / Netlify 대시보드에서만 관리합니다. 자세한 내용은 `docs/env-setup.md`를 보세요.
+운영 값은 파일에 넣지 않습니다. AWS(Secrets Manager·ECS 작업 정의, dev 는 SSM)에서만 관리합니다. 자세한 내용은 `docs/env-setup.md`를 보세요.
 
-### 3. Prisma 초기화 (최초 1회)
+### 3. 로컬 DB (최초 1회)
 
 ```bash
-cd apps/backend && npx prisma migrate deploy && cd ../..
+yarn db:start          # Docker 로 PostgreSQL (docker-compose.yml)
+yarn db:migrate:dev    # 스키마 적용
+yarn db:seed           # (선택) 샘플 데이터
 ```
+
+dev 서버의 데이터로 개발하려면 `yarn dev:aws-db` 를 씁니다 (`scripts/dev-box/README.md`).
 
 ### 4. 앱 실행
 
@@ -73,17 +77,15 @@ yarn test:e2e        # 브라우저 E2E (Playwright)
 
 ## 데이터베이스
 
-### 연결 정보
+### 어디에 있나
 
-데이터는 **Neon 클라우드 PostgreSQL**에 저장됩니다. 팀원 모두 같은 DB를 바라보며, 장비가 데이터를 전송하면 즉시 모두에게 반영됩니다.
+| 환경 | DB | 접속 |
+|------|----|------|
+| 운영 | AWS RDS PostgreSQL (`pmcs-prod-db`, 서울) | 인터넷에서 직접 접속 불가. 터널 + 조회 전용 계정 (`scripts/aws-migrate/README.md` "데이터 둘러보기") |
+| dev  | dev 서버(EC2)의 PostgreSQL 컨테이너 | `yarn dev:aws-db` (`scripts/dev-box/README.md`) |
+| 로컬 | Docker (`yarn db:start`) | `apps/backend/.env.development` 의 `DATABASE_URL` |
 
-| 항목       | 값                                                |
-|------------|---------------------------------------------------|
-| 종류       | PostgreSQL (Neon 클라우드)                        |
-| Region     | Asia Pacific (Singapore)                          |
-| Connection | `apps/backend/.env.development`의 `DATABASE_URL` |
-
-> `.env` 파일은 gitignore 처리되어 있습니다. 연결 문자열을 팀 내에서 안전하게 공유하세요 (Slack DM, 1Password 등).
+2026-10-28 까지 쓰던 Neon 은 2026-11-05 에 삭제했습니다. 마지막 덤프는 `s3://pmcs-prod-archive-887664351558/neon/` 에 있습니다.
 
 ### 데이터 확인 방법
 
@@ -96,9 +98,9 @@ npx prisma studio
 
 브라우저에서 `http://localhost:5555` 으로 접속하면 모든 테이블을 GUI로 확인·편집할 수 있습니다.
 
-#### 방법 2 — Neon 웹 콘솔
+#### 방법 2 — DB 프로그램 (TablePlus 등)
 
-Neon 대시보드 → 프로젝트 선택 → **SQL Editor** 탭에서 직접 쿼리 실행 가능합니다.
+로컬은 `localhost:5432` (`pmcs`/`pmcs`), 운영은 터널(`localhost:15432`) + 조회 전용 계정으로 접속해 쿼리를 실행합니다.
 
 유용한 쿼리:
 
@@ -138,7 +140,7 @@ Site (고객사/현장)
 
 | 파일 | 주요 항목 |
 |------|-----------|
-| `apps/backend/.env.development` | `DATABASE_URL` (Neon dev), `JWT_SECRET`, `RECEIVER_API_KEY` |
+| `apps/backend/.env.development` | `DATABASE_URL` (로컬 Docker), `JWT_SECRET`, `RECEIVER_API_KEY` |
 | `apps/frontend/.env.local` | `NEXT_PUBLIC_API_BASE`, `COMMAND_API_BASE` |
 
 ---

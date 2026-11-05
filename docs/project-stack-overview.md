@@ -1,5 +1,8 @@
 # PQMS 프로젝트 기술 스택 & 서비스 가이드
 
+> **2026-11-05 기록용 문서:** 여기 나오는 Netlify·Railway·Neon 은 2026-10-28 AWS 로 옮긴 뒤 2026-11-05 에 해지했습니다.
+> 지금 구성은 [`infra/terraform/README.md`](../infra/terraform/README.md), 배포는 [`scripts/aws-deploy/README.md`](../scripts/aws-deploy/README.md)·[`scripts/dev-box/README.md`](../scripts/dev-box/README.md), 환경 변수는 [`env-setup.md`](env-setup.md) 를 보세요.
+
 > 작성일: 2026-04-01
 > 대상: PQMS 개발팀 (프로젝트에 새로 합류하는 동료용)
 

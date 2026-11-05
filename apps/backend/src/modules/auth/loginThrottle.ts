@@ -1,4 +1,4 @@
-/** 계정별 로그인 실패 제한. Next BFF를 거치면 백엔드 IP가 Netlify로 뭉개지므로 username 기준이 맞다. */
+/** 계정별 로그인 실패 제한. Next BFF를 거치면 백엔드에는 프론트 서버 IP만 보이므로 username 기준이 맞다. */
 export const LOGIN_MAX_FAILURES = 5;
 export const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 

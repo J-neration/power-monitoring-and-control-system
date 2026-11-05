@@ -1,15 +1,15 @@
-# AWS ECS 용 백엔드 이미지. Railway 배포(저장소 루트 Dockerfile)와는 무관하다.
+# AWS ECS 용 백엔드 이미지 (dev 서버·운영 공통).
 # 빌드 컨텍스트는 저장소 루트 (같은 폴더의 Dockerfile.dockerignore 가 적용됨):
 #   docker build --platform linux/arm64 -f apps/backend/Dockerfile .
 #
-# 루트 Dockerfile(Railway)과 다른 점:
+# 설계:
 #   - 실행 이미지에는 운영 의존성만 둔다. 개발 도구·프론트엔드 의존성·yarn 캐시가 빠져
 #     약 5GB → 수백 MB 로 준다 (ECR 보관 비용, Fargate 기동 시간).
 #   - 부팅 시 마이그레이션을 하지 않는다. 배포 때 별도 ECS 태스크(api-migrate)가 실행한다.
 #   - root 가 아닌 node 사용자로 실행한다.
 # 환경별 값과 시크릿은 이미지에 굽지 않고 ECS 작업 정의에서 넣는다.
 
-# ── 1. 빌드: 루트 Dockerfile 과 같은 방식으로 설치·컴파일 ─────────────────
+# ── 1. 빌드: 전체 워크스페이스 설치·컴파일 ───────────────────────────────
 FROM node:22.23.4-trixie-slim AS build
 WORKDIR /app
 

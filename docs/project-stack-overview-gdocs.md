@@ -1,5 +1,7 @@
 PQMS 인프라 및 기술 스택 구성 보고서
 
+[2026-11-05 기록용] 이 문서의 Netlify·Railway·Neon 은 2026-11-05 에 해지했습니다. 지금 구성은 AWS 입니다(infra/terraform/README.md).
+
 문서 정보
   작성일: 2026-04-01
   작성자: PQMS 개발팀
