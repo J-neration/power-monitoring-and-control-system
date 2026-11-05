@@ -9,9 +9,37 @@ import { settingsService } from "../services/settingsService.js";
 import * as viewingState from "../lib/viewingState.js";
 import { wsHub } from "../lib/wsHub.js";
 import { resolveHistoryQuery } from "../lib/historyRange.js";
-import { ARRAY_METRICS, SCALAR_METRICS } from "../lib/telemetryAggregate.js";
+import { ARRAY_METRICS, SCALAR_METRICS, type HistoryPoint } from "../lib/telemetryAggregate.js";
 import { retentionConfig } from "../lib/retentionConfig.js";
 import { getDeviceHistory } from "../services/summaryService.js";
+
+function metricNumber(value: number | Array<number | null> | null | undefined): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/** 절감 계산에 쓰는 시간 평균만 남긴다. */
+function slimOpsSample(point: HistoryPoint) {
+  const peak = metricNumber(point.metricMax?.uncompP);
+  const uncompP = metricNumber(point.uncompP);
+  return {
+    recordedAt: point.recordedAt,
+    uncompP,
+    uncompPMax: peak ?? uncompP,
+    tpf1: metricNumber(point.tpf1),
+    tpf2: metricNumber(point.tpf2),
+    dpf1: metricNumber(point.dpf1),
+    dpf2: metricNumber(point.dpf2),
+    loadCurrentTHDL1: metricNumber(point.loadCurrentTHDL1),
+    loadCurrentTHDL2: metricNumber(point.loadCurrentTHDL2),
+    loadCurrentTHDL3: metricNumber(point.loadCurrentTHDL3),
+    gridCurrentTHDL1: metricNumber(point.gridCurrentTHDL1),
+    gridCurrentTHDL2: metricNumber(point.gridCurrentTHDL2),
+    gridCurrentTHDL3: metricNumber(point.gridCurrentTHDL3),
+    vL1: metricNumber(point.vL1),
+    vL2: metricNumber(point.vL2),
+    vL3: metricNumber(point.vL3),
+  };
+}
 
 const historyPreHandler = async (request: FastifyRequest, reply: FastifyReply) => {
   const authHeader = request.headers.authorization;
@@ -217,8 +245,49 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
     if (!device) {
       return reply.status(404).send({ message: "Device not found" });
     }
+    const longRangeClosed =
+      request.user.role !== "ADMIN" && device.installation.historyVisible !== true;
+    if (longRangeClosed) {
+      const askedResolution = (query.resolution ?? "auto").trim();
+      const hasEnd = Boolean((query.end ?? query.endDate)?.trim());
+      const dayOnly =
+        resolved.value.period === "day" &&
+        !hasEnd &&
+        (askedResolution === "" || askedResolution === "auto" || askedResolution === "raw");
+      if (!dayOnly) {
+        return reply.status(403).send({
+          message: "이 설치지점의 주·월·연 이력은 고객 계정에 열려 있지 않습니다.",
+        });
+      }
+    }
     const history = await getDeviceHistory(id, resolved.value);
     return { ...history, metric: metric ?? null };
+  });
+
+  /**
+   * 최근 30일 시간 평균. 절감 카드 전용.
+   * 이력 탭의 주·월 공개 여부와 무관하게, 장치를 볼 수 있으면 읽는다.
+   */
+  server.get("/:id/ops-samples", { preHandler: authenticate }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const device = await deviceService.get({ id }, request.user);
+    if (!device) {
+      return reply.status(404).send({ message: "Device not found" });
+    }
+    const to = new Date();
+    const from = new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const history = await getDeviceHistory(id, {
+      period: "month",
+      aggregation: "avg",
+      resolution: "hourly",
+      from,
+      to,
+    });
+    const samples = history.points
+      .filter((point) => !point.gap)
+      .map((point) => slimOpsSample(point))
+      .filter((point) => point.uncompP != null || point.tpf1 != null || point.dpf1 != null);
+    return { samples, from: history.from, to: history.to, source: history.source };
   });
 
   server.get("/:id/readings", { preHandler: authenticate }, async (request, reply) => {

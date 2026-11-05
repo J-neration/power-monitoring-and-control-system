@@ -115,6 +115,9 @@ model Installation {
   /// 설치 장비 품목명 (예: PAF 400Y-100C). 선택 입력이며 나중에 관리자 화면에서 추가·수정할 수 있다.
   moduleName String?
 
+  /// 고객 계정의 주·월·연 이력. 하루(24시간) 이력은 항상 보이고, 관리자는 이 값과 관계없이 전부 본다.
+  historyVisible Boolean @default(false)
+
   /// Legacy — HMI ignores. Always leave false; do not use for settings upload.
   webSettingsActive      Boolean   @default(false)
   /// Settings 탭 heartbeat 시각 (legacy, unused)

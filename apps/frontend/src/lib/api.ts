@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { Device, DeviceWithInstallation, Site, TelemetryReading } from "../types/site";
+import type { TimedReading } from "./opsSavings";
 import type {
   ClientOptionFromApi,
   RoleOptionFromApi,
@@ -147,6 +148,16 @@ export const fetchReadings = async (
   if (!response?.ok) return [];
   const data = (await response.json()) as { readings: TelemetryReading[] };
   return data.readings ?? [];
+};
+
+/** 절감 카드용 최근 30일 시간 평균. 실패하면 연간 숫자는 집계 중으로 둔다. */
+export const fetchOpsSamples = async (installationId: string): Promise<TimedReading[]> => {
+  const response = await requestApi(
+    `/devices/${encodeURIComponent(installationId)}/ops-samples`,
+  );
+  if (!response?.ok) return [];
+  const data = (await response.json()) as { samples?: TimedReading[] };
+  return data.samples ?? [];
 };
 
 export const fetchDevice = async (installationId: string) => {

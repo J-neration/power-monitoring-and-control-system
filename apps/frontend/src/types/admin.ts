@@ -17,6 +17,8 @@ export type SiteListInstallationFromApi = {
   moduleName?: string | null;
   /** ADMIN 토큰일 때만 포함 */
   iccid?: string | null;
+  /** 고객 계정에 주·월·연 이력을 연다. 하루 이력과 관리자 화면은 항상 전부 보인다. */
+  historyVisible?: boolean;
   device: unknown | null;
 };
 

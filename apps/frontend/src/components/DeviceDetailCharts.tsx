@@ -23,7 +23,9 @@ import {
   CHART_H,
   GRID,
   PF_QTY,
+  THD_LOW_LOAD_COLOR,
   thdBarColor,
+  thdDangerLineMuted,
   TOOLTIP_CURSOR,
   TOOLTIP_ITEM_STYLE,
   TOOLTIP_LABEL_STYLE,
@@ -39,24 +41,14 @@ import PfNeedleGauge from "./charts/PfNeedleGauge";
 import PfQtyMix from "./charts/PfQtyMix";
 import ThdArcGauge from "./charts/ThdArcGauge";
 import { ThdInfoTip } from "./ThdLoadNotice";
+import { isLowLoadCurrent } from "../lib/lowLoad";
 
 export type DeviceChartSection = "pf" | "thd" | "unbalance" | "thermal";
 function ThdBarLegend() {
-  const items = [
-    { label: "보상 전", swatch: "before" },
-    { label: "보상 후", swatch: "after" },
-  ];
   return (
     <ul className="thd-bar-legend">
-      {items.map((item) => (
-        <li key={item.label}>
-          <span
-            className={`thd-bar-legend-mark thd-bar-legend-mark--${item.swatch}`}
-            aria-hidden
-          />
-          {item.label}
-        </li>
-      ))}
+      <li>왼쪽 · 보상 전</li>
+      <li>오른쪽 · 보상 후</li>
     </ul>
   );
 }
@@ -150,6 +142,38 @@ function powerBarFill(name: string, which: "before" | "after"): string {
   return which === "after" ? PF_QTY.other : PF_QTY.otherDim;
 }
 
+function ThdAxisTick({
+  x = 0,
+  y = 0,
+  payload,
+}: {
+  x?: number;
+  y?: number;
+  payload?: { value?: string };
+}) {
+  const raw = String(payload?.value ?? "");
+  const [phase, note] = raw.split(" · ");
+  return (
+    <text
+      x={x}
+      y={y}
+      textAnchor="middle"
+      fill="rgba(255,255,255,0.45)"
+      fontSize={11}
+      fontFamily="JetBrains Mono, Consolas, monospace"
+    >
+      <tspan x={x} dy={12}>
+        {phase}
+      </tspan>
+      {note ? (
+        <tspan x={x} dy={12} fill={THD_LOW_LOAD_COLOR} fontSize={9}>
+          {note}
+        </tspan>
+      ) : null}
+    </text>
+  );
+}
+
 function PowerAxisTick({
   x,
   y,
@@ -208,41 +232,30 @@ export default function DeviceDetailCharts({
     보상후: iGridDev[i]?.pct ?? null,
   }));
 
-  const thdData = [
-    {
-      phase: "L1",
-      보상전:
-        device.loadCurrentTHDL1 != null
-          ? Math.round(device.loadCurrentTHDL1 * 10) / 10
-          : null,
-      보상후:
-        device.gridCurrentTHDL1 != null
-          ? Math.round(device.gridCurrentTHDL1 * 10) / 10
-          : null,
-    },
-    {
-      phase: "L2",
-      보상전:
-        device.loadCurrentTHDL2 != null
-          ? Math.round(device.loadCurrentTHDL2 * 10) / 10
-          : null,
-      보상후:
-        device.gridCurrentTHDL2 != null
-          ? Math.round(device.gridCurrentTHDL2 * 10) / 10
-          : null,
-    },
-    {
-      phase: "L3",
-      보상전:
-        device.loadCurrentTHDL3 != null
-          ? Math.round(device.loadCurrentTHDL3 * 10) / 10
-          : null,
-      보상후:
-        device.gridCurrentTHDL3 != null
-          ? Math.round(device.gridCurrentTHDL3 * 10) / 10
-          : null,
-    },
-  ];
+  const thdData = (
+    [
+      ["L1", device.loadCurrentTHDL1, device.gridCurrentTHDL1, device.loadCurrentL1],
+      ["L2", device.loadCurrentTHDL2, device.gridCurrentTHDL2, device.loadCurrentL2],
+      ["L3", device.loadCurrentTHDL3, device.gridCurrentTHDL3, device.loadCurrentL3],
+    ] as const
+  ).map(([phase, before, after, amps]) => {
+    const lowLoad = isLowLoadCurrent(amps);
+    const round = (v: number | null | undefined) =>
+      v != null && Number.isFinite(v) ? Math.round(v * 10) / 10 : null;
+    return {
+      phase: lowLoad ? `${phase} · 저부하` : phase,
+      lowLoad,
+      보상전: round(before),
+      보상후: round(after),
+    };
+  });
+  const muteThdDanger = thdDangerLineMuted(
+    thdData.map((row) => ({
+      before: row.보상전,
+      after: row.보상후,
+      lowLoad: row.lowLoad,
+    })),
+  );
 
   const powerData = [
     {
@@ -446,7 +459,6 @@ export default function DeviceDetailCharts({
       {show(["thd"]) && (
         <ChartCard
           title="전류 THD (%)"
-          subtitle="— 보상 전 / 후"
           large={!compactMode}
           fill={fill}
           legend={<ThdBarLegend />}
@@ -456,10 +468,21 @@ export default function DeviceDetailCharts({
               <ResponsiveContainer width="100%" height={plotH}>
                 <BarChart
                   data={thdData}
-                  margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
+                  margin={{
+                    top: 8,
+                    right: 12,
+                    left: 0,
+                    bottom: thdData.some((row) => row.lowLoad) ? 20 : 8,
+                  }}
                 >
                   <CartesianGrid {...GRID} />
-                  <XAxis dataKey="phase" {...AXIS} tickMargin={8} />
+                  <XAxis
+                    dataKey="phase"
+                    {...AXIS}
+                    interval={0}
+                    tick={<ThdAxisTick />}
+                    tickMargin={8}
+                  />
                   <YAxis
                     {...AXIS}
                     allowDecimals={false}
@@ -478,27 +501,35 @@ export default function DeviceDetailCharts({
                     labelStyle={TOOLTIP_LABEL_STYLE}
                     itemStyle={TOOLTIP_ITEM_STYLE}
                     cursor={TOOLTIP_CURSOR}
-                    formatter={(v) => [withChartUnit(String(v ?? ""), "%")]}
+                    formatter={(v, name) => {
+                      const series =
+                        name === "보상전" || name === "보상 전"
+                          ? "보상 전"
+                          : "보상 후";
+                      return [withChartUnit(String(v ?? ""), "%"), series];
+                    }}
                   />
-                  <ChartThresholdLines kind="thd" />
+                  <ChartThresholdLines kind="thd" muteDanger={muteThdDanger} />
                   <Bar
                     dataKey="보상전"
+                    name="보상 전"
                     fill={CHART_COLORS.accent}
                     radius={[4, 4, 0, 0]}
                     barSize={28}
                   >
                     {thdData.map((entry, i) => (
-                      <Cell key={i} fill={thdBarColor(entry.보상전)} />
+                      <Cell key={i} fill={thdBarColor(entry.보상전, entry.lowLoad)} />
                     ))}
                   </Bar>
                   <Bar
                     dataKey="보상후"
+                    name="보상 후"
                     fill={CHART_COLORS.accent}
                     radius={[4, 4, 0, 0]}
                     barSize={28}
                   >
                     {thdData.map((entry, i) => (
-                      <Cell key={i} fill={thdBarColor(entry.보상후)} />
+                      <Cell key={i} fill={thdBarColor(entry.보상후, entry.lowLoad)} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -513,11 +544,13 @@ export default function DeviceDetailCharts({
       {show(["pf"]) && (
         <ChartCard
           title="전력"
-          subtitle="— 보상 전후 비교"
           large={!compactMode}
           fill={fill}
           legend={
             <ul className="pf-power-legend">
+              <li>왼쪽 · 보상 전</li>
+              <li>오른쪽 · 보상 후</li>
+              <li className="pf-power-legend-split" aria-hidden />
               <li>
                 <span className="pf-qty-pill pf-qty-pill--q">Q</span>
                 DPF
@@ -555,7 +588,7 @@ export default function DeviceDetailCharts({
                     labelStyle={TOOLTIP_LABEL_STYLE}
                     itemStyle={TOOLTIP_ITEM_STYLE}
                     cursor={TOOLTIP_CURSOR}
-                    formatter={(value, _name, item) => {
+                    formatter={(value, name, item) => {
                       const row = String(
                         (item as { payload?: { name?: string } })?.payload
                           ?.name ?? "",
@@ -565,7 +598,11 @@ export default function DeviceDetailCharts({
                         : row.includes("kW")
                           ? "kW"
                           : "kvar";
-                      return [withChartUnit(String(value ?? ""), unit)];
+                      const series =
+                        name === "보상전" || name === "보상 전"
+                          ? "보상 전"
+                          : "보상 후";
+                      return [withChartUnit(String(value ?? ""), unit), series];
                     }}
                   />
                   <ReferenceLine
@@ -573,7 +610,12 @@ export default function DeviceDetailCharts({
                     stroke="rgba(255,255,255,0.25)"
                     strokeWidth={1}
                   />
-                  <Bar dataKey="보상전" radius={[4, 4, 0, 0]} barSize={28}>
+                  <Bar
+                    dataKey="보상전"
+                    name="보상 전"
+                    radius={[4, 4, 0, 0]}
+                    barSize={28}
+                  >
                     {powerData.map((entry) => (
                       <Cell
                         key={`pre-${entry.name}`}
@@ -581,7 +623,12 @@ export default function DeviceDetailCharts({
                       />
                     ))}
                   </Bar>
-                  <Bar dataKey="보상후" radius={[4, 4, 0, 0]} barSize={28}>
+                  <Bar
+                    dataKey="보상후"
+                    name="보상 후"
+                    radius={[4, 4, 0, 0]}
+                    barSize={28}
+                  >
                     {powerData.map((entry) => (
                       <Cell
                         key={`post-${entry.name}`}

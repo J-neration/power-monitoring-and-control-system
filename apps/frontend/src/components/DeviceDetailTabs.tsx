@@ -15,6 +15,7 @@ import DeviceWatchSummaryCard from "./DeviceWatchSummaryCard";
 import DeviceSideIdentity from "./DeviceSideIdentity";
 import type { DeviceWithInstallation } from "../types/site";
 import type { TelemetryReading } from "../types/site";
+import type { TimedReading } from "../lib/opsSavings";
 import type { FaultEvent } from "../lib/api";
 import { facilityCapacity, sumModuleCapacity } from "../lib/ratedKvar";
 import {
@@ -84,6 +85,8 @@ const FaultIcon = () => (
 type Props = {
   device: DeviceWithInstallation;
   readings: TelemetryReading[];
+  /** 절감 카드용 최근 30일 시간 평균. 24시간 차트 이력과 별개다. */
+  savingsReadings?: TimedReading[];
   hours: number;
   /** ADMIN만 설정·전원 제어 + Fault 이력 표시 */
   isAdmin?: boolean;
@@ -96,6 +99,7 @@ type Props = {
 export default function DeviceDetailTabs({
   device,
   readings,
+  savingsReadings = [],
   hours,
   isAdmin = false,
   adminUsername,
@@ -103,8 +107,9 @@ export default function DeviceDetailTabs({
 }: Props) {
   const [tab, setTab] = useState<Tab>("monitor");
   const router = useRouter();
-
-  const remoteControlTab = isAdmin && tab === "settings";
+  const activeTab: Tab = tab;
+  const remoteControlTab = isAdmin && activeTab === "settings";
+  const longRangeHistory = isAdmin || device.installation.historyVisible === true;
 
   useWsEvents((msg) => {
     if (
@@ -143,8 +148,8 @@ export default function DeviceDetailTabs({
             <button
               type="button"
               role="tab"
-              aria-selected={tab === "monitor"}
-              className={`device-tab-btn${tab === "monitor" ? " active" : ""}`}
+              aria-selected={activeTab === "monitor"}
+              className={`device-tab-btn${activeTab === "monitor" ? " active" : ""}`}
               onClick={() => setTab("monitor")}
             >
               <span className="device-tab-icon">
@@ -155,8 +160,8 @@ export default function DeviceDetailTabs({
             <button
               type="button"
               role="tab"
-              aria-selected={tab === "analytics"}
-              className={`device-tab-btn${tab === "analytics" ? " active" : ""}`}
+              aria-selected={activeTab === "analytics"}
+              className={`device-tab-btn${activeTab === "analytics" ? " active" : ""}`}
               onClick={() => setTab("analytics")}
             >
               <span className="device-tab-icon">
@@ -168,8 +173,8 @@ export default function DeviceDetailTabs({
               <button
                 type="button"
                 role="tab"
-                aria-selected={tab === "settings"}
-                className={`device-tab-btn${tab === "settings" ? " active" : ""}`}
+                aria-selected={activeTab === "settings"}
+                className={`device-tab-btn${activeTab === "settings" ? " active" : ""}`}
                 onClick={() => setTab("settings")}
               >
                 <span className="device-tab-icon">
@@ -182,8 +187,8 @@ export default function DeviceDetailTabs({
               <button
                 type="button"
                 role="tab"
-                aria-selected={tab === "faults"}
-                className={`device-tab-btn${tab === "faults" ? " active" : ""}${hasActiveFaults ? " device-tab-btn-fault" : ""}`}
+                aria-selected={activeTab === "faults"}
+                className={`device-tab-btn${activeTab === "faults" ? " active" : ""}${hasActiveFaults ? " device-tab-btn-fault" : ""}`}
                 onClick={() => setTab("faults")}
               >
                 <span className="device-tab-icon">
@@ -209,21 +214,23 @@ export default function DeviceDetailTabs({
         </div>
       </div>
 
-      <div className={`device-detail-tab-body${tab === "monitor" || tab === "analytics" || tab === "settings" ? " device-detail-tab-body--fit" : ""}`}>
-      {tab === "monitor" && (
+      <div className={`device-detail-tab-body${activeTab === "monitor" || activeTab === "analytics" || activeTab === "settings" ? " device-detail-tab-body--fit" : ""}`}>
+      {activeTab === "monitor" && (
         <DeviceMonitorBoard
           device={device}
           readings={readings}
+          savingsReadings={savingsReadings}
         />
       )}
 
-      {tab === "analytics" && (
+      {activeTab === "analytics" && (
         <DeviceHistoryCharts
           installationId={device.installationId}
           readings={historyReadings}
           hours={hours}
           model={device.model}
           faults={faults}
+          longRangeVisible={longRangeHistory}
           facilityTotal={facilityCapacity(
             device.totalCapacity,
             sumModuleCapacity(
@@ -234,7 +241,7 @@ export default function DeviceDetailTabs({
         />
       )}
 
-      {tab === "settings" && isAdmin && (
+      {activeTab === "settings" && isAdmin && (
         <div className="device-settings-console">
           <details className="device-settings-help">
             <summary>
@@ -305,7 +312,7 @@ export default function DeviceDetailTabs({
         </div>
       )}
 
-      {tab === "faults" && isAdmin && (
+      {activeTab === "faults" && isAdmin && (
         <DeviceFaultHistory
           installationId={device.installationId}
           faults={faults}

@@ -128,6 +128,8 @@ type Props = {
   faults?: FaultEvent[];
   /** 이력 점에 totalCapacity가 없을 때 쓰는 설비용량 */
   facilityTotal?: number | null;
+  /** 주·월·연. 관리자는 항상 true. 고객 계정은 설치지점 설정을 따른다. */
+  longRangeVisible?: boolean;
 };
 
 export default function DeviceHistoryCharts({
@@ -137,9 +139,11 @@ export default function DeviceHistoryCharts({
   model,
   faults = [],
   facilityTotal = null,
+  longRangeVisible = true,
 }: Props) {
   const [subTab, setSubTab] = useState<SubTab>("pf");
   const [period, setPeriod] = useState<Period>("day");
+  const rangePeriod: Period = longRangeVisible ? period : "day";
   const [aggregation, setAggregation] = useState<Agg>("avg");
   const [detail, setDetail] = useState(false);
   const [start, setStart] = useState("");
@@ -150,10 +154,14 @@ export default function DeviceHistoryCharts({
   const [error, setError] = useState<string | null>(null);
 
   const demoDay =
-    installationId === DEMO_HISTORY_INSTALLATION_ID && period === "day" && !start;
+    installationId === DEMO_HISTORY_INSTALLATION_ID && rangePeriod === "day" && !start;
   const resolution: Resolution =
     remote?.resolution ??
-    (period === "day" || (period === "week" && detail) ? "raw" : period === "week" ? "hourly" : "daily");
+    (rangePeriod === "day" || (rangePeriod === "week" && detail)
+      ? "raw"
+      : rangePeriod === "week"
+        ? "hourly"
+        : "daily");
 
   useEffect(() => {
     if (demoDay) {
@@ -164,14 +172,14 @@ export default function DeviceHistoryCharts({
     }
     const ac = new AbortController();
     const params = new URLSearchParams({
-      period,
+      period: rangePeriod,
       aggregation: "avg",
-      resolution: period === "week" && detail ? "raw" : "auto",
+      resolution: rangePeriod === "week" && detail ? "raw" : "auto",
     });
     if (start) {
       params.set(
         "start",
-        period === "day" && start.includes("T") ? new Date(start).toISOString() : start,
+        rangePeriod === "day" && start.includes("T") ? new Date(start).toISOString() : start,
       );
     }
     setLoading(true);
@@ -194,23 +202,23 @@ export default function DeviceHistoryCharts({
         if (!ac.signal.aborted) setLoading(false);
       });
     return () => ac.abort();
-  }, [demoDay, detail, installationId, period, start]);
+  }, [demoDay, detail, installationId, rangePeriod, start]);
 
   const capUnit = model === "paf" ? "A" : "kvar";
   const aggDisabled = resolution === "raw";
   const activeAgg: Agg = aggDisabled ? "avg" : aggregation;
   const aggLabel = AGGS.find((item) => item.key === activeAgg)?.label ?? "평균";
   const resLabel = resolution === "raw" ? "10분" : resolution === "hourly" ? "1시간" : "1일";
-  const periodLabel = PERIODS.find((item) => item.key === period)?.label ?? "일간";
+  const periodLabel = PERIODS.find((item) => item.key === rangePeriod)?.label ?? "일간";
   const rangeLabel = `${resLabel}${resolution === "raw" ? "" : ` ${aggLabel}`}`;
   const hoursLabel =
-    resolution === "raw" && period === "day" && !start
+    resolution === "raw" && rangePeriod === "day" && !start
       ? `최근 ${hours}시간 · 10분`
-      : period === "day"
+      : rangePeriod === "day"
         ? `${periodLabel} · ${rangeLabel}`
         : rangeLabel;
 
-  const chartReadings = demoDay ? readings : remote?.points ?? (period === "day" && !start ? readings : []);
+  const chartReadings = demoDay ? readings : remote?.points ?? (rangePeriod === "day" && !start ? readings : []);
   const spansYears = useMemo(() => {
     const years = new Set(
       chartReadings.map(
@@ -349,24 +357,26 @@ export default function DeviceHistoryCharts({
 
   const rangeBar = (
     <div className="history-range-bar">
-      <div className="monitor-view-chips" role="tablist" aria-label="조회 기간">
-        {PERIODS.map(({ key, label }) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            aria-selected={period === key}
-            className={`monitor-view-chip${period === key ? " active" : ""}`}
-            onClick={() => {
-              setPeriod(key);
-              setStart("");
-              setDetail(false);
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {longRangeVisible ? (
+        <div className="monitor-view-chips" role="tablist" aria-label="조회 기간">
+          {PERIODS.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={rangePeriod === key}
+              className={`monitor-view-chip${rangePeriod === key ? " active" : ""}`}
+              onClick={() => {
+                setPeriod(key);
+                setStart("");
+                setDetail(false);
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <div className="monitor-view-chips" role="group" aria-label="집계값">
         {AGGS.map(({ key, label }) => (
           <button
@@ -382,7 +392,7 @@ export default function DeviceHistoryCharts({
           </button>
         ))}
       </div>
-      {period === "week" ? (
+      {rangePeriod === "week" ? (
         <div className="monitor-view-chips">
           <button
             type="button"
@@ -393,7 +403,7 @@ export default function DeviceHistoryCharts({
           </button>
         </div>
       ) : null}
-      {period === "day" ? (
+      {rangePeriod === "day" ? (
         <>
           <input
             className="history-range-input"
@@ -422,7 +432,7 @@ export default function DeviceHistoryCharts({
           </div>
         </>
       ) : null}
-      {period === "week" ? (
+      {rangePeriod === "week" ? (
         <input
           className="history-range-input"
           type="date"
@@ -431,7 +441,7 @@ export default function DeviceHistoryCharts({
           onChange={(event) => setStart(event.target.value)}
         />
       ) : null}
-      {period === "month" ? (
+      {rangePeriod === "month" ? (
         <input
           className="history-range-input"
           type="month"
@@ -440,7 +450,7 @@ export default function DeviceHistoryCharts({
           onChange={(event) => setStart(event.target.value)}
         />
       ) : null}
-      {period === "year" ? (
+      {rangePeriod === "year" ? (
         <input
           className="history-range-input"
           type="number"

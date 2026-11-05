@@ -1,5 +1,6 @@
 "use client";
 
+import { THD_LOW_LOAD_COLOR, THD_THRESHOLDS } from "../../lib/chartTheme";
 import { formatMetric } from "../../lib/metricThreshold";
 import { isLowLoadCurrent } from "../../lib/lowLoad";
 import { ThdInfoTip, ThdLowLoadBadge } from "../ThdLoadNotice";
@@ -73,8 +74,10 @@ function radial(t: number, r0: number, r1: number) {
   return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
 }
 
-function fillColor(v: number): string {
-  if (v < 20) return COLOR.green;
+function fillColor(v: number, lowLoad: boolean): string {
+  if (v < THD_THRESHOLDS.danger) return COLOR.green;
+  // 저부하에서는 주의·위험 모두 참고색. 30%만 회색으로 두면 25%가 더 심각해 보인다.
+  if (lowLoad) return THD_LOW_LOAD_COLOR;
   if (v < 30) return COLOR.warn;
   return COLOR.danger;
 }
@@ -132,8 +135,8 @@ export default function ThdArcGauge({
   const beforeVal = b ?? a ?? 0;
   const tA = toT(afterVal) * enter;
   const tB = toT(beforeVal) * enter;
-  const afterColor = fillColor(afterVal);
-  const beforeColor = fillColor(beforeVal);
+  const afterColor = fillColor(afterVal, low);
+  const beforeColor = fillColor(beforeVal, low);
   const left = polar(0, R_OUT);
   const right = polar(1, R_OUT);
   const leftIn = polar(0, R_IN);

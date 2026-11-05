@@ -42,8 +42,10 @@ test.describe("session", () => {
   test("logout clears the session and protects pages again", async ({ page }) => {
     await loginAs(page, E2E.users.admin);
 
-    await page.getByTitle("로그아웃").click();
-    await page.locator(".logout-popover").getByRole("button", { name: "로그아웃" }).click();
+    await page.getByRole("button", { name: "메뉴 열기" }).click();
+    const panel = page.locator("#header-side-panel");
+    await panel.getByRole("button", { name: "로그아웃", exact: true }).click();
+    await panel.getByRole("button", { name: "로그아웃", exact: true }).click();
     await expect(page).toHaveURL(/\/login/);
 
     await page.goto("/");

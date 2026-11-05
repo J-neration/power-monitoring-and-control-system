@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { cookies } from "next/headers";
-import LogoutButton from "../../components/LogoutButton";
+import HeaderMenu from "../../components/HeaderMenu";
 import SessionTimeoutGuard from "../../components/SessionTimeoutGuard";
 import SystemStatusBar from "../../components/SystemStatusBar";
 import { CLIENT_LABELS } from "../../data/clients";
@@ -82,6 +82,7 @@ export default async function MainLayout({
   }
 
   const displayName = user ? resolveDisplayName(user, siteName) : null;
+  const roleLabel = user ? (ROLE_LABEL[user.role] ?? user.role) : null;
 
   return (
     <>
@@ -108,20 +109,16 @@ export default async function MainLayout({
             <>
               <span className="global-header-sep" aria-hidden />
               <div className="header-user-info">
-                {user.role === "ADMIN" ? (
-                  <Link href="/admin/sites" className="global-header-admin-link">
-                    관리자 패널
-                  </Link>
-                ) : (
-                  <span className="header-user-role">
-                    {ROLE_LABEL[user.role] ?? user.role}
-                  </span>
-                )}
+                <span className="header-user-role">{roleLabel}</span>
                 <span className="header-username">{displayName}</span>
               </div>
             </>
           ) : null}
-          <LogoutButton />
+          <HeaderMenu
+            roleLabel={roleLabel}
+            displayName={displayName}
+            isAdmin={user?.role === "ADMIN"}
+          />
         </div>
       </header>
       <div className="global-content">{children}</div>

@@ -69,6 +69,12 @@ export const TEMP_ALARM_REF = {
 export const TEMP_CHART_MARGIN_RIGHT = 72;
 
 export const THD_THRESHOLDS = { danger: 20 } as const;
+
+/**
+ * 저부하 THDi 참고색. 결측(gridMuted)보다 한 단계 밝은 슬레이트.
+ * 위험 빨강과 구분되고, 양호를 뜻하지 않는다.
+ */
+export const THD_LOW_LOAD_COLOR = "#94a3b8";
 export const PF_THRESHOLDS = { warn: 90, danger: 85 } as const;
 export const VOLTAGE_NOMINAL = 220;
 
@@ -122,10 +128,27 @@ export function withChartUnit(value: string | number, unit?: string): string {
   return `${text} ${u}`;
 }
 
-export function thdBarColor(value: number | null | undefined): string {
+export function thdBarColor(
+  value: number | null | undefined,
+  lowLoad = false,
+): string {
   if (value == null || !Number.isFinite(value)) return CHART_COLORS.gridMuted;
-  if (value >= THD_THRESHOLDS.danger) return CHART_COLORS.danger;
+  if (value >= THD_THRESHOLDS.danger) {
+    return lowLoad ? THD_LOW_LOAD_COLOR : CHART_COLORS.danger;
+  }
   return CHART_COLORS.accent;
+}
+
+/** 값이 있는 상이 모두 저부하면 위험 기준선을 판정색으로 두지 않는다. */
+export function thdDangerLineMuted(
+  rows: Array<{
+    before: number | null;
+    after: number | null;
+    lowLoad: boolean;
+  }>,
+): boolean {
+  const present = rows.filter((row) => row.before != null || row.after != null);
+  return present.length > 0 && present.every((row) => row.lowLoad);
 }
 
 export function fmtChartTime(iso: string): string {

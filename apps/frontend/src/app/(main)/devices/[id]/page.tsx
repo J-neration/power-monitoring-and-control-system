@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { fetchDevice, fetchReadings, fetchFaults } from "../../../../lib/api";
+import { fetchDevice, fetchOpsSamples, fetchReadings, fetchFaults } from "../../../../lib/api";
 import { getSessionUser } from "../../../../lib/auth-server";
 import DeviceDetailTabs from "../../../../components/DeviceDetailTabs";
 import PageLiveRefresh from "../../../../components/PageLiveRefresh";
@@ -24,9 +24,10 @@ export default async function DeviceDetailPage({ params }: Props) {
   const sessionUser = await getSessionUser();
   const isAdmin = sessionUser?.role === "ADMIN";
 
-  const [device, readings, faults] = await Promise.all([
+  const [device, readings, savingsReadings, faults] = await Promise.all([
     fetchDevice(id) as Promise<DeviceWithInstallation | null>,
     fetchReadings(id, HISTORY_HOURS),
+    fetchOpsSamples(id),
     isAdmin ? fetchFaults(id) : Promise.resolve([]),
   ]);
 
@@ -79,6 +80,7 @@ export default async function DeviceDetailPage({ params }: Props) {
       <DeviceDetailTabs
         device={device}
         readings={readings}
+        savingsReadings={savingsReadings}
         hours={HISTORY_HOURS}
         isAdmin={isAdmin}
         adminUsername={sessionUser?.username}

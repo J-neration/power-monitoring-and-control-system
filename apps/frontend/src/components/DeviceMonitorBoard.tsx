@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { DeviceWithInstallation } from "../types/site";
-import type { TelemetryReading } from "../types/site";
+import type { DeviceWithInstallation, TelemetryReading } from "../types/site";
+import type { TimedReading } from "../lib/opsSavings";
 import PfNeedleGauge from "./charts/PfNeedleGauge";
 import ThdArcGauge from "./charts/ThdArcGauge";
 import CapacitySnapshot from "./CapacitySnapshot";
@@ -32,9 +32,11 @@ const VIEWS: { key: MonitorSection; label: string }[] = [
 export default function DeviceMonitorBoard({
   device,
   readings = [],
+  savingsReadings = [],
 }: {
   device: DeviceWithInstallation;
   readings?: TelemetryReading[];
+  savingsReadings?: TimedReading[];
 }) {
   const [section, setSection] = useState<MonitorSection>("overview");
 
@@ -67,7 +69,7 @@ export default function DeviceMonitorBoard({
 
       {section === "overview" ? (
         <div className="device-monitor-overview">
-          <DeviceOpsBenefitPanel device={device} readings={readings} />
+          <DeviceOpsBenefitPanel device={device} readings={savingsReadings} />
           <div className="monitor-gauge-grid">
             <PfNeedleGauge
               label="TPF"

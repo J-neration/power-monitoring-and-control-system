@@ -1,9 +1,11 @@
 /**
- * 운용 절감 환산 — 전기 문외한용 숫자.
+ * 운용 절감 환산 — 설치 효과.
  *
- * 산출은 보상 전(Load) vs 보상 후(Grid) 계측으로 한다.
- * 연간 값은 "지금 이 운전이 1년 이어진다"는 환산이며, 계약전력·실측
- * 전력량계가 아니므로 화면 각주에 기준을 밝힌다.
+ * 연간 전력량·탄소·요금·품질은 지금 순시 전력을 1년으로 늘리지 않는다.
+ * 최근 30일 동안 부하측(보상 전)과 계통측(보상 후)이 실제로 벌어진 차이를
+ * 시간으로 적분한 뒤, 그 구간의 달력 일수로 1년을 환산한다.
+ * 무부하 시간은 절감 0으로 넣고, 계측이 끊긴 구간은 분모에서 뺀다.
+ * 7일이 안 되면 연간 숫자는 내지 않는다.
  */
 
 export const OPS_SAVINGS = {
@@ -20,6 +22,18 @@ export const OPS_SAVINGS = {
   /** 소나무류 1그루 연간 CO₂ 흡수량 (kg) — 국립산림과학원 표준 */
   treeKgCo2PerYear: 6.6,
   hoursPerYear: 8760,
+} as const;
+
+/** 연간 절감은 이 창으로만 만든다. 순시값에는 쓰지 않는다. */
+export const OPS_WINDOW = {
+  /** 이보다 짧으면 연간 환산을 하지 않는다. */
+  minCoveredDays: 7,
+  /** 화면이 요청하는 실측 창. */
+  targetDays: 30,
+  /** 이 일수 이상이면 "최근 30일"로 표기한다. */
+  monthDays: 27,
+  /** 이보다 긴 공백은 결측이다. 0으로 채우지 않고 분모에서 뺀다. */
+  maxGapHours: 6,
 } as const;
 
 /**
@@ -71,24 +85,49 @@ export type PowerSnapshot = {
   vL3?: number | null;
 };
 
-export type TimedReading = PowerSnapshot & { recordedAt: string };
+export type TimedReading = PowerSnapshot & {
+  recordedAt: string;
+  /** 그 시간 구간의 최대 유효전력. 기본요금 수요에 쓴다. 없으면 uncompP. */
+  uncompPMax?: number | null;
+};
+
+export type OpsBasis = "gathering" | "partial" | "month";
 
 export type OpsSavings = {
+  /** 지금 순시 동손 절감. 연간 숫자와 분리한다. */
   kwSaved: number | null;
+  basis: OpsBasis;
   kWhYear: number | null;
   kWhWindow: number | null;
   windowHours: number | null;
+  windowDays: number | null;
   carbonKgYear: number | null;
   treesYear: number | null;
+  /** 동손 전력량요금 합계. 무효전력 분 + 고조파 분. */
   energyCostYear: number | null;
+  /** 변위역률(DPF)만으로 줄어든 동손 요금. */
+  pfEnergyCostYear: number | null;
+  /** 고조파를 걷어 추가로 줄어든 동손 요금. */
+  thdEnergyCostYear: number | null;
+  /** 한전 역률요금. 지상역률과 구간 최대수요만 쓴다. */
   pfCostYear: number | null;
   costYear: number | null;
+  /** 기본요금에 쓴 구간 최대수요(kW). */
+  demandKw: number | null;
+  /** 역률요금에 쓴 역률. DPF가 있으면 DPF, 없을 때만 TPF. */
+  pfBillBasis: "dpf" | "tpf" | null;
   qReducedPct: number | null;
+  /** 전력량 가중 평균 역률(%). 보상 전·후. */
   pfBefore: number | null;
   pfAfter: number | null;
+  /** 전력량 가중 평균 전류 THD(%). 경부하는 제외. */
+  thdBefore: number | null;
+  thdAfter: number | null;
   sFreedKva: number | null;
   qualityBefore: number | null;
   qualityAfter: number | null;
+  /** 지금 순시 품질. 집계 중일 때 힌트로만 쓴다. */
+  qualityLive: number | null;
   qualityThd: number | null;
   qualityUnbalance: number | null;
 };
@@ -164,27 +203,45 @@ function totalPf(
  * 크기(kW)를 내려면 부하 규모가 하나는 필요하다. 보상 전 유효전력을 쓴다.
  * 보상 후 P는 보상기 손실만큼만 달라져야 하는 값이라 기준으로 삼지 않는다.
  * 보상기 자체 손실(P의 1~3%)은 차감하지 않으므로 그만큼 낙관적인 값이다.
+ *
+ * 역률이 좋아지지 않았으면 null. 0을 반환하면 계산된 절감처럼 보인다.
  */
-export function estimateKwSaved(s: PowerSnapshot): number | null {
-  const p = num(s.uncompP);
-  if (!isLoadedKw(p)) return null;
-
-  const before = totalPf(
-    s.tpf1,
-    s.dpf1,
-    avg([s.loadCurrentTHDL1, s.loadCurrentTHDL2, s.loadCurrentTHDL3]),
-  );
-  const after = totalPf(
-    s.tpf2,
-    s.dpf2,
-    avg([s.gridCurrentTHDL1, s.gridCurrentTHDL2, s.gridCurrentTHDL3]),
-  );
-  if (before == null || after == null || after <= before) return null;
-
-  // 보상 전 피상전력 = P / 역률. 동손은 전류, 즉 kVA에 비례한다.
+function copperSavedKw(
+  p: number | null,
+  before: number | null,
+  after: number | null,
+): number | null {
+  if (!isLoadedKw(p) || before == null || after == null) return null;
+  if (after <= before) return 0;
   const lossBefore = (p / before) * OPS_SAVINGS.copperLossRatio;
   const saved = lossBefore * (1 - (before / after) ** 2);
-  return saved > 0 ? saved : null;
+  return saved > 0 ? saved : 0;
+}
+
+function tpfPair(s: PowerSnapshot): { before: number | null; after: number | null } {
+  return {
+    before: totalPf(
+      s.tpf1,
+      s.dpf1,
+      avg([s.loadCurrentTHDL1, s.loadCurrentTHDL2, s.loadCurrentTHDL3]),
+    ),
+    after: totalPf(
+      s.tpf2,
+      s.dpf2,
+      avg([s.gridCurrentTHDL1, s.gridCurrentTHDL2, s.gridCurrentTHDL3]),
+    ),
+  };
+}
+
+/** 변위역률만. THD로 종합역률을 만들지 않는다. 한전 역률요금과 무효전력 동손 분리다. */
+function dpfPair(s: PowerSnapshot): { before: number | null; after: number | null } {
+  return { before: pfFraction(s.dpf1), after: pfFraction(s.dpf2) };
+}
+
+export function estimateKwSaved(s: PowerSnapshot): number | null {
+  const pair = tpfPair(s);
+  const saved = copperSavedKw(num(s.uncompP), pair.before, pair.after);
+  return saved != null && saved > 0 ? saved : null;
 }
 
 /**
@@ -314,127 +371,210 @@ function qualityFromSnapshot(
   };
 }
 
-function pfCostYearFromSnapshot(s: PowerSnapshot): number | null {
-  const before = num(s.tpf1);
-  const after = num(s.tpf2);
-  const demandKw = num(s.uncompP) ?? num(s.uncompS);
-  if (before == null || after == null || demandKw == null || demandKw <= 0) {
-    return null;
-  }
-  // 한전 역률요금은 부하기간 평균 지상역률. 경부하 순시 9% 같은 값은 고지서 환산에 쓰지 않는다.
-  if (
-    Math.abs(before) < QUALITY_REFS.kepcoPfBillingFloorPct ||
-    Math.abs(after) < QUALITY_REFS.kepcoPfBillingFloorPct
-  ) {
-    return null;
-  }
-  const monthlyBasic = demandKw * OPS_SAVINGS.demandKrwPerKwMonth;
-  const delta = pfChargeRatio(before) - pfChargeRatio(after);
-  // 가감이 같으면 보고할 절감이 없다. 0원을 띄우면 계산이 된 것처럼 보인다.
+function pfBillYear(demandKw: number, beforePct: number, afterPct: number): number | null {
+  if (!(demandKw > 0)) return null;
+  const delta = pfChargeRatio(beforePct) - pfChargeRatio(afterPct);
   if (delta === 0) return null;
+  const monthlyBasic = demandKw * OPS_SAVINGS.demandKrwPerKwMonth;
   return monthlyBasic * delta * 12;
+}
+
+function withinTargetWindow(readings: TimedReading[]): TimedReading[] {
+  if (readings.length === 0) return [];
+  const latest = Math.max(
+    ...readings.map((r) => new Date(r.recordedAt).getTime()),
+  );
+  if (!Number.isFinite(latest)) return [];
+  const from = latest - OPS_WINDOW.targetDays * 24 * 3_600_000;
+  return readings
+    .filter((r) => {
+      const t = new Date(r.recordedAt).getTime();
+      return Number.isFinite(t) && t >= from && t <= latest;
+    })
+    .sort((a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime());
 }
 
 export function computeOpsSavings(
   device: PowerSnapshot,
   readings: TimedReading[] = [],
 ): OpsSavings {
-  const pfBefore = num(device.tpf1);
-  const pfAfter = num(device.tpf2);
   const qBefore = num(device.uncompQ);
   const qAfter = num(device.compQ);
   const sBefore = num(device.uncompS);
   const sAfter = num(device.compS);
-
   const qReducedPct =
     qBefore != null && qAfter != null && qBefore > 0
       ? Math.max(0, ((qBefore - qAfter) / qBefore) * 100)
       : null;
   const sFreedKva =
     sBefore != null && sAfter != null ? Math.max(0, sBefore - sAfter) : null;
-  const qualityBefore = qualityFromSnapshot(device, "before");
-  const qualityAfter = qualityFromSnapshot(device, "after");
+  const liveQuality = qualityFromSnapshot(device, "after");
+  const kwSaved = isIdleSnapshot(device) ? null : estimateKwSaved(device);
 
-  const sorted = [...readings].sort(
-    (a, b) =>
-      new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime(),
-  );
+  const sorted = withinTargetWindow(readings);
+  let coveredH = 0;
+  let kwhTotal = 0;
+  let kwhPf = 0;
+  let kwhThd = 0;
+  let kwhUnsplit = 0;
+  let peak = 0;
+  let dpfW = 0;
+  let dpfBefore = 0;
+  let dpfAfter = 0;
+  let tpfW = 0;
+  let tpfBefore = 0;
+  let tpfAfter = 0;
+  let thdBeforeW = 0;
+  let thdBeforeAcc = 0;
+  let thdAfterW = 0;
+  let thdAfterAcc = 0;
+  let qualityBeforeW = 0;
+  let qualityBeforeAcc = 0;
+  let qualityAfterW = 0;
+  let qualityAfterAcc = 0;
+  let qualityThdW = 0;
+  let qualityThdAcc = 0;
+  let qualityUnbalanceW = 0;
+  let qualityUnbalanceAcc = 0;
 
-  let kWhWindow: number | null = null;
-  let windowHours: number | null = null;
-  let kWhYear: number | null = null;
-  let kwSaved = estimateKwSaved(device);
-  const noEnergy = isIdleSnapshot(device);
+  for (const sample of sorted) {
+    const candidate = num(sample.uncompPMax) ?? num(sample.uncompP);
+    if (candidate != null && candidate > peak) peak = candidate;
+  }
 
-  // 지금 무부하면 이력으로 연간 전력량 요금을 만들지 않는다.
-  if (!noEnergy && sorted.length >= 2) {
-    let energy = 0;
-    let used = false;
-    for (let i = 1; i < sorted.length; i++) {
-      const t0 = new Date(sorted[i - 1].recordedAt).getTime();
-      const t1 = new Date(sorted[i].recordedAt).getTime();
-      const dt = (t1 - t0) / 3_600_000;
-      if (!(dt > 0) || dt > 6) continue;
-      const kw =
-        estimateKwSaved(sorted[i]) ?? estimateKwSaved(sorted[i - 1]);
-      if (kw == null) continue;
-      energy += kw * dt;
-      used = true;
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = sorted[i - 1];
+    const sample = sorted[i];
+    const t0 = new Date(prev.recordedAt).getTime();
+    const t1 = new Date(sample.recordedAt).getTime();
+    const dt = (t1 - t0) / 3_600_000;
+    if (!(dt > 0) || dt > OPS_WINDOW.maxGapHours) continue;
+    const p = num(sample.uncompP);
+    // 계측이 없는 시간은 0으로 넣지 않는다. 무부하(값이 0 근처)만 절감 0이다.
+    if (p == null) continue;
+    coveredH += dt;
+    if (!isLoadedKw(p)) continue;
+
+    const tpf = tpfPair(sample);
+    const dpf = dpfPair(sample);
+    const tpfSaved = copperSavedKw(p, tpf.before, tpf.after) ?? 0;
+    const dpfSaved = copperSavedKw(p, dpf.before, dpf.after);
+    kwhTotal += tpfSaved * dt;
+    if (dpfSaved == null) {
+      kwhUnsplit += tpfSaved * dt;
+    } else {
+      const thdSaved = Math.max(0, tpfSaved - dpfSaved);
+      const pfSaved = tpfSaved - thdSaved;
+      kwhPf += pfSaved * dt;
+      kwhThd += thdSaved * dt;
     }
-    const span =
-      (new Date(sorted[sorted.length - 1].recordedAt).getTime() -
-        new Date(sorted[0].recordedAt).getTime()) /
-      3_600_000;
-    if (used && span > 0.5) {
-      kWhWindow = energy;
-      windowHours = span;
-      kWhYear = energy * (OPS_SAVINGS.hoursPerYear / span);
-      const kwAvg = energy / span;
-      if (kwSaved == null) kwSaved = kwAvg;
+
+    const weight = p * dt;
+    if (dpf.before != null && dpf.after != null) {
+      dpfW += weight;
+      dpfBefore += dpf.before * 100 * weight;
+      dpfAfter += dpf.after * 100 * weight;
+    } else if (tpf.before != null && tpf.after != null) {
+      tpfW += weight;
+      tpfBefore += tpf.before * 100 * weight;
+      tpfAfter += tpf.after * 100 * weight;
+    }
+
+    const beforeQ = qualityFromSnapshot(sample, "before");
+    const afterQ = qualityFromSnapshot(sample, "after");
+    if (beforeQ.score != null) {
+      qualityBeforeW += weight;
+      qualityBeforeAcc += beforeQ.score * weight;
+    }
+    if (afterQ.score != null) {
+      qualityAfterW += weight;
+      qualityAfterAcc += afterQ.score * weight;
+    }
+    if (beforeQ.thd != null) {
+      thdBeforeW += weight;
+      thdBeforeAcc += beforeQ.thd * weight;
+    }
+    if (afterQ.thd != null) {
+      thdAfterW += weight;
+      thdAfterAcc += afterQ.thd * weight;
+      qualityThdW += weight;
+      qualityThdAcc += afterQ.thd * weight;
+    }
+    if (afterQ.unbalance != null) {
+      qualityUnbalanceW += weight;
+      qualityUnbalanceAcc += afterQ.unbalance * weight;
     }
   }
 
-  if (noEnergy) {
-    kwSaved = null;
-    kWhYear = null;
-    kWhWindow = null;
-    windowHours = null;
-  } else if (kWhYear == null && kwSaved != null) {
-    kWhYear = kwSaved * OPS_SAVINGS.hoursPerYear;
-  }
+  const windowDays = coveredH > 0 ? coveredH / 24 : null;
+  const ready = windowDays != null && windowDays >= OPS_WINDOW.minCoveredDays;
+  const basis: OpsBasis =
+    !ready || windowDays == null
+      ? "gathering"
+      : windowDays >= OPS_WINDOW.monthDays
+        ? "month"
+        : "partial";
+  const annual = (kwh: number) =>
+    ready && windowDays != null && windowDays > 0 ? (kwh * 365) / windowDays : null;
 
-  const carbonKgYear =
-    kWhYear != null ? kWhYear * OPS_SAVINGS.co2KgPerKwh : null;
-  const treesYear =
-    carbonKgYear != null
-      ? carbonKgYear / OPS_SAVINGS.treeKgCo2PerYear
+  const kWhYear = annual(kwhTotal);
+  // 변위역률이 없는 구간이 대부분이면 고조파 분리를 내세우지 않는다.
+  const splitKwh = kwhPf + kwhThd;
+  const canSplit = splitKwh > 0 && kwhUnsplit <= splitKwh;
+  const pfEnergyKwh = canSplit ? annual(kwhPf) : null;
+  const thdEnergyKwh = canSplit ? annual(kwhThd) : null;
+  const tariff = OPS_SAVINGS.krwPerKwh;
+  const energyCostYear = kWhYear != null ? kWhYear * tariff : null;
+  const pfEnergyCostYear = pfEnergyKwh != null ? pfEnergyKwh * tariff : null;
+  const thdEnergyCostYear = thdEnergyKwh != null ? thdEnergyKwh * tariff : null;
+
+  const pfBillBasis = dpfW > 0 ? "dpf" : tpfW > 0 ? "tpf" : null;
+  const pfBefore = dpfW > 0 ? dpfBefore / dpfW : tpfW > 0 ? tpfBefore / tpfW : null;
+  const pfAfter = dpfW > 0 ? dpfAfter / dpfW : tpfW > 0 ? tpfAfter / tpfW : null;
+  const demandKw = peak > 0 ? peak : null;
+  const pfCostYear =
+    ready && pfBefore != null && pfAfter != null && demandKw != null
+      ? pfBillYear(demandKw, pfBefore, pfAfter)
       : null;
-  const energyCostYear =
-    kWhYear != null ? kWhYear * OPS_SAVINGS.krwPerKwh : null;
-  const pfCostYear = noEnergy ? null : pfCostYearFromSnapshot(device);
   const costYear =
     energyCostYear != null || pfCostYear != null
       ? (energyCostYear ?? 0) + (pfCostYear ?? 0)
       : null;
 
+  const carbonKgYear = kWhYear != null ? kWhYear * OPS_SAVINGS.co2KgPerKwh : null;
+  const treesYear =
+    carbonKgYear != null ? carbonKgYear / OPS_SAVINGS.treeKgCo2PerYear : null;
+
   return {
     kwSaved,
+    basis,
     kWhYear,
-    kWhWindow,
-    windowHours,
+    kWhWindow: coveredH > 0 ? kwhTotal : null,
+    windowHours: coveredH > 0 ? coveredH : null,
+    windowDays,
     carbonKgYear,
     treesYear,
     energyCostYear,
+    pfEnergyCostYear,
+    thdEnergyCostYear,
     pfCostYear,
     costYear,
+    demandKw: ready ? demandKw : null,
+    pfBillBasis: ready ? pfBillBasis : null,
     qReducedPct,
-    pfBefore,
-    pfAfter,
+    pfBefore: ready ? pfBefore : null,
+    pfAfter: ready ? pfAfter : null,
+    thdBefore: ready && thdBeforeW > 0 ? thdBeforeAcc / thdBeforeW : null,
+    thdAfter: ready && thdAfterW > 0 ? thdAfterAcc / thdAfterW : null,
     sFreedKva,
-    qualityBefore: qualityBefore.score,
-    qualityAfter: qualityAfter.score,
-    qualityThd: qualityAfter.thd,
-    qualityUnbalance: qualityAfter.unbalance,
+    qualityBefore: ready && qualityBeforeW > 0 ? qualityBeforeAcc / qualityBeforeW : null,
+    qualityAfter: ready && qualityAfterW > 0 ? qualityAfterAcc / qualityAfterW : null,
+    qualityLive: liveQuality.score,
+    qualityThd: ready && qualityThdW > 0 ? qualityThdAcc / qualityThdW : liveQuality.thd,
+    qualityUnbalance:
+      ready && qualityUnbalanceW > 0
+        ? qualityUnbalanceAcc / qualityUnbalanceW
+        : liveQuality.unbalance,
   };
 }
 

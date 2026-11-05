@@ -2,9 +2,9 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { Device } from "../types/site";
-import type { TelemetryReading } from "../types/site";
 import {
   OPS_SAVINGS,
+  OPS_WINDOW,
   QUALITY_REFS,
   computeOpsSavings,
   formatCarbon,
@@ -12,11 +12,13 @@ import {
   formatKwhParts,
   formatTrees,
   formatQuality,
+  type OpsSavings,
+  type TimedReading,
 } from "../lib/opsSavings";
 
 type Props = {
   device: Device;
-  readings?: TelemetryReading[];
+  readings?: TimedReading[];
 };
 
 type FormulaBlock = {
@@ -95,7 +97,7 @@ function WonIcon() {
   );
 }
 
-function InfoTip({ formula }: { formula: FormulaBlock }) {
+function InfoTip({ formula, caption }: { formula: FormulaBlock; caption?: string }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const popId = useId();
@@ -149,6 +151,7 @@ function InfoTip({ formula }: { formula: FormulaBlock }) {
               </ul>
             </div>
           ) : null}
+          {caption ? <p className="ops-info-pop-caption">{caption}</p> : null}
         </div>
       ) : null}
     </div>
@@ -162,6 +165,7 @@ function StatCard({
   value,
   unit,
   hint,
+  caption,
   compare,
   formula,
 }: {
@@ -171,6 +175,7 @@ function StatCard({
   value: string;
   unit?: string;
   hint?: string;
+  caption?: string;
   compare?: { before: string; after: string };
   formula: FormulaBlock;
 }) {
@@ -182,7 +187,7 @@ function StatCard({
       <div className="ops-stat-body">
         <div className="ops-stat-head">
           <span className="ops-stat-kicker">{kicker}</span>
-          <InfoTip formula={formula} />
+          <InfoTip formula={formula} caption={caption} />
         </div>
         <div className="ops-stat-num">
           <span className="ops-stat-value">{value}</span>
@@ -209,35 +214,55 @@ function StatCard({
   );
 }
 
+function pctLabel(value: number | null): string {
+  if (value == null) return "—";
+  return `${Math.round(Math.abs(value))}%`;
+}
+
+function basisSentence(s: OpsSavings): string {
+  if (s.basis === "month" || s.basis === "partial") return "최근 30일 실측을 1년으로 환산";
+  if (s.windowDays != null && s.windowDays >= 0.5) {
+    const n = s.windowDays >= 10 ? Math.round(s.windowDays).toString() : s.windowDays.toFixed(1);
+    return `${n}일 집계 중 · 7일이 되면 연간 환산`;
+  }
+  return "7일 이상 실측이 쌓이면 연간 절감을 계산합니다";
+}
+
 export default function DeviceOpsBenefitPanel({
   device,
   readings = [],
 }: Props) {
   const s = computeOpsSavings(device, readings);
-  const kwhParts = s.kWhYear != null ? formatKwhParts(s.kWhYear) : null;
-  const carbon = s.carbonKgYear != null ? formatCarbon(s.carbonKgYear) : null;
+  const ready = s.basis !== "gathering";
+  const kwhParts = ready && s.kWhYear != null ? formatKwhParts(s.kWhYear) : null;
+  const carbon = ready && s.carbonKgYear != null ? formatCarbon(s.carbonKgYear) : null;
   const lossPct = Math.round(OPS_SAVINGS.copperLossRatio * 100);
-  const historyNote =
-    s.windowHours != null
-      ? `최근 ${s.windowHours.toFixed(0)}시간 이력으로 연간 환산했습니다.`
-      : "지금 계측이 1년 동안 이어진다고 보고 8760시간을 곱합니다.";
+  const basisNote = basisSentence(s);
+  const liveKw =
+    s.kwSaved != null ? `지금 ${s.kwSaved.toFixed(1)} kW 절감 중` : null;
 
-  const pBefore = device.uncompP;
-  const pAfter = device.compP;
-  const energyCompare =
-    pBefore != null &&
-    pAfter != null &&
-    Number.isFinite(pBefore) &&
-    Number.isFinite(pAfter)
-      ? {
-          before: `${pBefore.toFixed(1)} kW`,
-          after: `${pAfter.toFixed(1)} kW`,
-        }
+  const pfCompare =
+    s.pfBefore != null && s.pfAfter != null
+      ? { before: `역률 ${pctLabel(s.pfBefore)}`, after: `역률 ${pctLabel(s.pfAfter)}` }
+      : undefined;
+  const thdCompare =
+    s.thdBefore != null && s.thdAfter != null
+      ? { before: `THDi ${pctLabel(s.thdBefore)}`, after: `THDi ${pctLabel(s.thdAfter)}` }
       : undefined;
   const costHint = (() => {
-    if (s.costYear == null) return undefined;
+    if (!ready || s.costYear == null) return undefined;
     const parts: string[] = [];
-    if (s.energyCostYear != null) {
+    if (s.pfEnergyCostYear != null && s.pfEnergyCostYear > 0) {
+      parts.push(`무효전력 ${formatKrw(s.pfEnergyCostYear)}`);
+    }
+    if (s.thdEnergyCostYear != null && s.thdEnergyCostYear > 0) {
+      parts.push(`고조파 ${formatKrw(s.thdEnergyCostYear)}`);
+    }
+    if (
+      parts.length === 0 &&
+      s.energyCostYear != null &&
+      s.energyCostYear > 0
+    ) {
       parts.push(`전력량 ${formatKrw(s.energyCostYear)}`);
     }
     if (s.pfCostYear != null) {
@@ -252,6 +277,11 @@ export default function DeviceOpsBenefitPanel({
           after: `${Math.round(s.qualityAfter)}점`,
         }
       : undefined;
+  const qualityHint = ready
+    ? `IEEE 519 THD 한도 ${QUALITY_REFS.thdLimitPct}%`
+    : s.qualityLive != null
+      ? `지금 ${Math.round(s.qualityLive)}점`
+      : undefined;
 
   return (
     <section className="ops-benefit" aria-label="운용 절감">
@@ -259,33 +289,30 @@ export default function DeviceOpsBenefitPanel({
         tone="energy"
         icon={<BoltIcon />}
         kicker="전력량 절감"
-        value={kwhParts?.value ?? "—"}
+        value={ready ? (kwhParts?.value ?? "—") : "집계 중"}
         unit={kwhParts?.unit}
-        compare={energyCompare}
-        hint={
-          s.kwSaved != null
-            ? `지금 ${s.kwSaved.toFixed(1)} kW 절감 중`
-            : undefined
-        }
+        compare={pfCompare}
+        hint={liveKw ?? undefined}
+        caption={basisNote}
         formula={{
           title: "전력량 절감 공식",
           lines: [
-            `순시 절감(kW) = 보상 전 동손 × [1 − (보상 전 역률 / 보상 후 역률)²]`,
-            `보상 전 동손 = (보상 전 P ÷ 보상 전 역률) × ${lossPct}%  — 피상전력(kVA) 기준`,
-            `전류는 역률에 반비례하고(I = P / √3·V·PF) 동손은 전류 제곱에 비례합니다`,
-            `종합역률(TPF)은 고조파를 포함한 전 전류 기준이라 THD 효과가 이미 들어 있습니다 (TPF = DPF / √(1+THD²))`,
-            `TPF를 못 받으면 변위역률(DPF)과 전류 THD로 만들어 씁니다`,
-            `유효전력이 ${OPS_SAVINGS.minLoadKw} kW 미만이거나 역률이 좋아지지 않았으면 표시하지 않습니다`,
-            `연간 kWh = 순시 kW × 8,760시간 (이력 있으면 구간의 kWh를 연간으로 환산)`,
+            `시간 절감(kW) = 보상 전 동손 × [1 − (보상 전 종합역률 / 보상 후 종합역률)²]`,
+            `보상 전 동손 = (그 시각의 부하 유효전력 ÷ 보상 전 종합역률) × ${lossPct}%`,
+            `구간 kWh = 최근 ${OPS_WINDOW.targetDays}일의 시간 절감을 더한 값. 무부하 시간은 0, 계측이 끊긴 시간은 제외`,
+            `연간 kWh = 구간 kWh × 365 / 실측 일수`,
+            `${OPS_WINDOW.minCoveredDays}일이 안 되면 연간 숫자를 내지 않습니다`,
+            `종합역률(TPF)은 고조파를 포함한 전 전류라 THD 효과가 들어 있습니다 (TPF = DPF / √(1+THD²))`,
+            `비교의 역률은 부하 전력량으로 가중 평균한 값입니다. 지금 kW가 아닙니다`,
           ],
-          note: `${historyNote} ${lossPct}%는 변압기 전부하 동손(~1–2%)과 저압 간선 손실을 합친 가정치이며 법정 계수가 아닙니다. 보상기 자체 손실(P의 1~3%)은 차감하지 않았습니다.`,
+          note: `${lossPct}%는 변압기 전부하 동손(~1–2%)과 저압 간선 손실을 합친 가정치이며 법정 계수가 아닙니다. 보상기 자체 손실은 차감하지 않았습니다.`,
           sources: [
             "줄의 법칙 / IEC 60287-1-1 — 도체 손실 P = I²R, 전류 제곱에 비례",
             "IEC 60076-1 (KS C IEC 60076-1) — 전력용 변압기 부하손(동손)은 부하전류의 제곱에 비례",
             "IEEE Std C57.12.00 — 배전 변압기 load loss(동손) 정의",
             "IEEE Std 141 (Red Book) — 배전계통 I²R 손실·역률 개선에 따른 손실 감소",
             `동손 비율 ${lossPct}% — 변압기+선로를 묶은 현장 가정치 (표준 고정값이 아님)`,
-            "연간 환산 8,760h — 현재 운전이 1년 지속된다고 보는 환산 (실측 전력량계 아님)",
+            "연간 환산 — 최근 실측 구간의 하루 평균이 1년 중 같은 비율로 반복된다고 보는 값 (고지서 계량 아님)",
           ],
         }}
       />
@@ -293,9 +320,10 @@ export default function DeviceOpsBenefitPanel({
         tone="carbon"
         icon={<TreeIcon />}
         kicker="탄소 절감"
-        value={carbon?.value ?? "—"}
+        value={ready ? (carbon?.value ?? "—") : "집계 중"}
         unit={carbon ? `${carbon.unit}/년` : undefined}
         hint={s.treesYear != null ? formatTrees(s.treesYear) : undefined}
+        caption={basisNote}
         formula={{
           title: "탄소 절감 공식",
           lines: [
@@ -316,22 +344,24 @@ export default function DeviceOpsBenefitPanel({
         tone="cost"
         icon={<WonIcon />}
         kicker="전기요금 절감"
-        value={s.costYear != null ? formatKrw(s.costYear) : "—"}
-        unit={s.costYear != null ? "/년" : undefined}
-        compare={energyCompare}
+        value={ready && s.costYear != null ? formatKrw(s.costYear) : ready ? "—" : "집계 중"}
+        unit={ready && s.costYear != null ? "/년" : undefined}
+        compare={thdCompare}
         hint={costHint}
+        caption={basisNote}
         formula={{
           title: "전기요금 절감 공식",
           lines: [
-            `전력량요금 ≈ 연간 kWh × ${OPS_SAVINGS.krwPerKwh.toLocaleString("ko-KR")}원/kWh`,
-            `기본요금 ≈ 보상 전 kW × ${OPS_SAVINGS.demandKrwPerKwMonth.toLocaleString("ko-KR")}원/kW·월`,
-            `역률요금 = 기본요금 × (기준역률 − 실역률) × 0.2%  (1%당 기본요금의 0.2%)`,
+            `무효전력 동손 = 변위역률(DPF)만으로 계산한 연간 kWh × ${OPS_SAVINGS.krwPerKwh.toLocaleString("ko-KR")}원/kWh`,
+            `고조파 동손 = (종합역률 절감 − 변위역률 절감) × 같은 단가. THDi를 걷어 전류 실효값이 더 줄어든 분`,
+            `고조파를 역률요금 식에 넣지 않습니다. 한전 역률요금에는 고조파 항목이 없습니다`,
+            `기본요금 = 구간 최대 유효전력 × ${OPS_SAVINGS.demandKrwPerKwMonth.toLocaleString("ko-KR")}원/kW·월. 지금 kW가 아닙니다`,
+            `역률요금 = 기본요금 × (보상 전 지상역률 가감 − 보상 후 가감) × 12`,
+            `지상역률은 ${OPS_SAVINGS.minLoadKw} kW 이상 구간의 전력량 가중 평균입니다`,
             `지상 90% 미만이면 가산, 90% 초과~95% 이하면 감액 (감액 폭 최대 5%)`,
-            `연간 역률 절감 = 월 기본요금 × (보상 전 가감비율 − 보상 후 가감비율) × 12`,
-            `순시 역률이 ${QUALITY_REFS.kepcoPfBillingFloorPct}% 미만이면 경부하로 보고 역률요금은 빼 둡니다`,
-            `합계 = 전력량요금 절감 + 역률요금 절감`,
+            `합계 = 무효전력 동손 + 고조파 동손 + 역률요금`,
           ],
-          note: "계약전력·실제 고지서가 아닙니다. 선택요금·시간대·기후환경요금·연료비조정은 넣지 않은 환산입니다.",
+          note: "계약전력·실제 고지서가 아닙니다. 선택요금·시간대·기후환경요금·연료비조정은 넣지 않은 환산입니다. 비교 숫자는 전류 THD입니다.",
           sources: [
             "한국전력공사 전기공급약관 시행세칙 제43조(역률요금) — 매 1%당 기본요금의 0.2% 가감",
             "같은 조 개정 전 구간: 지상 90% 미만 할증, 90% 초과~95% 이하 감액. 본 화면은 이 구간을 사용",
@@ -346,20 +376,22 @@ export default function DeviceOpsBenefitPanel({
         tone="quality"
         icon={<GaugeIcon />}
         kicker="전기 품질 점수"
-        value={s.qualityAfter != null ? formatQuality(s.qualityAfter) : "—"}
-        unit={s.qualityAfter != null ? "점" : undefined}
+        value={ready && s.qualityAfter != null ? formatQuality(s.qualityAfter) : ready ? "—" : "집계 중"}
+        unit={ready && s.qualityAfter != null ? "점" : undefined}
         compare={qualityCompare}
-        hint={`IEEE 519 THD 한도 ${QUALITY_REFS.thdLimitPct}%`}
+        hint={qualityHint}
+        caption={basisNote}
         formula={{
           title: "전기 품질 점수 공식",
           lines: [
             `점수 = 역률 ${QUALITY_REFS.weights.pf * 100}% + 전류 THD ${QUALITY_REFS.weights.thd * 100}% + 전압 불평형 ${QUALITY_REFS.weights.unbalance * 100}%`,
+            `표시 점수는 ${OPS_SAVINGS.minLoadKw} kW 이상 구간만 전력량으로 가중 평균합니다. 경부하 THD는 넣지 않습니다`,
             `전류 THD: IEEE 519-2022 Table 2의 8% 한도를 기준으로 채점 (Isc/IL 20–50, 120 V–69 kV). 5% 이내 100–90점, 8%에서 80점, 20%(표의 최대 한도)에서 25점. 계측은 THD이며 TDD의 근사입니다.`,
             `전압 불평형: NEMA MG-1 LVUR = max|V−Vavg| / Vavg × 100. 1%(전동기 권장)→90점, 2%(저압 양립 레벨)→70점, 5% 이상→0점.`,
             `역률: IEEE 한도가 아닙니다. 한전 전기공급약관 90% 할증 / 95% 인센티브 구간에 맞춰 90%→82점, 95% 이상→100점.`,
             "빠진 항목이 있으면 나머지 가중치만 다시 나눠 평균합니다.",
           ],
-          note: "보상 전은 부하측 THD·역률, 지금은 계통측 THD·역률입니다. 전압 불평형은 상전압 계측을 씁니다.",
+          note: "보상 전은 부하측 THD·역률, 보상 후는 계통측 THD·역률입니다. 전압 불평형은 상전압 계측을 씁니다. 7일이 안 되면 지금 점수만 힌트로 둡니다.",
           sources: [
             "IEEE Std 519-2022 Table 2 — Current distortion limits for systems 120 V to 69 kV (Isc/IL 20–50 → TDD 8%)",
             "IEEE Std 519-2022 Table 1 — Voltage distortion, V ≤ 1.0 kV → THD 8% (참고, 본 점수는 전류 THD)",
