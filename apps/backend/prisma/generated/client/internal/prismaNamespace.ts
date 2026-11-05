@@ -398,7 +398,8 @@ export const ModelName = {
   AggregationLog: 'AggregationLog',
   FaultEvent: 'FaultEvent',
   ModuleFaultState: 'ModuleFaultState',
-  DeviceCommand: 'DeviceCommand'
+  DeviceCommand: 'DeviceCommand',
+  OtaFile: 'OtaFile'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -414,7 +415,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "clientOption" | "roleOption" | "site" | "installation" | "installationDeviceSettings" | "device" | "telemetryRecord" | "telemetryHourlySummary" | "telemetryDailySummary" | "aggregationState" | "aggregationLog" | "faultEvent" | "moduleFaultState" | "deviceCommand"
+    modelProps: "user" | "clientOption" | "roleOption" | "site" | "installation" | "installationDeviceSettings" | "device" | "telemetryRecord" | "telemetryHourlySummary" | "telemetryDailySummary" | "aggregationState" | "aggregationLog" | "faultEvent" | "moduleFaultState" | "deviceCommand" | "otaFile"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1528,6 +1529,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    OtaFile: {
+      payload: Prisma.$OtaFilePayload<ExtArgs>
+      fields: Prisma.OtaFileFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.OtaFileFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaFilePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.OtaFileFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaFilePayload>
+        }
+        findFirst: {
+          args: Prisma.OtaFileFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaFilePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.OtaFileFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaFilePayload>
+        }
+        findMany: {
+          args: Prisma.OtaFileFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaFilePayload>[]
+        }
+        create: {
+          args: Prisma.OtaFileCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaFilePayload>
+        }
+        createMany: {
+          args: Prisma.OtaFileCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.OtaFileCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaFilePayload>[]
+        }
+        delete: {
+          args: Prisma.OtaFileDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaFilePayload>
+        }
+        update: {
+          args: Prisma.OtaFileUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaFilePayload>
+        }
+        deleteMany: {
+          args: Prisma.OtaFileDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.OtaFileUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.OtaFileUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaFilePayload>[]
+        }
+        upsert: {
+          args: Prisma.OtaFileUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaFilePayload>
+        }
+        aggregate: {
+          args: Prisma.OtaFileAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOtaFile>
+        }
+        groupBy: {
+          args: Prisma.OtaFileGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OtaFileGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.OtaFileCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OtaFileCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1862,6 +1937,20 @@ export const DeviceCommandScalarFieldEnum = {
 export type DeviceCommandScalarFieldEnum = (typeof DeviceCommandScalarFieldEnum)[keyof typeof DeviceCommandScalarFieldEnum]
 
 
+export const OtaFileScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  size: 'size',
+  sha256: 'sha256',
+  data: 'data',
+  downloadToken: 'downloadToken',
+  uploadedBy: 'uploadedBy',
+  createdAt: 'createdAt'
+} as const
+
+export type OtaFileScalarFieldEnum = (typeof OtaFileScalarFieldEnum)[keyof typeof OtaFileScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2034,6 +2123,20 @@ export type EnumDeviceCommandStatusFieldRefInput<$PrismaModel> = FieldRefInputTy
 export type ListEnumDeviceCommandStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DeviceCommandStatus[]'>
     
 
+
+/**
+ * Reference to a field of type 'Bytes'
+ */
+export type BytesFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Bytes'>
+    
+
+
+/**
+ * Reference to a field of type 'Bytes[]'
+ */
+export type ListBytesFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Bytes[]'>
+    
+
 /**
  * Batch Payload for updateMany & deleteMany & createMany
  */
@@ -2144,6 +2247,7 @@ export type GlobalOmitConfig = {
   faultEvent?: Prisma.FaultEventOmit
   moduleFaultState?: Prisma.ModuleFaultStateOmit
   deviceCommand?: Prisma.DeviceCommandOmit
+  otaFile?: Prisma.OtaFileOmit
 }
 
 /* Types for Logging */

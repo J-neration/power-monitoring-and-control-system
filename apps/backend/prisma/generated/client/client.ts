@@ -126,3 +126,9 @@ export type ModuleFaultState = Prisma.ModuleFaultStateModel
  * 
  */
 export type DeviceCommand = Prisma.DeviceCommandModel
+/**
+ * Model OtaFile
+ * HMI 무선 업데이트(OTA) 파일. 수 MB 이하라 DB 에 그대로 둔다.
+ * HMI 는 GET /receiver/ota/file/:id?t=<downloadToken> 으로 64KB 씩(Range) 받는다.
+ */
+export type OtaFile = Prisma.OtaFileModel

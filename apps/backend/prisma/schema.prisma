@@ -462,3 +462,22 @@ model DeviceCommand {
   @@index([installationId, status, createdAt])
   @@index([installationId, module, status, createdAt])
 }
+
+/* =========================
+ * OTA – HMI firmware files
+ * ========================= */
+
+/// HMI 무선 업데이트(OTA) 파일. 수 MB 이하라 DB 에 그대로 둔다.
+/// HMI 는 GET /receiver/ota/file/:id?t=<downloadToken> 으로 64KB 씩(Range) 받는다.
+model OtaFile {
+  id            String   @id @default(cuid())
+  name          String
+  size          Int
+  /// 업로드 본문의 SHA-256 (hex 소문자)
+  sha256        String
+  data          Bytes
+  /// 다운로드 URL 의 t= 값. 파일마다 무작위 32자
+  downloadToken String   @unique
+  uploadedBy    String?
+  createdAt     DateTime @default(now())
+}
