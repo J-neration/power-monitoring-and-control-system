@@ -1,33 +1,13 @@
-# pqms.co.kr DNS. 가비아 대신 Route 53 이 응답하도록 옮긴다(가비아는 apex 를 ALB 에 연결할 수 없다).
-#
-# 순서:
-#   1. 이 루트 apply → 지금 가비아에 있는 레코드를 똑같이 만든다(app_target = "netlify").
-#   2. 출력 name_servers 에 직접 물어 가비아와 같은 답이 나오는지 확인한다.
-#   3. 가비아에서 네임서버를 name_servers 4개로 바꾼다. 두 곳의 답이 같아 그동안 영향이 없다.
-#   4. 컷오버 날 terraform.tfvars 의 app_target = "aws" 로 apply → pqms.co.kr·www 가 AWS ALB 로 간다.
-#      롤백은 "netlify" 로 되돌려 apply.
+# pqms.co.kr DNS. 가비아 대신 Route 53 이 응답한다(가비아는 apex 를 ALB 에 연결할 수 없다).
+# 2026-10-28 컷오버로 pqms.co.kr·www 를 AWS ALB 로 옮겼고, 2026-11-05 옛 Netlify 를 해지하며
+# Netlify 로 되돌리는 선택지(app_target)와 dev.pqms.co.kr(옛 dev 화면)을 지웠다.
 #
 # 영역을 지웠다 다시 만들면 네임서버가 바뀌어 도메인 전체가 끊기므로 prevent_destroy 로 막는다.
 # app 루트는 이 영역에 api·app 주소와 인증서 검증 레코드를 직접 추가한다(이름으로 찾음).
 
-variable "app_target" {
-  description = "pqms.co.kr·www 가 가리킬 곳. netlify = 지금 운영 화면, aws = pmcs-prod ALB (컷오버)."
-  type        = string
-  default     = "netlify"
-  validation {
-    condition     = contains(["netlify", "aws"], var.app_target)
-    error_message = "app_target 은 netlify 또는 aws 여야 한다."
-  }
-}
-
 locals {
-  domain = "pqms.co.kr"
-  ttl    = 300
-
-  # 2026-10-27 가비아 레코드(5개, TTL 600)를 그대로 옮긴 값. MX·TXT·CAA 는 없었다.
-  netlify_apex_ip  = "75.2.60.5"
-  netlify_www      = "lmacs.netlify.app"
-  netlify_dev      = "dev--lmacs.netlify.app"
+  domain           = "pqms.co.kr"
+  ttl              = 300
   dev_box_ip       = "54.116.197.4" # pmcs-dev 서버 1대형 EIP (envs/dev/box). 바뀌면 여기도 바꾼다.
   dev_box_hostname = ["app-dev", "api-dev"]
 }
@@ -42,61 +22,33 @@ resource "aws_route53_zone" "this" {
 }
 
 data "aws_lb" "prod" {
-  count = var.app_target == "aws" ? 1 : 0
-  name  = "pmcs-prod-alb"
+  name = "pmcs-prod-alb"
 }
 
 # ── pqms.co.kr · www: 운영 화면 ─────────────────────────────────────
 
-# 두 레코드 모두 리소스 하나로 두고 값만 바꾼다. 지웠다 만들면 그 사이 조회가 "없음"으로 캐시될 수 있어서,
-# 제자리 수정(UPSERT)이 되게 했다(2026-10-28 dev 시험 영역에서 A 값 ↔ 별칭 양방향 제자리 수정 확인).
 resource "aws_route53_record" "apex" {
   zone_id = aws_route53_zone.this.zone_id
   name    = local.domain
   type    = "A"
-  ttl     = var.app_target == "netlify" ? local.ttl : null
-  records = var.app_target == "netlify" ? [local.netlify_apex_ip] : null
 
-  dynamic "alias" {
-    for_each = var.app_target == "aws" ? [1] : []
-    content {
-      name                   = data.aws_lb.prod[0].dns_name
-      zone_id                = data.aws_lb.prod[0].zone_id
-      evaluate_target_health = false
-    }
+  alias {
+    name                   = data.aws_lb.prod.dns_name
+    zone_id                = data.aws_lb.prod.zone_id
+    evaluate_target_health = false
   }
 }
 
-# www 는 종류(CNAME)를 바꾸면 다시 만들어야 하므로 CNAME 으로 두고 대상만 바꾼다.
-# 컷오버 후에는 pqms.co.kr(ALB)을 따라가고, ALB 가 pqms.co.kr 로 301 리디렉트한다.
+# pqms.co.kr(ALB)을 따라가고, ALB 가 pqms.co.kr 로 301 리디렉트한다.
 resource "aws_route53_record" "www" {
   zone_id = aws_route53_zone.this.zone_id
   name    = "www.${local.domain}"
   type    = "CNAME"
   ttl     = local.ttl
-  records = [var.app_target == "netlify" ? local.netlify_www : local.domain]
-}
-
-moved {
-  from = aws_route53_record.apex_netlify[0]
-  to   = aws_route53_record.apex
-}
-
-moved {
-  from = aws_route53_record.www_netlify[0]
-  to   = aws_route53_record.www
+  records = [local.domain]
 }
 
 # ── dev ────────────────────────────────────────────────────────────
-
-# dev Netlify(옛 dev 화면). Netlify 를 정리할 때 함께 지운다.
-resource "aws_route53_record" "dev_netlify" {
-  zone_id = aws_route53_zone.this.zone_id
-  name    = "dev.${local.domain}"
-  type    = "CNAME"
-  ttl     = local.ttl
-  records = [local.netlify_dev]
-}
 
 resource "aws_route53_record" "dev_box" {
   for_each = toset(local.dev_box_hostname)

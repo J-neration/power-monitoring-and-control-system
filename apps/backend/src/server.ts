@@ -79,18 +79,10 @@ const devFallbacks = {
 
 type SecretName = keyof typeof devFallbacks;
 
-/** Railway 는 NODE_ENV 를 자동 주입하지 않는다 — NODE_ENV 만 보면 변수를 빼먹은 배포가
- *  폴백값으로 조용히 떠버려 가드가 무력해지므로, 플랫폼이 주입하는 변수로도 배포를 판별한다
- *  (Railway, AWS ECS). */
+/** NODE_ENV 만 보면 변수를 빼먹은 배포가 폴백값으로 조용히 떠버려 가드가 무력해지므로,
+ *  플랫폼이 주입하는 변수(AWS ECS)로도 배포를 판별한다. */
 const isDeployedEnv = (env: Record<string, string | undefined>) =>
-  env.NODE_ENV === "production" ||
-  Boolean(
-    env.RAILWAY_ENVIRONMENT ??
-      env.RAILWAY_ENVIRONMENT_NAME ??
-      env.RAILWAY_PROJECT_ID ??
-      env.RAILWAY_SERVICE_ID ??
-      env.ECS_CONTAINER_METADATA_URI_V4,
-  );
+  env.NODE_ENV === "production" || Boolean(env.ECS_CONTAINER_METADATA_URI_V4);
 
 /** 대시보드에는 변수가 보이는데 프로세스에는 없는 가장 흔한 원인 — 이름에 공백·탭이 섞여
  *  `RECEIVER_API_KEY\t` 로 저장된 경우. UI 에서는 정상으로 보여 찾는 데 오래 걸린다. */
@@ -100,9 +92,7 @@ const findWhitespacePaddedName = (
 ) => Object.keys(env).find((key) => key !== name && key.trim() === name);
 
 const MISSING_ENV_HINT =
-  "  Railway → 해당 서비스 → Variables 에 설정하세요. (AWS: Secrets Manager → ECS 작업 정의)\n" +
-  "  · dev/production 은 서비스가 분리돼 있으니 두 서비스를 모두 확인할 것\n" +
-  "  · project Shared Variables 에만 넣었다면 서비스에서 ${{shared.NAME}} 로 참조해야 적용됨\n" +
+  "  운영: Secrets Manager pmcs-prod/api → ECS 작업 정의, dev: SSM /pmcs-dev/box/env 에 설정하세요.\n" +
   "  · 시크릿 생성: openssl rand -hex 24";
 
 export const parseEnv = (env: Record<string, string | undefined>) => {

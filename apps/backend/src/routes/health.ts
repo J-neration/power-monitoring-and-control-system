@@ -5,7 +5,7 @@ export const healthRoutes: FastifyPluginAsync = async (server) => {
     return {
       status: "ok",
       timestamp: new Date().toISOString(),
-      // bump when verifying Railway actually picked up a new deploy
+      // bump when verifying a deploy actually picked up the new build
       build: "receiver-auth-v2",
     };
   });

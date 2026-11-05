@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// HMI 펌웨어와 같은 바이트로 /receiver 에 측정값 1건을 보낸다(Railway 중계 검증용).
+// HMI 펌웨어와 같은 바이트로 /receiver 에 측정값 1건을 보낸다(수신 경로·WAF 규칙 검증용).
 // 모뎀(Quectel, requestheader=1)은 헤더를 직접 써서 보낸다: Host, Content-Type, x-api-key, Content-Length.
 // User-Agent·Accept-Encoding·Connection 은 없고, 인증서는 검증하지 않으며 SNI 는 보낸다.
 //
 // 키는 환경 변수 RECEIVER_API_KEY 로만 받는다(명령줄·화면에 나오지 않게).
 // 사용:
-//   RECEIVER_API_KEY=... HOST=pmcsbackend-dev.up.railway.app node scripts/railway-relay/hmi-raw-post.mjs
+//   RECEIVER_API_KEY=... HOST=api-dev.pqms.co.kr node scripts/hmi/hmi-raw-post.mjs
 //   DEVICE_ID 기본값 relay-test-01 — 처음 보내면 "Unknown" 사이트 아래 장비가 새로 생긴다.
 //   COUNT=5 로 여러 번 보내 응답 시간을 본다(요청마다 새 연결, 모뎀과 같다).
 import tls from "node:tls";
@@ -13,7 +13,7 @@ import tls from "node:tls";
 const key = process.env.RECEIVER_API_KEY;
 const host = process.env.HOST;
 if (!key || !host) {
-  console.error("RECEIVER_API_KEY 와 HOST 가 필요합니다 (예: HOST=pmcsbackend-dev.up.railway.app)");
+  console.error("RECEIVER_API_KEY 와 HOST 가 필요합니다 (예: HOST=api-dev.pqms.co.kr)");
   process.exit(2);
 }
 const deviceId = process.env.DEVICE_ID || "relay-test-01";

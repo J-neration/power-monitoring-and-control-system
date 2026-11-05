@@ -4,7 +4,7 @@ import { defineConfig } from "prisma/config";
 //   npx prisma migrate deploy --config prisma.test.config.ts
 //
 // prisma.config.ts 를 쓰지 않는 이유: 그 파일은 .env* 를 override 로 읽어서,
-// 로컬에 .env.development(Neon dev)가 있으면 넘겨준 테스트 주소가 덮어써진다.
+// 로컬에 .env.development(개발 DB)가 있으면 넘겨준 테스트 주소가 덮어써진다.
 const url = process.env.TEST_DATABASE_URL;
 if (!url) {
   throw new Error(

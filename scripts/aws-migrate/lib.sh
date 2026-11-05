@@ -48,7 +48,7 @@ TUNNEL_HOURS="${TUNNEL_HOURS:-1}"
 TARGET_HOST="${TARGET_HOST:-host.docker.internal}"
 TARGET_PORT="${TARGET_PORT:-$TUNNEL_PORT}"
 PG_IMAGE="${PG_IMAGE:-postgres:16}"
-# 원본(Neon) 접속은 항상 읽기 전용 트랜잭션으로 연다. 덤프·행 수 비교 모두 읽기만 한다.
+# 원본(이전 때는 Neon) 접속은 항상 읽기 전용 트랜잭션으로 연다. 덤프·행 수 비교 모두 읽기만 한다.
 SOURCE_PGOPTIONS="-c default_transaction_read_only=on"
 LOCAL_REHEARSAL="${LOCAL_REHEARSAL:-0}"
 

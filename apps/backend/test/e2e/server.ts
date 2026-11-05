@@ -2,7 +2,7 @@
  * Playwright E2E 용 백엔드. playwright.config.ts 의 webServer 가 띄운다.
  *
  * src/index.ts 를 쓰지 않는 이유: index.ts 는 .env* 를 override 로 읽어 DATABASE_URL 이
- * 로컬 .env.development(Neon dev)로 바뀔 수 있다. 여기서는 안전장치를 통과한 테스트 DB 만 쓴다.
+ * 로컬 .env.development(개발 DB)로 바뀔 수 있다. 여기서는 안전장치를 통과한 테스트 DB 만 쓴다.
  *
  * 시작할 때 테스트 DB 를 비우고 시나리오 데이터를 넣은 뒤 E2E_API_PORT(기본 4100)에서 듣는다.
  */

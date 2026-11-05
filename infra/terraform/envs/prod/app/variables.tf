@@ -1,10 +1,10 @@
 variable "app_hostname" {
-  description = "브라우저용 주소. 컷오버 후 사용자가 들어오는 주소(지금 Netlify 운영 화면과 같은 주소)."
+  description = "브라우저용 주소 (사용자가 들어오는 주소)."
   type        = string
 }
 
 variable "app_alias_hostnames" {
-  description = "app 과 똑같이 서비스할 추가 주소. 컷오버 전에는 apex 가 Netlify 를 가리키므로 리허설은 여기로 한다."
+  description = "app 과 똑같이 서비스할 추가 주소."
   type        = list(string)
   default     = []
 }
@@ -16,7 +16,7 @@ variable "redirect_hostnames" {
 }
 
 variable "api_hostname" {
-  description = "HMI 수신용 주소. 현장 장비는 Railway 중계를 거쳐 여기로 온다."
+  description = "HMI 수신용 주소. 현장 장비가 펌웨어 HOST_PROD 로 여기에 직접 보낸다."
   type        = string
 }
 
@@ -42,7 +42,7 @@ variable "frontend_desired_count" {
 }
 
 variable "receiver_rate_limit" {
-  description = "IP당 5분 동안 허용하는 /receiver 요청 수 (WAF). 현장 장비는 Railway 중계 IP 몇 개로 모여 들어온다."
+  description = "IP당 5분 동안 허용하는 /receiver 요청 수 (WAF). 현장 장비는 통신사 NAT IP 몇 개로 모여 들어온다."
   type        = number
   default     = 600
 }
