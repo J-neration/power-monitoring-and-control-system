@@ -1,4 +1,4 @@
-# AWS ECS 용 프론트엔드 이미지. Netlify 배포와는 무관하다.
+# AWS ECS 용 프론트엔드 이미지 (dev 서버·운영 공통).
 # 빌드 컨텍스트는 저장소 루트 (같은 폴더의 Dockerfile.dockerignore 가 적용됨):
 #   docker build -f apps/frontend/Dockerfile .
 #

@@ -1,28 +1,25 @@
 # 환경 변수
 
-로컬은 **파일 2개**만 씁니다. 운영은 **대시보드**만 씁니다. example 템플릿은 없습니다.
+로컬은 **파일 2개**만 씁니다. dev·운영 값은 **AWS** 에만 둡니다. example 템플릿은 없습니다.
 
 ## 로컬 (gitignore)
 
 | 파일 | 누가 읽나 | 넣는 값 |
 |------|-----------|---------|
-| `apps/backend/.env.development` | `yarn dev` 백엔드 | Neon **dev** `DATABASE_URL`, `NEON_BRANCH=dev`, 개발용 JWT/API 키 |
+| `apps/backend/.env.development` | `yarn dev` 백엔드 | 로컬 Docker `DATABASE_URL`(`postgresql://pmcs:pmcs@localhost:5432/pmcs`), 개발용 JWT/API 키 |
 | `apps/frontend/.env.local` | Next.js | `NEXT_PUBLIC_API_BASE`, `COMMAND_API_BASE` |
 
-선택: `apps/backend/.env.local` 은 `yarn db:pull-prod` 용 `PROD_DATABASE_URL` 전용입니다.
+`yarn dev`는 `NODE_ENV=development`라서 `.env.development`를 읽습니다. `yarn dev:aws-db` 는 dev 서버 DB 로 가는 터널 주소를
+`.env.development.local` 에 넣어 이 값을 덮어씁니다(`scripts/dev-box/README.md`).
 
-`yarn dev`는 `NODE_ENV=development`라서 `.env.development`를 읽습니다. 운영 Neon URL을 이 파일에 넣지 마세요.
+## dev·운영 (파일 없음)
 
-## 운영 (파일 없음)
+| 환경 | 어디에 | 무엇을 |
+|------|--------|--------|
+| 운영 | Secrets Manager `pmcs-prod/api`·`pmcs-prod/jwt`·`pmcs-prod/alert-mail` → ECS 작업 정의 | `DATABASE_URL`, `RECEIVER_API_KEY`, `JWT_SECRET`, SMTP 등. 나머지 값은 `infra/terraform/envs/prod/app/services.tf` |
+| dev  | SSM `/pmcs-dev/box/env` → dev 서버 `/opt/pmcs/.env` | 같은 키들. 나머지는 `infra/dev-box/compose.yml` |
 
-| 플랫폼 | 변수 |
-|--------|------|
-| Railway (백엔드) | `NODE_ENV=production`, `DATABASE_URL`, `NEON_BRANCH=main`, `JWT_SECRET`, `RECEIVER_API_KEY`, `FRONTEND_ORIGIN`, `LOG_LEVEL` |
-| Netlify (프론트) | `NEXT_PUBLIC_API_BASE`, `COMMAND_API_BASE` |
-
-## AWS 전환용 (Railway·Netlify 에는 넣지 않음)
-
-아래 변수는 모두 **미설정이면 기존 동작 그대로**입니다. AWS ECS 작업 정의에서만 설정합니다.
+아래 변수는 모두 **미설정이면 로컬 기본 동작**입니다. dev·운영 컨테이너에만 설정합니다.
 
 | 위치 | 변수 | 값 (AWS) | 효과 |
 |------|------|----------|------|
@@ -39,5 +36,5 @@
 ## 하지 말 것
 
 - 운영 DB에 `yarn db:seed`
-- `apps/backend/.env.development`에 Neon **main** URL 넣기
+- `apps/backend/.env.development`에 운영 DB 주소 넣기
 - 환경 변수 파일을 git에 커밋

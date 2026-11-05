@@ -1,7 +1,7 @@
 # ── 시크릿 (값은 Terraform 밖에서 콘솔로 입력한다. 상태·코드에 남지 않게) ─────
 # pmcs-prod/api  : JSON {DATABASE_URL, MIGRATE_DATABASE_URL, RECEIVER_API_KEY, RECEIVER_API_KEY_PREVIOUS,
 #                        CRITICAL_FAULT_WEBHOOK_URL}
-#   RECEIVER_API_KEY 는 HMI 펌웨어의 REMOTE_HTTPS_API_KEY_PROD 와 같아야 한다(Railway 중계도 키를 그대로 넘김).
+#   RECEIVER_API_KEY 는 HMI 펌웨어의 REMOTE_HTTPS_API_KEY_PROD 와 같아야 한다(HMI 는 api.pqms.co.kr 로 직접 보낸다).
 #   RECEIVER_API_KEY_PREVIOUS 는 키 교체 중에만 예전 키를 담고 평소에는 빈 문자열이다
 #   (scripts/aws-deploy/rotate-receiver-key.sh).
 # pmcs-prod/jwt  : JSON {JWT_SECRET}  (백엔드 JWT_SECRET = 프론트 AUTH_JWT_SECRET). 새로 발급한다.
@@ -110,11 +110,11 @@ module "api" {
   cpu_architecture = local.cpu_architecture
 
   container_port = local.api_port
-  # Railway용 Dockerfile CMD(부팅 시 마이그레이션)를 쓰지 않고 서버만 띄운다.
+  # 부팅 시 마이그레이션 없이 서버만 띄운다.
   # 마이그레이션은 아래 api-migrate 태스크로 따로 실행한다.
   command = ["node", "apps/backend/dist/src/index.js"]
 
-  # AGGREGATION_ENABLED 는 코드 기본값(켜짐, Railway prod 와 같음).
+  # AGGREGATION_ENABLED 는 코드 기본값(켜짐).
   # DEVICE_FRESHNESS_CHECK_ENABLED: 30분 넘게 끊긴 설비를 관리자에게 메일로 알린다(코드 기본값도 켜짐).
   # 1시간마다 보내는 prime-parkinglot 은 메일 대상에서 빠져 있다(lib/moduleAlerts.ts, 1749c5d).
   # 서버가 새로 뜰 때 이미 끊겨 있는 설비는 한 번 더 메일이 간다(배포 때마다).

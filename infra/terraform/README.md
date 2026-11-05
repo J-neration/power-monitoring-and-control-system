@@ -1,8 +1,7 @@
 # PQMS AWS 인프라 (Terraform)
 
-PQMS를 AWS 서울 리전(`ap-northeast-2`)으로 옮기기 위한 인프라 코드입니다.
-이 디렉터리는 Railway(`watchPatterns`)·Docker 이미지·Netlify(`base = apps/frontend`)
-어디에도 포함되지 않으므로, 여기만 바꾼 커밋은 현재 운영 배포에 영향을 주지 않습니다.
+PQMS 의 AWS 서울 리전(`ap-northeast-2`) 인프라 코드입니다. 2026-10-28 운영을 옮겼고, 2026-11-05 옛 Railway·Netlify·Neon 을 해지했습니다.
+이 디렉터리는 Docker 이미지에 포함되지 않으므로, 여기만 바꾼 커밋은 앱 배포에 영향을 주지 않습니다(apply 는 사람이 따로 합니다).
 
 ## 구조
 
@@ -24,7 +23,7 @@ infra/terraform/
     prod/               pmcs-prod 계정(887664351558). "필수 보안형"(ECS·ALB·WAF·RDS, NAT 없음)
       bootstrap/        상태 저장소. 가장 먼저, 한 번만
       security/         계정 보안 기반 (CloudTrail·GuardDuty. Security Hub·Config 는 꺼 둠)
-      dns/              pqms.co.kr Route 53 영역 (가비아에서 옮김). 컷오버 때 app_target 으로 화면 주소를 바꿈
+      dns/              pqms.co.kr Route 53 영역 (가비아에서 옮김). apex·www 는 운영 ALB, app-dev·api-dev 는 dev 서버
       app/              ECS·ALB·WAF·RDS·ECR·시크릿·알람
 ```
 
@@ -32,7 +31,8 @@ dev 적용 순서는 `bootstrap` → `security` → `box`입니다. 루트끼리
 
 prod 는 `bootstrap` → `security` → `dns` → **가비아 네임서버를 dns 출력 `name_servers` 로 변경** → `app` 순서입니다.
 app 의 인증서는 Route 53 에 검증 레코드를 만들어 검증하므로, 네임서버가 Route 53 으로 넘어간 뒤에야 apply 가 끝납니다.
-app 은 dns 루트가 만든 영역을 이름(`pqms.co.kr`)으로 찾고, dns 루트는 컷오버 때(`app_target = "aws"`) ALB 를 이름(`pmcs-prod-alb`)으로 찾습니다.
+app 은 dns 루트가 만든 영역을 이름(`pqms.co.kr`)으로 찾고, dns 루트는 apex 별칭에 쓸 ALB 를 이름(`pmcs-prod-alb`)으로 찾습니다.
+그래서 처음부터 다시 만들 때는 dns 를 영역만 먼저(`terraform apply -target=aws_route53_zone.this`) 만들고 → app → dns 전체 순서로 apply 합니다.
 
 ## dev 와 prod
 
@@ -43,13 +43,13 @@ prod 의 app 루트(`envs/prod/app`)는 그 코드를 바탕으로 작성했다.
 - **도메인·인증서**: 가비아 DNS 는 apex 를 ALB 에 연결할 수 없어, prod 는 pqms.co.kr 를 Route 53 으로 옮긴다(`envs/prod/dns`).
   edge 모듈에 `route53_zone_id` 를 주면 ACM 검증 레코드를 직접 만든다.
 - **HMI 요청**: 펌웨어(Quectel 모뎀)가 HTTP 헤더를 직접 만들며 User-Agent 를 보내지 않는다. WAF 는 User-Agent 없는 요청을
-  `/receiver` 밖에서만 막는다(edge 모듈 `block_no_user_agent_outside_receiver`). 현장 장비는 Railway 중계를 거쳐 오므로
-  WAF 에는 Railway IP 몇 개로 보인다 — 속도 제한은 장비 전체 합계 기준.
+  `/receiver` 밖에서만 막는다(edge 모듈 `block_no_user_agent_outside_receiver`). 현장 장비는 LTE 통신사 NAT 를 거쳐 오므로
+  WAF 에는 여러 장비가 같은 IP 몇 개로 보인다 — 속도 제한은 그 IP 를 공유하는 장비 합계 기준.
 - **시크릿 값**: Terraform 은 빈 시크릿만 만들고 값은 콘솔·스크립트로 넣는다.
   `<env>/api`: `DATABASE_URL`, `MIGRATE_DATABASE_URL`, `RECEIVER_API_KEY`, `CRITICAL_FAULT_WEBHOOK_URL` /
   `<env>/jwt`: `JWT_SECRET` / `<env>/alert-mail`: `SMTP_*`, `ALERT_EMAIL_TO`.
 - **CPU 아키텍처**: ARM64(Graviton). 이미지는 `docker buildx build --platform linux/arm64 --provenance=false --sbom=false`
-  로 단일 매니페스트를 올려야 ECR 기본 스캔이 된다. API 는 `apps/backend/Dockerfile`(Railway 용 루트 `Dockerfile` 아님).
+  로 단일 매니페스트를 올려야 ECR 기본 스캔이 된다. API 는 `apps/backend/Dockerfile`, 프론트는 `apps/frontend/Dockerfile`.
 - **마이그레이션**: API 는 부팅 시 마이그레이션을 하지 않고 `scripts/aws-migrate/run-migrate-task.sh` 로 따로 돌린다.
   Prisma 마이그레이션 엔진은 `sslcert` 의 첫 인증서만 읽으므로 서울 RDS 루트 하나만 든 파일을 쓴다(`scripts/aws-migrate/lib.sh`).
 - **ECS 서비스는 리스너 규칙보다 먼저 만들어지면 실패**한다(대상 그룹이 ALB 에 안 붙음) → edge 출력에 `depends_on`.

@@ -32,9 +32,9 @@ PostgreSQL이 `localhost:5432`에서 실행됩니다.
 
 ### 로컬 환경변수
 
-`apps/backend/.env.development` (gitignore). 로컬 백엔드는 Neon **dev**를 씁니다.
+`apps/backend/.env.development` (gitignore). 로컬 백엔드는 Docker Postgres(`DATABASE_URL=postgresql://pmcs:pmcs@localhost:5432/pmcs`)를 씁니다.
 
-Docker Postgres를 쓸 때만 `DATABASE_URL=postgresql://pmcs:pmcs@localhost:5432/pmcs` 로 바꿉니다.
+dev 서버의 데이터로 개발할 때는 `yarn dev:aws-db` 를 씁니다(`scripts/dev-box/README.md`).
 ### 초기 세팅 (최초 1회)
 
 ```bash
@@ -122,7 +122,7 @@ npx prisma migrate dev
 
 ---
 
-## 4. 운영 DB (Neon) 반영
+## 4. dev·운영 DB 반영
 
 ### 자동 배포 흐름
 
@@ -131,28 +131,21 @@ schema.prisma 수정
     ↓
 npx prisma migrate dev --name <이름>  (로컬)
     ↓
-git push origin dev 또는 main
+PR → dev 병합 → deploy-dev-box.yml: 이미지 빌드 → dev 서버에서 prisma migrate deploy → 앱 교체
     ↓
-Railway 자동 빌드 & 배포
-    ↓
-prisma migrate deploy 자동 실행 (Dockerfile에서 서버 시작 전 실행)
-    ↓
-Neon DB에 migration 자동 적용 완료
+dev → main 병합 → deploy-prod.yml: 이미지 빌드 → 승인 → 마이그레이션 태스크(api-migrate) → ECS 서비스 교체
 ```
 
-> DB migration은 Railway 배포 시 자동으로 실행됩니다.
-> Dockerfile의 CMD에서 서버 시작 전 `prisma migrate deploy`가 실행되어,
-> 각 환경의 DATABASE_URL에 연결된 Neon 브랜치 (dev / main)에 migration이 적용됩니다.
+> 앱 컨테이너는 부팅할 때 마이그레이션을 하지 않습니다. 배포 워크플로가 서비스를 바꾸기 전에 따로 실행합니다
+> (`scripts/aws-deploy/README.md`, `scripts/dev-box/README.md`). 마이그레이션은 되돌리지 않으므로,
+> 이전 버전 코드가 새 DB 구조에서도 돌 수 있게 만듭니다.
 
 ### 수동으로 Migration 적용이 필요한 경우
 
-자동 적용이 실패하거나, 배포 없이 DB만 업데이트해야 할 때:
+운영 RDS 는 인터넷에서 직접 접속할 수 없습니다. 마이그레이션 태스크를 따로 실행합니다.
 
 ```bash
-cd apps/backend
-
-# DATABASE_URL을 Neon 운영 DB로 지정하여 실행
-DATABASE_URL="<Neon 운영 DATABASE_URL>" npx prisma migrate deploy
+PMCS_ENV=prod scripts/aws-migrate/run-migrate-task.sh   # 지금 작업 정의(마지막 배포 이미지)로 실행
 ```
 
 > **`migrate dev` vs `migrate deploy`**
@@ -226,7 +219,7 @@ yarn start                  # node dist/src/index.js
 
 - [ ] 코드 수정
 - [ ] 로컬에서 테스트
-- [ ] 커밋 & 푸시 → Railway 자동 배포
+- [ ] PR → dev 병합(dev 서버 자동 배포) → dev → main 병합(승인 후 운영 배포)
 
 ### Pull 받은 후
 

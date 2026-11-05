@@ -178,7 +178,7 @@ const parseJsonObject = (rawBody: unknown): Record<string, unknown> | null => {
   return null;
 };
 
-/** HMI는 iccid만 보내고, DB에 등록된 매핑으로만 식별 (설치 전환 시 Railway 등에 1 로 설정) */
+/** HMI는 iccid만 보내고, DB에 등록된 매핑으로만 식별 (설치 전환 시 배포 환경 변수에 1 로 설정) */
 const receiverRequireIccidOnly = () =>
   process.env.RECEIVER_REQUIRE_ICCID === "1" ||
   process.env.RECEIVER_REQUIRE_ICCID === "true";

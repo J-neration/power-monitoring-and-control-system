@@ -3,7 +3,7 @@ import { checkServerIdentity, type ConnectionOptions } from "node:tls";
 
 /**
  * DATABASE_SSL_CA_FILE 이 설정되면 그 CA 번들로 DB 서버 인증서를 검증한다 (AWS RDS).
- * 미설정이면 연결 문자열의 sslmode 를 그대로 따른다 (Neon·로컬 — 기존 동작).
+ * 미설정이면 연결 문자열의 sslmode 를 그대로 따른다 (로컬·테스트 DB).
  *
  * pg 는 연결 문자열의 sslmode 를 이 ssl 옵션보다 우선 적용하므로,
  * CA 파일을 쓸 때는 DATABASE_URL 에 sslmode 를 넣지 않는다.

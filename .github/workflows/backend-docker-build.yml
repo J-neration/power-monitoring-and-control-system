@@ -1,20 +1,18 @@
-# Railway가 쓰는 것과 **동일한** Dockerfile로 이미지를 미리 빌드해서,
-# Railway 배포 실패를 푸시한 사람이 직접 알 수 있게 한다.
+# 백엔드·프론트엔드가 빌드되는지 푸시·PR 단계에서 미리 확인한다.
 #
 # 왜 필요한가:
-#   Railway 빌드 로그는 Railway 대시보드에서만 보인다. 그래서 백엔드 빌드가 깨지면
-#   대시보드를 보는 사람만 알게 되고, 정작 푸시한 사람은 모른 채 넘어간다.
 #   GitHub Actions는 **워크플로를 실패시킨 커밋의 작성자에게 자동으로 메일을 보낸다.**
-#   → 푸시한 사람이 Railway 계정 없이도 같은 실패 로그를 즉시 받는다.
+#   그래서 배포 워크플로(deploy-dev-box.yml·deploy-prod.yml)까지 가기 전에, 푸시한 사람이
+#   타입 에러·빌드 실패를 바로 알게 된다.
 #
 # 받는 사람이 메일을 못 받고 있다면:
 #   GitHub → Settings → Notifications → Actions → "Send notifications for failed
 #   workflows only" 체크 + Email 활성화 (기본값이지만 꺼놨을 수 있음)
 #
 # 이 워크플로가 잡아주는 것: prisma generate 스키마 누락, COPY 대상 없음(.dockerignore
-# 오설정), lockfile 불일치, tsc 타입 에러 등 — 전부 Railway에서 터지던 것들.
+# 오설정), lockfile 불일치, tsc 타입 에러, next build 실패 등.
 
-name: Build check (Railway · Netlify)
+name: Build check
 
 # - push는 dev·main만 검사한다. 기능 브랜치는 PR에서 검사한다 (브랜치 push까지 돌면
 #   같은 변경을 세 번 빌드하고, 캐시가 없는 브랜치 실행이 PR 화면에 4~10분 걸려 있었다).
@@ -38,14 +36,13 @@ jobs:
   # 바뀐 파일로 어느 잡을 돌릴지 정한다. 외부 액션 없이 git diff 만 쓴다.
   #   PR    : 병합 미리보기 커밋(refs/pull/N/merge)과 첫 부모(지금의 대상 브랜치)의 차이
   #   push  : 직전 tip(event.before)과 이번 tip의 차이. before 를 모르면 전부 돈다.
-  # 경로 목록은 각 빌드가 실제로 읽는 파일과 같다 (Dockerfile 의 COPY, railway.toml 의 watchPatterns).
+  # 경로 목록은 각 빌드가 실제로 읽는 파일과 같다 (Dockerfile 의 COPY).
   changes:
     name: 바뀐 경로 판정
     runs-on: ubuntu-latest
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
-      railway: ${{ steps.filter.outputs.railway }}
       aws_backend: ${{ steps.filter.outputs.aws_backend }}
       aws_frontend: ${{ steps.filter.outputs.aws_frontend }}
     steps:
@@ -82,10 +79,9 @@ jobs:
             fi
           }
           out backend '^apps/backend/'
-          out frontend '^apps/frontend/|^netlify\.toml$'
-          out railway '^apps/backend/|^apps/frontend/package\.json$|^Dockerfile$|^\.dockerignore$|^railway\.toml$'
-          out aws_backend '^apps/backend/|^apps/frontend/package\.json$'
-          out aws_frontend '^apps/frontend/|^apps/backend/package\.json$'
+          out frontend '^apps/frontend/'
+          out aws_backend '^apps/backend/|^apps/frontend/package\.json$|^\.dockerignore$'
+          out aws_frontend '^apps/frontend/|^apps/backend/package\.json$|^\.dockerignore$'
 
           {
             echo "### 바뀐 경로 판정"
@@ -124,10 +120,10 @@ jobs:
             echo "로컬에서 \`yarn typecheck\` 으로 같은 결과를 볼 수 있습니다."
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # Netlify 배포 실패도 푸시한 사람이 바로 알 수 있게 같은 빌드를 여기서 돌린다.
-  # (Netlify 체크는 "Deploy failed" 만 보여주고 원인 로그는 Netlify 대시보드에 있다.)
+  # 프론트엔드 이미지 빌드(아래 frontend-image)는 push 에서 돌지 않으므로, main·dev push 에서도
+  # next build 가 깨지지 않았는지 여기서 확인한다.
   frontend:
-    name: next build (Netlify와 동일)
+    name: next build
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
@@ -146,24 +142,20 @@ jobs:
       - name: 실패 안내
         if: failure()
         run: |
-          echo "::error::Netlify 배포도 같은 이유로 실패합니다."
+          echo "::error::AWS 프론트엔드 이미지 빌드도 같은 이유로 실패합니다."
           {
             echo "### ❌ 프론트엔드 빌드 실패"
             echo ""
-            echo "Netlify에 올라가도 **같은 지점에서 실패**합니다. 머지 전에 고쳐주세요."
+            echo "배포(이미지 빌드)에서도 **같은 지점에서 실패**합니다. 머지 전에 고쳐주세요."
             echo ""
             echo "로컬에서 \`yarn workspace @pmcs/frontend build\` 로 같은 결과를 볼 수 있습니다."
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # docker 빌드 캐시(type=gha)는 dev push 에서만 쓴다. PR·main 은 읽기만 한다.
-  # 저장소 캐시 한도는 10GB인데 Railway 이미지 캐시 하나가 약 4GB라, PR·브랜치마다 쓰면
-  # 서로 밀어내서 dev push 가 매번 처음부터 빌드했다 (AWS 프론트엔드 4~6분).
-  # PR 은 대상 브랜치(dev)의 캐시를 읽을 수 있다.
-  #
-  # AWS 이미지 두 개는 push 에서 돌지 않는다. dev push 에서는 deploy-dev-box.yml 이 같은 이미지를
-  # 빌드해 ECR 에 올리고 캐시(scope 동일)도 쓴다. main 은 아직 AWS 이미지를 쓰지 않는다.
+  # AWS 이미지 두 개는 PR 에서만 돈다(캐시는 읽기만). push 에서는 deploy-dev-box.yml(dev)·
+  # deploy-prod.yml(main)이 build-images.yml 로 같은 이미지를 빌드해 ECR 에 올리고, dev push 가
+  # 캐시(scope 동일)를 쓴다. PR 은 대상 브랜치(dev)의 캐시를 읽을 수 있다.
 
-  # AWS 프론트엔드 컨테이너 이미지 (dev 서버가 쓰는 arm64). 지금 운영(Netlify)과는 무관하다.
+  # AWS 프론트엔드 컨테이너 이미지 (arm64, apps/frontend/Dockerfile).
   frontend-image:
     name: docker build (AWS 프론트엔드)
     needs: changes
@@ -182,8 +174,7 @@ jobs:
           push: false
           cache-from: type=gha,scope=frontend-image
 
-  # AWS 백엔드 이미지 (apps/backend/Dockerfile, arm64). Railway 는 루트 Dockerfile 을 쓰므로
-  # 운영과는 무관하다.
+  # AWS 백엔드 컨테이너 이미지 (arm64, apps/backend/Dockerfile).
   backend-image:
     name: docker build (AWS 백엔드)
     needs: changes
@@ -201,37 +192,3 @@ jobs:
           file: apps/backend/Dockerfile
           push: false
           cache-from: type=gha,scope=backend-image
-
-  # Railway 운영이 쓰는 루트 Dockerfile. main 은 PR 없이 반영되고 Railway 빌드와 동시에 돌아
-  # 사전 경고가 되지 못하므로, dev·PR 단계에서 잡는 것이 운영 보호의 핵심이다.
-  build:
-    name: docker build (Railway와 동일)
-    needs: changes
-    if: needs.changes.outputs.railway == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: docker/setup-buildx-action@v3
-
-      # DATABASE_URL 불필요: prisma generate는 datasource URL 없이도 동작 (Prisma 7.2+)
-      - name: Build image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: Dockerfile
-          push: false
-          cache-from: type=gha
-          cache-to: ${{ github.event_name == 'push' && github.ref == 'refs/heads/dev' && 'type=gha,mode=max' || '' }}
-
-      - name: 실패 안내
-        if: failure()
-        run: |
-          echo "::error::Railway 배포도 같은 이유로 실패합니다. 위 'Build image' 단계 로그를 확인하세요."
-          {
-            echo "### ❌ 백엔드 Docker 빌드 실패"
-            echo ""
-            echo "Railway에 올라가도 **같은 지점에서 실패**합니다. 머지 전에 고쳐주세요."
-            echo ""
-            echo "위 \`Build image\` 단계의 로그가 Railway 빌드 로그와 동일합니다."
-          } >> "$GITHUB_STEP_SUMMARY"

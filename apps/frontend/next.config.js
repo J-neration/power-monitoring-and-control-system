@@ -1,7 +1,7 @@
 const path = require("node:path");
 
 // AWS 컨테이너 이미지 빌드(apps/frontend/Dockerfile)에서만 켜진다.
-// Netlify 빌드는 이 값이 없으므로 출력 형식·헤더가 기존과 같다 (보안 헤더는 netlify.toml 담당).
+// 로컬 next dev·next build 는 이 값이 없으므로 기본 출력 형식이고 보안 헤더를 붙이지 않는다.
 const isContainerBuild = process.env.NEXT_OUTPUT === "standalone";
 
 // Next 의 하이드레이션 인라인 스크립트 때문에 script-src 에 'unsafe-inline' 이 필요하다.
@@ -18,7 +18,7 @@ const contentSecurityPolicy = [
   "object-src 'none'",
 ].join("; ");
 
-// netlify.toml [[headers]] 와 같은 값 + CSP. CSP 는 NEXT_CSP_ENFORCE=true 일 때 차단(컨테이너 이미지 기본값), 아니면 보고 전용.
+// 보안 헤더 + CSP. CSP 는 NEXT_CSP_ENFORCE=true 일 때 차단(컨테이너 이미지 기본값), 아니면 보고 전용.
 const securityHeaders = [
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "X-Content-Type-Options", value: "nosniff" },

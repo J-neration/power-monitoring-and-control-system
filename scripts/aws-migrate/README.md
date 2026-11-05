@@ -1,10 +1,17 @@
-# Neon → AWS RDS 데이터 이전
+# RDS 도구 (터널·DB 계정·마이그레이션) 와 Neon → RDS 이전 기록
 
-운영 컷오버에서 Neon 의 데이터를 RDS 로 옮기는 스크립트입니다. 2026-10 dev 전환(Neon dev → RDS dev)에 썼고,
-그 dev RDS 는 2026-10-23 서버 1대형으로 옮기며 지웠습니다. 이제 이 스크립트들은 `PMCS_ENV=prod` 용이며,
-운영 데이터는 dev 로 복사하지 않습니다.
+RDS 에 붙는 터널, DB 계정, 마이그레이션 태스크 스크립트입니다. 처음에는 Neon 의 데이터를 RDS 로 옮기려고 만들었습니다.
 
-## 운영 컷오버 (데이터 공백 없이)
+- 2026-10 dev 전환(Neon dev → RDS dev), 2026-10-28 운영 컷오버(Neon production → RDS prod)에 썼습니다.
+- **2026-11-05 Neon 프로젝트를 삭제했습니다.** 삭제 직전 덤프(`pg_dump -Fc`, production·dev, 행 수를 원본과 대조함)는
+  `s3://pmcs-prod-archive-887664351558/neon/` 에 있습니다(pmcs-prod 계정, KMS 암호화). 되살릴 때는
+  `pg_restore --no-owner --no-acl -d <빈 DB> neon-production-20261105.dump`.
+- `copy-data.sh`·`copy-delta.sh`·`verify-row-counts.sh` 는 원본으로 Neon 을 가정합니다. 원본이 사라졌으므로 기록으로만 둡니다
+  (다른 PostgreSQL 을 원본으로 쓸 때는 `SOURCE_LABEL` 검사를 맞게 고쳐서).
+
+## 운영 컷오버 (2026-10-28 완료, 기록)
+
+아래는 그날의 절차입니다. Railway·Netlify·Neon 을 모두 해지했으므로 그대로 다시 실행할 수는 없습니다.
 
 현장 HMI 는 펌웨어에 Railway 운영 주소가 박혀 있고, 실패한 전송을 다시 보내지 않는다. 그래서 Railway 를 멈추고
 복사하지 않는다. Railway 가 Neon 에 계속 쓰는 동안 통째로 복사하고 → 화면 주소(DNS)를 AWS 로 → Railway 를 중계로
@@ -58,14 +65,12 @@ scripts/aws-migrate/copy-delta.sh
 # 8. 터널 창 Ctrl+C
 ```
 
-**되돌리기**
-- 5단계 전: `app_target = "netlify"` 로 apply. Railway 는 계속 Neon 에 쓰고 있었으므로 잃는 것이 없다.
-- 5단계 뒤: Railway 운영 서비스의 Root Directory·Config 경로를 비우고(원래 백엔드) 다시 Deploy, DNS 는 "netlify".
-  그 사이 AWS 에만 들어온 데이터는 Neon 에 없다.
+**되돌리기**(그때 준비했던 것): 5단계 전에는 DNS 를 Netlify 로, 뒤에는 Railway 를 원래 백엔드로 되돌리는 것이었다.
+옛 시스템을 해지해 이제는 쓸 수 없다.
 
-**2주 뒤 정리**: Netlify 사이트·Neon 프로젝트 삭제, `prisma-migrate-production.yml` 과 `DATABASE_URL_PRODUCTION` 시크릿 삭제
-(그때까지는 롤백에 대비해 Neon 스키마도 맞춰 둔다), dns 루트의 `dev.pqms.co.kr`(Netlify) 레코드 삭제.
-Railway 운영 서비스(중계)는 옛 주소를 쓰는 HMI 가 한 대라도 남아 있으면 지우지 않는다.
+**정리 (2026-11-05 완료)**: 현장 HMI 펌웨어를 모두 `api.pqms.co.kr` 로 바꾼 뒤(옛 펌웨어 2대는 고객 해지로 철거)
+수신 키 교체를 마무리했고(`rotate-receiver-key.sh finish`), Railway(중계 포함)·Netlify·Neon 을 해지했다.
+`prisma-migrate-production.yml`·`DATABASE_URL_PRODUCTION` 시크릿, dns 루트의 `dev.pqms.co.kr`(Netlify) 레코드와 `app_target` 도 지웠다.
 
 2026-10-28 로컬 리허설(PostgreSQL 16 두 개, 대상 TLS): 리허설 데이터가 있는 대상 비우기 → 원본이 쓰이는 중 통째 복사
 (원본이 더 많은 표 표시) → 원본에 공백 구간 쓰기(텔레메트리·새 장비·로그인·고장·명령) + 대상에 더 최신 쓰기 →
@@ -102,12 +107,13 @@ scripts/aws-migrate/copy-data.sh
 ## 데이터 둘러보기 (조회 전용 계정)
 
 사람이 RDS 데이터를 볼 때는 조회만 되는 `pmcs_readonly` 계정을 쓴다. 한 번만 만들면 되고, 다시 실행하면 비밀번호가 바뀐다.
+prod 는 2026-11-05 에 만들었다(시크릿 `pmcs-prod/db-readonly`).
 
 ```sh
-# 터미널 A: 터널
-PMCS_ENV=dev scripts/aws-migrate/open-db-tunnel.sh
-# 터미널 B: 계정 생성 (최초 1회) → 로그인 정보는 시크릿 pmcs-dev/db-readonly
-PMCS_ENV=dev scripts/aws-migrate/setup-readonly-role.sh
+# 터미널 A: 터널. TargetNotConnected 로 바로 끝나면(에이전트 등록이 몇 초 늦음) 한 번 더 실행한다.
+PMCS_ENV=prod scripts/aws-migrate/open-db-tunnel.sh
+# 터미널 B: 계정 생성 (최초 1회, 이미 있으면 건너뜀) → 로그인 정보는 시크릿 pmcs-prod/db-readonly
+PMCS_ENV=prod scripts/aws-migrate/setup-readonly-role.sh
 ```
 
 DB 프로그램(TablePlus 등)에서 Host `127.0.0.1`, Port `15432`, Database `pmcs`, SSL mode `require`, 사용자·비밀번호는 시크릿 값으로 접속한다.
