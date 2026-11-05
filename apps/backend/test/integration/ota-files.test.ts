@@ -10,8 +10,9 @@ const t = useTestApp();
 const sampleFile = (size = 200_003) => {
   const buf = Buffer.alloc(size);
   for (let i = 0; i < size; i++) buf[i] = (i * 31 + 7) & 0xff;
-  buf.fill(0, 0, 1024);
-  Buffer.from("\r\nOK\r\nCONNECT 4096\r\n").copy(buf, 65536 - 8);
+  buf.fill(0, 0, Math.min(1024, size));
+  const marker = Buffer.from("\r\nOK\r\nCONNECT 4096\r\n");
+  if (size >= 65536 + marker.length) marker.copy(buf, 65536 - 8);
   return buf;
 };
 
