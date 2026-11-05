@@ -54,8 +54,6 @@ export const isDevAlertSite = (env: NodeJS.ProcessEnv = process.env) => {
   if (flag === "prod" || flag === "production") return false;
   if (flag === "dev" || flag === "development") return true;
   if ((env.NODE_ENV ?? "").trim() === "development") return true;
-  const neonBranch = (env.NEON_BRANCH ?? "").trim().replace(/^["']|["']$/g, "").toLowerCase();
-  if (neonBranch === "dev") return true;
   return (env.FRONTEND_ORIGIN ?? "").split(",").some(hostLooksLikeDev);
 };
 

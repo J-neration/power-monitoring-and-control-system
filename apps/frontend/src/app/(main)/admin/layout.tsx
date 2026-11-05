@@ -24,7 +24,7 @@ async function checkAdmin() {
   } catch {
     // 백엔드 일시 장애 시 로그인으로 보내지 말고 레이아웃은 통과 —
     // 페이지 클라이언트 fetch가 재시도/에러 UI를 담당.
-    // (타임아웃 중 redirect는 Netlify 스트림에서 Connection closed를 유발할 수 있음)
+    // (타임아웃 중 redirect는 스트리밍 응답에서 Connection closed를 유발할 수 있음)
     return;
   }
 

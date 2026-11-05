@@ -26,7 +26,7 @@ main 에 앱 코드(`apps/**`, `package.json`, `yarn.lock`)가 병합되면 GitH
   이전 태그는 배포 실행 요약의 "되돌리기" 줄에 있다.
 - 관리자 Mac: `AWS_PROFILE=pmcs-prod AWS_REGION=ap-northeast-2 TAG=<이전 태그> scripts/aws-deploy/ecs-deploy.sh`
 
-마이그레이션은 되돌리지 않는다. 이전 이미지가 새 DB 구조에서 돌 수 있어야 한다(Railway 때와 같다).
+마이그레이션은 되돌리지 않는다. 이전 이미지가 새 DB 구조에서 돌 수 있어야 한다.
 
 ## Terraform 과의 관계
 

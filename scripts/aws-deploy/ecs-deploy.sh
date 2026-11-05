@@ -8,7 +8,7 @@
 #   4. SSM image-tag 에 태그 기록 → Terraform 이 같은 태그로 작업 정의를 만들므로 plan 은 No changes
 #
 # 새 버전은 지금 버전을 그대로 복사하고 이미지만 바꾼다. CPU·메모리·환경 변수는 Terraform 으로만 바꾼다.
-# 마이그레이션은 되돌릴 수 없다. 이전 태그로 되돌려도 DB 구조는 그대로다(Railway 때와 같다).
+# 마이그레이션은 되돌릴 수 없다. 이전 태그로 되돌려도 DB 구조는 그대로다.
 #
 # 사용: TAG=<커밋>-arm64 [NAME_PREFIX=pmcs-prod] scripts/aws-deploy/ecs-deploy.sh
 #       관리자 Mac: AWS_PROFILE=pmcs-prod AWS_REGION=ap-northeast-2 TAG=... scripts/aws-deploy/ecs-deploy.sh

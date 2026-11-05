@@ -19,25 +19,6 @@ for (const file of [
   config({ path: path.resolve(dir, file), override: true });
 }
 
-// 🚨 안전 가드: Neon main 에 대해 `prisma migrate dev` 만 차단.
-// `prisma generate` / `migrate deploy` (Railway 빌드·부팅) 에서는 throw 하지 않음.
-const argv = process.argv.join(" ");
-const isMigrateDev =
-  argv.includes("migrate") && /\bdev\b/.test(argv) && !argv.includes("deploy");
-if (
-  isMigrateDev &&
-  process.env.DATABASE_URL?.includes("neon.tech") &&
-  nodeEnv !== "production"
-) {
-  const neonBranch = process.env.NEON_BRANCH ?? "";
-  if (neonBranch === "main" || neonBranch === "production") {
-    throw new Error(
-      "\n🚨 SAFETY: Neon main(Production) 브랜치에 대해 prisma migrate dev를 실행할 수 없습니다!" +
-      "\n   NEON_BRANCH=dev인 dev 브랜치를 사용하거나 로컬 Docker Postgres를 사용하세요.\n",
-    );
-  }
-}
-
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {

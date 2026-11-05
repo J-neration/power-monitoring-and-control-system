@@ -1,5 +1,4 @@
-# prod 주소. Route 53 영역(dns 루트)에 있고, 가비아 네임서버를 Route 53 으로 옮긴 뒤에 인증서 검증이 끝난다.
-# pqms.co.kr·www 는 컷오버 전까지 Netlify 를 가리키므로(dns 루트 app_target), 리허설은 app.pqms.co.kr 로 한다.
+# prod 주소. Route 53 영역(dns 루트)에 있다. app.pqms.co.kr 은 컷오버 리허설에 쓰던 주소로, 지금도 같은 화면을 보여 준다.
 app_hostname        = "pqms.co.kr"
 app_alias_hostnames = ["app.pqms.co.kr"]
 redirect_hostnames  = ["www.pqms.co.kr"]

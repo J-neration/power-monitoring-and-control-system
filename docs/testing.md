@@ -50,10 +50,10 @@ DB 가 필요한 통합·E2E 는 CI 가 맡는다.
 2. DB 이름에 `test` 가 들어감
 
 기본값은 `postgresql://pmcs:pmcs@localhost:5433/pmcs_test` 이고, 바꾸려면 `TEST_DATABASE_URL` 을 지정한다.
-Neon·RDS 주소를 넣으면 시작하기 전에 거부한다 (`apps/backend/test/testDatabase.ts`).
+원격(RDS 등) 주소를 넣으면 시작하기 전에 거부한다 (`apps/backend/test/testDatabase.ts`).
 
 테스트는 `.env*` 파일을 읽지 않는다. 마이그레이션도 `.env` 를 읽는 `prisma.config.ts` 대신
-`prisma.test.config.ts` 로 돌려서, 로컬 `.env.development` 의 Neon 주소로 바뀌는 일이 없다.
+`prisma.test.config.ts` 로 돌려서, 로컬 `.env.development` 의 개발 DB 주소로 바뀌는 일이 없다.
 SMTP·웹훅 환경변수도 지우고 시작하므로 테스트 중 실제 알림 메일이 나가지 않는다.
 
 ## 파일 위치
