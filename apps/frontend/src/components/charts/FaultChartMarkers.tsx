@@ -15,6 +15,21 @@ type Marker = {
 const ROW_H = 13;
 const MAX_ROWS = 4;
 
+/**
+ * 차트에 표시된 시간 범위(첫 점 ~ 마지막 점, 샘플 간격 1칸 여유).
+ * 범위 밖 장애는 가장 가까운 끝점으로 붙어 그래프 맨 앞/뒤에 잘못 표시되므로 제외한다.
+ */
+function chartRange(data: TimeRow[]): { start: number; end: number } | null {
+  const times = data
+    .map((row) => new Date(row.recordedAt).getTime())
+    .filter((t) => Number.isFinite(t));
+  if (!times.length) return null;
+  const start = Math.min(...times);
+  const end = Math.max(...times);
+  const step = times.length > 1 ? (end - start) / (times.length - 1) : 0;
+  return { start: start - step, end: end + step };
+}
+
 function nearestTime(faultAt: string, data: TimeRow[]): string | null {
   if (!data.length) return null;
   const t = new Date(faultAt).getTime();
@@ -60,8 +75,13 @@ function buildMarkers(faults: FaultEvent[], data: TimeRow[]): Marker[] {
     if (!indexByTime.has(row.time)) indexByTime.set(row.time, index);
   });
 
+  const range = chartRange(data);
+  if (!range) return [];
+
   const grouped = new Map<string, { labels: Set<string>; index: number }>();
   for (const fault of faults) {
+    const at = new Date(fault.occurredAt).getTime();
+    if (!Number.isFinite(at) || at < range.start || at > range.end) continue;
     const x = nearestTime(fault.occurredAt, data) ?? fmtChartTime(fault.occurredAt);
     const index = indexByTime.get(x) ?? data.length;
     const group = grouped.get(x) ?? { labels: new Set<string>(), index };
@@ -145,6 +165,7 @@ export default function FaultChartMarkers({
   if (!faults.length) return null;
 
   const markers = buildMarkers(faults, data);
+  if (!markers.length) return null;
 
   return (
     <>
