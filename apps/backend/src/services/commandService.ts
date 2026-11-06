@@ -12,8 +12,19 @@ import {
   SETTINGS_READONLY_KEYS,
 } from "../lib/deviceSettingsKeys.js";
 import { prisma } from "../lib/prisma.js";
+import { otaDownloadPath } from "./otaService.js";
 
 export const NO_COMMAND = { id: "", module: -1, power: "" } as const;
+
+/** OTA 명령에 필요한 파일 정보. version 이 null 이면 헤더 없는 일반 파일. */
+export type OtaCommandFile = {
+  id: string;
+  size: number;
+  downloadToken: string;
+  version: string | null;
+  productId: number | null;
+  assetVersion: number | null;
+};
 
 type CreateInput = {
   installationId: string;
@@ -66,6 +77,7 @@ type CommandRepository = {
     ackMessage?: string | null,
   ): Promise<DeviceCommand>;
   listHistory(installationId: string, limit: number): Promise<DeviceCommand[]>;
+  findOtaFile(id: string): Promise<OtaCommandFile | null>;
 };
 
 class PrismaCommandRepository implements CommandRepository {
@@ -187,6 +199,20 @@ class PrismaCommandRepository implements CommandRepository {
       take: limit,
     });
   }
+
+  async findOtaFile(id: string): Promise<OtaCommandFile | null> {
+    return prisma.otaFile.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        size: true,
+        downloadToken: true,
+        version: true,
+        productId: true,
+        assetVersion: true,
+      },
+    });
+  }
 }
 
 export const makeCommandId = () => {
@@ -207,7 +233,7 @@ const parsePower = (power: string): DeviceCommandPower | null => {
   if (normalized === "setBasic") return "setBasic";
   if (normalized === "refreshSettings") return "refreshSettings";
   const lower = normalized.toLowerCase() as DeviceCommandPower;
-  if (lower === "on" || lower === "off" || lower === "refresh") return lower;
+  if (lower === "on" || lower === "off" || lower === "refresh" || lower === "ota") return lower;
   return null;
 };
 
@@ -279,8 +305,32 @@ export const createCommandService = (
         throw new CommandError(
           400,
           "INVALID_POWER",
-          "power must be 'on', 'off', 'refresh', 'refreshSettings', or 'setBasic'",
+          "power must be 'on', 'off', 'refresh', 'refreshSettings', 'setBasic', or 'ota'",
         );
+      }
+
+      // ota: HMI itself (module 0), fields = { fileId } of an uploaded OTA package.
+      let otaFields: Prisma.InputJsonValue | null = null;
+      if (power === "ota") {
+        if (input.module !== 0) {
+          throw new CommandError(400, "INVALID_MODULE", "ota uses module 0 (the HMI itself)");
+        }
+        const fileId = input.fields?.fileId;
+        if (typeof fileId !== "string" || !fileId.trim()) {
+          throw new CommandError(400, "INVALID_FIELDS", "ota requires fields.fileId");
+        }
+        const file = await repo.findOtaFile(fileId.trim());
+        if (!file) {
+          throw new CommandError(404, "OTA_FILE_NOT_FOUND", "ota file not found");
+        }
+        if (!file.version) {
+          throw new CommandError(
+            400,
+            "OTA_FILE_NOT_PACKAGE",
+            "ota file has no package header (upload a file made by tools/ota_pack.py)",
+          );
+        }
+        otaFields = { fileId: file.id };
       }
 
       const exists = await repo.installationExists(installationId);
@@ -301,7 +351,7 @@ export const createCommandService = (
       const fields =
         power === "setBasic"
           ? sanitizeFields(input.fields ?? null, moduleType)
-          : null;
+          : otaFields;
       if (power === "setBasic" && !fields) {
         const submitted = Object.keys(input.fields ?? {}).filter(
           (key) => key !== "mod",
@@ -339,7 +389,11 @@ export const createCommandService = (
       });
     },
 
-    async poll(installationIdRaw: string) {
+    /**
+     * Oldest pending command for the HMI. opts.otaBaseUrl ("https://<api host>") is
+     * prefixed to the OTA download path so DEV and PROD hand out their own host.
+     */
+    async poll(installationIdRaw: string, opts?: { otaBaseUrl?: string }) {
       const installationId = installationIdRaw?.trim();
       if (!installationId) {
         throw new CommandError(400, "INVALID_INSTALLATION_ID", "installationId is required");
@@ -351,6 +405,30 @@ export const createCommandService = (
         return NO_COMMAND;
       }
       const sent = await repo.markSent(cmd.id, new Date());
+
+      if (sent.power === "ota") {
+        // Short keys: the HMI reads the command into a 512-byte buffer (~220 B used).
+        const fileId =
+          sent.fields && typeof sent.fields === "object" && !Array.isArray(sent.fields)
+            ? (sent.fields as Record<string, unknown>).fileId
+            : undefined;
+        const file = typeof fileId === "string" ? await repo.findOtaFile(fileId) : null;
+        if (!file || !file.version) {
+          await repo.markAck(sent.id, "failed", new Date(), "ota file missing on server");
+          return NO_COMMAND;
+        }
+        return {
+          id: sent.id,
+          module: sent.module,
+          power: sent.power,
+          ver: file.version,
+          pid: file.productId,
+          asset: file.assetVersion,
+          size: file.size,
+          url: `${opts?.otaBaseUrl ?? ""}${otaDownloadPath(file)}`,
+        };
+      }
+
       const payload: {
         id: string;
         module: number;

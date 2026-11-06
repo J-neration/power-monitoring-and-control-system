@@ -766,7 +766,10 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
         });
       }
 
-      const command = await commandService.poll(installationId);
+      // OTA download URL uses the host the HMI called (api-dev / api), always https.
+      const command = await commandService.poll(installationId, {
+        otaBaseUrl: request.headers.host ? `https://${request.headers.host}` : undefined,
+      });
       if (command.id) {
         server.log.info(
           {

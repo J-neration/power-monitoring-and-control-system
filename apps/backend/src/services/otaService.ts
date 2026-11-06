@@ -1,4 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { parseOtaHeader } from "../lib/otaHeader.js";
 import { prisma } from "../lib/prisma.js";
 
 /** 업로드 한도. HMI 앱 슬롯이 2MB 라 여유를 두고 4MB. */
@@ -12,7 +13,15 @@ export type OtaFileMeta = {
   downloadToken: string;
   uploadedBy: string | null;
   createdAt: Date;
+  /** 패키지 헤더 값. 헤더 없는 일반 파일이면 null */
+  version: string | null;
+  productId: number | null;
+  assetVersion: number | null;
+  imageSize: number | null;
 };
+
+/** 헤더(매직 "HMI1")는 있는데 깨진 파일. 라우트에서 400 으로 바꾼다. */
+export class OtaUploadError extends Error {}
 
 const META_SELECT = {
   id: true,
@@ -22,6 +31,10 @@ const META_SELECT = {
   downloadToken: true,
   uploadedBy: true,
   createdAt: true,
+  version: true,
+  productId: true,
+  assetVersion: true,
+  imageSize: true,
 } as const;
 
 /** HMI 가 받는 경로. 모뎀 URL 한도(2048자) 안에 들어가도록 짧게 유지한다. */
@@ -36,6 +49,9 @@ const tokensEqual = (a: string, b: string) => {
 
 export const otaService = {
   async create(input: { name: string; data: Buffer; uploadedBy?: string | null }): Promise<OtaFileMeta> {
+    const parsed = parseOtaHeader(input.data);
+    if (parsed.kind === "invalid") throw new OtaUploadError(`OTA 패키지 헤더 오류: ${parsed.reason}`);
+    const header = parsed.kind === "ok" ? parsed.header : null;
     const sha256 = createHash("sha256").update(input.data).digest("hex");
     return prisma.otaFile.create({
       data: {
@@ -45,6 +61,10 @@ export const otaService = {
         data: new Uint8Array(input.data),
         downloadToken: randomBytes(16).toString("hex"),
         uploadedBy: input.uploadedBy ?? null,
+        version: header?.version ?? null,
+        productId: header?.productId ?? null,
+        assetVersion: header?.assetVersion ?? null,
+        imageSize: header?.imageSize ?? null,
       },
       select: META_SELECT,
     });
@@ -52,6 +72,10 @@ export const otaService = {
 
   async list(): Promise<OtaFileMeta[]> {
     return prisma.otaFile.findMany({ select: META_SELECT, orderBy: { createdAt: "desc" } });
+  },
+
+  async findMeta(id: string): Promise<OtaFileMeta | null> {
+    return prisma.otaFile.findUnique({ where: { id }, select: META_SELECT });
   },
 
   async remove(id: string): Promise<boolean> {

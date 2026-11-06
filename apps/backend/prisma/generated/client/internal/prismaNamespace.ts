@@ -2033,7 +2033,11 @@ export const OtaFileScalarFieldEnum = {
   data: 'data',
   downloadToken: 'downloadToken',
   uploadedBy: 'uploadedBy',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  version: 'version',
+  productId: 'productId',
+  assetVersion: 'assetVersion',
+  imageSize: 'imageSize'
 } as const
 
 export type OtaFileScalarFieldEnum = (typeof OtaFileScalarFieldEnum)[keyof typeof OtaFileScalarFieldEnum]
