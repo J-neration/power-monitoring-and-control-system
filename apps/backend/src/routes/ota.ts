@@ -2,13 +2,20 @@ import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import { requireAdmin } from "../middleware/authenticate.js";
 import { parseRange } from "../lib/otaRange.js";
-import { OTA_MAX_FILE_BYTES, otaDownloadPath, otaService, type OtaFileMeta } from "../services/otaService.js";
+import {
+  OTA_MAX_FILE_BYTES,
+  otaDownloadPath,
+  otaService,
+  OtaUploadError,
+  type OtaFileMeta,
+} from "../services/otaService.js";
 
 /**
  * HMI 무선 업데이트(OTA) 파일. prefix "/receiver/ota" 로 등록한다 —
  * dev Caddy 와 prod ALB 가 /receiver/* 만 API 로 넘기므로 인프라를 바꾸지 않아도 된다.
  *
- *   POST   /receiver/ota/files?name=...   관리자. 본문 application/octet-stream
+ *   POST   /receiver/ota/files?name=...   관리자. 본문 application/octet-stream.
+ *                                         OTA 패키지면 헤더(버전 등)를 저장, 헤더가 깨졌으면 400
  *   GET    /receiver/ota/files            관리자. 목록(메타만)
  *   DELETE /receiver/ota/files/:id        관리자
  *   GET    /receiver/ota/file/:id?t=...   HMI. Range(206) 지원. x-api-key 대신 파일별 토큰
@@ -33,6 +40,10 @@ const toDto = (f: OtaFileMeta) => ({
   sha256: f.sha256,
   uploadedBy: f.uploadedBy,
   createdAt: f.createdAt,
+  version: f.version,
+  productId: f.productId,
+  assetVersion: f.assetVersion,
+  imageSize: f.imageSize,
   downloadPath: otaDownloadPath(f),
 });
 
@@ -59,12 +70,21 @@ export const otaRoutes: FastifyPluginAsync = async (server) => {
           .send({ message: "Content-Type: application/octet-stream 으로 파일 내용을 보내야 합니다." });
       }
 
-      const file = await otaService.create({
-        name: name.data,
-        data: body,
-        uploadedBy: request.user.username,
-      });
-      request.log.info({ otaFileId: file.id, name: file.name, size: file.size }, "ota file uploaded");
+      let file: OtaFileMeta;
+      try {
+        file = await otaService.create({
+          name: name.data,
+          data: body,
+          uploadedBy: request.user.username,
+        });
+      } catch (error) {
+        if (error instanceof OtaUploadError) return reply.status(400).send({ message: error.message });
+        throw error;
+      }
+      request.log.info(
+        { otaFileId: file.id, name: file.name, size: file.size, version: file.version },
+        "ota file uploaded",
+      );
       return reply.status(201).send({ file: toDto(file) });
     },
   );

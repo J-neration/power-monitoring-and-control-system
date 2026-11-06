@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createCommandService, CommandError, NO_COMMAND } from "./commandService.js";
+import {
+  createCommandService,
+  CommandError,
+  NO_COMMAND,
+  type OtaCommandFile,
+} from "./commandService.js";
 import type { DeviceCommand } from "../../prisma/generated/client/client.js";
 
 class InMemoryRepo {
@@ -48,7 +53,7 @@ class InMemoryRepo {
     id: string;
     installationId: string;
     module: number;
-    power: "on" | "off" | "refresh" | "refreshSettings" | "setBasic";
+    power: "on" | "off" | "refresh" | "refreshSettings" | "setBasic" | "ota";
     requestedBy?: string | null;
     expiresAt?: Date | null;
     fields?: unknown;
@@ -116,6 +121,12 @@ class InMemoryRepo {
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, limit);
   }
+
+  otaFiles = new Map<string, OtaCommandFile>();
+
+  async findOtaFile(id: string) {
+    return this.otaFiles.get(id) ?? null;
+  }
 }
 
 test("create -> poll -> ack success flow", async () => {
@@ -138,6 +149,80 @@ test("create -> poll -> ack success flow", async () => {
   const acked = await service.ack({ id: created.id, ok: true, message: "queued" });
   assert.equal(acked.status, "acked");
   assert.equal(acked.ackMessage, "queued");
+});
+
+const OTA_PKG: OtaCommandFile = {
+  id: "file_pkg",
+  size: 843872,
+  downloadToken: "d5888e466f1564ff9a5445cc498f0b6b",
+  version: "2.4.0",
+  productId: 1,
+  assetVersion: 1,
+};
+
+test("ota command: create with a package, poll returns the download spec", async () => {
+  const repo = new InMemoryRepo();
+  repo.otaFiles.set(OTA_PKG.id, OTA_PKG);
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "ota",
+    fields: { fileId: OTA_PKG.id },
+  });
+  assert.equal(created.power, "ota");
+  assert.deepEqual(created.fields, { fileId: OTA_PKG.id });
+
+  const polled = await service.poll("PSVG-RNDTEST5", { otaBaseUrl: "https://api-dev.pqms.co.kr" });
+  assert.deepEqual(polled, {
+    id: created.id,
+    module: 0,
+    power: "ota",
+    ver: "2.4.0",
+    pid: 1,
+    asset: 1,
+    size: 843872,
+    url: "https://api-dev.pqms.co.kr/receiver/ota/file/file_pkg?t=d5888e466f1564ff9a5445cc498f0b6b",
+  });
+  // The HMI reads the command into a 512-byte buffer.
+  assert.ok(JSON.stringify(polled).length < 300);
+});
+
+test("ota command: bad module, missing file, plain file are rejected", async () => {
+  const repo = new InMemoryRepo();
+  repo.otaFiles.set(OTA_PKG.id, OTA_PKG);
+  repo.otaFiles.set("plain", { ...OTA_PKG, id: "plain", version: null, productId: null, assetVersion: null });
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+  const base = { installationId: "PSVG-RNDTEST5", power: "ota" };
+
+  const rejects = (input: Parameters<typeof service.create>[0], code: string) =>
+    assert.rejects(
+      () => service.create(input),
+      (err: unknown) => err instanceof CommandError && err.code === code,
+    );
+  await rejects({ ...base, module: 1, fields: { fileId: OTA_PKG.id } }, "INVALID_MODULE");
+  await rejects({ ...base, module: 0 }, "INVALID_FIELDS");
+  await rejects({ ...base, module: 0, fields: { fileId: "nope" } }, "OTA_FILE_NOT_FOUND");
+  await rejects({ ...base, module: 0, fields: { fileId: "plain" } }, "OTA_FILE_NOT_PACKAGE");
+});
+
+test("ota command: file deleted before the poll -> failed, nothing sent", async () => {
+  const repo = new InMemoryRepo();
+  repo.otaFiles.set(OTA_PKG.id, OTA_PKG);
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "ota",
+    fields: { fileId: OTA_PKG.id },
+  });
+  repo.otaFiles.delete(OTA_PKG.id);
+
+  assert.deepEqual(await service.poll("PSVG-RNDTEST5"), NO_COMMAND);
+  const cmd = await repo.findById(created.id);
+  assert.equal(cmd?.status, "failed");
+  assert.equal(cmd?.ackMessage, "ota file missing on server");
 });
 
 test("invalid module/power are rejected", async () => {

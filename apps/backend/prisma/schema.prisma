@@ -24,6 +24,8 @@ enum DeviceCommandPower {
   /// Settings tab: basic settings snapshot + moduleStatus (not full monitor metrics intent)
   refreshSettings
   setBasic
+  /// HMI firmware update (OTA). module 0, fields = { fileId }
+  ota
 }
 
 enum DeviceCommandStatus {
@@ -502,4 +504,11 @@ model OtaFile {
   downloadToken String   @unique
   uploadedBy    String?
   createdAt     DateTime @default(now())
+
+  /// 패키지 헤더(HMI ota_image.h)에서 읽은 값. 헤더가 없는 일반 파일이면 null
+  /// (그런 파일로는 ota 명령을 만들 수 없다).
+  version       String?
+  productId     Int?
+  assetVersion  Int?
+  imageSize     Int?
 }

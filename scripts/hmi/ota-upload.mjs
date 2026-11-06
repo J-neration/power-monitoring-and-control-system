@@ -11,6 +11,7 @@
 //   환경 변수: APP_HOST(기본 app-dev.pqms.co.kr) API_HOST(기본 api-dev.pqms.co.kr)
 //              PMCS_USERNAME PMCS_PASSWORD (없으면 물어본다)
 // 목록: node scripts/hmi/ota-upload.mjs --list
+// OTA 명령: node scripts/hmi/ota-upload.mjs --send <파일id> <installationId>
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -54,8 +55,16 @@ const login = async () => {
 
 const main = async () => {
   const args = process.argv.slice(2);
-  if (args.length === 0) {
-    console.error("사용: node scripts/hmi/ota-upload.mjs <파일> [이름]   |   --list");
+  if (args.length === 0 || (args[0] === "--send" && args.length < 3)) {
+    console.error(
+      [
+        "사용: node scripts/hmi/ota-upload.mjs <파일> [이름]          업로드",
+        "      node scripts/hmi/ota-upload.mjs --list                   목록(파일 id, 버전)",
+        "      node scripts/hmi/ota-upload.mjs --send <파일id> <installationId>",
+        "          HMI 에 OTA 명령. HMI 는 관리자 세션이 열린 동안에만 명령을 가져간다",
+        "          (명령을 만들면 세션이 열린다). 받으면 다운로드 → 검사 → 자동 적용(재부팅).",
+      ].join("\n"),
+    );
     process.exit(2);
   }
 
@@ -67,9 +76,24 @@ const main = async () => {
     const body = await res.json();
     if (!res.ok) throw new Error(`목록 실패 (${res.status}): ${body.message ?? ""}`);
     for (const f of body.files) {
-      console.log(`${f.createdAt}  ${f.name}  ${f.size}B  sha256=${f.sha256}`);
+      const ver = f.version ? `v${f.version} (product ${f.productId}, asset ${f.assetVersion})` : "일반 파일";
+      console.log(`${f.createdAt}  id=${f.id}  ${f.name}  ${f.size}B  ${ver}`);
       console.log(`  https://${API_HOST}${f.downloadPath}`);
     }
+    return;
+  }
+
+  if (args[0] === "--send") {
+    const [, fileId, installationId] = args;
+    const res = await fetch(`https://${API_HOST}/receiver/commands/create`, {
+      method: "POST",
+      headers: { ...auth, "Content-Type": "application/json" },
+      body: JSON.stringify({ installationId, module: 0, power: "ota", fields: { fileId } }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(`OTA 명령 실패 (${res.status}): ${body.code ?? ""} ${body.message ?? ""}`);
+    console.log(`OTA 명령 생성: ${body.command.id} → ${installationId} (파일 ${fileId})`);
+    console.log(`관리자 세션 ~${body.remoteWindowUntil}. HMI 가 다음 폴링에서 가져갑니다.`);
     return;
   }
 
@@ -88,7 +112,8 @@ const main = async () => {
 
   const f = body.file;
   const url = `https://${API_HOST}${f.downloadPath}`;
-  console.log(`업로드 완료: ${f.name} (${f.size} bytes)`);
+  console.log(`업로드 완료: ${f.name} (${f.size} bytes) id=${f.id}`);
+  console.log(f.version ? `OTA 패키지 v${f.version} (product ${f.productId}, asset ${f.assetVersion})` : "일반 파일(헤더 없음)");
   console.log(`sha256 서버 ${f.sha256}`);
   console.log(`sha256 로컬 ${localSha} ${f.sha256 === localSha ? "(일치)" : "(불일치!)"}`);
   console.log(`다운로드 URL (${url.length}자):`);
