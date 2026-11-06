@@ -23,8 +23,10 @@ export type FaultEvent = {
   eventName?: string | null;
   /** 현재 활성(빨강) 여부 — RAISE 상태 + 미확인 + 자동해제 시간 미경과 */
   active?: boolean;
-  /** CLEAR 수신 시각 (없으면 미해제) */
+  /** 이 건이 끝난 시각 — 해제 또는 갱신 (없으면 진행 중) */
   resolvedAt?: string | null;
+  /** 끝난 이유 — cleared: HMI 해제, updated: 풀리지 않은 채 새 코드로 갱신 */
+  endReason?: "cleared" | "updated" | null;
   /** 사용자 Acknowledge 시각 */
   acknowledgedAt?: string | null;
 };

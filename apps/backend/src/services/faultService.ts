@@ -27,10 +27,10 @@ const eventNamePatch = (fault: ReceiverFaultUpsertInput) =>
     : { eventName: normalizeEventNameForDb(fault.eventName) };
 
 /**
- * 자동 해제 기준: 마지막 갱신(updatedAt) 후 이 시간 동안 재발생(RAISE)이 없으면
- * 활성 fault에서 자동 제외한다. (기본 24시간)
+ * CLEAR 뒤 이 시간 안에 같은 모듈 RAISE 가 오면 해제가 아니라 코드 갱신으로 본다.
+ * HMI 는 fault 중 코드가 바뀌면 CLEAR·RAISE 를 같은 배치로 보내므로 실제 간격은 수 ms 다.
  */
-const AUTO_CLEAR_MS = 24 * 60 * 60 * 1000;
+const CODE_UPDATE_GAP_MS = 2000;
 
 type FaultListRow = {
   id: string;
@@ -39,9 +39,12 @@ type FaultListRow = {
   occurredAt: Date;
   installationId: string;
   eventName?: string | null;
-  /** 현재 활성(빨강) 여부 — RAISE 상태 + 미확인 + 자동해제 시간 미경과 */
+  /** 현재 활성(빨강) 여부 — RAISE 상태 + 미확인 */
   active: boolean;
+  /** 이 건이 끝난 시각 (해제 또는 갱신). 없으면 진행 중 */
   resolvedAt?: Date | null;
+  /** 끝난 이유 — cleared: HMI 해제, updated: 풀리지 않은 채 새 코드로 갱신 */
+  endReason?: "cleared" | "updated" | null;
   acknowledgedAt?: Date | null;
 };
 
@@ -176,20 +179,13 @@ const dedupeModuleStatesByFaultCode = <
 
 /**
  * ModuleFaultState 한 행이 현재 "활성"인지 판정.
- * 활성 = 마지막 이벤트가 RAISE && 사용자 미확인 && 마지막 갱신 후 자동해제 시간 미경과.
- * (CLEAR 수신 → resolvedAt/ lastEvent=CLEAR → 비활성, acknowledgedAt 설정 → 비활성)
+ * 활성 = 마지막 이벤트가 RAISE && 사용자 미확인.
+ * HMI 는 상태가 바뀔 때만 보내므로 시간이 지났다고 자동 해제하지 않는다 — CLEAR 나 확인으로만 꺼진다.
  */
 const isModuleStateActive = (s: {
   lastEvent: string;
   acknowledgedAt: Date | null;
-  updatedAt: Date;
-  now?: number;
-}): boolean => {
-  if (s.lastEvent !== "RAISE") return false;
-  if (s.acknowledgedAt != null) return false;
-  const now = s.now ?? Date.now();
-  return now - s.updatedAt.getTime() < AUTO_CLEAR_MS;
-};
+}): boolean => s.lastEvent === "RAISE" && s.acknowledgedAt == null;
 
 type ModuleStateRow = {
   id: string;
@@ -215,22 +211,37 @@ type ModuleLogRow = {
 
 /**
  * ModuleFaultLog 를 모듈별 발생 건으로 묶는다. RAISE 가 한 건을 열고 다음 CLEAR 가 닫는다.
+ * - CLEAR 바로 뒤(CODE_UPDATE_GAP_MS 안)에 같은 모듈 RAISE 가 오면 해제가 아니라 "갱신"이다.
+ *   (HMI 는 fault 중 코드가 바뀌면 CLEAR·RAISE 를 함께 보낸다)
+ * - CLEAR 없이 RAISE 가 또 와도 앞 건은 "갱신"으로 닫는다.
  * - 앞 RAISE 없이 온 CLEAR 는 버린다 (로그 조회 범위 밖에서 시작한 건).
- * - CLEAR 없이 RAISE 가 또 오면 앞 건은 해제 시각 없이 닫는다.
  * - 모듈마다 가장 최근 건에만 현재 상태(활성·확인)를 붙인다.
  */
 const buildOccurrenceRows = (
   logs: ModuleLogRow[],
   stateByCode: Map<number, ModuleStateRow>,
-  now: number,
 ): FaultListRow[] => {
   const byCode = new Map<number, FaultListRow[]>();
   const open = new Map<number, FaultListRow>();
+  /** 방금 CLEAR 로 닫힌 건 — 곧 RAISE 가 따라오면 "갱신"으로 바꾼다 */
+  const justCleared = new Map<number, FaultListRow>();
   for (const log of logs) {
     const list = byCode.get(log.faultCode) ?? [];
     byCode.set(log.faultCode, list);
     if (log.event === "RAISE") {
-      open.delete(log.faultCode);
+      const prevOpen = open.get(log.faultCode);
+      if (prevOpen) {
+        prevOpen.resolvedAt = log.occurredAt;
+        prevOpen.endReason = "updated";
+      }
+      const cleared = justCleared.get(log.faultCode);
+      if (
+        cleared?.resolvedAt &&
+        log.occurredAt.getTime() - cleared.resolvedAt.getTime() <= CODE_UPDATE_GAP_MS
+      ) {
+        cleared.endReason = "updated";
+      }
+      justCleared.delete(log.faultCode);
       const row: FaultListRow = {
         id: `mfl-${log.id}`,
         module: log.faultCode - 1,
@@ -240,6 +251,7 @@ const buildOccurrenceRows = (
         eventName: log.eventName,
         active: false,
         resolvedAt: null,
+        endReason: null,
         acknowledgedAt: null,
       };
       list.push(row);
@@ -249,7 +261,9 @@ const buildOccurrenceRows = (
     const row = open.get(log.faultCode);
     if (row) {
       row.resolvedAt = log.occurredAt;
+      row.endReason = "cleared";
       open.delete(log.faultCode);
+      justCleared.set(log.faultCode, row);
     }
   }
 
@@ -259,12 +273,7 @@ const buildOccurrenceRows = (
     const state = stateByCode.get(faultCode);
     if (latest && state) {
       if (open.get(faultCode) === latest) {
-        latest.active = isModuleStateActive({
-          lastEvent: state.lastEvent,
-          acknowledgedAt: state.acknowledgedAt,
-          updatedAt: state.updatedAt,
-          now,
-        });
+        latest.active = isModuleStateActive(state);
       }
       if (
         state.acknowledgedAt &&
@@ -290,7 +299,6 @@ const mergeFaultLists = (
   logs: ModuleLogRow[],
   limit: number,
 ): FaultListRow[] => {
-  const now = Date.now();
   // 순수 이력(FaultEvent)은 과거 로그이므로 항상 비활성으로 둔다.
   const eventRows: FaultListRow[] = events.map((e) => ({
     ...e,
@@ -300,7 +308,7 @@ const mergeFaultLists = (
     acknowledgedAt: null,
   }));
   const stateByCode = new Map(states.map((s) => [s.faultCode, s]));
-  const fromLog = buildOccurrenceRows(logs, stateByCode, now);
+  const fromLog = buildOccurrenceRows(logs, stateByCode);
   // 로그가 생기기 전(마이그레이션 이전)에 들어온 모듈은 현재 상태 한 줄로만 보여준다.
   const loggedCodes = new Set(logs.map((l) => l.faultCode));
   const fromState: FaultListRow[] = states
@@ -312,13 +320,9 @@ const mergeFaultLists = (
       occurredAt: s.updatedAt,
       installationId: s.installationId,
       eventName: s.eventName,
-      active: isModuleStateActive({
-        lastEvent: s.lastEvent,
-        acknowledgedAt: s.acknowledgedAt,
-        updatedAt: s.updatedAt,
-        now,
-      }),
+      active: isModuleStateActive(s),
       resolvedAt: s.resolvedAt,
+      endReason: s.resolvedAt ? ("cleared" as const) : null,
       acknowledgedAt: s.acknowledgedAt,
     }));
   return [...eventRows, ...fromLog, ...fromState]

@@ -12363,6 +12363,13 @@ body.pmcs-control-room .global-header:hover {
   color: #a5b4fc;
 }
 
+/* 풀리지 않은 채 새 코드로 갱신된 건 — 해제(회색)와 구분 */
+.fault-status-updated {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.28);
+  color: #fcd34d;
+}
+
 .fault-status-resolved,
 .fault-status-history {
   background: rgba(255, 255, 255, 0.05);

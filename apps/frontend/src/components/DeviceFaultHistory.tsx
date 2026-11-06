@@ -98,14 +98,6 @@ function EventCodes({ text }: { text: string }) {
   );
 }
 
-function faultBadgeText(text: string): string {
-  const groups = parseEventCodes(text);
-  if (!groups) return text;
-  const faults = groups.faults.map((item) => item.raw);
-  if (faults.length > 0) return faults.join(" ");
-  return groups.statuses.map((item) => item.raw).join(" ");
-}
-
 /**
  * 상대 시각 — 분·시간·일 단위.
  * occurredAt 이 지금보다 미래로 잡히면(시각 동기·타임존·Unix 해석 차이) "N시간 후"는 의미가 없으므로
@@ -139,11 +131,12 @@ function formatKst(iso: string): string {
   return new Date(iso).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
 }
 
-type FaultStatus = "active" | "acknowledged" | "resolved" | "history";
+type FaultStatus = "active" | "acknowledged" | "updated" | "resolved" | "history";
 
 function faultStatus(f: FaultEvent): FaultStatus {
   if (f.active) return "active";
   if (f.acknowledgedAt) return "acknowledged";
+  if (f.resolvedAt && f.endReason === "updated") return "updated";
   if (f.resolvedAt) return "resolved";
   return "history";
 }
@@ -151,6 +144,7 @@ function faultStatus(f: FaultEvent): FaultStatus {
 const STATUS_LABEL: Record<FaultStatus, string> = {
   active: "활성",
   acknowledged: "확인됨",
+  updated: "갱신됨",
   resolved: "해제됨",
   history: "이력",
 };
@@ -208,7 +202,9 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
   const [ackingId, setAckingId] = useState<string | null>(null);
 
   const activeFaults = faults.filter((f) => f.active);
-  const latestFault = activeFaults[0] ?? faults[0] ?? null;
+  const activeModules = [...new Set(activeFaults.map((f) => f.module))]
+    .sort((a, b) => a - b)
+    .map(moduleLabel);
 
   const handleAck = useCallback(
     async (f: FaultEvent) => {
@@ -247,17 +243,7 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
             {activeFaults.length > 0 ? (
               <span className="fault-latest-badge">
                 <span className="fault-badge-dot" />
-                활성 fault {activeFaults.length}건
-                {latestFault && (
-                  <>
-                    {" — "}
-                    {moduleLabel(latestFault.module)}{" "}
-                    {faultBadgeText(faultLabel(latestFault))}
-                    {" ("}
-                    {relativeTime(latestFault.occurredAt)}
-                    {")"}
-                  </>
-                )}
+                {activeModules.join(", ")} fault 활성
               </span>
             ) : (
               <span className="fault-latest-badge fault-latest-badge-clear">
@@ -315,7 +301,7 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
               <thead>
                 <tr>
                   <th>발생시각</th>
-                  <th>해제시각</th>
+                  <th>해제·갱신 시각</th>
                   <th>모듈</th>
                   <th>이벤트</th>
                   <th>상태</th>
@@ -345,6 +331,7 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
                               {formatKst(f.resolvedAt)}
                             </span>
                             <span className="fault-time-rel">
+                              {f.endReason === "updated" ? "새 코드로 갱신 · " : ""}
                               지속 {durationLabel(f.occurredAt, f.resolvedAt)}
                             </span>
                           </>
