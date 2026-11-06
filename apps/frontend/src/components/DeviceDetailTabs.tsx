@@ -90,6 +90,8 @@ type Props = {
   hours: number;
   /** ADMIN만 설정·전원 제어 + Fault 이력 표시 */
   isAdmin?: boolean;
+  /** 영업 열람(VIEWER): Fault 이력(확인 버튼 없이)·장기 이력만, 설정·제어 없음 */
+  isViewer?: boolean;
   /** 명령 audit용 (로그인 사용자명) */
   adminUsername?: string;
   /** Admin 전용: fault 이력 */
@@ -102,6 +104,7 @@ export default function DeviceDetailTabs({
   savingsReadings = [],
   hours,
   isAdmin = false,
+  isViewer = false,
   adminUsername,
   faults = [],
 }: Props) {
@@ -109,7 +112,8 @@ export default function DeviceDetailTabs({
   const router = useRouter();
   const activeTab: Tab = tab;
   const remoteControlTab = isAdmin && activeTab === "settings";
-  const longRangeHistory = isAdmin || device.installation.historyVisible === true;
+  const canViewFaults = isAdmin || isViewer;
+  const longRangeHistory = isAdmin || isViewer || device.installation.historyVisible === true;
 
   useWsEvents((msg) => {
     if (
@@ -183,7 +187,7 @@ export default function DeviceDetailTabs({
                 설정
               </button>
             )}
-            {isAdmin && (
+            {canViewFaults && (
               <button
                 type="button"
                 role="tab"
@@ -312,10 +316,11 @@ export default function DeviceDetailTabs({
         </div>
       )}
 
-      {activeTab === "faults" && isAdmin && (
+      {activeTab === "faults" && canViewFaults && (
         <DeviceFaultHistory
           installationId={device.installationId}
           faults={faults}
+          canAck={isAdmin}
         />
       )}
       </div>

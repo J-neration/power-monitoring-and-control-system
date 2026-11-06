@@ -23,12 +23,14 @@ export default async function DeviceDetailPage({ params }: Props) {
   const id = decodeURIComponent(params.id);
   const sessionUser = await getSessionUser();
   const isAdmin = sessionUser?.role === "ADMIN";
+  /** 영업 열람: 관리자처럼 Fault 이력·장기 이력은 보되 설정·제어는 없다 */
+  const isViewer = sessionUser?.role === "VIEWER";
 
   const [device, readings, savingsReadings, faults] = await Promise.all([
     fetchDevice(id) as Promise<DeviceWithInstallation | null>,
     fetchReadings(id, HISTORY_HOURS),
     fetchOpsSamples(id),
-    isAdmin ? fetchFaults(id) : Promise.resolve([]),
+    isAdmin || isViewer ? fetchFaults(id) : Promise.resolve([]),
   ]);
 
   if (!device) {
@@ -83,6 +85,7 @@ export default async function DeviceDetailPage({ params }: Props) {
         savingsReadings={savingsReadings}
         hours={HISTORY_HOURS}
         isAdmin={isAdmin}
+        isViewer={isViewer}
         adminUsername={sessionUser?.username}
         faults={faults}
       />

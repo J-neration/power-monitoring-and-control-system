@@ -14,7 +14,7 @@ const firstZodMessage = (error: z.ZodError) =>
 const createUserSchema = z
   .object({
     username: z.string().min(2),
-    role: z.enum(["ADMIN", "CLIENT", "SITE"]),
+    role: z.enum(["ADMIN", "CLIENT", "SITE", "VIEWER"]),
     clientKey: z.string().optional(),
     siteId: z.string().optional(),
     initialPassword: z.string().min(1, "비밀번호를 입력해주세요."),

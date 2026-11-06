@@ -12099,6 +12099,12 @@ body.pmcs-control-room .global-header:hover {
   border: 1px solid rgba(34, 197, 94, 0.22);
 }
 
+.user-role-viewer {
+  background: rgba(14, 165, 233, 0.12);
+  color: #7dd3fc;
+  border: 1px solid rgba(14, 165, 233, 0.22);
+}
+
 .user-status-active {
   font-size: 12px;
   font-weight: 600;

@@ -26,7 +26,6 @@ const ADMIN_ONLY: Array<[method: "GET" | "POST" | "PATCH" | "DELETE", url: strin
   ["DELETE", "/admin/registry/clients/some-id"],
   ["GET", "/admin/registry/roles"],
   ["PATCH", "/admin/registry/roles/CLIENT"],
-  ["GET", `/devices/${IDS.lotteInst}/faults`],
   ["POST", `/devices/${IDS.lotteInst}/faults/ack`],
   ["GET", `/devices/${IDS.lotteInst}/settings`],
   ["POST", "/devices/admin-session/stop-all"],
@@ -36,6 +35,9 @@ const ADMIN_ONLY: Array<[method: "GET" | "POST" | "PATCH" | "DELETE", url: strin
   ["POST", "/receiver/commands/create"],
   ["GET", `/receiver/commands/history?installationId=${IDS.lotteInst}`],
 ];
+
+/** 관리자 + 영업 열람(VIEWER) 이 볼 수 있는 조회 전용 엔드포인트. 고객 계정(CLIENT·SITE)은 403. */
+const ADMIN_OR_VIEWER_READ: string[] = [`/devices/${IDS.lotteInst}/faults`];
 
 /** 로그인한 누구나 (단, 범위 안의 데이터만). */
 const AUTHENTICATED: string[] = [
@@ -82,6 +84,31 @@ describe("admin-only endpoints", () => {
       assert.ok(![401, 403].includes(res.statusCode), `ADMIN ${method} ${url} → ${res.statusCode}`);
     }
   });
+
+  it("reject the sales VIEWER account with 403 — it can change nothing", async () => {
+    const { tokens } = await seedWorld(t.app);
+    for (const [method, url] of ADMIN_ONLY) {
+      const res = await call(method, url, tokens.viewer);
+      assert.equal(res.statusCode, 403, `VIEWER ${method} ${url} → ${res.statusCode}`);
+    }
+  });
+});
+
+describe("admin-or-viewer read endpoints", () => {
+  it("let ADMIN and VIEWER read, reject CLIENT and SITE with 403", async () => {
+    const { tokens } = await seedWorld(t.app);
+    for (const url of ADMIN_OR_VIEWER_READ) {
+      for (const [role, token] of [["ADMIN", tokens.admin], ["VIEWER", tokens.viewer]] as const) {
+        const res = await call("GET", url, token);
+        assert.equal(res.statusCode, 200, `${role} GET ${url} → ${res.statusCode}`);
+      }
+      for (const [role, token] of [["CLIENT", tokens.client], ["SITE", tokens.site]] as const) {
+        const res = await call("GET", url, token);
+        assert.equal(res.statusCode, 403, `${role} GET ${url} → ${res.statusCode}`);
+      }
+      assert.equal((await call("GET", url)).statusCode, 401, `anonymous GET ${url}`);
+    }
+  });
 });
 
 describe("authenticated endpoints", () => {
@@ -110,6 +137,30 @@ describe("data scoping", () => {
     const res = await http(t.app).get("/sites", { token: tokens.admin });
     const ids = res.json().sites.map((s: { siteId: string }) => s.siteId).sort();
     assert.deepEqual(ids, [IDS.gsSite, IDS.lotteSite]);
+  });
+
+  it("VIEWER (sales) sees every site and device, but no SIM ICCID", async () => {
+    const { tokens } = await seedWorld(t.app);
+    const api = http(t.app);
+
+    const sites = (await api.get("/sites", { token: tokens.viewer })).json().sites;
+    assert.deepEqual(sites.map((s: { siteId: string }) => s.siteId).sort(), [IDS.gsSite, IDS.lotteSite]);
+    assert.equal("iccid" in sites[0].installations[0], false);
+
+    const devices = (await api.get("/devices", { token: tokens.viewer })).json().devices;
+    assert.deepEqual(devices.map((d: { installationId: string }) => d.installationId).sort(), [IDS.gsInst, IDS.lotteInst]);
+
+    const one = (await api.get(`/devices/${IDS.gsInst}`, { token: tokens.viewer })).json().device;
+    assert.equal("iccid" in one.installation, false);
+  });
+
+  it("opens week/month history to VIEWER even when it is closed to customers", async () => {
+    const { tokens } = await seedWorld(t.app);
+    const api = http(t.app);
+    const url = `/devices/${IDS.lotteInst}/history?period=week`;
+
+    assert.equal((await api.get(url, { token: tokens.client })).statusCode, 403);
+    assert.equal((await api.get(url, { token: tokens.viewer })).statusCode, 200);
   });
 
   it("CLIENT sees only its construction company's sites and devices", async () => {

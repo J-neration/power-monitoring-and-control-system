@@ -31,7 +31,7 @@ export type ClientOptionFromApi = {
 };
 
 export type RoleOptionFromApi = {
-  key: "ADMIN" | "CLIENT" | "SITE";
+  key: "ADMIN" | "CLIENT" | "SITE" | "VIEWER";
   label: string;
   description: string | null;
   sortOrder: number;

@@ -52,6 +52,9 @@ export const toUserContext = (payload: JwtPayload): UserContext => {
   if (payload.role === "ADMIN") {
     return { role: "ADMIN", userId: payload.sub, username: payload.username };
   }
+  if (payload.role === "VIEWER") {
+    return { role: "VIEWER", userId: payload.sub, username: payload.username };
+  }
   if (payload.role === "CLIENT") {
     if (!payload.clientKey)
       throw new Error("CLIENT 토큰에 clientKey가 없습니다.");
@@ -91,7 +94,7 @@ export const userManagementService = {
 
   create: async (data: {
     username: string;
-    role: "ADMIN" | "CLIENT" | "SITE";
+    role: "ADMIN" | "CLIENT" | "SITE" | "VIEWER";
     clientKey?: string;
     siteId?: string;
     initialPassword: string;

@@ -80,10 +80,10 @@ describe("construction company registry", () => {
 });
 
 describe("role registry", () => {
-  it("lists the three roles", async () => {
+  it("lists the four roles", async () => {
     const { tokens } = await seedWorld(t.app);
     const roles = (await http(t.app).get("/admin/registry/roles", { token: tokens.admin })).json().roles;
-    assert.deepEqual(roles.map((r: { key: string }) => r.key).sort(), ["ADMIN", "CLIENT", "SITE"]);
+    assert.deepEqual(roles.map((r: { key: string }) => r.key).sort(), ["ADMIN", "CLIENT", "SITE", "VIEWER"]);
   });
 
   it("updates a role label", async () => {

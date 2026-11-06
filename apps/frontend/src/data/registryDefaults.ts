@@ -43,6 +43,13 @@ export const DEFAULT_ROLE_OPTIONS: RoleOptionFromApi[] = [
     sortOrder: 3,
     isAssignable: true,
   },
+  {
+    key: "VIEWER",
+    label: "영업 열람",
+    description: "모든 현장 조회만 (수정·제어·설정 불가)",
+    sortOrder: 4,
+    isAssignable: true,
+  },
 ];
 
 export function withRegistryDefaults<T extends { length: number }>(

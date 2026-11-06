@@ -6,7 +6,7 @@ import type { SiteListFromApi } from "../../types/admin";
 import { validatePassword } from "../../lib/passwordPolicy";
 import { formatKstDate } from "../../lib/kstTime";
 
-type UserRole = "ADMIN" | "CLIENT" | "SITE";
+type UserRole = "ADMIN" | "CLIENT" | "SITE" | "VIEWER";
 
 type AdminUser = {
   id: string;
@@ -30,6 +30,7 @@ const ROLE_COLOR: Record<UserRole, string> = {
   ADMIN: "user-role-admin",
   CLIENT: "user-role-client",
   SITE: "user-role-site",
+  VIEWER: "user-role-viewer",
 };
 
 function formatDate(iso: string | null) {
@@ -43,6 +44,7 @@ function scopeLabel(
   clientLabelByKey: Record<string, string>,
 ) {
   if (user.role === "ADMIN") return "전체";
+  if (user.role === "VIEWER") return "전체 (조회만)";
   if (user.role === "CLIENT") {
     return user.clientKey
       ? (clientLabelByKey[user.clientKey] ?? user.clientKey)
