@@ -270,7 +270,7 @@ function withModuleType<
 
 /* ─── 권한별 Device WHERE 필터 (site 경로로) ─────── */
 const deviceWhereFilter = (ctx: UserContext) => {
-  if (ctx.role === "ADMIN") return {};
+  if (ctx.role === "ADMIN" || ctx.role === "VIEWER") return {};
   if (ctx.role === "CLIENT")
     return { installation: { site: { client: ctx.clientKey } } };
   return { installation: { site: { id: ctx.siteId } } }; // SITE
@@ -281,7 +281,7 @@ const canAccessDevice = (
   siteClient: string,
   siteId: string
 ) => {
-  if (ctx.role === "ADMIN") return true;
+  if (ctx.role === "ADMIN" || ctx.role === "VIEWER") return true;
   if (ctx.role === "CLIENT") return siteClient === ctx.clientKey;
   return siteId === ctx.siteId;
 };

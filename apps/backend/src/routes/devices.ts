@@ -1,7 +1,7 @@
 import { FastifyPluginAsync, type FastifyReply, type FastifyRequest } from "fastify";
 import { deviceService } from "../services/deviceService.js";
 import { watchFactsService } from "../services/watchFactsService.js";
-import { authenticate, requireAdmin } from "../middleware/authenticate.js";
+import { authenticate, requireAdmin, requireAdminOrViewer } from "../middleware/authenticate.js";
 import { toUserContext } from "../modules/auth/auth.service.js";
 import type { JwtPayload } from "../modules/auth/auth.types.js";
 import { faultService } from "../services/faultService.js";
@@ -66,8 +66,8 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
     return { devices: await deviceService.list(request.user) };
   });
 
-  /** Admin: 장치 상세 Fault 탭 — /receiver/faults 와 동일 데이터, 접근 권한은 GET /devices/:id 와 동일 */
-  server.get("/:id/faults", { preHandler: requireAdmin }, async (request, reply) => {
+  /** Admin·영업 열람: 장치 상세 Fault 탭 (조회만) — /receiver/faults 와 동일 데이터 */
+  server.get("/:id/faults", { preHandler: requireAdminOrViewer }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const device = await deviceService.get({ id }, request.user);
     if (!device) {
@@ -245,8 +245,11 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
     if (!device) {
       return reply.status(404).send({ message: "Device not found" });
     }
+    // 고객 계정(CLIENT·SITE)만 historyVisible 로 막는다. 관리자·영업 열람은 항상 볼 수 있다.
     const longRangeClosed =
-      request.user.role !== "ADMIN" && device.installation.historyVisible !== true;
+      request.user.role !== "ADMIN" &&
+      request.user.role !== "VIEWER" &&
+      device.installation.historyVisible !== true;
     if (longRangeClosed) {
       const askedResolution = (query.resolution ?? "auto").trim();
       const hasEnd = Boolean((query.end ?? query.endDate)?.trim());
