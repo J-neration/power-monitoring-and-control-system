@@ -12,6 +12,7 @@ const ROLE_LABEL: Record<string, string> = {
   ADMIN: "관리자",
   CLIENT: "건설사",
   SITE: "현장",
+  VIEWER: "영업 열람",
 };
 
 type AuthUser = {
@@ -64,7 +65,7 @@ function resolveDisplayName(user: AuthUser, siteName: string | null): string {
   if (user.role === "SITE") {
     return siteName ?? user.siteId ?? user.username;
   }
-  // ADMIN
+  // ADMIN · VIEWER
   return user.username;
 }
 

@@ -1939,7 +1939,7 @@ export type $InstallationPayload<ExtArgs extends runtime.Types.Extensions.Intern
      */
     moduleName: string | null
     /**
-     * 연간 구독 설치지점만 일·주·월·연 이력 그래프를 연다. 관리자 패널의 보이기/숨기기.
+     * 고객 계정의 주·월·연 이력. 하루(24시간) 이력은 항상 보이고, 관리자는 이 값과 관계없이 전부 본다.
      */
     historyVisible: boolean
     /**

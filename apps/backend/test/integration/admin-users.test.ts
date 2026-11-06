@@ -14,7 +14,7 @@ describe("GET /admin/users", () => {
 
     assert.equal(res.statusCode, 200);
     const users = res.json().users;
-    assert.equal(users.length, 3);
+    assert.equal(users.length, 4); // admin, client, site, viewer
     for (const user of users) assert.equal(user.passwordHash, undefined);
   });
 });
@@ -34,6 +34,23 @@ describe("POST /admin/users", () => {
     const login = await http(t.app).post("/auth/login", { username: "new-site", password: "Fresh#Start9" });
     assert.equal(login.statusCode, 200);
     assert.equal(login.json().user.siteId, IDS.gsSite);
+  });
+
+  it("creates a sales VIEWER account that logs in and sees every site", async () => {
+    const { tokens } = await seedWorld(t.app);
+
+    const created = await http(t.app).post(
+      "/admin/users",
+      { username: "prime-sales", role: "VIEWER", initialPassword: "Fresh#Start9" },
+      { token: tokens.admin },
+    );
+    assert.equal(created.statusCode, 201);
+    assert.equal(created.json().user.role, "VIEWER");
+
+    const login = await http(t.app).post("/auth/login", { username: "prime-sales", password: "Fresh#Start9" });
+    assert.equal(login.statusCode, 200);
+    const sites = (await http(t.app).get("/sites", { token: login.json().token })).json().sites;
+    assert.equal(sites.length, 2);
   });
 
   it("stores a bcrypt hash, never the plain password", async () => {

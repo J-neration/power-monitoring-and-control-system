@@ -6,7 +6,7 @@ import type { TestApp } from "./app.js";
 /** 비밀번호 정책을 통과하는 테스트용 비밀번호. */
 export const PASSWORD = "Regression#2026";
 
-type Role = "ADMIN" | "CLIENT" | "SITE";
+type Role = "ADMIN" | "CLIENT" | "SITE" | "VIEWER";
 
 export const createUser = async (opts: {
   username: string;
@@ -80,7 +80,7 @@ export const IDS = {
 /**
  * 권한 경계를 확인할 수 있는 최소 구성.
  *   - 롯데 현장 1곳 + 설치지점(ICCID 등록) / GS 현장 1곳 + 설치지점
- *   - ADMIN, 롯데 CLIENT, GS 현장 SITE 계정과 각 토큰
+ *   - ADMIN, 롯데 CLIENT, GS 현장 SITE, 영업 열람 VIEWER 계정과 각 토큰
  */
 export const seedWorld = async (app: TestApp) => {
   await createSite({ id: IDS.lotteSite, client: "lotte", name: "롯데 회귀 현장" });
@@ -91,13 +91,15 @@ export const seedWorld = async (app: TestApp) => {
   const admin = await createUser({ username: "admin-reg", role: "ADMIN" });
   const client = await createUser({ username: "lotte-reg", role: "CLIENT", clientKey: "lotte" });
   const site = await createUser({ username: "gs-site-reg", role: "SITE", siteId: IDS.gsSite });
+  const viewer = await createUser({ username: "sales-reg", role: "VIEWER" });
 
   return {
-    users: { admin, client, site },
+    users: { admin, client, site, viewer },
     tokens: {
       admin: tokenFor(app, admin),
       client: tokenFor(app, client),
       site: tokenFor(app, site),
+      viewer: tokenFor(app, viewer),
     },
   };
 };

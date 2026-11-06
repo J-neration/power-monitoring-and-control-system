@@ -7,6 +7,8 @@ import type { FaultEvent } from "../lib/api";
 type Props = {
   installationId: string;
   faults: FaultEvent[];
+  /** 확인(Ack) 버튼 표시 — 관리자만. 영업 열람은 보기만 한다 */
+  canAck?: boolean;
 };
 
 function moduleLabel(module: number): string {
@@ -54,7 +56,7 @@ const STATUS_LABEL: Record<FaultStatus, string> = {
   history: "이력",
 };
 
-export default function DeviceFaultHistory({ installationId, faults }: Props) {
+export default function DeviceFaultHistory({ installationId, faults, canAck = true }: Props) {
   const router = useRouter();
   const [ackingId, setAckingId] = useState<string | null>(null);
 
@@ -93,7 +95,7 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
           <div className="fault-history-title-row">
             <h3 className="chart-title">
               Fault 이력
-              <span className="chart-title-sub">최근 50건 · Admin</span>
+              <span className="chart-title-sub">최근 50건</span>
             </h3>
             {activeFaults.length > 0 ? (
               <span className="fault-latest-badge">
@@ -163,7 +165,7 @@ export default function DeviceFaultHistory({ installationId, faults }: Props) {
                         </span>
                       </td>
                       <td>
-                        {status === "active" && (
+                        {canAck && status === "active" && (
                           <button
                             type="button"
                             className="fault-ack-btn"

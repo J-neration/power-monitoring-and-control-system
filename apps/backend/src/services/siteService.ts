@@ -4,14 +4,14 @@ import { prisma } from "../lib/prisma.js";
 
 /* ─── 권한별 Site WHERE 필터 ──────────────────────── */
 const siteWhereFilter = (ctx: UserContext) => {
-  if (ctx.role === "ADMIN") return {};
+  if (ctx.role === "ADMIN" || ctx.role === "VIEWER") return {};
   if (ctx.role === "CLIENT") return { client: ctx.clientKey };
   return { id: ctx.siteId }; // SITE
 };
 
 /* ─── 권한 검사: 특정 siteId에 접근 가능한지 ─────── */
 const canAccessSite = (ctx: UserContext, siteClient: string, siteId: string) => {
-  if (ctx.role === "ADMIN") return true;
+  if (ctx.role === "ADMIN" || ctx.role === "VIEWER") return true;
   if (ctx.role === "CLIENT") return siteClient === ctx.clientKey;
   return siteId === ctx.siteId;
 };

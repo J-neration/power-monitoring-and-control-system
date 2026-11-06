@@ -36,3 +36,17 @@ export const requireAdmin = async (
     return reply.status(403).send({ message: "관리자 권한이 필요합니다." });
   }
 };
+
+/**
+ * 관리자 또는 영업 열람(VIEWER) — 조회 전용 API 에만 쓴다. 수정·제어는 requireAdmin.
+ */
+export const requireAdminOrViewer = async (
+  request: FastifyRequest,
+  reply: FastifyReply
+) => {
+  await authenticate(request, reply);
+  if (reply.sent) return;
+  if (request.user.role !== "ADMIN" && request.user.role !== "VIEWER") {
+    return reply.status(403).send({ message: "관리자 권한이 필요합니다." });
+  }
+};
