@@ -88,24 +88,32 @@ const installationIdsForModuleFaultState = async (
   return [...ids];
 };
 
-/** installationId 목록 + (있으면) 동일 ICCID 설치(예: lte-*)의 ModuleFaultState 까지 */
-const fetchModuleFaultStatesForInstallations = async (
+/** installationId 목록 + (있으면) 동일 ICCID 설치(예: lte-*) 조건. 대상이 없으면 null */
+const moduleFaultWhere = (
   stateIds: string[],
   iccid: string | null | undefined,
 ) => {
   const norm = iccid ? normalizeIccid(iccid) : "";
   if (stateIds.length === 0 && !norm) {
-    return [];
+    return null;
   }
-  const where =
-    norm.length > 0
-      ? {
-          OR: [
-            ...(stateIds.length > 0 ? [{ installationId: { in: stateIds } }] : []),
-            { installation: { iccid: norm } },
-          ],
-        }
-      : { installationId: { in: stateIds } };
+  return norm.length > 0
+    ? {
+        OR: [
+          ...(stateIds.length > 0 ? [{ installationId: { in: stateIds } }] : []),
+          { installation: { iccid: norm } },
+        ],
+      }
+    : { installationId: { in: stateIds } };
+};
+
+/** installationId 목록 + (있으면) 동일 ICCID 설치(예: lte-*)의 ModuleFaultState 까지 */
+const fetchModuleFaultStatesForInstallations = async (
+  stateIds: string[],
+  iccid: string | null | undefined,
+) => {
+  const where = moduleFaultWhere(stateIds, iccid);
+  if (!where) return [];
 
   const rows = await prisma.moduleFaultState.findMany({
     where,
@@ -124,6 +132,30 @@ const fetchModuleFaultStatesForInstallations = async (
   });
   const byId = new Map(rows.map((r) => [r.id, r]));
   return [...byId.values()];
+};
+
+/** 같은 대상의 ModuleFaultLog 최근 take 건 (수신 순서 오름차순으로 돌려준다) */
+const fetchModuleFaultLogsForInstallations = async (
+  stateIds: string[],
+  iccid: string | null | undefined,
+  take: number,
+) => {
+  const where = moduleFaultWhere(stateIds, iccid);
+  if (!where) return [];
+  const rows = await prisma.moduleFaultLog.findMany({
+    where,
+    orderBy: { id: "desc" },
+    take,
+    select: {
+      id: true,
+      installationId: true,
+      faultCode: true,
+      event: true,
+      eventName: true,
+      occurredAt: true,
+    },
+  });
+  return rows.reverse();
 };
 
 /** 동일 ICCID로 `lte-*` 와 레지스트리 설치에 중복 행이 있으면 faultCode 당 최신 한 건만 */
@@ -159,6 +191,93 @@ const isModuleStateActive = (s: {
   return now - s.updatedAt.getTime() < AUTO_CLEAR_MS;
 };
 
+type ModuleStateRow = {
+  id: string;
+  installationId: string;
+  faultCode: number;
+  updatedAt: Date;
+  lastEvent: string;
+  repeatCount: number;
+  resolvedAt: Date | null;
+  criticalChannel: boolean;
+  eventName: string | null;
+  acknowledgedAt: Date | null;
+};
+
+type ModuleLogRow = {
+  id: number;
+  installationId: string;
+  faultCode: number;
+  event: string;
+  eventName: string | null;
+  occurredAt: Date;
+};
+
+/**
+ * ModuleFaultLog 를 모듈별 발생 건으로 묶는다. RAISE 가 한 건을 열고 다음 CLEAR 가 닫는다.
+ * - 앞 RAISE 없이 온 CLEAR 는 버린다 (로그 조회 범위 밖에서 시작한 건).
+ * - CLEAR 없이 RAISE 가 또 오면 앞 건은 해제 시각 없이 닫는다.
+ * - 모듈마다 가장 최근 건에만 현재 상태(활성·확인)를 붙인다.
+ */
+const buildOccurrenceRows = (
+  logs: ModuleLogRow[],
+  stateByCode: Map<number, ModuleStateRow>,
+  now: number,
+): FaultListRow[] => {
+  const byCode = new Map<number, FaultListRow[]>();
+  const open = new Map<number, FaultListRow>();
+  for (const log of logs) {
+    const list = byCode.get(log.faultCode) ?? [];
+    byCode.set(log.faultCode, list);
+    if (log.event === "RAISE") {
+      open.delete(log.faultCode);
+      const row: FaultListRow = {
+        id: `mfl-${log.id}`,
+        module: log.faultCode - 1,
+        desc: "",
+        occurredAt: log.occurredAt,
+        installationId: log.installationId,
+        eventName: log.eventName,
+        active: false,
+        resolvedAt: null,
+        acknowledgedAt: null,
+      };
+      list.push(row);
+      open.set(log.faultCode, row);
+      continue;
+    }
+    const row = open.get(log.faultCode);
+    if (row) {
+      row.resolvedAt = log.occurredAt;
+      open.delete(log.faultCode);
+    }
+  }
+
+  const rows: FaultListRow[] = [];
+  for (const [faultCode, list] of byCode) {
+    const latest = list[list.length - 1];
+    const state = stateByCode.get(faultCode);
+    if (latest && state) {
+      if (open.get(faultCode) === latest) {
+        latest.active = isModuleStateActive({
+          lastEvent: state.lastEvent,
+          acknowledgedAt: state.acknowledgedAt,
+          updatedAt: state.updatedAt,
+          now,
+        });
+      }
+      if (
+        state.acknowledgedAt &&
+        state.acknowledgedAt.getTime() >= latest.occurredAt.getTime()
+      ) {
+        latest.acknowledgedAt = state.acknowledgedAt;
+      }
+    }
+    rows.push(...list);
+  }
+  return rows;
+};
+
 const mergeFaultLists = (
   events: Array<{
     id: string;
@@ -167,18 +286,8 @@ const mergeFaultLists = (
     occurredAt: Date;
     installationId: string;
   }>,
-  states: Array<{
-    id: string;
-    installationId: string;
-    faultCode: number;
-    updatedAt: Date;
-    lastEvent: string;
-    repeatCount: number;
-    resolvedAt: Date | null;
-    criticalChannel: boolean;
-    eventName: string | null;
-    acknowledgedAt: Date | null;
-  }>,
+  states: ModuleStateRow[],
+  logs: ModuleLogRow[],
   limit: number,
 ): FaultListRow[] => {
   const now = Date.now();
@@ -190,23 +299,29 @@ const mergeFaultLists = (
     resolvedAt: null,
     acknowledgedAt: null,
   }));
-  const fromState: FaultListRow[] = states.map((s) => ({
-    id: `mfs-${s.id}`,
-    module: s.faultCode - 1,
-    desc: "",
-    occurredAt: s.updatedAt,
-    installationId: s.installationId,
-    eventName: s.eventName,
-    active: isModuleStateActive({
-      lastEvent: s.lastEvent,
+  const stateByCode = new Map(states.map((s) => [s.faultCode, s]));
+  const fromLog = buildOccurrenceRows(logs, stateByCode, now);
+  // 로그가 생기기 전(마이그레이션 이전)에 들어온 모듈은 현재 상태 한 줄로만 보여준다.
+  const loggedCodes = new Set(logs.map((l) => l.faultCode));
+  const fromState: FaultListRow[] = states
+    .filter((s) => !loggedCodes.has(s.faultCode))
+    .map((s) => ({
+      id: `mfs-${s.id}`,
+      module: s.faultCode - 1,
+      desc: "",
+      occurredAt: s.updatedAt,
+      installationId: s.installationId,
+      eventName: s.eventName,
+      active: isModuleStateActive({
+        lastEvent: s.lastEvent,
+        acknowledgedAt: s.acknowledgedAt,
+        updatedAt: s.updatedAt,
+        now,
+      }),
+      resolvedAt: s.resolvedAt,
       acknowledgedAt: s.acknowledgedAt,
-      updatedAt: s.updatedAt,
-      now,
-    }),
-    resolvedAt: s.resolvedAt,
-    acknowledgedAt: s.acknowledgedAt,
-  }));
-  return [...eventRows, ...fromState]
+    }));
+  return [...eventRows, ...fromLog, ...fromState]
     .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime())
     .slice(0, limit);
 };
@@ -272,6 +387,8 @@ export const faultService = {
     limit?: number;
   }) => {
     const limit = Math.min(Math.max(params.limit ?? 50, 1), 200);
+    /** 발생 한 건 = RAISE + CLEAR 두 줄이므로 로그는 두 배를 읽는다. */
+    const logTake = limit * 2;
     const selectEvent = {
       id: true,
       module: true,
@@ -303,12 +420,12 @@ export const faultService = {
           })
         : null;
       const iccidForMerge = instRow?.iccid ?? norm;
-      const rawStates = await fetchModuleFaultStatesForInstallations(
-        stateIds,
-        iccidForMerge,
-      );
+      const [rawStates, logs] = await Promise.all([
+        fetchModuleFaultStatesForInstallations(stateIds, iccidForMerge),
+        fetchModuleFaultLogsForInstallations(stateIds, iccidForMerge, logTake),
+      ]);
       const states = dedupeModuleStatesByFaultCode(rawStates);
-      return mergeFaultLists(events, states, limit);
+      return mergeFaultLists(events, states, logs, limit);
     }
 
     if (params.installationId) {
@@ -319,7 +436,7 @@ export const faultService = {
         where: { id: params.installationId },
         select: { iccid: true },
       });
-      const [events, rawStates] = await Promise.all([
+      const [events, rawStates, logs] = await Promise.all([
         prisma.faultEvent.findMany({
           where: { installationId: params.installationId },
           orderBy: { occurredAt: "desc" },
@@ -327,10 +444,12 @@ export const faultService = {
           select: selectEvent,
         }),
         fetchModuleFaultStatesForInstallations(stateIds, instRow?.iccid),
+        fetchModuleFaultLogsForInstallations(stateIds, instRow?.iccid, logTake),
       ]);
       return mergeFaultLists(
         events,
         dedupeModuleStatesByFaultCode(rawStates),
+        logs,
         limit,
       );
     }
@@ -339,8 +458,12 @@ export const faultService = {
   },
 
   /**
-   * POST /receiver/faults* — Modbus faultCode(1–6)당 한 행 upsert.
+   * POST /receiver/faults* — Modbus faultCode(1–6)당 한 행 upsert + ModuleFaultLog 한 줄 추가.
    * 시각은 DB `updatedAt`(갱신 시각)과 CLEAR 시 `resolvedAt`(서버 수신 시각)만 사용.
+   *
+   * TODO(HMI): HMI remote_fault_batch.c 는 4초 배치 안에서 (faultCode, RAISE/CLEAR) 키당 한 줄만
+   * 남긴다. 같은 모듈이 4초 안에 두 번 이상 바뀌면(예: RAISE F11 → 코드 변경 CLEAR → RAISE F3)
+   * 뒤 RAISE 가 빠져 서버는 해제로 보게 된다. HMI 쪽에서 중복 키를 버리지 말고 순서대로 쌓도록 고쳐야 한다.
    */
   upsertReceiverFaultState: async (params: {
     installationId: string;
@@ -351,8 +474,51 @@ export const faultService = {
 
     const enCreate = normalizeEventNameForDb(fault.eventName);
 
+    // 상태(덮어쓰기)와 이력 로그(추가)를 한 트랜잭션으로 남긴다.
+    const log = prisma.moduleFaultLog.create({
+      data: {
+        installationId,
+        faultCode: fault.faultCode,
+        event: fault.event,
+        eventName: enCreate,
+        criticalChannel,
+      },
+    });
+
     if (fault.event === "RAISE") {
-      return prisma.moduleFaultState.upsert({
+      const [state] = await prisma.$transaction([
+        prisma.moduleFaultState.upsert({
+          where: {
+            installationId_faultCode: { installationId, faultCode: fault.faultCode },
+          },
+          create: {
+            installationId,
+            faultCode: fault.faultCode,
+            repeatCount: 1,
+            resolvedAt: null,
+            lastEvent: "RAISE",
+            criticalChannel,
+            eventName: enCreate,
+          },
+          update: {
+            repeatCount: { increment: 1 },
+            resolvedAt: null,
+            lastEvent: "RAISE",
+            // 재발생 시 이전 확인(Acknowledge) 무효화 → 다시 활성으로 표시
+            acknowledgedAt: null,
+            acknowledgedBy: null,
+            ...(criticalChannel ? { criticalChannel: true } : {}),
+            ...eventNamePatch(fault),
+          },
+        }),
+        log,
+      ]);
+      return state;
+    }
+
+    const now = new Date();
+    const [state] = await prisma.$transaction([
+      prisma.moduleFaultState.upsert({
         where: {
           installationId_faultCode: { installationId, faultCode: fault.faultCode },
         },
@@ -360,46 +526,22 @@ export const faultService = {
           installationId,
           faultCode: fault.faultCode,
           repeatCount: 1,
-          resolvedAt: null,
-          lastEvent: "RAISE",
+          resolvedAt: now,
+          lastEvent: "CLEAR",
           criticalChannel,
           eventName: enCreate,
         },
         update: {
           repeatCount: { increment: 1 },
-          resolvedAt: null,
-          lastEvent: "RAISE",
-          // 재발생 시 이전 확인(Acknowledge) 무효화 → 다시 활성으로 표시
-          acknowledgedAt: null,
-          acknowledgedBy: null,
+          resolvedAt: now,
+          lastEvent: "CLEAR",
           ...(criticalChannel ? { criticalChannel: true } : {}),
           ...eventNamePatch(fault),
         },
-      });
-    }
-
-    const now = new Date();
-    return prisma.moduleFaultState.upsert({
-      where: {
-        installationId_faultCode: { installationId, faultCode: fault.faultCode },
-      },
-      create: {
-        installationId,
-        faultCode: fault.faultCode,
-        repeatCount: 1,
-        resolvedAt: now,
-        lastEvent: "CLEAR",
-        criticalChannel,
-        eventName: enCreate,
-      },
-      update: {
-        repeatCount: { increment: 1 },
-        resolvedAt: now,
-        lastEvent: "CLEAR",
-        ...(criticalChannel ? { criticalChannel: true } : {}),
-        ...eventNamePatch(fault),
-      },
-    });
+      }),
+      log,
+    ]);
+    return state;
   },
 
   /**

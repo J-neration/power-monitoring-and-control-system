@@ -177,4 +177,53 @@ describe("fault history", () => {
     assert.ok(byDevice.length > 0);
     assert.deepEqual(byIccid, byDevice);
   });
+
+  it("keeps every occurrence of a module instead of overwriting one row", async () => {
+    const { tokens } = await seedWorld(t.app);
+    const send = (faults: unknown[]) => hmi(t.app).post("/receiver/faults", { iccid: IDS.lotteIccid, faults });
+
+    await send([{ faultCode: 2, event: "RAISE", eventName: "F11" }]);
+    await send([{ faultCode: 2, event: "CLEAR", eventName: "" }]);
+    // fault 중 코드 변경: HMI 는 CLEAR 후 새 RAISE 를 한 배치로 보낸다.
+    await send([{ faultCode: 2, event: "RAISE", eventName: "F3" }]);
+    await send([
+      { faultCode: 2, event: "CLEAR", eventName: "" },
+      { faultCode: 2, event: "RAISE", eventName: "F5" },
+    ]);
+
+    assert.equal(await prisma.moduleFaultLog.count(), 5);
+
+    const faults = (await http(t.app).get(`/devices/${IDS.lotteInst}/faults`, { token: tokens.admin })).json()
+      .faults as Array<{ module: number; eventName: string; active: boolean; resolvedAt: string | null }>;
+
+    assert.deepEqual(
+      faults.map((f) => [f.module, f.eventName, f.active, f.resolvedAt != null]),
+      [
+        [1, "F5", true, false],
+        [1, "F3", false, true],
+        [1, "F11", false, true],
+      ],
+    );
+  });
+
+  it("marks only the latest occurrence as acknowledged", async () => {
+    const { tokens } = await seedWorld(t.app);
+    const send = (faults: unknown[]) => hmi(t.app).post("/receiver/faults", { iccid: IDS.lotteIccid, faults });
+
+    await send([{ faultCode: 1, event: "RAISE", eventName: "F2" }]);
+    await send([{ faultCode: 1, event: "CLEAR" }]);
+    await send([{ faultCode: 1, event: "RAISE", eventName: "F4" }]);
+    await http(t.app).post(`/devices/${IDS.lotteInst}/faults/ack`, { faultCode: 1 }, { token: tokens.admin });
+
+    const faults = (await http(t.app).get(`/devices/${IDS.lotteInst}/faults`, { token: tokens.admin })).json()
+      .faults as Array<{ eventName: string; active: boolean; acknowledgedAt: string | null }>;
+
+    assert.deepEqual(
+      faults.map((f) => [f.eventName, f.active, f.acknowledgedAt != null]),
+      [
+        ["F4", false, true],
+        ["F2", false, false],
+      ],
+    );
+  });
 });

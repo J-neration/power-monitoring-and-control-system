@@ -138,6 +138,7 @@ model Installation {
   commands         DeviceCommand[]
   faultEvents      FaultEvent[]               // fault 이력
   moduleFaultStates ModuleFaultState[]        // HMI /receiver/faults upsert 상태
+  moduleFaultLogs  ModuleFaultLog[]           // HMI /receiver/faults 수신 이벤트 로그
   deviceSettings   InstallationDeviceSettings? // HMI POST /receiver/settings 스냅샷
 
   createdAt DateTime @default(now())
@@ -437,6 +438,27 @@ model ModuleFaultState {
 
   @@unique([installationId, faultCode])
   @@index([installationId, resolvedAt])
+}
+
+/// POST /receiver/faults·/faults/critical 로 받은 RAISE/CLEAR 원본 로그 (추가 전용).
+/// ModuleFaultState 는 모듈당 한 행을 덮어쓰는 현재 상태이고, 이력 화면은 이 로그로 만든다.
+/// HMI 는 상태가 바뀔 때만 보내므로 받은 이벤트를 거르지 않고 모두 남긴다.
+model ModuleFaultLog {
+  /// 수신 순서. 같은 배치 안의 CLEAR→RAISE 순서를 지키기 위해 정렬 기준으로 쓴다.
+  id               Int          @id @default(autoincrement())
+  installationId   String
+  installation     Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  /// Modbus 모듈 주소 1–6
+  faultCode        Int
+  event            String       @db.VarChar(16) // RAISE | CLEAR
+  eventName        String?      @db.VarChar(64)
+  criticalChannel  Boolean      @default(false)
+
+  /// 서버 수신 시각
+  occurredAt       DateTime     @default(now())
+
+  @@index([installationId, occurredAt])
 }
 
 model DeviceCommand {

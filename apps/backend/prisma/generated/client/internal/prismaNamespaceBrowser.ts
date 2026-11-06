@@ -65,6 +65,7 @@ export const ModelName = {
   AggregationLog: 'AggregationLog',
   FaultEvent: 'FaultEvent',
   ModuleFaultState: 'ModuleFaultState',
+  ModuleFaultLog: 'ModuleFaultLog',
   DeviceCommand: 'DeviceCommand',
   OtaFile: 'OtaFile'
 } as const
@@ -359,6 +360,19 @@ export const ModuleFaultStateScalarFieldEnum = {
 } as const
 
 export type ModuleFaultStateScalarFieldEnum = (typeof ModuleFaultStateScalarFieldEnum)[keyof typeof ModuleFaultStateScalarFieldEnum]
+
+
+export const ModuleFaultLogScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  faultCode: 'faultCode',
+  event: 'event',
+  eventName: 'eventName',
+  criticalChannel: 'criticalChannel',
+  occurredAt: 'occurredAt'
+} as const
+
+export type ModuleFaultLogScalarFieldEnum = (typeof ModuleFaultLogScalarFieldEnum)[keyof typeof ModuleFaultLogScalarFieldEnum]
 
 
 export const DeviceCommandScalarFieldEnum = {

@@ -398,6 +398,7 @@ export const ModelName = {
   AggregationLog: 'AggregationLog',
   FaultEvent: 'FaultEvent',
   ModuleFaultState: 'ModuleFaultState',
+  ModuleFaultLog: 'ModuleFaultLog',
   DeviceCommand: 'DeviceCommand',
   OtaFile: 'OtaFile'
 } as const
@@ -415,7 +416,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "clientOption" | "roleOption" | "site" | "installation" | "installationDeviceSettings" | "device" | "telemetryRecord" | "telemetryHourlySummary" | "telemetryDailySummary" | "aggregationState" | "aggregationLog" | "faultEvent" | "moduleFaultState" | "deviceCommand" | "otaFile"
+    modelProps: "user" | "clientOption" | "roleOption" | "site" | "installation" | "installationDeviceSettings" | "device" | "telemetryRecord" | "telemetryHourlySummary" | "telemetryDailySummary" | "aggregationState" | "aggregationLog" | "faultEvent" | "moduleFaultState" | "moduleFaultLog" | "deviceCommand" | "otaFile"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1455,6 +1456,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ModuleFaultLog: {
+      payload: Prisma.$ModuleFaultLogPayload<ExtArgs>
+      fields: Prisma.ModuleFaultLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ModuleFaultLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ModuleFaultLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultLogPayload>
+        }
+        findFirst: {
+          args: Prisma.ModuleFaultLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ModuleFaultLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultLogPayload>
+        }
+        findMany: {
+          args: Prisma.ModuleFaultLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultLogPayload>[]
+        }
+        create: {
+          args: Prisma.ModuleFaultLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultLogPayload>
+        }
+        createMany: {
+          args: Prisma.ModuleFaultLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ModuleFaultLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultLogPayload>[]
+        }
+        delete: {
+          args: Prisma.ModuleFaultLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultLogPayload>
+        }
+        update: {
+          args: Prisma.ModuleFaultLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.ModuleFaultLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ModuleFaultLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ModuleFaultLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.ModuleFaultLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModuleFaultLogPayload>
+        }
+        aggregate: {
+          args: Prisma.ModuleFaultLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateModuleFaultLog>
+        }
+        groupBy: {
+          args: Prisma.ModuleFaultLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ModuleFaultLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ModuleFaultLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ModuleFaultLogCountAggregateOutputType> | number
+        }
+      }
+    }
     DeviceCommand: {
       payload: Prisma.$DeviceCommandPayload<ExtArgs>
       fields: Prisma.DeviceCommandFieldRefs
@@ -1918,6 +1993,19 @@ export const ModuleFaultStateScalarFieldEnum = {
 export type ModuleFaultStateScalarFieldEnum = (typeof ModuleFaultStateScalarFieldEnum)[keyof typeof ModuleFaultStateScalarFieldEnum]
 
 
+export const ModuleFaultLogScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  faultCode: 'faultCode',
+  event: 'event',
+  eventName: 'eventName',
+  criticalChannel: 'criticalChannel',
+  occurredAt: 'occurredAt'
+} as const
+
+export type ModuleFaultLogScalarFieldEnum = (typeof ModuleFaultLogScalarFieldEnum)[keyof typeof ModuleFaultLogScalarFieldEnum]
+
+
 export const DeviceCommandScalarFieldEnum = {
   id: 'id',
   installationId: 'installationId',
@@ -2246,6 +2334,7 @@ export type GlobalOmitConfig = {
   aggregationLog?: Prisma.AggregationLogOmit
   faultEvent?: Prisma.FaultEventOmit
   moduleFaultState?: Prisma.ModuleFaultStateOmit
+  moduleFaultLog?: Prisma.ModuleFaultLogOmit
   deviceCommand?: Prisma.DeviceCommandOmit
   otaFile?: Prisma.OtaFileOmit
 }

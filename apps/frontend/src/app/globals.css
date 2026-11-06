@@ -12446,6 +12446,130 @@ body.pmcs-control-room .global-header:hover {
   color: #fca5a5;
 }
 
+/* 오류 코드 대조표 — 접힌 상태가 기본 */
+.fault-code-guide {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.fault-code-guide > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.fault-code-guide > summary::-webkit-details-marker {
+  display: none;
+}
+
+.fault-code-guide-chevron {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.55);
+  transition: transform 0.15s ease;
+}
+
+.fault-code-guide[open] .fault-code-guide-chevron {
+  transform: rotate(180deg);
+}
+
+.fault-code-guide-hint {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.fault-code-guide-body {
+  padding: 0 12px 12px;
+}
+
+.fault-code-guide-table {
+  max-height: 320px;
+  overflow: auto;
+}
+
+/* border-collapse: collapse 에서는 th sticky 가 먹지 않고 행이 헤더 위로 비친다. */
+.fault-code-guide-table .fault-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.fault-code-guide-table .fault-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #10141c;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.fault-code-cell {
+  width: 88px;
+  font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fca5a5;
+  white-space: nowrap;
+}
+
+.fault-event-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 240px;
+}
+
+.fault-event-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.fault-code-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  max-width: 100%;
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.fault-code-chip b {
+  font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.fault-code-chip-fault {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.28);
+  color: #fecaca;
+}
+
+.fault-code-chip-status {
+  background: rgba(99, 102, 241, 0.14);
+  border-color: rgba(99, 102, 241, 0.32);
+  color: #c7d2fe;
+}
+
+.fault-code-chip-status.is-off {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(226, 232, 240, 0.72);
+}
+
 /* 빈 상태 */
 .fault-empty {
   font-size: 13px;

@@ -100,6 +100,13 @@ export type FaultEvent = Prisma.FaultEventModel
  */
 export type ModuleFaultState = Prisma.ModuleFaultStateModel
 /**
+ * Model ModuleFaultLog
+ * POST /receiver/faults·/faults/critical 로 받은 RAISE/CLEAR 원본 로그 (추가 전용).
+ * ModuleFaultState 는 모듈당 한 행을 덮어쓰는 현재 상태이고, 이력 화면은 이 로그로 만든다.
+ * HMI 는 상태가 바뀔 때만 보내므로 받은 이벤트를 거르지 않고 모두 남긴다.
+ */
+export type ModuleFaultLog = Prisma.ModuleFaultLogModel
+/**
  * Model DeviceCommand
  * 
  */
