@@ -47,6 +47,34 @@ type Props = {
 };
 
 const POLL_MS = 15_000;
+/** 진행 중에는 더 자주 본다 */
+const POLL_ACTIVE_MS = 5_000;
+/** 서버 명령 TTL(COMMAND_TTL_SECONDS 기본 900 s). 이보다 오래 받지 않으면 만료 */
+const COMMAND_TTL_MS = 15 * 60_000;
+/** 진행 보고가 이보다 오래 없으면 멈춘 것으로 보고 다시 보낼 수 있게 한다 */
+const STALE_MS = 30 * 60_000;
+/** 진행 단계에서 이보다 오래 다음 보고가 없으면 경고 */
+const SLOW_MS = 10 * 60_000;
+
+type Stage = "queued" | "downloading" | "verified" | "installing" | "confirming";
+
+const STEPS: { key: Stage; label: string }[] = [
+  { key: "queued", label: "명령 전달" },
+  { key: "downloading", label: "다운로드" },
+  { key: "verified", label: "검사·기록" },
+  { key: "installing", label: "설치·재부팅" },
+  { key: "confirming", label: "새 버전 확인" },
+];
+
+const STAGE_HINT: Record<Stage, string> = {
+  queued: "HMI가 다음 보고 때 명령을 받습니다(최대 약 10분).",
+  downloading: "LTE로 펌웨어를 받는 중입니다(약 2분).",
+  verified: "서명 검사를 통과했고 외부 플래시에 기록하는 중입니다.",
+  installing: "HMI가 재부팅해서 새 펌웨어를 설치하는 중입니다. 약 15초 동안 화면과 제어가 멈춥니다.",
+  confirming: "새 버전이 정상 동작하는지 확인하는 중입니다(약 1–5분). 문제가 있으면 이전 버전으로 자동 복구됩니다.",
+};
+
+type Sent = { commandId: string | null; version: string; at: number };
 
 /** HMI 진행/결과 보고 (OtaStatusEvent.state) */
 const STATE_LABEL: Record<string, string> = {
@@ -80,6 +108,12 @@ const ERROR_LABEL: Record<string, string> = {
   signature: "서명 불일치",
   sha256: "파일 손상(SHA-256)",
   "image crc": "파일 손상(CRC)",
+  product: "다른 제품용 펌웨어(거부)",
+  asset: "화면 자산 세대가 다름(거부)",
+  size: "패키지 크기 이상(거부)",
+  not_newer: "현재보다 높은 버전이 아님(거부)",
+  install_pending: "이전 설치가 끝나지 않음(거부)",
+  bad_command: "명령 형식 오류(거부)",
 };
 
 const FINAL_STATES = new Set(["confirmed", "rolled_back", "failed"]);
@@ -99,6 +133,64 @@ function versionNewer(a: string, b: string): boolean {
     if ((pa[i] ?? 0) !== (pb[i] ?? 0)) return (pa[i] ?? 0) > (pb[i] ?? 0);
   }
   return false;
+}
+
+function fmtElapsed(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(s / 60);
+  return m > 0 ? `${m}분 ${s % 60}초` : `${s}초`;
+}
+
+function ProgressCard({
+  stage,
+  version,
+  since,
+  now,
+  note,
+}: {
+  stage: Stage;
+  version: string | null;
+  since: number;
+  now: number;
+  note?: string;
+}) {
+  const idx = STEPS.findIndex((s) => s.key === stage);
+  const elapsed = now - since;
+  const slow = elapsed > (stage === "queued" ? COMMAND_TTL_MS : SLOW_MS);
+  return (
+    <div className="device-firmware-progress" role="status" aria-live="polite" aria-busy="true">
+      <div className="device-firmware-progress-head">
+        <span className="device-settings-status-spinner" aria-hidden />
+        <span className="device-firmware-progress-title">
+          {version ? `v${version} ` : ""}업데이트 진행 중 · {STEPS[idx]?.label}
+          {note ? ` (${note})` : ""}
+        </span>
+        <span className="device-firmware-progress-time">{fmtElapsed(elapsed)}</span>
+      </div>
+      <ol className="device-firmware-steps">
+        {STEPS.map((s, i) => (
+          <li
+            key={s.key}
+            className={
+              i < idx ? "is-done" : i === idx ? "is-active" : undefined
+            }
+          >
+            <span className="device-firmware-step-dot" aria-hidden>
+              {i < idx ? "✓" : i + 1}
+            </span>
+            <span className="device-firmware-step-label">{s.label}</span>
+          </li>
+        ))}
+      </ol>
+      <p className="device-firmware-hint">
+        {slow
+          ? stage === "queued"
+            ? "15분 동안 HMI가 명령을 받지 않았습니다. 명령이 만료되었을 수 있으니 HMI 통신 상태를 확인한 뒤 다시 보내세요."
+            : "10분 넘게 새 보고가 없습니다. HMI 통신 상태를 확인하세요."
+          : STAGE_HINT[stage]}
+      </p>
+    </div>
+  );
 }
 
 function StatusCard({ banner }: { banner: Banner }) {
@@ -133,13 +225,71 @@ export default function DeviceFirmwarePanel({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [banner, setBanner] = useState<Banner | null>(null);
   const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState<Sent | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
   const current = status?.device?.fwVersion ?? fwVersion ?? null;
   const capable = (status?.device?.otaCapable ?? otaCapable) === true;
   const recordState = status?.device?.otaState ?? otaState ?? null;
   const events = useMemo(() => status?.events ?? [], [status]);
   const latest = events[0];
-  const inProgress = latest ? !FINAL_STATES.has(latest.state) : false;
+  const latestAt = latest ? new Date(latest.createdAt).getTime() : 0;
+  /** 마지막 보고가 진행 단계이고 너무 오래되지 않았을 때만 진행 중 */
+  const inProgress = latest ? !FINAL_STATES.has(latest.state) && now - latestAt < STALE_MS : false;
+
+  /** 방금 보낸 명령에 대한 보고가 아직 없으면 "명령 전달" 단계 */
+  const sentHasEvent = sent
+    ? events.some((e) =>
+        sent.commandId ? e.commandId === sent.commandId : new Date(e.createdAt).getTime() >= sent.at,
+      )
+    : false;
+  const queued = sent !== null && !sentHasEvent && now - sent.at < COMMAND_TTL_MS + SLOW_MS;
+
+  const stage: Stage | null = queued
+    ? "queued"
+    : inProgress && latest
+      ? latest.state === "downloading"
+        ? "downloading"
+        : latest.state === "verified"
+          ? "verified"
+          : recordState === "pending_confirm" || recordState === "rollback"
+            ? "confirming"
+            : "installing"
+      : null;
+  const stageSince = queued && sent ? sent.at : latestAt;
+  const stageVersion = queued && sent ? sent.version : (latest?.target ?? null);
+  const stageNote = stage === "confirming" && recordState === "rollback" ? "이전 버전으로 복구 중" : undefined;
+  const active = stage !== null;
+
+  /** 진행 중에는 1초마다 경과 시간을 갱신 */
+  useEffect(() => {
+    if (!active) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [active]);
+
+  /** 보낸 명령의 최종 결과가 오면 결과 배너로 바꾼다 */
+  useEffect(() => {
+    if (!sent || !latest || !FINAL_STATES.has(latest.state)) return;
+    const mine = sent.commandId ? latest.commandId === sent.commandId : latestAt >= sent.at;
+    if (!mine) return;
+    setSent(null);
+    if (latest.state === "confirmed") {
+      setBanner({ tone: "ok", title: `v${latest.target ?? sent.version} 업데이트 완료` });
+    } else if (latest.state === "rolled_back") {
+      setBanner({
+        tone: "err",
+        title: `v${sent.version} 적용 실패, v${latest.fw ?? "?"}(으)로 자동 복구`,
+        detail: latest.error ? (ERROR_LABEL[latest.error] ?? latest.error) : undefined,
+      });
+    } else {
+      setBanner({
+        tone: "err",
+        title: `v${sent.version} 업데이트 실패`,
+        detail: latest.error ? (ERROR_LABEL[latest.error] ?? latest.error) : undefined,
+      });
+    }
+  }, [sent, latest, latestAt]);
 
   /** Version the command tried to install. After a rollback the result report
    *  carries the restored version as target, so look at the earlier reports
@@ -185,9 +335,12 @@ export default function DeviceFirmwarePanel({
         /* no list */
       }
     })();
-    const t = setInterval(() => void loadStatus(), POLL_MS);
-    return () => clearInterval(t);
   }, [loadStatus]);
+
+  useEffect(() => {
+    const t = setInterval(() => void loadStatus(), active ? POLL_ACTIVE_MS : POLL_MS);
+    return () => clearInterval(t);
+  }, [loadStatus, active]);
 
   const chosen = files.find((f) => f.id === selected) ?? null;
   const notNewer = chosen && current ? !versionNewer(chosen.version ?? "", current) : false;
@@ -218,10 +371,12 @@ export default function DeviceFirmwarePanel({
         });
         return;
       }
-      setBanner({
-        tone: "ok",
-        title: `v${chosen.version} OTA 명령을 보냈습니다`,
-        detail: "HMI가 다음 보고(최대 약 10분) 때 받아 다운로드를 시작합니다. 아래 이력에서 진행을 확인하세요.",
+      setBanner(null);
+      setNow(Date.now());
+      setSent({
+        commandId: typeof body?.command?.id === "string" ? body.command.id : null,
+        version: chosen.version ?? "?",
+        at: Date.now(),
       });
     } catch {
       setBanner({ tone: "err", title: "OTA 명령 실패", detail: "서버에 연결할 수 없습니다." });
@@ -249,6 +404,10 @@ export default function DeviceFirmwarePanel({
           </div>
         </dl>
 
+        {stage ? (
+          <ProgressCard stage={stage} version={stageVersion} since={stageSince} now={now} note={stageNote} />
+        ) : null}
+
         <div className="device-firmware-send">
           <label htmlFor="ota-file">업데이트할 패키지</label>
           <select
@@ -267,7 +426,7 @@ export default function DeviceFirmwarePanel({
           <button
             type="button"
             className="module-power-confirm-submit module-power-confirm-submit--on"
-            disabled={!chosen || !capable || sending || notNewer || inProgress}
+            disabled={!chosen || !capable || sending || notNewer || active}
             onClick={() => setConfirmOpen(true)}
           >
             OTA 보내기
@@ -278,7 +437,7 @@ export default function DeviceFirmwarePanel({
             ? "이 기기는 OTA를 지원하지 않는 펌웨어입니다. 현장에서 ST-Link로 OTA 펌웨어를 먼저 설치해야 합니다."
             : notNewer
               ? "현재 버전보다 높은 버전만 보낼 수 있습니다(HMI가 거절합니다)."
-              : inProgress
+              : active
                 ? "업데이트가 진행 중입니다. 끝난 뒤 다시 보낼 수 있습니다."
                 : "명령 하나로 다운로드(약 2분) → 서명 검사 → 자동 적용까지 진행합니다. 적용할 때 약 15초 동안 화면과 제어가 멈춥니다. 새 버전이 정상 동작하지 않으면 이전 버전으로 자동 복구됩니다."}
         </p>
