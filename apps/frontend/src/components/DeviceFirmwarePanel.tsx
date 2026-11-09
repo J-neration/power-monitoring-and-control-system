@@ -234,8 +234,18 @@ export default function DeviceFirmwarePanel({
   const events = useMemo(() => status?.events ?? [], [status]);
   const latest = events[0];
   const latestAt = latest ? new Date(latest.createdAt).getTime() : 0;
+  /** "설치 중" 다음 보고가 없어도, 기기가 이미 목표 버전으로 돌고 있고 확인 단계가
+   *  아니면 끝난 것으로 본다 (완료 보고가 없는 펌웨어, 보고 유실, ST-Link 재기록 등) */
+  const installedByFw =
+    latest?.state === "installing" &&
+    !!latest.target &&
+    current === latest.target &&
+    recordState !== "pending_confirm" &&
+    recordState !== "rollback";
   /** 마지막 보고가 진행 단계이고 너무 오래되지 않았을 때만 진행 중 */
-  const inProgress = latest ? !FINAL_STATES.has(latest.state) && now - latestAt < STALE_MS : false;
+  const inProgress = latest
+    ? !FINAL_STATES.has(latest.state) && !installedByFw && now - latestAt < STALE_MS
+    : false;
 
   /** 방금 보낸 명령에 대한 보고가 아직 없으면 "명령 전달" 단계 */
   const sentHasEvent = sent
