@@ -515,6 +515,10 @@ export const deviceService = {
     rsrp?: number | string;
     /** HMI 펌웨어가 보내는 장치 유형 (psta | paf | psvg). 있으면 레지스트리보다 우선 */
     model?: string;
+    /** OTA 지원 펌웨어만 보낸다: 실행 버전, OTA 가능 여부, OTA 레코드 상태 */
+    fw?: unknown;
+    otaCapable?: unknown;
+    otaState?: unknown;
     /** Unix 초(또는 ms). 있으면 lastSeenAt·TelemetryRecord.recordedAt에 사용 */
     timestamp?: number | string;
     ts?: number | string;
@@ -576,6 +580,16 @@ export const deviceService = {
     const availableMargin = toNumber(payload.availableMargin);
     const csq = toInteger(payload.csq);
     const rsrp = toNumber(payload.rsrp);
+    // OTA fields go to the Device snapshot only (not to TelemetryRecord).
+    const shortStr = (v: unknown, max: number) =>
+      typeof v === "string" && v.trim() ? v.trim().slice(0, max) : undefined;
+    const fwVersion = shortStr(payload.fw, 32);
+    const otaState = shortStr(payload.otaState, 32);
+    const otaFields = {
+      ...(fwVersion !== undefined ? { fwVersion } : {}),
+      ...(typeof payload.otaCapable === "boolean" ? { otaCapable: payload.otaCapable } : {}),
+      ...(otaState !== undefined ? { otaState } : {}),
+    };
 
     return prisma.$transaction(async (tx) => {
       // 1) Ensure Site + Installation exist
@@ -680,6 +694,7 @@ export const deviceService = {
           ...(payload.ip ? { lastIp: payload.ip } : {}),
           ...(lastValue !== undefined ? { lastValue } : {}),
           ...telemetryFields,
+          ...otaFields,
         },
         create: {
           installationId,
@@ -689,6 +704,7 @@ export const deviceService = {
           ...(payload.ip ? { lastIp: payload.ip } : {}),
           ...(lastValue !== undefined ? { lastValue } : {}),
           ...telemetryFields,
+          ...otaFields,
         },
       });
 

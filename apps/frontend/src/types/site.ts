@@ -25,6 +25,13 @@ export type Device = {
   /** LTE RSRP (dBm) */
   rsrp?: number | null;
 
+  /** HMI 펌웨어 버전 (텔레메트리 fw). OTA 이전 펌웨어는 null */
+  fwVersion?: string | null;
+  /** OTA 지원 펌웨어면 true */
+  otaCapable?: boolean | null;
+  /** HMI OTA 레코드 상태: idle | installing | pending_confirm | confirmed | rollback | failed */
+  otaState?: string | null;
+
   moduleStatus?: number[];
   numOfMods?: number;
   /** Per-module rated capacity. Length = numOfMods, index 0 = M1 */

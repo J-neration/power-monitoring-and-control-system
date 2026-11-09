@@ -67,7 +67,8 @@ export const ModelName = {
   ModuleFaultState: 'ModuleFaultState',
   ModuleFaultLog: 'ModuleFaultLog',
   DeviceCommand: 'DeviceCommand',
-  OtaFile: 'OtaFile'
+  OtaFile: 'OtaFile',
+  OtaStatusEvent: 'OtaStatusEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -184,6 +185,9 @@ export const DeviceScalarFieldEnum = {
   lastIp: 'lastIp',
   csq: 'csq',
   rsrp: 'rsrp',
+  fwVersion: 'fwVersion',
+  otaCapable: 'otaCapable',
+  otaState: 'otaState',
   vL1: 'vL1',
   vL2: 'vL2',
   vL3: 'vL3',
@@ -410,6 +414,21 @@ export const OtaFileScalarFieldEnum = {
 } as const
 
 export type OtaFileScalarFieldEnum = (typeof OtaFileScalarFieldEnum)[keyof typeof OtaFileScalarFieldEnum]
+
+
+export const OtaStatusEventScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  commandId: 'commandId',
+  state: 'state',
+  percent: 'percent',
+  fw: 'fw',
+  target: 'target',
+  error: 'error',
+  createdAt: 'createdAt'
+} as const
+
+export type OtaStatusEventScalarFieldEnum = (typeof OtaStatusEventScalarFieldEnum)[keyof typeof OtaStatusEventScalarFieldEnum]
 
 
 export const SortOrder = {

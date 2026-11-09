@@ -13789,3 +13789,77 @@ body.pmcs-control-room .global-header:hover {
   color: rgba(255, 255, 255, 0.7);
   font-weight: 600;
 }
+
+/* ===== Device firmware (OTA) tab ===== */
+.device-firmware-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.device-firmware-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.device-firmware-facts > div {
+  border: 1px solid var(--pmcs-panel-border);
+  border-radius: var(--pmcs-radius);
+  background: var(--pmcs-hmi-inset);
+  padding: 10px 12px;
+}
+
+.device-firmware-facts dt {
+  font-size: 12px;
+  color: var(--pmcs-text-muted);
+  margin: 0 0 4px;
+}
+
+.device-firmware-facts dd {
+  margin: 0;
+  font-size: 18px;
+  font-family: var(--pmcs-font-mono);
+  color: var(--pmcs-text);
+}
+
+.device-firmware-send {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.device-firmware-send label {
+  font-size: 13px;
+  color: var(--pmcs-text-muted);
+}
+
+.device-firmware-send select {
+  flex: 1 1 280px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--pmcs-panel-border);
+  border-radius: var(--pmcs-radius);
+  background: var(--pmcs-bg-elevated);
+  color: var(--pmcs-text);
+}
+
+.device-firmware-send button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.device-firmware-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--pmcs-text-muted);
+}
+
+.device-firmware-subtitle {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--pmcs-text);
+}

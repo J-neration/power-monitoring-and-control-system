@@ -139,3 +139,9 @@ export type DeviceCommand = Prisma.DeviceCommandModel
  * HMI 는 GET /receiver/ota/file/:id?t=<downloadToken> 으로 64KB 씩(Range) 받는다.
  */
 export type OtaFile = Prisma.OtaFileModel
+/**
+ * Model OtaStatusEvent
+ * HMI 가 보낸 OTA 진행/결과 (POST /receiver/ota/status). 시간순 이력.
+ * state: downloading | verified | installing | confirmed | rolled_back | failed
+ */
+export type OtaStatusEvent = Prisma.OtaStatusEventModel

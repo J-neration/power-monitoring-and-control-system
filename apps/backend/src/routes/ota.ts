@@ -2,6 +2,8 @@ import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import { requireAdmin } from "../middleware/authenticate.js";
 import { parseRange } from "../lib/otaRange.js";
+import { prisma } from "../lib/prisma.js";
+import { otaStatusService } from "../services/otaStatusService.js";
 import {
   OTA_MAX_FILE_BYTES,
   otaDownloadPath,
@@ -19,6 +21,8 @@ import {
  *   GET    /receiver/ota/files            관리자. 목록(메타만)
  *   DELETE /receiver/ota/files/:id        관리자
  *   GET    /receiver/ota/file/:id?t=...   HMI. Range(206) 지원. x-api-key 대신 파일별 토큰
+ *   GET    /receiver/ota/status?installationId=...  관리자. 현재 버전 + OTA 진행/결과 이력
+ *   (HMI 의 POST /receiver/ota/status 는 x-api-key 라우트라 receiver.ts 에 있다)
  *
  * 파일 진위는 URL 비밀이 아니라 펌웨어 서명으로 검증한다(HMI 저장소 docs/OTA_DEVELOPMENT_PLAN.md 6장).
  */
@@ -32,6 +36,10 @@ const nameSchema = z
 
 const idParams = z.object({ id: z.string().min(1).max(64) });
 const downloadQuery = z.object({ t: z.string().max(128).optional() });
+const statusQuery = z.object({
+  installationId: z.string().trim().min(1).max(64),
+  limit: z.coerce.number().int().min(1).max(200).optional(),
+});
 
 const toDto = (f: OtaFileMeta) => ({
   id: f.id,
@@ -88,6 +96,17 @@ export const otaRoutes: FastifyPluginAsync = async (server) => {
       return reply.status(201).send({ file: toDto(file) });
     },
   );
+
+  server.get("/status", { preHandler: requireAdmin }, async (request, reply) => {
+    const q = statusQuery.safeParse(request.query);
+    if (!q.success) return reply.status(400).send({ message: "installationId 가 필요합니다." });
+    const device = await prisma.device.findUnique({
+      where: { installationId: q.data.installationId },
+      select: { fwVersion: true, otaCapable: true, otaState: true, lastSeenAt: true },
+    });
+    const events = await otaStatusService.list(q.data.installationId, q.data.limit ?? 30);
+    return { device, events };
+  });
 
   server.get("/files", { preHandler: requireAdmin }, async () => {
     const files = await otaService.list();
