@@ -400,7 +400,8 @@ export const ModelName = {
   ModuleFaultState: 'ModuleFaultState',
   ModuleFaultLog: 'ModuleFaultLog',
   DeviceCommand: 'DeviceCommand',
-  OtaFile: 'OtaFile'
+  OtaFile: 'OtaFile',
+  OtaStatusEvent: 'OtaStatusEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -416,7 +417,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "clientOption" | "roleOption" | "site" | "installation" | "installationDeviceSettings" | "device" | "telemetryRecord" | "telemetryHourlySummary" | "telemetryDailySummary" | "aggregationState" | "aggregationLog" | "faultEvent" | "moduleFaultState" | "moduleFaultLog" | "deviceCommand" | "otaFile"
+    modelProps: "user" | "clientOption" | "roleOption" | "site" | "installation" | "installationDeviceSettings" | "device" | "telemetryRecord" | "telemetryHourlySummary" | "telemetryDailySummary" | "aggregationState" | "aggregationLog" | "faultEvent" | "moduleFaultState" | "moduleFaultLog" | "deviceCommand" | "otaFile" | "otaStatusEvent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1678,6 +1679,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    OtaStatusEvent: {
+      payload: Prisma.$OtaStatusEventPayload<ExtArgs>
+      fields: Prisma.OtaStatusEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.OtaStatusEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaStatusEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.OtaStatusEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaStatusEventPayload>
+        }
+        findFirst: {
+          args: Prisma.OtaStatusEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaStatusEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.OtaStatusEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaStatusEventPayload>
+        }
+        findMany: {
+          args: Prisma.OtaStatusEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaStatusEventPayload>[]
+        }
+        create: {
+          args: Prisma.OtaStatusEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaStatusEventPayload>
+        }
+        createMany: {
+          args: Prisma.OtaStatusEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.OtaStatusEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaStatusEventPayload>[]
+        }
+        delete: {
+          args: Prisma.OtaStatusEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaStatusEventPayload>
+        }
+        update: {
+          args: Prisma.OtaStatusEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaStatusEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.OtaStatusEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.OtaStatusEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.OtaStatusEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaStatusEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.OtaStatusEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtaStatusEventPayload>
+        }
+        aggregate: {
+          args: Prisma.OtaStatusEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOtaStatusEvent>
+        }
+        groupBy: {
+          args: Prisma.OtaStatusEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OtaStatusEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.OtaStatusEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OtaStatusEventCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1815,6 +1890,9 @@ export const DeviceScalarFieldEnum = {
   lastIp: 'lastIp',
   csq: 'csq',
   rsrp: 'rsrp',
+  fwVersion: 'fwVersion',
+  otaCapable: 'otaCapable',
+  otaState: 'otaState',
   vL1: 'vL1',
   vL2: 'vL2',
   vL3: 'vL3',
@@ -2041,6 +2119,21 @@ export const OtaFileScalarFieldEnum = {
 } as const
 
 export type OtaFileScalarFieldEnum = (typeof OtaFileScalarFieldEnum)[keyof typeof OtaFileScalarFieldEnum]
+
+
+export const OtaStatusEventScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  commandId: 'commandId',
+  state: 'state',
+  percent: 'percent',
+  fw: 'fw',
+  target: 'target',
+  error: 'error',
+  createdAt: 'createdAt'
+} as const
+
+export type OtaStatusEventScalarFieldEnum = (typeof OtaStatusEventScalarFieldEnum)[keyof typeof OtaStatusEventScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2341,6 +2434,7 @@ export type GlobalOmitConfig = {
   moduleFaultLog?: Prisma.ModuleFaultLogOmit
   deviceCommand?: Prisma.DeviceCommandOmit
   otaFile?: Prisma.OtaFileOmit
+  otaStatusEvent?: Prisma.OtaStatusEventOmit
 }
 
 /* Types for Logging */
