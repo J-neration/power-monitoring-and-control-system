@@ -48,6 +48,7 @@ type Props = {
 
 const POLL_MS = 15_000;
 
+/** HMI 진행/결과 보고 (OtaStatusEvent.state) */
 const STATE_LABEL: Record<string, string> = {
   downloading: "다운로드 중",
   verified: "검사 완료",
@@ -55,10 +56,17 @@ const STATE_LABEL: Record<string, string> = {
   confirmed: "업데이트 완료",
   rolled_back: "이전 버전으로 복구",
   failed: "실패",
-  // otaState (HMI 레코드)
+};
+
+/** HMI EEPROM 레코드 상태 (텔레메트리 otaState). "confirmed" 는 롤백 뒤에도 쓰이므로
+ *  "업데이트 완료"가 아니라 "정상 동작"으로 읽는다. */
+const RECORD_LABEL: Record<string, string> = {
   idle: "대기",
+  installing: "설치 중",
   pending_confirm: "새 버전 확인 중",
+  confirmed: "정상 동작",
   rollback: "복구 중",
+  failed: "실패",
 };
 
 const ERROR_LABEL: Record<string, string> = {
@@ -132,6 +140,27 @@ export default function DeviceFirmwarePanel({
   const events = useMemo(() => status?.events ?? [], [status]);
   const latest = events[0];
   const inProgress = latest ? !FINAL_STATES.has(latest.state) : false;
+
+  /** Version the command tried to install. After a rollback the result report
+   *  carries the restored version as target, so look at the earlier reports
+   *  of the same command (downloading / verified / installing). */
+  const attemptedTarget = (e: OtaEvent): string | null => {
+    if (e.state !== "rolled_back") return e.target;
+    const tried = events.find(
+      (x) => x.commandId && x.commandId === e.commandId && x.state !== "rolled_back" && x.target,
+    );
+    return tried?.target ?? null;
+  };
+
+  const stateText = (() => {
+    if (!latest) return RECORD_LABEL[recordState ?? "idle"] ?? recordState ?? "대기";
+    const label = STATE_LABEL[latest.state] ?? latest.state;
+    if (latest.state === "rolled_back") {
+      const tried = attemptedTarget(latest);
+      return `${label}${tried ? ` (v${tried} → v${latest.fw ?? "?"})` : ""}`;
+    }
+    return `${label}${latest.target ? ` (v${latest.target})` : ""}`;
+  })();
 
   const loadStatus = useCallback(async () => {
     try {
@@ -216,13 +245,7 @@ export default function DeviceFirmwarePanel({
           </div>
           <div>
             <dt>OTA 상태</dt>
-            <dd>
-              {!capable
-                ? "OTA 미지원 펌웨어"
-                : inProgress && latest
-                  ? `${STATE_LABEL[latest.state] ?? latest.state}${latest.target ? ` (v${latest.target})` : ""}`
-                  : STATE_LABEL[recordState ?? "idle"] ?? recordState ?? "대기"}
-            </dd>
+            <dd>{!capable ? "OTA 미지원 펌웨어" : stateText}</dd>
           </div>
         </dl>
 
@@ -281,7 +304,7 @@ export default function DeviceFirmwarePanel({
                     <td>{fmtTime(e.createdAt)}</td>
                     <td>{STATE_LABEL[e.state] ?? e.state}</td>
                     <td>{e.fw ? `v${e.fw}` : "—"}</td>
-                    <td>{e.target ? `v${e.target}` : "—"}</td>
+                    <td>{attemptedTarget(e) ? `v${attemptedTarget(e)}` : "—"}</td>
                     <td>{e.error ? ERROR_LABEL[e.error] ?? e.error : ""}</td>
                   </tr>
                 ))}
