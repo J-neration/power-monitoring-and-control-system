@@ -65,6 +65,15 @@ export const toUserContext = (payload: JwtPayload): UserContext => {
       clientKey: payload.clientKey,
     };
   }
+  if (payload.role === "INSPECTOR") {
+    if (!payload.siteId) throw new Error("INSPECTOR 토큰에 siteId가 없습니다.");
+    return {
+      role: "INSPECTOR",
+      userId: payload.sub,
+      username: payload.username,
+      siteId: payload.siteId,
+    };
+  }
   // SITE
   if (!payload.siteId) throw new Error("SITE 토큰에 siteId가 없습니다.");
   return {
@@ -94,7 +103,7 @@ export const userManagementService = {
 
   create: async (data: {
     username: string;
-    role: "ADMIN" | "CLIENT" | "SITE" | "VIEWER";
+    role: "ADMIN" | "CLIENT" | "SITE" | "VIEWER" | "INSPECTOR";
     clientKey?: string;
     siteId?: string;
     initialPassword: string;

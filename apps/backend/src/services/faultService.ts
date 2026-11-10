@@ -27,10 +27,10 @@ const eventNamePatch = (fault: ReceiverFaultUpsertInput) =>
     : { eventName: normalizeEventNameForDb(fault.eventName) };
 
 /**
- * 자동 해제 기준: 마지막 갱신(updatedAt) 후 이 시간 동안 재발생(RAISE)이 없으면
- * 활성 fault에서 자동 제외한다. (기본 24시간)
+ * CLEAR 뒤 이 시간 안에 같은 모듈 RAISE 가 오면 해제가 아니라 코드 갱신으로 본다.
+ * HMI 는 fault 중 코드가 바뀌면 CLEAR·RAISE 를 같은 배치로 보내므로 실제 간격은 수 ms 다.
  */
-const AUTO_CLEAR_MS = 24 * 60 * 60 * 1000;
+const CODE_UPDATE_GAP_MS = 2000;
 
 type FaultListRow = {
   id: string;
@@ -39,9 +39,12 @@ type FaultListRow = {
   occurredAt: Date;
   installationId: string;
   eventName?: string | null;
-  /** 현재 활성(빨강) 여부 — RAISE 상태 + 미확인 + 자동해제 시간 미경과 */
+  /** 현재 활성(빨강) 여부 — RAISE 상태 + 미확인 */
   active: boolean;
+  /** 이 건이 끝난 시각 (해제 또는 갱신). 없으면 진행 중 */
   resolvedAt?: Date | null;
+  /** 끝난 이유 — cleared: HMI 해제, updated: 풀리지 않은 채 새 코드로 갱신 */
+  endReason?: "cleared" | "updated" | null;
   acknowledgedAt?: Date | null;
 };
 
@@ -88,24 +91,32 @@ const installationIdsForModuleFaultState = async (
   return [...ids];
 };
 
-/** installationId 목록 + (있으면) 동일 ICCID 설치(예: lte-*)의 ModuleFaultState 까지 */
-const fetchModuleFaultStatesForInstallations = async (
+/** installationId 목록 + (있으면) 동일 ICCID 설치(예: lte-*) 조건. 대상이 없으면 null */
+const moduleFaultWhere = (
   stateIds: string[],
   iccid: string | null | undefined,
 ) => {
   const norm = iccid ? normalizeIccid(iccid) : "";
   if (stateIds.length === 0 && !norm) {
-    return [];
+    return null;
   }
-  const where =
-    norm.length > 0
-      ? {
-          OR: [
-            ...(stateIds.length > 0 ? [{ installationId: { in: stateIds } }] : []),
-            { installation: { iccid: norm } },
-          ],
-        }
-      : { installationId: { in: stateIds } };
+  return norm.length > 0
+    ? {
+        OR: [
+          ...(stateIds.length > 0 ? [{ installationId: { in: stateIds } }] : []),
+          { installation: { iccid: norm } },
+        ],
+      }
+    : { installationId: { in: stateIds } };
+};
+
+/** installationId 목록 + (있으면) 동일 ICCID 설치(예: lte-*)의 ModuleFaultState 까지 */
+const fetchModuleFaultStatesForInstallations = async (
+  stateIds: string[],
+  iccid: string | null | undefined,
+) => {
+  const where = moduleFaultWhere(stateIds, iccid);
+  if (!where) return [];
 
   const rows = await prisma.moduleFaultState.findMany({
     where,
@@ -126,6 +137,30 @@ const fetchModuleFaultStatesForInstallations = async (
   return [...byId.values()];
 };
 
+/** 같은 대상의 ModuleFaultLog 최근 take 건 (수신 순서 오름차순으로 돌려준다) */
+const fetchModuleFaultLogsForInstallations = async (
+  stateIds: string[],
+  iccid: string | null | undefined,
+  take: number,
+) => {
+  const where = moduleFaultWhere(stateIds, iccid);
+  if (!where) return [];
+  const rows = await prisma.moduleFaultLog.findMany({
+    where,
+    orderBy: { id: "desc" },
+    take,
+    select: {
+      id: true,
+      installationId: true,
+      faultCode: true,
+      event: true,
+      eventName: true,
+      occurredAt: true,
+    },
+  });
+  return rows.reverse();
+};
+
 /** 동일 ICCID로 `lte-*` 와 레지스트리 설치에 중복 행이 있으면 faultCode 당 최신 한 건만 */
 const dedupeModuleStatesByFaultCode = <
   T extends { faultCode: number; updatedAt: Date },
@@ -144,19 +179,112 @@ const dedupeModuleStatesByFaultCode = <
 
 /**
  * ModuleFaultState 한 행이 현재 "활성"인지 판정.
- * 활성 = 마지막 이벤트가 RAISE && 사용자 미확인 && 마지막 갱신 후 자동해제 시간 미경과.
- * (CLEAR 수신 → resolvedAt/ lastEvent=CLEAR → 비활성, acknowledgedAt 설정 → 비활성)
+ * 활성 = 마지막 이벤트가 RAISE && 사용자 미확인.
+ * HMI 는 상태가 바뀔 때만 보내므로 시간이 지났다고 자동 해제하지 않는다 — CLEAR 나 확인으로만 꺼진다.
  */
 const isModuleStateActive = (s: {
   lastEvent: string;
   acknowledgedAt: Date | null;
+}): boolean => s.lastEvent === "RAISE" && s.acknowledgedAt == null;
+
+type ModuleStateRow = {
+  id: string;
+  installationId: string;
+  faultCode: number;
   updatedAt: Date;
-  now?: number;
-}): boolean => {
-  if (s.lastEvent !== "RAISE") return false;
-  if (s.acknowledgedAt != null) return false;
-  const now = s.now ?? Date.now();
-  return now - s.updatedAt.getTime() < AUTO_CLEAR_MS;
+  lastEvent: string;
+  repeatCount: number;
+  resolvedAt: Date | null;
+  criticalChannel: boolean;
+  eventName: string | null;
+  acknowledgedAt: Date | null;
+};
+
+type ModuleLogRow = {
+  id: number;
+  installationId: string;
+  faultCode: number;
+  event: string;
+  eventName: string | null;
+  occurredAt: Date;
+};
+
+/**
+ * ModuleFaultLog 를 모듈별 발생 건으로 묶는다. RAISE 가 한 건을 열고 다음 CLEAR 가 닫는다.
+ * - CLEAR 바로 뒤(CODE_UPDATE_GAP_MS 안)에 같은 모듈 RAISE 가 오면 해제가 아니라 "갱신"이다.
+ *   (HMI 는 fault 중 코드가 바뀌면 CLEAR·RAISE 를 함께 보낸다)
+ * - CLEAR 없이 RAISE 가 또 와도 앞 건은 "갱신"으로 닫는다.
+ * - 앞 RAISE 없이 온 CLEAR 는 버린다 (로그 조회 범위 밖에서 시작한 건).
+ * - 모듈마다 가장 최근 건에만 현재 상태(활성·확인)를 붙인다.
+ */
+const buildOccurrenceRows = (
+  logs: ModuleLogRow[],
+  stateByCode: Map<number, ModuleStateRow>,
+): FaultListRow[] => {
+  const byCode = new Map<number, FaultListRow[]>();
+  const open = new Map<number, FaultListRow>();
+  /** 방금 CLEAR 로 닫힌 건 — 곧 RAISE 가 따라오면 "갱신"으로 바꾼다 */
+  const justCleared = new Map<number, FaultListRow>();
+  for (const log of logs) {
+    const list = byCode.get(log.faultCode) ?? [];
+    byCode.set(log.faultCode, list);
+    if (log.event === "RAISE") {
+      const prevOpen = open.get(log.faultCode);
+      if (prevOpen) {
+        prevOpen.resolvedAt = log.occurredAt;
+        prevOpen.endReason = "updated";
+      }
+      const cleared = justCleared.get(log.faultCode);
+      if (
+        cleared?.resolvedAt &&
+        log.occurredAt.getTime() - cleared.resolvedAt.getTime() <= CODE_UPDATE_GAP_MS
+      ) {
+        cleared.endReason = "updated";
+      }
+      justCleared.delete(log.faultCode);
+      const row: FaultListRow = {
+        id: `mfl-${log.id}`,
+        module: log.faultCode - 1,
+        desc: "",
+        occurredAt: log.occurredAt,
+        installationId: log.installationId,
+        eventName: log.eventName,
+        active: false,
+        resolvedAt: null,
+        endReason: null,
+        acknowledgedAt: null,
+      };
+      list.push(row);
+      open.set(log.faultCode, row);
+      continue;
+    }
+    const row = open.get(log.faultCode);
+    if (row) {
+      row.resolvedAt = log.occurredAt;
+      row.endReason = "cleared";
+      open.delete(log.faultCode);
+      justCleared.set(log.faultCode, row);
+    }
+  }
+
+  const rows: FaultListRow[] = [];
+  for (const [faultCode, list] of byCode) {
+    const latest = list[list.length - 1];
+    const state = stateByCode.get(faultCode);
+    if (latest && state) {
+      if (open.get(faultCode) === latest) {
+        latest.active = isModuleStateActive(state);
+      }
+      if (
+        state.acknowledgedAt &&
+        state.acknowledgedAt.getTime() >= latest.occurredAt.getTime()
+      ) {
+        latest.acknowledgedAt = state.acknowledgedAt;
+      }
+    }
+    rows.push(...list);
+  }
+  return rows;
 };
 
 const mergeFaultLists = (
@@ -167,21 +295,10 @@ const mergeFaultLists = (
     occurredAt: Date;
     installationId: string;
   }>,
-  states: Array<{
-    id: string;
-    installationId: string;
-    faultCode: number;
-    updatedAt: Date;
-    lastEvent: string;
-    repeatCount: number;
-    resolvedAt: Date | null;
-    criticalChannel: boolean;
-    eventName: string | null;
-    acknowledgedAt: Date | null;
-  }>,
+  states: ModuleStateRow[],
+  logs: ModuleLogRow[],
   limit: number,
 ): FaultListRow[] => {
-  const now = Date.now();
   // 순수 이력(FaultEvent)은 과거 로그이므로 항상 비활성으로 둔다.
   const eventRows: FaultListRow[] = events.map((e) => ({
     ...e,
@@ -190,23 +307,25 @@ const mergeFaultLists = (
     resolvedAt: null,
     acknowledgedAt: null,
   }));
-  const fromState: FaultListRow[] = states.map((s) => ({
-    id: `mfs-${s.id}`,
-    module: s.faultCode - 1,
-    desc: "",
-    occurredAt: s.updatedAt,
-    installationId: s.installationId,
-    eventName: s.eventName,
-    active: isModuleStateActive({
-      lastEvent: s.lastEvent,
+  const stateByCode = new Map(states.map((s) => [s.faultCode, s]));
+  const fromLog = buildOccurrenceRows(logs, stateByCode);
+  // 로그가 생기기 전(마이그레이션 이전)에 들어온 모듈은 현재 상태 한 줄로만 보여준다.
+  const loggedCodes = new Set(logs.map((l) => l.faultCode));
+  const fromState: FaultListRow[] = states
+    .filter((s) => !loggedCodes.has(s.faultCode))
+    .map((s) => ({
+      id: `mfs-${s.id}`,
+      module: s.faultCode - 1,
+      desc: "",
+      occurredAt: s.updatedAt,
+      installationId: s.installationId,
+      eventName: s.eventName,
+      active: isModuleStateActive(s),
+      resolvedAt: s.resolvedAt,
+      endReason: s.resolvedAt ? ("cleared" as const) : null,
       acknowledgedAt: s.acknowledgedAt,
-      updatedAt: s.updatedAt,
-      now,
-    }),
-    resolvedAt: s.resolvedAt,
-    acknowledgedAt: s.acknowledgedAt,
-  }));
-  return [...eventRows, ...fromState]
+    }));
+  return [...eventRows, ...fromLog, ...fromState]
     .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime())
     .slice(0, limit);
 };
@@ -272,6 +391,8 @@ export const faultService = {
     limit?: number;
   }) => {
     const limit = Math.min(Math.max(params.limit ?? 50, 1), 200);
+    /** 발생 한 건 = RAISE + CLEAR 두 줄이므로 로그는 두 배를 읽는다. */
+    const logTake = limit * 2;
     const selectEvent = {
       id: true,
       module: true,
@@ -303,12 +424,12 @@ export const faultService = {
           })
         : null;
       const iccidForMerge = instRow?.iccid ?? norm;
-      const rawStates = await fetchModuleFaultStatesForInstallations(
-        stateIds,
-        iccidForMerge,
-      );
+      const [rawStates, logs] = await Promise.all([
+        fetchModuleFaultStatesForInstallations(stateIds, iccidForMerge),
+        fetchModuleFaultLogsForInstallations(stateIds, iccidForMerge, logTake),
+      ]);
       const states = dedupeModuleStatesByFaultCode(rawStates);
-      return mergeFaultLists(events, states, limit);
+      return mergeFaultLists(events, states, logs, limit);
     }
 
     if (params.installationId) {
@@ -319,7 +440,7 @@ export const faultService = {
         where: { id: params.installationId },
         select: { iccid: true },
       });
-      const [events, rawStates] = await Promise.all([
+      const [events, rawStates, logs] = await Promise.all([
         prisma.faultEvent.findMany({
           where: { installationId: params.installationId },
           orderBy: { occurredAt: "desc" },
@@ -327,10 +448,12 @@ export const faultService = {
           select: selectEvent,
         }),
         fetchModuleFaultStatesForInstallations(stateIds, instRow?.iccid),
+        fetchModuleFaultLogsForInstallations(stateIds, instRow?.iccid, logTake),
       ]);
       return mergeFaultLists(
         events,
         dedupeModuleStatesByFaultCode(rawStates),
+        logs,
         limit,
       );
     }
@@ -339,8 +462,12 @@ export const faultService = {
   },
 
   /**
-   * POST /receiver/faults* — Modbus faultCode(1–6)당 한 행 upsert.
+   * POST /receiver/faults* — Modbus faultCode(1–6)당 한 행 upsert + ModuleFaultLog 한 줄 추가.
    * 시각은 DB `updatedAt`(갱신 시각)과 CLEAR 시 `resolvedAt`(서버 수신 시각)만 사용.
+   *
+   * TODO(HMI): HMI remote_fault_batch.c 는 4초 배치 안에서 (faultCode, RAISE/CLEAR) 키당 한 줄만
+   * 남긴다. 같은 모듈이 4초 안에 두 번 이상 바뀌면(예: RAISE F11 → 코드 변경 CLEAR → RAISE F3)
+   * 뒤 RAISE 가 빠져 서버는 해제로 보게 된다. HMI 쪽에서 중복 키를 버리지 말고 순서대로 쌓도록 고쳐야 한다.
    */
   upsertReceiverFaultState: async (params: {
     installationId: string;
@@ -351,8 +478,51 @@ export const faultService = {
 
     const enCreate = normalizeEventNameForDb(fault.eventName);
 
+    // 상태(덮어쓰기)와 이력 로그(추가)를 한 트랜잭션으로 남긴다.
+    const log = prisma.moduleFaultLog.create({
+      data: {
+        installationId,
+        faultCode: fault.faultCode,
+        event: fault.event,
+        eventName: enCreate,
+        criticalChannel,
+      },
+    });
+
     if (fault.event === "RAISE") {
-      return prisma.moduleFaultState.upsert({
+      const [state] = await prisma.$transaction([
+        prisma.moduleFaultState.upsert({
+          where: {
+            installationId_faultCode: { installationId, faultCode: fault.faultCode },
+          },
+          create: {
+            installationId,
+            faultCode: fault.faultCode,
+            repeatCount: 1,
+            resolvedAt: null,
+            lastEvent: "RAISE",
+            criticalChannel,
+            eventName: enCreate,
+          },
+          update: {
+            repeatCount: { increment: 1 },
+            resolvedAt: null,
+            lastEvent: "RAISE",
+            // 재발생 시 이전 확인(Acknowledge) 무효화 → 다시 활성으로 표시
+            acknowledgedAt: null,
+            acknowledgedBy: null,
+            ...(criticalChannel ? { criticalChannel: true } : {}),
+            ...eventNamePatch(fault),
+          },
+        }),
+        log,
+      ]);
+      return state;
+    }
+
+    const now = new Date();
+    const [state] = await prisma.$transaction([
+      prisma.moduleFaultState.upsert({
         where: {
           installationId_faultCode: { installationId, faultCode: fault.faultCode },
         },
@@ -360,46 +530,22 @@ export const faultService = {
           installationId,
           faultCode: fault.faultCode,
           repeatCount: 1,
-          resolvedAt: null,
-          lastEvent: "RAISE",
+          resolvedAt: now,
+          lastEvent: "CLEAR",
           criticalChannel,
           eventName: enCreate,
         },
         update: {
           repeatCount: { increment: 1 },
-          resolvedAt: null,
-          lastEvent: "RAISE",
-          // 재발생 시 이전 확인(Acknowledge) 무효화 → 다시 활성으로 표시
-          acknowledgedAt: null,
-          acknowledgedBy: null,
+          resolvedAt: now,
+          lastEvent: "CLEAR",
           ...(criticalChannel ? { criticalChannel: true } : {}),
           ...eventNamePatch(fault),
         },
-      });
-    }
-
-    const now = new Date();
-    return prisma.moduleFaultState.upsert({
-      where: {
-        installationId_faultCode: { installationId, faultCode: fault.faultCode },
-      },
-      create: {
-        installationId,
-        faultCode: fault.faultCode,
-        repeatCount: 1,
-        resolvedAt: now,
-        lastEvent: "CLEAR",
-        criticalChannel,
-        eventName: enCreate,
-      },
-      update: {
-        repeatCount: { increment: 1 },
-        resolvedAt: now,
-        lastEvent: "CLEAR",
-        ...(criticalChannel ? { criticalChannel: true } : {}),
-        ...eventNamePatch(fault),
-      },
-    });
+      }),
+      log,
+    ]);
+    return state;
   },
 
   /**

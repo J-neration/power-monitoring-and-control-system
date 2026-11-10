@@ -126,6 +126,9 @@ export type DeviceMinAggregateOutputType = {
   lastIp: string | null
   csq: number | null
   rsrp: number | null
+  fwVersion: string | null
+  otaCapable: boolean | null
+  otaState: string | null
   vL1: number | null
   vL2: number | null
   vL3: number | null
@@ -171,6 +174,9 @@ export type DeviceMaxAggregateOutputType = {
   lastIp: string | null
   csq: number | null
   rsrp: number | null
+  fwVersion: string | null
+  otaCapable: boolean | null
+  otaState: string | null
   vL1: number | null
   vL2: number | null
   vL3: number | null
@@ -218,6 +224,9 @@ export type DeviceCountAggregateOutputType = {
   lastIp: number
   csq: number
   rsrp: number
+  fwVersion: number
+  otaCapable: number
+  otaState: number
   vL1: number
   vL2: number
   vL3: number
@@ -356,6 +365,9 @@ export type DeviceMinAggregateInputType = {
   lastIp?: true
   csq?: true
   rsrp?: true
+  fwVersion?: true
+  otaCapable?: true
+  otaState?: true
   vL1?: true
   vL2?: true
   vL3?: true
@@ -401,6 +413,9 @@ export type DeviceMaxAggregateInputType = {
   lastIp?: true
   csq?: true
   rsrp?: true
+  fwVersion?: true
+  otaCapable?: true
+  otaState?: true
   vL1?: true
   vL2?: true
   vL3?: true
@@ -448,6 +463,9 @@ export type DeviceCountAggregateInputType = {
   lastIp?: true
   csq?: true
   rsrp?: true
+  fwVersion?: true
+  otaCapable?: true
+  otaState?: true
   vL1?: true
   vL2?: true
   vL3?: true
@@ -585,6 +603,9 @@ export type DeviceGroupByOutputType = {
   lastIp: string | null
   csq: number | null
   rsrp: number | null
+  fwVersion: string | null
+  otaCapable: boolean | null
+  otaState: string | null
   vL1: number | null
   vL2: number | null
   vL3: number | null
@@ -658,6 +679,9 @@ export type DeviceWhereInput = {
   lastIp?: Prisma.StringNullableFilter<"Device"> | string | null
   csq?: Prisma.IntNullableFilter<"Device"> | number | null
   rsrp?: Prisma.FloatNullableFilter<"Device"> | number | null
+  fwVersion?: Prisma.StringNullableFilter<"Device"> | string | null
+  otaCapable?: Prisma.BoolNullableFilter<"Device"> | boolean | null
+  otaState?: Prisma.StringNullableFilter<"Device"> | string | null
   vL1?: Prisma.FloatNullableFilter<"Device"> | number | null
   vL2?: Prisma.FloatNullableFilter<"Device"> | number | null
   vL3?: Prisma.FloatNullableFilter<"Device"> | number | null
@@ -709,6 +733,9 @@ export type DeviceOrderByWithRelationInput = {
   lastIp?: Prisma.SortOrderInput | Prisma.SortOrder
   csq?: Prisma.SortOrderInput | Prisma.SortOrder
   rsrp?: Prisma.SortOrderInput | Prisma.SortOrder
+  fwVersion?: Prisma.SortOrderInput | Prisma.SortOrder
+  otaCapable?: Prisma.SortOrderInput | Prisma.SortOrder
+  otaState?: Prisma.SortOrderInput | Prisma.SortOrder
   vL1?: Prisma.SortOrderInput | Prisma.SortOrder
   vL2?: Prisma.SortOrderInput | Prisma.SortOrder
   vL3?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -763,6 +790,9 @@ export type DeviceWhereUniqueInput = Prisma.AtLeast<{
   lastIp?: Prisma.StringNullableFilter<"Device"> | string | null
   csq?: Prisma.IntNullableFilter<"Device"> | number | null
   rsrp?: Prisma.FloatNullableFilter<"Device"> | number | null
+  fwVersion?: Prisma.StringNullableFilter<"Device"> | string | null
+  otaCapable?: Prisma.BoolNullableFilter<"Device"> | boolean | null
+  otaState?: Prisma.StringNullableFilter<"Device"> | string | null
   vL1?: Prisma.FloatNullableFilter<"Device"> | number | null
   vL2?: Prisma.FloatNullableFilter<"Device"> | number | null
   vL3?: Prisma.FloatNullableFilter<"Device"> | number | null
@@ -814,6 +844,9 @@ export type DeviceOrderByWithAggregationInput = {
   lastIp?: Prisma.SortOrderInput | Prisma.SortOrder
   csq?: Prisma.SortOrderInput | Prisma.SortOrder
   rsrp?: Prisma.SortOrderInput | Prisma.SortOrder
+  fwVersion?: Prisma.SortOrderInput | Prisma.SortOrder
+  otaCapable?: Prisma.SortOrderInput | Prisma.SortOrder
+  otaState?: Prisma.SortOrderInput | Prisma.SortOrder
   vL1?: Prisma.SortOrderInput | Prisma.SortOrder
   vL2?: Prisma.SortOrderInput | Prisma.SortOrder
   vL3?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -872,6 +905,9 @@ export type DeviceScalarWhereWithAggregatesInput = {
   lastIp?: Prisma.StringNullableWithAggregatesFilter<"Device"> | string | null
   csq?: Prisma.IntNullableWithAggregatesFilter<"Device"> | number | null
   rsrp?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
+  fwVersion?: Prisma.StringNullableWithAggregatesFilter<"Device"> | string | null
+  otaCapable?: Prisma.BoolNullableWithAggregatesFilter<"Device"> | boolean | null
+  otaState?: Prisma.StringNullableWithAggregatesFilter<"Device"> | string | null
   vL1?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
   vL2?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
   vL3?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
@@ -921,6 +957,9 @@ export type DeviceCreateInput = {
   lastIp?: string | null
   csq?: number | null
   rsrp?: number | null
+  fwVersion?: string | null
+  otaCapable?: boolean | null
+  otaState?: string | null
   vL1?: number | null
   vL2?: number | null
   vL3?: number | null
@@ -972,6 +1011,9 @@ export type DeviceUncheckedCreateInput = {
   lastIp?: string | null
   csq?: number | null
   rsrp?: number | null
+  fwVersion?: string | null
+  otaCapable?: boolean | null
+  otaState?: string | null
   vL1?: number | null
   vL2?: number | null
   vL3?: number | null
@@ -1021,6 +1063,9 @@ export type DeviceUpdateInput = {
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rsrp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  fwVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otaCapable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  otaState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1072,6 +1117,9 @@ export type DeviceUncheckedUpdateInput = {
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rsrp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  fwVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otaCapable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  otaState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1122,6 +1170,9 @@ export type DeviceCreateManyInput = {
   lastIp?: string | null
   csq?: number | null
   rsrp?: number | null
+  fwVersion?: string | null
+  otaCapable?: boolean | null
+  otaState?: string | null
   vL1?: number | null
   vL2?: number | null
   vL3?: number | null
@@ -1171,6 +1222,9 @@ export type DeviceUpdateManyMutationInput = {
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rsrp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  fwVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otaCapable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  otaState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1221,6 +1275,9 @@ export type DeviceUncheckedUpdateManyInput = {
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rsrp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  fwVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otaCapable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  otaState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1292,6 +1349,9 @@ export type DeviceCountOrderByAggregateInput = {
   lastIp?: Prisma.SortOrder
   csq?: Prisma.SortOrder
   rsrp?: Prisma.SortOrder
+  fwVersion?: Prisma.SortOrder
+  otaCapable?: Prisma.SortOrder
+  otaState?: Prisma.SortOrder
   vL1?: Prisma.SortOrder
   vL2?: Prisma.SortOrder
   vL3?: Prisma.SortOrder
@@ -1384,6 +1444,9 @@ export type DeviceMaxOrderByAggregateInput = {
   lastIp?: Prisma.SortOrder
   csq?: Prisma.SortOrder
   rsrp?: Prisma.SortOrder
+  fwVersion?: Prisma.SortOrder
+  otaCapable?: Prisma.SortOrder
+  otaState?: Prisma.SortOrder
   vL1?: Prisma.SortOrder
   vL2?: Prisma.SortOrder
   vL3?: Prisma.SortOrder
@@ -1429,6 +1492,9 @@ export type DeviceMinOrderByAggregateInput = {
   lastIp?: Prisma.SortOrder
   csq?: Prisma.SortOrder
   rsrp?: Prisma.SortOrder
+  fwVersion?: Prisma.SortOrder
+  otaCapable?: Prisma.SortOrder
+  otaState?: Prisma.SortOrder
   vL1?: Prisma.SortOrder
   vL2?: Prisma.SortOrder
   vL3?: Prisma.SortOrder
@@ -1586,6 +1652,10 @@ export type NullableIntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type NullableBoolFieldUpdateOperationsInput = {
+  set?: boolean | null
+}
+
 export type DeviceUpdateareaTempInput = {
   set?: number[]
   push?: number | number[]
@@ -1612,6 +1682,9 @@ export type DeviceCreateWithoutInstallationInput = {
   lastIp?: string | null
   csq?: number | null
   rsrp?: number | null
+  fwVersion?: string | null
+  otaCapable?: boolean | null
+  otaState?: string | null
   vL1?: number | null
   vL2?: number | null
   vL3?: number | null
@@ -1661,6 +1734,9 @@ export type DeviceUncheckedCreateWithoutInstallationInput = {
   lastIp?: string | null
   csq?: number | null
   rsrp?: number | null
+  fwVersion?: string | null
+  otaCapable?: boolean | null
+  otaState?: string | null
   vL1?: number | null
   vL2?: number | null
   vL3?: number | null
@@ -1726,6 +1802,9 @@ export type DeviceUpdateWithoutInstallationInput = {
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rsrp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  fwVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otaCapable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  otaState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1775,6 +1854,9 @@ export type DeviceUncheckedUpdateWithoutInstallationInput = {
   lastIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   csq?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rsrp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  fwVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otaCapable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  otaState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1827,6 +1909,9 @@ export type DeviceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   lastIp?: boolean
   csq?: boolean
   rsrp?: boolean
+  fwVersion?: boolean
+  otaCapable?: boolean
+  otaState?: boolean
   vL1?: boolean
   vL2?: boolean
   vL3?: boolean
@@ -1878,6 +1963,9 @@ export type DeviceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   lastIp?: boolean
   csq?: boolean
   rsrp?: boolean
+  fwVersion?: boolean
+  otaCapable?: boolean
+  otaState?: boolean
   vL1?: boolean
   vL2?: boolean
   vL3?: boolean
@@ -1929,6 +2017,9 @@ export type DeviceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   lastIp?: boolean
   csq?: boolean
   rsrp?: boolean
+  fwVersion?: boolean
+  otaCapable?: boolean
+  otaState?: boolean
   vL1?: boolean
   vL2?: boolean
   vL3?: boolean
@@ -1980,6 +2071,9 @@ export type DeviceSelectScalar = {
   lastIp?: boolean
   csq?: boolean
   rsrp?: boolean
+  fwVersion?: boolean
+  otaCapable?: boolean
+  otaState?: boolean
   vL1?: boolean
   vL2?: boolean
   vL3?: boolean
@@ -2018,7 +2112,7 @@ export type DeviceSelectScalar = {
   updatedAt?: boolean
 }
 
-export type DeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"installationId" | "model" | "capacity" | "moduleStatus" | "numOfMods" | "moduleCapacity" | "lastSeenAt" | "lastValue" | "lastIp" | "csq" | "rsrp" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "uncompS" | "compS" | "uncompP" | "compP" | "uncompQ" | "compQ" | "uncompH" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "areaTemp" | "moduleTemp" | "fanSpeed" | "totalCapacity" | "operatingCapacity" | "reactivePowerCapacity" | "availableMargin" | "createdAt" | "updatedAt", ExtArgs["result"]["device"]>
+export type DeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"installationId" | "model" | "capacity" | "moduleStatus" | "numOfMods" | "moduleCapacity" | "lastSeenAt" | "lastValue" | "lastIp" | "csq" | "rsrp" | "fwVersion" | "otaCapable" | "otaState" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "uncompS" | "compS" | "uncompP" | "compP" | "uncompQ" | "compQ" | "uncompH" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "areaTemp" | "moduleTemp" | "fanSpeed" | "totalCapacity" | "operatingCapacity" | "reactivePowerCapacity" | "availableMargin" | "createdAt" | "updatedAt", ExtArgs["result"]["device"]>
 export type DeviceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }
@@ -2058,6 +2152,18 @@ export type $DevicePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
      * LTE RSRP (dBm, e.g. -84)
      */
     rsrp: number | null
+    /**
+     * HMI 펌웨어 버전 (텔레메트리 "fw", 예: "2.3.5"). OTA 이전 펌웨어는 보내지 않아 null
+     */
+    fwVersion: string | null
+    /**
+     * 텔레메트리 "otaCapable". null/false 면 OTA 명령을 보내지 않는다
+     */
+    otaCapable: boolean | null
+    /**
+     * 텔레메트리 "otaState" (HMI EEPROM 레코드): idle | installing | pending_confirm | confirmed | rollback | failed
+     */
+    otaState: string | null
     vL1: number | null
     vL2: number | null
     vL3: number | null
@@ -2529,6 +2635,9 @@ export interface DeviceFieldRefs {
   readonly lastIp: Prisma.FieldRef<"Device", 'String'>
   readonly csq: Prisma.FieldRef<"Device", 'Int'>
   readonly rsrp: Prisma.FieldRef<"Device", 'Float'>
+  readonly fwVersion: Prisma.FieldRef<"Device", 'String'>
+  readonly otaCapable: Prisma.FieldRef<"Device", 'Boolean'>
+  readonly otaState: Prisma.FieldRef<"Device", 'String'>
   readonly vL1: Prisma.FieldRef<"Device", 'Float'>
   readonly vL2: Prisma.FieldRef<"Device", 'Float'>
   readonly vL3: Prisma.FieldRef<"Device", 'Float'>

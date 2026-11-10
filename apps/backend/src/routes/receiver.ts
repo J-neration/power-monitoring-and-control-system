@@ -11,6 +11,7 @@ import { commandService, CommandError } from "../services/commandService.js";
 import { faultService } from "../services/faultService.js";
 import { notifyAdminAlerts } from "../services/adminAlertService.js";
 import { settingsService, SettingsError } from "../services/settingsService.js";
+import { OTA_STATUS_STATES, otaStatusService } from "../services/otaStatusService.js";
 import { wsHub } from "../lib/wsHub.js";
 import { matchReceiverApiKey } from "../lib/receiverApiKey.js";
 import * as viewingState from "../lib/viewingState.js";
@@ -96,6 +97,16 @@ const createCommandSchema = z.object({
     )
     .optional()
     .nullable(),
+});
+
+const otaStatusSchema = z.object({
+  iccid: z.string().min(1),
+  id: z.string().max(64).optional(),
+  state: z.enum(OTA_STATUS_STATES),
+  percent: z.number().int().min(0).max(100).optional(),
+  fw: z.string().max(32).optional(),
+  target: z.string().max(32).optional(),
+  error: z.string().max(200).optional(),
 });
 
 const ackSchema = z.object({
@@ -486,6 +497,9 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       csq: body.csq,
       rsrp: body.rsrp,
       model: typeof body.model === "string" ? body.model : undefined,
+      fw: body.fw,
+      otaCapable: body.otaCapable,
+      otaState: body.otaState,
       timestamp: body.timestamp,
       ts: body.ts,
     });
@@ -766,7 +780,10 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
         });
       }
 
-      const command = await commandService.poll(installationId);
+      // OTA download URL uses the host the HMI called (api-dev / api), always https.
+      const command = await commandService.poll(installationId, {
+        otaBaseUrl: request.headers.host ? `https://${request.headers.host}` : undefined,
+      });
       if (command.id) {
         server.log.info(
           {
@@ -832,6 +849,44 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       server.log.error({ error }, "Failed to ack command");
       return reply.status(500).send({ message: "Failed to ack command" });
     }
+  });
+
+  // Device -> OTA progress / result (HMI ota_manager.c). Same auth and ICCID
+  // rules as the command poll.
+  server.post("/ota/status", async (request, reply) => {
+    if (!hasValidApiKey(request)) {
+      return reply.status(401).send({ message: "Unauthorized" });
+    }
+    const parsed = otaStatusSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ message: "Invalid OTA status body", errors: parsed.error.flatten() });
+    }
+    const body = parsed.data;
+    const identity = await resolveInstallationIdForReceiver({ iccid: body.iccid });
+    if (!identity.installationId || (receiverRequireIccidOnly() && identity.resolvedVia !== "iccid")) {
+      return reply.status(422).send({ ok: false, message: "unknown iccid" });
+    }
+    const event = await otaStatusService.record(identity.installationId, {
+      commandId: body.id,
+      state: body.state,
+      percent: body.percent,
+      fw: body.fw,
+      target: body.target,
+      error: body.error,
+    });
+    server.log.info(
+      {
+        installationId: identity.installationId,
+        commandId: event.commandId,
+        state: event.state,
+        fw: event.fw,
+        target: event.target,
+        error: event.error,
+      },
+      "OTA status",
+    );
+    wsHub.broadcast({ type: "device_updated", installationId: identity.installationId });
+    return reply.send({ ok: true });
   });
 
   // UI history

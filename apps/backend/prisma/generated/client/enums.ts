@@ -13,7 +13,8 @@ export const UserRole = {
   ADMIN: 'ADMIN',
   CLIENT: 'CLIENT',
   SITE: 'SITE',
-  VIEWER: 'VIEWER'
+  VIEWER: 'VIEWER',
+  INSPECTOR: 'INSPECTOR'
 } as const
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
@@ -24,7 +25,8 @@ export const DeviceCommandPower = {
   off: 'off',
   refresh: 'refresh',
   refreshSettings: 'refreshSettings',
-  setBasic: 'setBasic'
+  setBasic: 'setBasic',
+  ota: 'ota'
 } as const
 
 export type DeviceCommandPower = (typeof DeviceCommandPower)[keyof typeof DeviceCommandPower]

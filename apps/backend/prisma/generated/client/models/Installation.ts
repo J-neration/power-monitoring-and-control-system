@@ -256,7 +256,9 @@ export type InstallationWhereInput = {
   commands?: Prisma.DeviceCommandListRelationFilter
   faultEvents?: Prisma.FaultEventListRelationFilter
   moduleFaultStates?: Prisma.ModuleFaultStateListRelationFilter
+  moduleFaultLogs?: Prisma.ModuleFaultLogListRelationFilter
   deviceSettings?: Prisma.XOR<Prisma.InstallationDeviceSettingsNullableScalarRelationFilter, Prisma.InstallationDeviceSettingsWhereInput> | null
+  otaStatusEvents?: Prisma.OtaStatusEventListRelationFilter
 }
 
 export type InstallationOrderByWithRelationInput = {
@@ -281,7 +283,9 @@ export type InstallationOrderByWithRelationInput = {
   commands?: Prisma.DeviceCommandOrderByRelationAggregateInput
   faultEvents?: Prisma.FaultEventOrderByRelationAggregateInput
   moduleFaultStates?: Prisma.ModuleFaultStateOrderByRelationAggregateInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogOrderByRelationAggregateInput
   deviceSettings?: Prisma.InstallationDeviceSettingsOrderByWithRelationInput
+  otaStatusEvents?: Prisma.OtaStatusEventOrderByRelationAggregateInput
 }
 
 export type InstallationWhereUniqueInput = Prisma.AtLeast<{
@@ -309,7 +313,9 @@ export type InstallationWhereUniqueInput = Prisma.AtLeast<{
   commands?: Prisma.DeviceCommandListRelationFilter
   faultEvents?: Prisma.FaultEventListRelationFilter
   moduleFaultStates?: Prisma.ModuleFaultStateListRelationFilter
+  moduleFaultLogs?: Prisma.ModuleFaultLogListRelationFilter
   deviceSettings?: Prisma.XOR<Prisma.InstallationDeviceSettingsNullableScalarRelationFilter, Prisma.InstallationDeviceSettingsWhereInput> | null
+  otaStatusEvents?: Prisma.OtaStatusEventListRelationFilter
 }, "id" | "iccid">
 
 export type InstallationOrderByWithAggregationInput = {
@@ -371,7 +377,9 @@ export type InstallationCreateInput = {
   commands?: Prisma.DeviceCommandCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateInput = {
@@ -395,7 +403,9 @@ export type InstallationUncheckedCreateInput = {
   commands?: Prisma.DeviceCommandUncheckedCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventUncheckedCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUpdateInput = {
@@ -419,7 +429,9 @@ export type InstallationUpdateInput = {
   commands?: Prisma.DeviceCommandUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateInput = {
@@ -443,7 +455,9 @@ export type InstallationUncheckedUpdateInput = {
   commands?: Prisma.DeviceCommandUncheckedUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUncheckedUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateManyInput = {
@@ -696,6 +710,20 @@ export type InstallationUpdateOneRequiredWithoutModuleFaultStatesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.InstallationUpdateToOneWithWhereWithoutModuleFaultStatesInput, Prisma.InstallationUpdateWithoutModuleFaultStatesInput>, Prisma.InstallationUncheckedUpdateWithoutModuleFaultStatesInput>
 }
 
+export type InstallationCreateNestedOneWithoutModuleFaultLogsInput = {
+  create?: Prisma.XOR<Prisma.InstallationCreateWithoutModuleFaultLogsInput, Prisma.InstallationUncheckedCreateWithoutModuleFaultLogsInput>
+  connectOrCreate?: Prisma.InstallationCreateOrConnectWithoutModuleFaultLogsInput
+  connect?: Prisma.InstallationWhereUniqueInput
+}
+
+export type InstallationUpdateOneRequiredWithoutModuleFaultLogsNestedInput = {
+  create?: Prisma.XOR<Prisma.InstallationCreateWithoutModuleFaultLogsInput, Prisma.InstallationUncheckedCreateWithoutModuleFaultLogsInput>
+  connectOrCreate?: Prisma.InstallationCreateOrConnectWithoutModuleFaultLogsInput
+  upsert?: Prisma.InstallationUpsertWithoutModuleFaultLogsInput
+  connect?: Prisma.InstallationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.InstallationUpdateToOneWithWhereWithoutModuleFaultLogsInput, Prisma.InstallationUpdateWithoutModuleFaultLogsInput>, Prisma.InstallationUncheckedUpdateWithoutModuleFaultLogsInput>
+}
+
 export type InstallationCreateNestedOneWithoutCommandsInput = {
   create?: Prisma.XOR<Prisma.InstallationCreateWithoutCommandsInput, Prisma.InstallationUncheckedCreateWithoutCommandsInput>
   connectOrCreate?: Prisma.InstallationCreateOrConnectWithoutCommandsInput
@@ -708,6 +736,20 @@ export type InstallationUpdateOneRequiredWithoutCommandsNestedInput = {
   upsert?: Prisma.InstallationUpsertWithoutCommandsInput
   connect?: Prisma.InstallationWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.InstallationUpdateToOneWithWhereWithoutCommandsInput, Prisma.InstallationUpdateWithoutCommandsInput>, Prisma.InstallationUncheckedUpdateWithoutCommandsInput>
+}
+
+export type InstallationCreateNestedOneWithoutOtaStatusEventsInput = {
+  create?: Prisma.XOR<Prisma.InstallationCreateWithoutOtaStatusEventsInput, Prisma.InstallationUncheckedCreateWithoutOtaStatusEventsInput>
+  connectOrCreate?: Prisma.InstallationCreateOrConnectWithoutOtaStatusEventsInput
+  connect?: Prisma.InstallationWhereUniqueInput
+}
+
+export type InstallationUpdateOneRequiredWithoutOtaStatusEventsNestedInput = {
+  create?: Prisma.XOR<Prisma.InstallationCreateWithoutOtaStatusEventsInput, Prisma.InstallationUncheckedCreateWithoutOtaStatusEventsInput>
+  connectOrCreate?: Prisma.InstallationCreateOrConnectWithoutOtaStatusEventsInput
+  upsert?: Prisma.InstallationUpsertWithoutOtaStatusEventsInput
+  connect?: Prisma.InstallationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.InstallationUpdateToOneWithWhereWithoutOtaStatusEventsInput, Prisma.InstallationUpdateWithoutOtaStatusEventsInput>, Prisma.InstallationUncheckedUpdateWithoutOtaStatusEventsInput>
 }
 
 export type InstallationCreateWithoutSiteInput = {
@@ -730,7 +772,9 @@ export type InstallationCreateWithoutSiteInput = {
   commands?: Prisma.DeviceCommandCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutSiteInput = {
@@ -753,7 +797,9 @@ export type InstallationUncheckedCreateWithoutSiteInput = {
   commands?: Prisma.DeviceCommandUncheckedCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventUncheckedCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutSiteInput = {
@@ -822,6 +868,8 @@ export type InstallationCreateWithoutDeviceSettingsInput = {
   commands?: Prisma.DeviceCommandCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogCreateNestedManyWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutDeviceSettingsInput = {
@@ -845,6 +893,8 @@ export type InstallationUncheckedCreateWithoutDeviceSettingsInput = {
   commands?: Prisma.DeviceCommandUncheckedCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventUncheckedCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedCreateNestedManyWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutDeviceSettingsInput = {
@@ -884,6 +934,8 @@ export type InstallationUpdateWithoutDeviceSettingsInput = {
   commands?: Prisma.DeviceCommandUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUpdateManyWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutDeviceSettingsInput = {
@@ -907,6 +959,8 @@ export type InstallationUncheckedUpdateWithoutDeviceSettingsInput = {
   commands?: Prisma.DeviceCommandUncheckedUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUncheckedUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedUpdateManyWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutDeviceInput = {
@@ -929,7 +983,9 @@ export type InstallationCreateWithoutDeviceInput = {
   commands?: Prisma.DeviceCommandCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutDeviceInput = {
@@ -952,7 +1008,9 @@ export type InstallationUncheckedCreateWithoutDeviceInput = {
   commands?: Prisma.DeviceCommandUncheckedCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventUncheckedCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutDeviceInput = {
@@ -991,7 +1049,9 @@ export type InstallationUpdateWithoutDeviceInput = {
   commands?: Prisma.DeviceCommandUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutDeviceInput = {
@@ -1014,7 +1074,9 @@ export type InstallationUncheckedUpdateWithoutDeviceInput = {
   commands?: Prisma.DeviceCommandUncheckedUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUncheckedUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutTelemetryRecordsInput = {
@@ -1037,7 +1099,9 @@ export type InstallationCreateWithoutTelemetryRecordsInput = {
   commands?: Prisma.DeviceCommandCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutTelemetryRecordsInput = {
@@ -1060,7 +1124,9 @@ export type InstallationUncheckedCreateWithoutTelemetryRecordsInput = {
   commands?: Prisma.DeviceCommandUncheckedCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventUncheckedCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutTelemetryRecordsInput = {
@@ -1099,7 +1165,9 @@ export type InstallationUpdateWithoutTelemetryRecordsInput = {
   commands?: Prisma.DeviceCommandUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutTelemetryRecordsInput = {
@@ -1122,7 +1190,9 @@ export type InstallationUncheckedUpdateWithoutTelemetryRecordsInput = {
   commands?: Prisma.DeviceCommandUncheckedUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUncheckedUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutHourlySummariesInput = {
@@ -1145,7 +1215,9 @@ export type InstallationCreateWithoutHourlySummariesInput = {
   commands?: Prisma.DeviceCommandCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutHourlySummariesInput = {
@@ -1168,7 +1240,9 @@ export type InstallationUncheckedCreateWithoutHourlySummariesInput = {
   commands?: Prisma.DeviceCommandUncheckedCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventUncheckedCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutHourlySummariesInput = {
@@ -1207,7 +1281,9 @@ export type InstallationUpdateWithoutHourlySummariesInput = {
   commands?: Prisma.DeviceCommandUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutHourlySummariesInput = {
@@ -1230,7 +1306,9 @@ export type InstallationUncheckedUpdateWithoutHourlySummariesInput = {
   commands?: Prisma.DeviceCommandUncheckedUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUncheckedUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutDailySummariesInput = {
@@ -1253,7 +1331,9 @@ export type InstallationCreateWithoutDailySummariesInput = {
   commands?: Prisma.DeviceCommandCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutDailySummariesInput = {
@@ -1276,7 +1356,9 @@ export type InstallationUncheckedCreateWithoutDailySummariesInput = {
   commands?: Prisma.DeviceCommandUncheckedCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventUncheckedCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutDailySummariesInput = {
@@ -1315,7 +1397,9 @@ export type InstallationUpdateWithoutDailySummariesInput = {
   commands?: Prisma.DeviceCommandUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutDailySummariesInput = {
@@ -1338,7 +1422,9 @@ export type InstallationUncheckedUpdateWithoutDailySummariesInput = {
   commands?: Prisma.DeviceCommandUncheckedUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUncheckedUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutFaultEventsInput = {
@@ -1361,7 +1447,9 @@ export type InstallationCreateWithoutFaultEventsInput = {
   dailySummaries?: Prisma.TelemetryDailySummaryCreateNestedManyWithoutInstallationInput
   commands?: Prisma.DeviceCommandCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutFaultEventsInput = {
@@ -1384,7 +1472,9 @@ export type InstallationUncheckedCreateWithoutFaultEventsInput = {
   dailySummaries?: Prisma.TelemetryDailySummaryUncheckedCreateNestedManyWithoutInstallationInput
   commands?: Prisma.DeviceCommandUncheckedCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutFaultEventsInput = {
@@ -1423,7 +1513,9 @@ export type InstallationUpdateWithoutFaultEventsInput = {
   dailySummaries?: Prisma.TelemetryDailySummaryUpdateManyWithoutInstallationNestedInput
   commands?: Prisma.DeviceCommandUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutFaultEventsInput = {
@@ -1446,7 +1538,9 @@ export type InstallationUncheckedUpdateWithoutFaultEventsInput = {
   dailySummaries?: Prisma.TelemetryDailySummaryUncheckedUpdateManyWithoutInstallationNestedInput
   commands?: Prisma.DeviceCommandUncheckedUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutModuleFaultStatesInput = {
@@ -1469,7 +1563,9 @@ export type InstallationCreateWithoutModuleFaultStatesInput = {
   dailySummaries?: Prisma.TelemetryDailySummaryCreateNestedManyWithoutInstallationInput
   commands?: Prisma.DeviceCommandCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutModuleFaultStatesInput = {
@@ -1492,7 +1588,9 @@ export type InstallationUncheckedCreateWithoutModuleFaultStatesInput = {
   dailySummaries?: Prisma.TelemetryDailySummaryUncheckedCreateNestedManyWithoutInstallationInput
   commands?: Prisma.DeviceCommandUncheckedCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventUncheckedCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutModuleFaultStatesInput = {
@@ -1531,7 +1629,9 @@ export type InstallationUpdateWithoutModuleFaultStatesInput = {
   dailySummaries?: Prisma.TelemetryDailySummaryUpdateManyWithoutInstallationNestedInput
   commands?: Prisma.DeviceCommandUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutModuleFaultStatesInput = {
@@ -1554,7 +1654,125 @@ export type InstallationUncheckedUpdateWithoutModuleFaultStatesInput = {
   dailySummaries?: Prisma.TelemetryDailySummaryUncheckedUpdateManyWithoutInstallationNestedInput
   commands?: Prisma.DeviceCommandUncheckedUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUncheckedUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
+}
+
+export type InstallationCreateWithoutModuleFaultLogsInput = {
+  id: string
+  label: string
+  iccid?: string | null
+  moduleName?: string | null
+  historyVisible?: boolean
+  webSettingsActive?: boolean
+  webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  site: Prisma.SiteCreateNestedOneWithoutInstallationsInput
+  device?: Prisma.DeviceCreateNestedOneWithoutInstallationInput
+  telemetryRecords?: Prisma.TelemetryRecordCreateNestedManyWithoutInstallationInput
+  hourlySummaries?: Prisma.TelemetryHourlySummaryCreateNestedManyWithoutInstallationInput
+  dailySummaries?: Prisma.TelemetryDailySummaryCreateNestedManyWithoutInstallationInput
+  commands?: Prisma.DeviceCommandCreateNestedManyWithoutInstallationInput
+  faultEvents?: Prisma.FaultEventCreateNestedManyWithoutInstallationInput
+  moduleFaultStates?: Prisma.ModuleFaultStateCreateNestedManyWithoutInstallationInput
+  deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
+}
+
+export type InstallationUncheckedCreateWithoutModuleFaultLogsInput = {
+  id: string
+  siteId: string
+  label: string
+  iccid?: string | null
+  moduleName?: string | null
+  historyVisible?: boolean
+  webSettingsActive?: boolean
+  webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  device?: Prisma.DeviceUncheckedCreateNestedOneWithoutInstallationInput
+  telemetryRecords?: Prisma.TelemetryRecordUncheckedCreateNestedManyWithoutInstallationInput
+  hourlySummaries?: Prisma.TelemetryHourlySummaryUncheckedCreateNestedManyWithoutInstallationInput
+  dailySummaries?: Prisma.TelemetryDailySummaryUncheckedCreateNestedManyWithoutInstallationInput
+  commands?: Prisma.DeviceCommandUncheckedCreateNestedManyWithoutInstallationInput
+  faultEvents?: Prisma.FaultEventUncheckedCreateNestedManyWithoutInstallationInput
+  moduleFaultStates?: Prisma.ModuleFaultStateUncheckedCreateNestedManyWithoutInstallationInput
+  deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
+}
+
+export type InstallationCreateOrConnectWithoutModuleFaultLogsInput = {
+  where: Prisma.InstallationWhereUniqueInput
+  create: Prisma.XOR<Prisma.InstallationCreateWithoutModuleFaultLogsInput, Prisma.InstallationUncheckedCreateWithoutModuleFaultLogsInput>
+}
+
+export type InstallationUpsertWithoutModuleFaultLogsInput = {
+  update: Prisma.XOR<Prisma.InstallationUpdateWithoutModuleFaultLogsInput, Prisma.InstallationUncheckedUpdateWithoutModuleFaultLogsInput>
+  create: Prisma.XOR<Prisma.InstallationCreateWithoutModuleFaultLogsInput, Prisma.InstallationUncheckedCreateWithoutModuleFaultLogsInput>
+  where?: Prisma.InstallationWhereInput
+}
+
+export type InstallationUpdateToOneWithWhereWithoutModuleFaultLogsInput = {
+  where?: Prisma.InstallationWhereInput
+  data: Prisma.XOR<Prisma.InstallationUpdateWithoutModuleFaultLogsInput, Prisma.InstallationUncheckedUpdateWithoutModuleFaultLogsInput>
+}
+
+export type InstallationUpdateWithoutModuleFaultLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  label?: Prisma.StringFieldUpdateOperationsInput | string
+  iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  site?: Prisma.SiteUpdateOneRequiredWithoutInstallationsNestedInput
+  device?: Prisma.DeviceUpdateOneWithoutInstallationNestedInput
+  telemetryRecords?: Prisma.TelemetryRecordUpdateManyWithoutInstallationNestedInput
+  hourlySummaries?: Prisma.TelemetryHourlySummaryUpdateManyWithoutInstallationNestedInput
+  dailySummaries?: Prisma.TelemetryDailySummaryUpdateManyWithoutInstallationNestedInput
+  commands?: Prisma.DeviceCommandUpdateManyWithoutInstallationNestedInput
+  faultEvents?: Prisma.FaultEventUpdateManyWithoutInstallationNestedInput
+  moduleFaultStates?: Prisma.ModuleFaultStateUpdateManyWithoutInstallationNestedInput
+  deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
+}
+
+export type InstallationUncheckedUpdateWithoutModuleFaultLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  label?: Prisma.StringFieldUpdateOperationsInput | string
+  iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  device?: Prisma.DeviceUncheckedUpdateOneWithoutInstallationNestedInput
+  telemetryRecords?: Prisma.TelemetryRecordUncheckedUpdateManyWithoutInstallationNestedInput
+  hourlySummaries?: Prisma.TelemetryHourlySummaryUncheckedUpdateManyWithoutInstallationNestedInput
+  dailySummaries?: Prisma.TelemetryDailySummaryUncheckedUpdateManyWithoutInstallationNestedInput
+  commands?: Prisma.DeviceCommandUncheckedUpdateManyWithoutInstallationNestedInput
+  faultEvents?: Prisma.FaultEventUncheckedUpdateManyWithoutInstallationNestedInput
+  moduleFaultStates?: Prisma.ModuleFaultStateUncheckedUpdateManyWithoutInstallationNestedInput
+  deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutCommandsInput = {
@@ -1577,7 +1795,9 @@ export type InstallationCreateWithoutCommandsInput = {
   dailySummaries?: Prisma.TelemetryDailySummaryCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutCommandsInput = {
@@ -1600,7 +1820,9 @@ export type InstallationUncheckedCreateWithoutCommandsInput = {
   dailySummaries?: Prisma.TelemetryDailySummaryUncheckedCreateNestedManyWithoutInstallationInput
   faultEvents?: Prisma.FaultEventUncheckedCreateNestedManyWithoutInstallationInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutCommandsInput = {
@@ -1639,7 +1861,9 @@ export type InstallationUpdateWithoutCommandsInput = {
   dailySummaries?: Prisma.TelemetryDailySummaryUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutCommandsInput = {
@@ -1662,6 +1886,124 @@ export type InstallationUncheckedUpdateWithoutCommandsInput = {
   dailySummaries?: Prisma.TelemetryDailySummaryUncheckedUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUncheckedUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedUpdateManyWithoutInstallationNestedInput
+  deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
+}
+
+export type InstallationCreateWithoutOtaStatusEventsInput = {
+  id: string
+  label: string
+  iccid?: string | null
+  moduleName?: string | null
+  historyVisible?: boolean
+  webSettingsActive?: boolean
+  webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  site: Prisma.SiteCreateNestedOneWithoutInstallationsInput
+  device?: Prisma.DeviceCreateNestedOneWithoutInstallationInput
+  telemetryRecords?: Prisma.TelemetryRecordCreateNestedManyWithoutInstallationInput
+  hourlySummaries?: Prisma.TelemetryHourlySummaryCreateNestedManyWithoutInstallationInput
+  dailySummaries?: Prisma.TelemetryDailySummaryCreateNestedManyWithoutInstallationInput
+  commands?: Prisma.DeviceCommandCreateNestedManyWithoutInstallationInput
+  faultEvents?: Prisma.FaultEventCreateNestedManyWithoutInstallationInput
+  moduleFaultStates?: Prisma.ModuleFaultStateCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogCreateNestedManyWithoutInstallationInput
+  deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
+}
+
+export type InstallationUncheckedCreateWithoutOtaStatusEventsInput = {
+  id: string
+  siteId: string
+  label: string
+  iccid?: string | null
+  moduleName?: string | null
+  historyVisible?: boolean
+  webSettingsActive?: boolean
+  webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  device?: Prisma.DeviceUncheckedCreateNestedOneWithoutInstallationInput
+  telemetryRecords?: Prisma.TelemetryRecordUncheckedCreateNestedManyWithoutInstallationInput
+  hourlySummaries?: Prisma.TelemetryHourlySummaryUncheckedCreateNestedManyWithoutInstallationInput
+  dailySummaries?: Prisma.TelemetryDailySummaryUncheckedCreateNestedManyWithoutInstallationInput
+  commands?: Prisma.DeviceCommandUncheckedCreateNestedManyWithoutInstallationInput
+  faultEvents?: Prisma.FaultEventUncheckedCreateNestedManyWithoutInstallationInput
+  moduleFaultStates?: Prisma.ModuleFaultStateUncheckedCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedCreateNestedManyWithoutInstallationInput
+  deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
+}
+
+export type InstallationCreateOrConnectWithoutOtaStatusEventsInput = {
+  where: Prisma.InstallationWhereUniqueInput
+  create: Prisma.XOR<Prisma.InstallationCreateWithoutOtaStatusEventsInput, Prisma.InstallationUncheckedCreateWithoutOtaStatusEventsInput>
+}
+
+export type InstallationUpsertWithoutOtaStatusEventsInput = {
+  update: Prisma.XOR<Prisma.InstallationUpdateWithoutOtaStatusEventsInput, Prisma.InstallationUncheckedUpdateWithoutOtaStatusEventsInput>
+  create: Prisma.XOR<Prisma.InstallationCreateWithoutOtaStatusEventsInput, Prisma.InstallationUncheckedCreateWithoutOtaStatusEventsInput>
+  where?: Prisma.InstallationWhereInput
+}
+
+export type InstallationUpdateToOneWithWhereWithoutOtaStatusEventsInput = {
+  where?: Prisma.InstallationWhereInput
+  data: Prisma.XOR<Prisma.InstallationUpdateWithoutOtaStatusEventsInput, Prisma.InstallationUncheckedUpdateWithoutOtaStatusEventsInput>
+}
+
+export type InstallationUpdateWithoutOtaStatusEventsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  label?: Prisma.StringFieldUpdateOperationsInput | string
+  iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  site?: Prisma.SiteUpdateOneRequiredWithoutInstallationsNestedInput
+  device?: Prisma.DeviceUpdateOneWithoutInstallationNestedInput
+  telemetryRecords?: Prisma.TelemetryRecordUpdateManyWithoutInstallationNestedInput
+  hourlySummaries?: Prisma.TelemetryHourlySummaryUpdateManyWithoutInstallationNestedInput
+  dailySummaries?: Prisma.TelemetryDailySummaryUpdateManyWithoutInstallationNestedInput
+  commands?: Prisma.DeviceCommandUpdateManyWithoutInstallationNestedInput
+  faultEvents?: Prisma.FaultEventUpdateManyWithoutInstallationNestedInput
+  moduleFaultStates?: Prisma.ModuleFaultStateUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUpdateManyWithoutInstallationNestedInput
+  deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
+}
+
+export type InstallationUncheckedUpdateWithoutOtaStatusEventsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  label?: Prisma.StringFieldUpdateOperationsInput | string
+  iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  device?: Prisma.DeviceUncheckedUpdateOneWithoutInstallationNestedInput
+  telemetryRecords?: Prisma.TelemetryRecordUncheckedUpdateManyWithoutInstallationNestedInput
+  hourlySummaries?: Prisma.TelemetryHourlySummaryUncheckedUpdateManyWithoutInstallationNestedInput
+  dailySummaries?: Prisma.TelemetryDailySummaryUncheckedUpdateManyWithoutInstallationNestedInput
+  commands?: Prisma.DeviceCommandUncheckedUpdateManyWithoutInstallationNestedInput
+  faultEvents?: Prisma.FaultEventUncheckedUpdateManyWithoutInstallationNestedInput
+  moduleFaultStates?: Prisma.ModuleFaultStateUncheckedUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
 }
 
@@ -1700,7 +2042,9 @@ export type InstallationUpdateWithoutSiteInput = {
   commands?: Prisma.DeviceCommandUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutSiteInput = {
@@ -1723,7 +2067,9 @@ export type InstallationUncheckedUpdateWithoutSiteInput = {
   commands?: Prisma.DeviceCommandUncheckedUpdateManyWithoutInstallationNestedInput
   faultEvents?: Prisma.FaultEventUncheckedUpdateManyWithoutInstallationNestedInput
   moduleFaultStates?: Prisma.ModuleFaultStateUncheckedUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateManyWithoutSiteInput = {
@@ -1753,6 +2099,8 @@ export type InstallationCountOutputType = {
   commands: number
   faultEvents: number
   moduleFaultStates: number
+  moduleFaultLogs: number
+  otaStatusEvents: number
 }
 
 export type InstallationCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1762,6 +2110,8 @@ export type InstallationCountOutputTypeSelect<ExtArgs extends runtime.Types.Exte
   commands?: boolean | InstallationCountOutputTypeCountCommandsArgs
   faultEvents?: boolean | InstallationCountOutputTypeCountFaultEventsArgs
   moduleFaultStates?: boolean | InstallationCountOutputTypeCountModuleFaultStatesArgs
+  moduleFaultLogs?: boolean | InstallationCountOutputTypeCountModuleFaultLogsArgs
+  otaStatusEvents?: boolean | InstallationCountOutputTypeCountOtaStatusEventsArgs
 }
 
 /**
@@ -1816,6 +2166,20 @@ export type InstallationCountOutputTypeCountModuleFaultStatesArgs<ExtArgs extend
   where?: Prisma.ModuleFaultStateWhereInput
 }
 
+/**
+ * InstallationCountOutputType without action
+ */
+export type InstallationCountOutputTypeCountModuleFaultLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ModuleFaultLogWhereInput
+}
+
+/**
+ * InstallationCountOutputType without action
+ */
+export type InstallationCountOutputTypeCountOtaStatusEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.OtaStatusEventWhereInput
+}
+
 
 export type InstallationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1839,7 +2203,9 @@ export type InstallationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   commands?: boolean | Prisma.Installation$commandsArgs<ExtArgs>
   faultEvents?: boolean | Prisma.Installation$faultEventsArgs<ExtArgs>
   moduleFaultStates?: boolean | Prisma.Installation$moduleFaultStatesArgs<ExtArgs>
+  moduleFaultLogs?: boolean | Prisma.Installation$moduleFaultLogsArgs<ExtArgs>
   deviceSettings?: boolean | Prisma.Installation$deviceSettingsArgs<ExtArgs>
+  otaStatusEvents?: boolean | Prisma.Installation$otaStatusEventsArgs<ExtArgs>
   _count?: boolean | Prisma.InstallationCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["installation"]>
 
@@ -1903,7 +2269,9 @@ export type InstallationInclude<ExtArgs extends runtime.Types.Extensions.Interna
   commands?: boolean | Prisma.Installation$commandsArgs<ExtArgs>
   faultEvents?: boolean | Prisma.Installation$faultEventsArgs<ExtArgs>
   moduleFaultStates?: boolean | Prisma.Installation$moduleFaultStatesArgs<ExtArgs>
+  moduleFaultLogs?: boolean | Prisma.Installation$moduleFaultLogsArgs<ExtArgs>
   deviceSettings?: boolean | Prisma.Installation$deviceSettingsArgs<ExtArgs>
+  otaStatusEvents?: boolean | Prisma.Installation$otaStatusEventsArgs<ExtArgs>
   _count?: boolean | Prisma.InstallationCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type InstallationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1924,7 +2292,9 @@ export type $InstallationPayload<ExtArgs extends runtime.Types.Extensions.Intern
     commands: Prisma.$DeviceCommandPayload<ExtArgs>[]
     faultEvents: Prisma.$FaultEventPayload<ExtArgs>[]
     moduleFaultStates: Prisma.$ModuleFaultStatePayload<ExtArgs>[]
+    moduleFaultLogs: Prisma.$ModuleFaultLogPayload<ExtArgs>[]
     deviceSettings: Prisma.$InstallationDeviceSettingsPayload<ExtArgs> | null
+    otaStatusEvents: Prisma.$OtaStatusEventPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2364,7 +2734,9 @@ export interface Prisma__InstallationClient<T, Null = never, ExtArgs extends run
   commands<T extends Prisma.Installation$commandsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Installation$commandsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DeviceCommandPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   faultEvents<T extends Prisma.Installation$faultEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Installation$faultEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FaultEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   moduleFaultStates<T extends Prisma.Installation$moduleFaultStatesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Installation$moduleFaultStatesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ModuleFaultStatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  moduleFaultLogs<T extends Prisma.Installation$moduleFaultLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Installation$moduleFaultLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ModuleFaultLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   deviceSettings<T extends Prisma.Installation$deviceSettingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Installation$deviceSettingsArgs<ExtArgs>>): Prisma.Prisma__InstallationDeviceSettingsClient<runtime.Types.Result.GetResult<Prisma.$InstallationDeviceSettingsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  otaStatusEvents<T extends Prisma.Installation$otaStatusEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Installation$otaStatusEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OtaStatusEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2966,6 +3338,30 @@ export type Installation$moduleFaultStatesArgs<ExtArgs extends runtime.Types.Ext
 }
 
 /**
+ * Installation.moduleFaultLogs
+ */
+export type Installation$moduleFaultLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ModuleFaultLog
+   */
+  select?: Prisma.ModuleFaultLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ModuleFaultLog
+   */
+  omit?: Prisma.ModuleFaultLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ModuleFaultLogInclude<ExtArgs> | null
+  where?: Prisma.ModuleFaultLogWhereInput
+  orderBy?: Prisma.ModuleFaultLogOrderByWithRelationInput | Prisma.ModuleFaultLogOrderByWithRelationInput[]
+  cursor?: Prisma.ModuleFaultLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ModuleFaultLogScalarFieldEnum | Prisma.ModuleFaultLogScalarFieldEnum[]
+}
+
+/**
  * Installation.deviceSettings
  */
 export type Installation$deviceSettingsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2982,6 +3378,30 @@ export type Installation$deviceSettingsArgs<ExtArgs extends runtime.Types.Extens
    */
   include?: Prisma.InstallationDeviceSettingsInclude<ExtArgs> | null
   where?: Prisma.InstallationDeviceSettingsWhereInput
+}
+
+/**
+ * Installation.otaStatusEvents
+ */
+export type Installation$otaStatusEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OtaStatusEvent
+   */
+  select?: Prisma.OtaStatusEventSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the OtaStatusEvent
+   */
+  omit?: Prisma.OtaStatusEventOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OtaStatusEventInclude<ExtArgs> | null
+  where?: Prisma.OtaStatusEventWhereInput
+  orderBy?: Prisma.OtaStatusEventOrderByWithRelationInput | Prisma.OtaStatusEventOrderByWithRelationInput[]
+  cursor?: Prisma.OtaStatusEventWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.OtaStatusEventScalarFieldEnum | Prisma.OtaStatusEventScalarFieldEnum[]
 }
 
 /**

@@ -177,4 +177,77 @@ describe("fault history", () => {
     assert.ok(byDevice.length > 0);
     assert.deepEqual(byIccid, byDevice);
   });
+
+  /** 테스트 요청은 수 ms 간격이라, 지금까지 받은 로그를 과거로 밀어 실제 시간 간격을 흉내 낸다. */
+  const ageLogs = (ms: number) =>
+    prisma.$executeRaw`UPDATE "ModuleFaultLog" SET "occurredAt" = "occurredAt" - (${ms} * interval '1 millisecond')`;
+
+  it("keeps every occurrence and tells a real clear from a code update", async () => {
+    const { tokens } = await seedWorld(t.app);
+    const send = (faults: unknown[]) => hmi(t.app).post("/receiver/faults", { iccid: IDS.lotteIccid, faults });
+
+    await send([{ faultCode: 2, event: "RAISE", eventName: "F11" }]);
+    await send([{ faultCode: 2, event: "CLEAR", eventName: "" }]); // 진짜 해제
+    await ageLogs(60_000);
+    await send([{ faultCode: 2, event: "RAISE", eventName: "F3" }]);
+    await ageLogs(60_000);
+    // fault 중 코드가 바뀌면 HMI 는 CLEAR 후 새 RAISE 를 한 배치로 보낸다 → 해제가 아니라 갱신
+    await send([
+      { faultCode: 2, event: "CLEAR", eventName: "" },
+      { faultCode: 2, event: "RAISE", eventName: "F5" },
+    ]);
+
+    assert.equal(await prisma.moduleFaultLog.count(), 5);
+
+    const faults = (await http(t.app).get(`/devices/${IDS.lotteInst}/faults`, { token: tokens.admin })).json()
+      .faults as Array<{ module: number; eventName: string; active: boolean; endReason: string | null }>;
+
+    assert.deepEqual(
+      faults.map((f) => [f.module, f.eventName, f.active, f.endReason]),
+      [
+        [1, "F5", true, null],
+        [1, "F3", false, "updated"],
+        [1, "F11", false, "cleared"],
+      ],
+    );
+  });
+
+  it("stays active until CLEAR even if nothing arrives for days", async () => {
+    const { tokens } = await seedWorld(t.app);
+    await hmi(t.app).post("/receiver/faults", {
+      iccid: IDS.lotteIccid,
+      faults: [{ faultCode: 3, event: "RAISE", eventName: "F22" }],
+    });
+    await ageLogs(3 * 24 * 60 * 60 * 1000);
+    await prisma.$executeRaw`UPDATE "ModuleFaultState" SET "updatedAt" = now() - interval '3 days'`;
+
+    const faults = (await http(t.app).get(`/devices/${IDS.lotteInst}/faults`, { token: tokens.admin })).json()
+      .faults as Array<{ eventName: string; active: boolean }>;
+
+    assert.deepEqual(
+      faults.map((f) => [f.eventName, f.active]),
+      [["F22", true]],
+    );
+  });
+
+  it("marks only the latest occurrence as acknowledged", async () => {
+    const { tokens } = await seedWorld(t.app);
+    const send = (faults: unknown[]) => hmi(t.app).post("/receiver/faults", { iccid: IDS.lotteIccid, faults });
+
+    await send([{ faultCode: 1, event: "RAISE", eventName: "F2" }]);
+    await send([{ faultCode: 1, event: "CLEAR" }]);
+    await send([{ faultCode: 1, event: "RAISE", eventName: "F4" }]);
+    await http(t.app).post(`/devices/${IDS.lotteInst}/faults/ack`, { faultCode: 1 }, { token: tokens.admin });
+
+    const faults = (await http(t.app).get(`/devices/${IDS.lotteInst}/faults`, { token: tokens.admin })).json()
+      .faults as Array<{ eventName: string; active: boolean; acknowledgedAt: string | null }>;
+
+    assert.deepEqual(
+      faults.map((f) => [f.eventName, f.active, f.acknowledgedAt != null]),
+      [
+        ["F4", false, true],
+        ["F2", false, false],
+      ],
+    );
+  });
 });

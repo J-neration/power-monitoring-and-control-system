@@ -17,7 +17,7 @@ import {
 type AdminUser = {
   id: string;
   username: string;
-  role: "ADMIN" | "CLIENT" | "SITE" | "VIEWER";
+  role: "ADMIN" | "CLIENT" | "SITE" | "VIEWER" | "INSPECTOR";
   clientKey: string | null;
   siteId: string | null;
   isActive: boolean;

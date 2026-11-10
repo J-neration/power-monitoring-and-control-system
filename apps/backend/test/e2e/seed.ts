@@ -4,9 +4,11 @@ import { createInstallation, createSite, createUser } from "../integration/helpe
 /** e2e/fixtures.ts 와 같은 값이어야 한다. */
 export const E2E = {
   password: "Regression#2026",
-  users: { admin: "e2e-admin", client: "e2e-lotte", site: "e2e-gs-site" },
+  users: { admin: "e2e-admin", client: "e2e-lotte", site: "e2e-gs-site", inspector: "e2e-inspector" },
   lotte: { siteId: "e2e-lotte", name: "E2E 롯데 현장", inst: "E2E-LOTTE-01", label: "변전실", iccid: "89820000000000000117" },
   gs: { siteId: "e2e-gs", name: "E2E GS 현장", inst: "E2E-GS-01", label: "전기실", iccid: "89820000000000000125" },
+  /** 출고검사 현장 — 설치지점 없이 시작한다 (검사 시나리오가 직접 등록·삭제) */
+  inspection: { siteId: "e2e-inspection", name: "E2E 출고검사" },
 } as const;
 
 /**
@@ -22,6 +24,14 @@ export const seedE2eData = async (app: TestApp) => {
   await createUser({ username: E2E.users.admin, role: "ADMIN", password: E2E.password });
   await createUser({ username: E2E.users.client, role: "CLIENT", clientKey: "lotte", password: E2E.password });
   await createUser({ username: E2E.users.site, role: "SITE", siteId: E2E.gs.siteId, password: E2E.password });
+
+  await createSite({ id: E2E.inspection.siteId, client: "prime", name: E2E.inspection.name });
+  await createUser({
+    username: E2E.users.inspector,
+    role: "INSPECTOR",
+    siteId: E2E.inspection.siteId,
+    password: E2E.password,
+  });
 
   const now = Math.floor(Date.now() / 1000);
   const ingest = (payload: Record<string, unknown>) =>

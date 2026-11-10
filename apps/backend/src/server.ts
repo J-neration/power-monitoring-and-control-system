@@ -8,9 +8,11 @@ import { buildLogger } from "./lib/logger.js";
 import { healthRoutes } from "./routes/health.js";
 import { deviceRoutes } from "./routes/devices.js";
 import { receiverRoutes } from "./routes/receiver.js";
+import { otaRoutes } from "./routes/ota.js";
 import { siteRoutes } from "./routes/sites.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { adminRoutes } from "./routes/admin.js";
+import { inspectionRoutes } from "./routes/inspection.js";
 import type { UserContext } from "./modules/auth/auth.types.js";
 import { wsHub } from "./lib/wsHub.js";
 
@@ -221,6 +223,7 @@ export const buildServer = async (env: Env) => {
   await server.register(healthRoutes, { prefix: "/health" });
   await server.register(authRoutes, { prefix: "/auth" });
   await server.register(adminRoutes, { prefix: "/admin" });
+  await server.register(inspectionRoutes, { prefix: "/inspection" });
   await server.register(deviceRoutes, { prefix: "/devices" });
   await server.register(siteRoutes, { prefix: "/sites" });
   await server.register(receiverRoutes, {
@@ -228,6 +231,8 @@ export const buildServer = async (env: Env) => {
     receiverApiKey: env.RECEIVER_API_KEY,
     previousReceiverApiKey: env.RECEIVER_API_KEY_PREVIOUS,
   });
+  /* HMI OTA 파일. /receiver 아래라 dev Caddy·prod ALB 규칙을 그대로 탄다. */
+  await server.register(otaRoutes, { prefix: "/receiver/ota" });
 
   const { registryService } = await import("./services/registryService.js");
   const registryReady = await registryService.ensureDefaults();

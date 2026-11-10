@@ -13,6 +13,7 @@ const ROLE_LABEL: Record<string, string> = {
   CLIENT: "건설사",
   SITE: "현장",
   VIEWER: "영업 열람",
+  INSPECTOR: "출고검사",
 };
 
 type AuthUser = {
@@ -65,7 +66,7 @@ function resolveDisplayName(user: AuthUser, siteName: string | null): string {
   if (user.role === "SITE") {
     return siteName ?? user.siteId ?? user.username;
   }
-  // ADMIN · VIEWER
+  // ADMIN · VIEWER · INSPECTOR
   return user.username;
 }
 
@@ -119,6 +120,7 @@ export default async function MainLayout({
             roleLabel={roleLabel}
             displayName={displayName}
             isAdmin={user?.role === "ADMIN"}
+            isInspector={user?.role === "INSPECTOR"}
           />
         </div>
       </header>

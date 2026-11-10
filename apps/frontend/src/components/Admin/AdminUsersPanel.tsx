@@ -6,7 +6,10 @@ import type { SiteListFromApi } from "../../types/admin";
 import { validatePassword } from "../../lib/passwordPolicy";
 import { formatKstDate } from "../../lib/kstTime";
 
-type UserRole = "ADMIN" | "CLIENT" | "SITE" | "VIEWER";
+type UserRole = "ADMIN" | "CLIENT" | "SITE" | "VIEWER" | "INSPECTOR";
+
+/** 현장 하나를 골라야 하는 역할 (SITE: 접근 현장, INSPECTOR: ICCID 등록할 검사 현장) */
+const needsSite = (role: UserRole) => role === "SITE" || role === "INSPECTOR";
 
 type AdminUser = {
   id: string;
@@ -31,6 +34,7 @@ const ROLE_COLOR: Record<UserRole, string> = {
   CLIENT: "user-role-client",
   SITE: "user-role-site",
   VIEWER: "user-role-viewer",
+  INSPECTOR: "user-role-inspector",
 };
 
 function formatDate(iso: string | null) {
@@ -45,6 +49,10 @@ function scopeLabel(
 ) {
   if (user.role === "ADMIN") return "전체";
   if (user.role === "VIEWER") return "전체 (조회만)";
+  if (user.role === "INSPECTOR") {
+    const site = sites.find((s) => s.siteId === user.siteId);
+    return `전체 조회 · ICCID 등록: ${site?.name ?? user.siteId ?? "-"}`;
+  }
   if (user.role === "CLIENT") {
     return user.clientKey
       ? (clientLabelByKey[user.clientKey] ?? user.clientKey)
@@ -124,6 +132,10 @@ export default function AdminUsersPanel({
       showFlash("err", "현장을 선택해주세요.");
       return;
     }
+    if (form.role === "INSPECTOR" && !form.siteId) {
+      showFlash("err", "출고검사 현장을 선택해주세요.");
+      return;
+    }
     setCreating(true);
     try {
       const body: Record<string, unknown> = {
@@ -132,7 +144,7 @@ export default function AdminUsersPanel({
         initialPassword: form.password,
       };
       if (form.role === "CLIENT") body.clientKey = form.clientKey;
-      if (form.role === "SITE") body.siteId = form.siteId;
+      if (needsSite(form.role)) body.siteId = form.siteId;
 
       const res = await fetch("/api/admin/users", {
         method: "POST",
@@ -387,9 +399,18 @@ export default function AdminUsersPanel({
               </label>
             )}
 
-            {form.role === "SITE" && (
+            {needsSite(form.role) && (
               <label className="admin-sites-form-label">
-                접근 현장
+                {form.role === "INSPECTOR" ? (
+                  <>
+                    출고검사 현장{" "}
+                    <span className="admin-sites-form-hint">
+                      (ICCID 등록은 이 현장 안에서만)
+                    </span>
+                  </>
+                ) : (
+                  "접근 현장"
+                )}
                 <select
                   className="admin-sites-input"
                   value={form.siteId}

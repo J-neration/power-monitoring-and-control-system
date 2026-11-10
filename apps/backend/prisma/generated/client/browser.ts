@@ -100,7 +100,26 @@ export type FaultEvent = Prisma.FaultEventModel
  */
 export type ModuleFaultState = Prisma.ModuleFaultStateModel
 /**
+ * Model ModuleFaultLog
+ * POST /receiver/faults·/faults/critical 로 받은 RAISE/CLEAR 원본 로그 (추가 전용).
+ * ModuleFaultState 는 모듈당 한 행을 덮어쓰는 현재 상태이고, 이력 화면은 이 로그로 만든다.
+ * HMI 는 상태가 바뀔 때만 보내므로 받은 이벤트를 거르지 않고 모두 남긴다.
+ */
+export type ModuleFaultLog = Prisma.ModuleFaultLogModel
+/**
  * Model DeviceCommand
  * 
  */
 export type DeviceCommand = Prisma.DeviceCommandModel
+/**
+ * Model OtaFile
+ * HMI 무선 업데이트(OTA) 파일. 수 MB 이하라 DB 에 그대로 둔다.
+ * HMI 는 GET /receiver/ota/file/:id?t=<downloadToken> 으로 64KB 씩(Range) 받는다.
+ */
+export type OtaFile = Prisma.OtaFileModel
+/**
+ * Model OtaStatusEvent
+ * HMI 가 보낸 OTA 진행/결과 (POST /receiver/ota/status). 시간순 이력.
+ * state: downloading | verified | installing | confirmed | rolled_back | failed
+ */
+export type OtaStatusEvent = Prisma.OtaStatusEventModel

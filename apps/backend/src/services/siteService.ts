@@ -1,17 +1,17 @@
 import { withLiveDeviceFields } from "./deviceService.js";
-import type { UserContext } from "../modules/auth/auth.types.js";
+import { canSeeIccid, type UserContext } from "../modules/auth/auth.types.js";
 import { prisma } from "../lib/prisma.js";
 
 /* ─── 권한별 Site WHERE 필터 ──────────────────────── */
 const siteWhereFilter = (ctx: UserContext) => {
-  if (ctx.role === "ADMIN" || ctx.role === "VIEWER") return {};
+  if (ctx.role === "ADMIN" || ctx.role === "VIEWER" || ctx.role === "INSPECTOR") return {};
   if (ctx.role === "CLIENT") return { client: ctx.clientKey };
   return { id: ctx.siteId }; // SITE
 };
 
 /* ─── 권한 검사: 특정 siteId에 접근 가능한지 ─────── */
 const canAccessSite = (ctx: UserContext, siteClient: string, siteId: string) => {
-  if (ctx.role === "ADMIN" || ctx.role === "VIEWER") return true;
+  if (ctx.role === "ADMIN" || ctx.role === "VIEWER" || ctx.role === "INSPECTOR") return true;
   if (ctx.role === "CLIENT") return siteClient === ctx.clientKey;
   return siteId === ctx.siteId;
 };
@@ -65,7 +65,7 @@ export const siteService = {
         label: inst.label,
         moduleName: inst.moduleName ?? null,
         historyVisible: inst.historyVisible,
-        ...(ctx.role === "ADMIN" ? { iccid: inst.iccid ?? null } : {}),
+        ...(canSeeIccid(ctx, site.id) ? { iccid: inst.iccid ?? null } : {}),
         device: withModuleTypeOnDevice(inst),
       }));
 
@@ -184,6 +184,13 @@ export const siteService = {
     return { ok: true };
   },
 
+  exists: async (siteId: string) =>
+    (await prisma.site.count({ where: { id: siteId } })) > 0,
+
+  /** 설치지점이 이 현장 소속인지 — 출고검사 계정이 남의 현장 설치지점을 건드리지 못하게 */
+  installationBelongsTo: async (installationId: string, siteId: string) =>
+    (await prisma.installation.count({ where: { id: installationId, siteId } })) > 0,
+
   /* ─── 설치지점 삭제 (Device/Telemetry cascade) ─── */
   deleteInstallation: async (installationId: string) => {
     const inst = await prisma.installation.findUnique({ where: { id: installationId } });
@@ -212,7 +219,7 @@ export const siteService = {
         const { deviceSettings, device, iccid, ...rest } = inst;
         return {
           ...rest,
-          ...(ctx.role === "ADMIN" ? { iccid: iccid ?? null } : {}),
+          ...(canSeeIccid(ctx, site.id) ? { iccid: iccid ?? null } : {}),
           device: withModuleTypeOnDevice({ device, deviceSettings }),
         };
       }),

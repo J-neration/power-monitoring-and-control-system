@@ -297,6 +297,12 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
       ] as const);
   }, [sites, statusFilter, searchQuery]);
 
+  // 설치지점이 0개인 현장은 사이드바와 동일하게 지도에서도 숨김
+  const mapSites = useMemo(
+    () => sites.filter((s) => s.installations.length > 0),
+    [sites],
+  );
+
   const visibleSiteCount = useMemo(
     () =>
       regionGroups.reduce((sum, [, regionSites]) => sum + regionSites.length, 0),
@@ -674,7 +680,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
 
             <div className="dash-map-panel">
               <KoreaMap
-                allSites={sites}
+                allSites={mapSites}
                 selectedSiteId={selectedSite?.id ?? ""}
                 deriveSiteStatus={deriveSiteStatus}
                 onSelect={handleSelectSite}
