@@ -99,6 +99,7 @@ const RECORD_LABEL: Record<string, string> = {
 
 const ERROR_LABEL: Record<string, string> = {
   download: "다운로드 실패",
+  interrupted: "다운로드 중 전원이 꺼지거나 재시작됨(다시 보내 주세요)",
   backup: "백업 생성 실패",
   slot: "외부 플래시 기록 실패",
   record: "상태 기록 실패",
