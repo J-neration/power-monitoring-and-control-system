@@ -50,6 +50,13 @@ export const DEFAULT_ROLE_OPTIONS: RoleOptionFromApi[] = [
     sortOrder: 4,
     isAssignable: true,
   },
+  {
+    key: "INSPECTOR",
+    label: "출고검사",
+    description: "지정 검사 현장에서 ICCID 등록·통신 확인만 (제어·설정 불가)",
+    sortOrder: 5,
+    isAssignable: true,
+  },
 ];
 
 export function withRegistryDefaults<T extends { length: number }>(

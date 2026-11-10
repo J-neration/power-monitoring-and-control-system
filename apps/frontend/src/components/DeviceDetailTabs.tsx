@@ -107,6 +107,8 @@ type Props = {
   isAdmin?: boolean;
   /** 영업 열람(VIEWER): Fault 이력(확인 버튼 없이)·장기 이력만, 설정·제어 없음 */
   isViewer?: boolean;
+  /** 출고검사(INSPECTOR): Fault 이력(확인 버튼 없이)만. 장기 이력은 고객과 같은 규칙, 설정·제어 없음 */
+  isInspector?: boolean;
   /** 명령 audit용 (로그인 사용자명) */
   adminUsername?: string;
   /** Admin 전용: fault 이력 */
@@ -120,6 +122,7 @@ export default function DeviceDetailTabs({
   hours,
   isAdmin = false,
   isViewer = false,
+  isInspector = false,
   adminUsername,
   faults = [],
 }: Props) {
@@ -127,7 +130,7 @@ export default function DeviceDetailTabs({
   const router = useRouter();
   const activeTab: Tab = tab;
   const remoteControlTab = isAdmin && activeTab === "settings";
-  const canViewFaults = isAdmin || isViewer;
+  const canViewFaults = isAdmin || isViewer || isInspector;
   const longRangeHistory = isAdmin || isViewer || device.installation.historyVisible === true;
 
   useWsEvents((msg) => {

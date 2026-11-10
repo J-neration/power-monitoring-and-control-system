@@ -3,7 +3,7 @@ import { serverApiBase } from "./serverApiBase";
 
 export type SessionUser = {
   username: string;
-  role: "ADMIN" | "CLIENT" | "SITE" | "VIEWER" | string;
+  role: "ADMIN" | "CLIENT" | "SITE" | "VIEWER" | "INSPECTOR" | string;
   clientKey?: string;
   siteId?: string;
 };

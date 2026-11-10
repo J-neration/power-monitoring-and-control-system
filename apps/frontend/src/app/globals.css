@@ -12105,6 +12105,42 @@ body.pmcs-control-room .global-header:hover {
   border: 1px solid rgba(14, 165, 233, 0.22);
 }
 
+.user-role-inspector {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.22);
+}
+
+/* 출고검사 화면: 통신 상태 */
+.inspection-comm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.inspection-comm::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.inspection-comm.ok {
+  color: #4ade80;
+}
+
+.inspection-comm.wait {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.inspection-comm.lost {
+  color: #f87171;
+}
+
 .user-status-active {
   font-size: 12px;
   font-weight: 600;

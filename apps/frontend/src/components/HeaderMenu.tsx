@@ -13,17 +13,23 @@ const ADMIN_LINKS = [
   { href: "/admin/manual", label: "관리자 매뉴얼" },
 ];
 
+const INSPECTOR_LINKS = [{ href: "/inspection", label: "출고검사 ICCID 등록" }];
+
 type HeaderMenuProps = {
   roleLabel: string | null;
   displayName: string | null;
   isAdmin: boolean;
+  isInspector?: boolean;
 };
 
 export default function HeaderMenu({
   roleLabel,
   displayName,
   isAdmin,
+  isInspector = false,
 }: HeaderMenuProps) {
+  const navLinks = isAdmin ? ADMIN_LINKS : isInspector ? INSPECTOR_LINKS : null;
+  const navLabel = isAdmin ? "관리" : "출고검사";
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -73,10 +79,10 @@ export default function HeaderMenu({
           </div>
         ) : null}
 
-        {isAdmin ? (
-          <nav className="header-side-nav" aria-label="관리">
-            <p className="header-side-label">관리</p>
-            {ADMIN_LINKS.map((item) => (
+        {navLinks ? (
+          <nav className="header-side-nav" aria-label={navLabel}>
+            <p className="header-side-label">{navLabel}</p>
+            {navLinks.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
