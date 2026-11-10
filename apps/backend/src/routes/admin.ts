@@ -14,7 +14,7 @@ const firstZodMessage = (error: z.ZodError) =>
 const createUserSchema = z
   .object({
     username: z.string().min(2),
-    role: z.enum(["ADMIN", "CLIENT", "SITE", "VIEWER"]),
+    role: z.enum(["ADMIN", "CLIENT", "SITE", "VIEWER", "INSPECTOR"]),
     clientKey: z.string().optional(),
     siteId: z.string().optional(),
     initialPassword: z.string().min(1, "비밀번호를 입력해주세요."),
@@ -134,6 +134,12 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
         !(await registryService.isActiveClientKey(parsed.data.clientKey))
       ) {
         return reply.status(400).send({ message: "유효한 건설사를 선택해주세요." });
+      }
+    }
+    if (parsed.data.role === "INSPECTOR") {
+      // 검사 현장이 없으면 로그인 토큰을 만들 수 없다 (toUserContext 가 거부).
+      if (!parsed.data.siteId || !(await siteService.exists(parsed.data.siteId))) {
+        return reply.status(400).send({ message: "출고검사 현장을 선택해주세요." });
       }
     }
     try {

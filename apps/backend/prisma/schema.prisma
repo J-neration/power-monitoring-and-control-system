@@ -17,6 +17,8 @@ enum UserRole {
   SITE
   /// 영업 열람: 모든 현장 조회만. 수정·제어·설정·ICCID 불가
   VIEWER
+  /// 출고검사: 모든 현장 조회 + 지정된 검사 현장(siteId) 안에서만 설치지점 추가·삭제와 ICCID 등록·해제. 제어·설정 불가
+  INSPECTOR
 }
 
 enum DeviceCommandPower {

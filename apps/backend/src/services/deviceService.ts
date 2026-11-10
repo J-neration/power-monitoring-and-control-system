@@ -1,6 +1,6 @@
 import { siteRegistry } from "../data/deviceRegistry.js";
 import { type Device } from "../../prisma/generated/client/client.js";
-import type { UserContext } from "../modules/auth/auth.types.js";
+import { canSeeIccid, type UserContext } from "../modules/auth/auth.types.js";
 import {
   iccidConflictWhere,
   iccidLookupCandidates,
@@ -256,12 +256,12 @@ function withModuleType<
   T extends {
     moduleStatus: number[] | null;
     lastSeenAt: Date | null;
-    installation: { deviceSettings?: { moduleType: string } | null; iccid: string | null };
+    installation: { deviceSettings?: { moduleType: string } | null; iccid: string | null; siteId: string };
   },
 >(d: T, ctx: UserContext) {
-  // SIM ICCID 는 관리자에게만 보인다 (siteService 와 같은 규칙).
+  // SIM ICCID 는 관리자·출고검사에게만 보인다 (siteService 와 같은 규칙).
   const { deviceSettings, iccid, ...rest } = d.installation;
-  const installation = ctx.role === "ADMIN" ? { ...rest, iccid } : rest;
+  const installation = canSeeIccid(ctx, rest.siteId) ? { ...rest, iccid } : rest;
   return withLiveDeviceFields(
     { ...d, installation },
     deviceSettings?.moduleType ?? null,
@@ -270,7 +270,7 @@ function withModuleType<
 
 /* ─── 권한별 Device WHERE 필터 (site 경로로) ─────── */
 const deviceWhereFilter = (ctx: UserContext) => {
-  if (ctx.role === "ADMIN" || ctx.role === "VIEWER") return {};
+  if (ctx.role === "ADMIN" || ctx.role === "VIEWER" || ctx.role === "INSPECTOR") return {};
   if (ctx.role === "CLIENT")
     return { installation: { site: { client: ctx.clientKey } } };
   return { installation: { site: { id: ctx.siteId } } }; // SITE
@@ -281,7 +281,7 @@ const canAccessDevice = (
   siteClient: string,
   siteId: string
 ) => {
-  if (ctx.role === "ADMIN" || ctx.role === "VIEWER") return true;
+  if (ctx.role === "ADMIN" || ctx.role === "VIEWER" || ctx.role === "INSPECTOR") return true;
   if (ctx.role === "CLIENT") return siteClient === ctx.clientKey;
   return siteId === ctx.siteId;
 };

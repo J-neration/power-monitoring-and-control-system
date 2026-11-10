@@ -1,7 +1,7 @@
 import { FastifyPluginAsync, type FastifyReply, type FastifyRequest } from "fastify";
 import { deviceService } from "../services/deviceService.js";
 import { watchFactsService } from "../services/watchFactsService.js";
-import { authenticate, requireAdmin, requireAdminOrViewer } from "../middleware/authenticate.js";
+import { authenticate, requireAdmin, requireFaultReader } from "../middleware/authenticate.js";
 import { toUserContext } from "../modules/auth/auth.service.js";
 import type { JwtPayload } from "../modules/auth/auth.types.js";
 import { faultService } from "../services/faultService.js";
@@ -66,8 +66,8 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
     return { devices: await deviceService.list(request.user) };
   });
 
-  /** Admin·영업 열람: 장치 상세 Fault 탭 (조회만) — /receiver/faults 와 동일 데이터 */
-  server.get("/:id/faults", { preHandler: requireAdminOrViewer }, async (request, reply) => {
+  /** Admin·영업 열람·출고검사: 장치 상세 Fault 탭 (조회만) — /receiver/faults 와 동일 데이터 */
+  server.get("/:id/faults", { preHandler: requireFaultReader }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const device = await deviceService.get({ id }, request.user);
     if (!device) {

@@ -6,7 +6,7 @@ import type { TestApp } from "./app.js";
 /** 비밀번호 정책을 통과하는 테스트용 비밀번호. */
 export const PASSWORD = "Regression#2026";
 
-type Role = "ADMIN" | "CLIENT" | "SITE" | "VIEWER";
+type Role = "ADMIN" | "CLIENT" | "SITE" | "VIEWER" | "INSPECTOR";
 
 export const createUser = async (opts: {
   username: string;
@@ -102,6 +102,22 @@ export const seedWorld = async (app: TestApp) => {
       viewer: tokenFor(app, viewer),
     },
   };
+};
+
+export const INSPECTION = {
+  site: "shipping-inspection",
+  iccid: "89820000000000000033",
+} as const;
+
+/**
+ * seedWorld + 출고검사 현장과 검사 계정.
+ * seedWorld 의 현장 수를 바꾸지 않도록 따로 둔다.
+ */
+export const seedInspection = async (app: TestApp) => {
+  const world = await seedWorld(app);
+  await createSite({ id: INSPECTION.site, client: "prime", name: "출고검사" });
+  const inspector = await createUser({ username: "inspector-reg", role: "INSPECTOR", siteId: INSPECTION.site });
+  return { ...world, inspector, inspectorToken: tokenFor(app, inspector) };
 };
 
 /** HMI 텔레메트리 한 건 — 실제 펌웨어가 보내는 형태(숫자 문자열 섞임)를 흉내 낸다. */

@@ -1,7 +1,7 @@
 import { prisma } from "../lib/prisma.js";
 
 const CLIENT_KEY_RE = /^[a-z][a-z0-9_-]*$/;
-const USER_ROLES = ["ADMIN", "CLIENT", "SITE", "VIEWER"] as const;
+const USER_ROLES = ["ADMIN", "CLIENT", "SITE", "VIEWER", "INSPECTOR"] as const;
 
 export type ClientOptionRow = {
   id: string;
@@ -66,6 +66,13 @@ const DEFAULT_ROLES: {
     label: "영업 열람",
     description: "모든 현장 조회만 (수정·제어·설정 불가)",
     sortOrder: 4,
+    isAssignable: true,
+  },
+  {
+    key: "INSPECTOR",
+    label: "출고검사",
+    description: "지정 검사 현장에서 ICCID 등록·통신 확인만 (제어·설정 불가)",
+    sortOrder: 5,
     isAssignable: true,
   },
 ];
