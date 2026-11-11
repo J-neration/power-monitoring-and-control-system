@@ -31,6 +31,10 @@ export type Device = {
   otaCapable?: boolean | null;
   /** HMI OTA 레코드 상태: idle | installing | pending_confirm | confirmed | rollback | failed */
   otaState?: string | null;
+  /** 화면 데이터(TouchGFX) 번호 (텔레메트리 assetVersion). 2.4.0 은 보내지 않아 null */
+  assetVersion?: number | null;
+  /** 화면 데이터 OTA 지원 펌웨어면 true (HMI 2.5.0~) */
+  assetOta?: boolean | null;
 
   moduleStatus?: number[];
   numOfMods?: number;

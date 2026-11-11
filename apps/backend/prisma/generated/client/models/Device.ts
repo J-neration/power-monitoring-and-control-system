@@ -36,6 +36,7 @@ export type DeviceAvgAggregateOutputType = {
   lastValue: number | null
   csq: number | null
   rsrp: number | null
+  assetVersion: number | null
   vL1: number | null
   vL2: number | null
   vL3: number | null
@@ -80,6 +81,7 @@ export type DeviceSumAggregateOutputType = {
   lastValue: number | null
   csq: number | null
   rsrp: number | null
+  assetVersion: number | null
   vL1: number | null
   vL2: number | null
   vL3: number | null
@@ -129,6 +131,8 @@ export type DeviceMinAggregateOutputType = {
   fwVersion: string | null
   otaCapable: boolean | null
   otaState: string | null
+  assetVersion: number | null
+  assetOta: boolean | null
   vL1: number | null
   vL2: number | null
   vL3: number | null
@@ -177,6 +181,8 @@ export type DeviceMaxAggregateOutputType = {
   fwVersion: string | null
   otaCapable: boolean | null
   otaState: string | null
+  assetVersion: number | null
+  assetOta: boolean | null
   vL1: number | null
   vL2: number | null
   vL3: number | null
@@ -227,6 +233,8 @@ export type DeviceCountAggregateOutputType = {
   fwVersion: number
   otaCapable: number
   otaState: number
+  assetVersion: number
+  assetOta: number
   vL1: number
   vL2: number
   vL3: number
@@ -275,6 +283,7 @@ export type DeviceAvgAggregateInputType = {
   lastValue?: true
   csq?: true
   rsrp?: true
+  assetVersion?: true
   vL1?: true
   vL2?: true
   vL3?: true
@@ -319,6 +328,7 @@ export type DeviceSumAggregateInputType = {
   lastValue?: true
   csq?: true
   rsrp?: true
+  assetVersion?: true
   vL1?: true
   vL2?: true
   vL3?: true
@@ -368,6 +378,8 @@ export type DeviceMinAggregateInputType = {
   fwVersion?: true
   otaCapable?: true
   otaState?: true
+  assetVersion?: true
+  assetOta?: true
   vL1?: true
   vL2?: true
   vL3?: true
@@ -416,6 +428,8 @@ export type DeviceMaxAggregateInputType = {
   fwVersion?: true
   otaCapable?: true
   otaState?: true
+  assetVersion?: true
+  assetOta?: true
   vL1?: true
   vL2?: true
   vL3?: true
@@ -466,6 +480,8 @@ export type DeviceCountAggregateInputType = {
   fwVersion?: true
   otaCapable?: true
   otaState?: true
+  assetVersion?: true
+  assetOta?: true
   vL1?: true
   vL2?: true
   vL3?: true
@@ -606,6 +622,8 @@ export type DeviceGroupByOutputType = {
   fwVersion: string | null
   otaCapable: boolean | null
   otaState: string | null
+  assetVersion: number | null
+  assetOta: boolean | null
   vL1: number | null
   vL2: number | null
   vL3: number | null
@@ -682,6 +700,8 @@ export type DeviceWhereInput = {
   fwVersion?: Prisma.StringNullableFilter<"Device"> | string | null
   otaCapable?: Prisma.BoolNullableFilter<"Device"> | boolean | null
   otaState?: Prisma.StringNullableFilter<"Device"> | string | null
+  assetVersion?: Prisma.IntNullableFilter<"Device"> | number | null
+  assetOta?: Prisma.BoolNullableFilter<"Device"> | boolean | null
   vL1?: Prisma.FloatNullableFilter<"Device"> | number | null
   vL2?: Prisma.FloatNullableFilter<"Device"> | number | null
   vL3?: Prisma.FloatNullableFilter<"Device"> | number | null
@@ -736,6 +756,8 @@ export type DeviceOrderByWithRelationInput = {
   fwVersion?: Prisma.SortOrderInput | Prisma.SortOrder
   otaCapable?: Prisma.SortOrderInput | Prisma.SortOrder
   otaState?: Prisma.SortOrderInput | Prisma.SortOrder
+  assetVersion?: Prisma.SortOrderInput | Prisma.SortOrder
+  assetOta?: Prisma.SortOrderInput | Prisma.SortOrder
   vL1?: Prisma.SortOrderInput | Prisma.SortOrder
   vL2?: Prisma.SortOrderInput | Prisma.SortOrder
   vL3?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -793,6 +815,8 @@ export type DeviceWhereUniqueInput = Prisma.AtLeast<{
   fwVersion?: Prisma.StringNullableFilter<"Device"> | string | null
   otaCapable?: Prisma.BoolNullableFilter<"Device"> | boolean | null
   otaState?: Prisma.StringNullableFilter<"Device"> | string | null
+  assetVersion?: Prisma.IntNullableFilter<"Device"> | number | null
+  assetOta?: Prisma.BoolNullableFilter<"Device"> | boolean | null
   vL1?: Prisma.FloatNullableFilter<"Device"> | number | null
   vL2?: Prisma.FloatNullableFilter<"Device"> | number | null
   vL3?: Prisma.FloatNullableFilter<"Device"> | number | null
@@ -847,6 +871,8 @@ export type DeviceOrderByWithAggregationInput = {
   fwVersion?: Prisma.SortOrderInput | Prisma.SortOrder
   otaCapable?: Prisma.SortOrderInput | Prisma.SortOrder
   otaState?: Prisma.SortOrderInput | Prisma.SortOrder
+  assetVersion?: Prisma.SortOrderInput | Prisma.SortOrder
+  assetOta?: Prisma.SortOrderInput | Prisma.SortOrder
   vL1?: Prisma.SortOrderInput | Prisma.SortOrder
   vL2?: Prisma.SortOrderInput | Prisma.SortOrder
   vL3?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -908,6 +934,8 @@ export type DeviceScalarWhereWithAggregatesInput = {
   fwVersion?: Prisma.StringNullableWithAggregatesFilter<"Device"> | string | null
   otaCapable?: Prisma.BoolNullableWithAggregatesFilter<"Device"> | boolean | null
   otaState?: Prisma.StringNullableWithAggregatesFilter<"Device"> | string | null
+  assetVersion?: Prisma.IntNullableWithAggregatesFilter<"Device"> | number | null
+  assetOta?: Prisma.BoolNullableWithAggregatesFilter<"Device"> | boolean | null
   vL1?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
   vL2?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
   vL3?: Prisma.FloatNullableWithAggregatesFilter<"Device"> | number | null
@@ -960,6 +988,8 @@ export type DeviceCreateInput = {
   fwVersion?: string | null
   otaCapable?: boolean | null
   otaState?: string | null
+  assetVersion?: number | null
+  assetOta?: boolean | null
   vL1?: number | null
   vL2?: number | null
   vL3?: number | null
@@ -1014,6 +1044,8 @@ export type DeviceUncheckedCreateInput = {
   fwVersion?: string | null
   otaCapable?: boolean | null
   otaState?: string | null
+  assetVersion?: number | null
+  assetOta?: boolean | null
   vL1?: number | null
   vL2?: number | null
   vL3?: number | null
@@ -1066,6 +1098,8 @@ export type DeviceUpdateInput = {
   fwVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   otaCapable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   otaState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assetVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  assetOta?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1120,6 +1154,8 @@ export type DeviceUncheckedUpdateInput = {
   fwVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   otaCapable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   otaState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assetVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  assetOta?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1173,6 +1209,8 @@ export type DeviceCreateManyInput = {
   fwVersion?: string | null
   otaCapable?: boolean | null
   otaState?: string | null
+  assetVersion?: number | null
+  assetOta?: boolean | null
   vL1?: number | null
   vL2?: number | null
   vL3?: number | null
@@ -1225,6 +1263,8 @@ export type DeviceUpdateManyMutationInput = {
   fwVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   otaCapable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   otaState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assetVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  assetOta?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1278,6 +1318,8 @@ export type DeviceUncheckedUpdateManyInput = {
   fwVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   otaCapable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   otaState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assetVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  assetOta?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1352,6 +1394,8 @@ export type DeviceCountOrderByAggregateInput = {
   fwVersion?: Prisma.SortOrder
   otaCapable?: Prisma.SortOrder
   otaState?: Prisma.SortOrder
+  assetVersion?: Prisma.SortOrder
+  assetOta?: Prisma.SortOrder
   vL1?: Prisma.SortOrder
   vL2?: Prisma.SortOrder
   vL3?: Prisma.SortOrder
@@ -1398,6 +1442,7 @@ export type DeviceAvgOrderByAggregateInput = {
   lastValue?: Prisma.SortOrder
   csq?: Prisma.SortOrder
   rsrp?: Prisma.SortOrder
+  assetVersion?: Prisma.SortOrder
   vL1?: Prisma.SortOrder
   vL2?: Prisma.SortOrder
   vL3?: Prisma.SortOrder
@@ -1447,6 +1492,8 @@ export type DeviceMaxOrderByAggregateInput = {
   fwVersion?: Prisma.SortOrder
   otaCapable?: Prisma.SortOrder
   otaState?: Prisma.SortOrder
+  assetVersion?: Prisma.SortOrder
+  assetOta?: Prisma.SortOrder
   vL1?: Prisma.SortOrder
   vL2?: Prisma.SortOrder
   vL3?: Prisma.SortOrder
@@ -1495,6 +1542,8 @@ export type DeviceMinOrderByAggregateInput = {
   fwVersion?: Prisma.SortOrder
   otaCapable?: Prisma.SortOrder
   otaState?: Prisma.SortOrder
+  assetVersion?: Prisma.SortOrder
+  assetOta?: Prisma.SortOrder
   vL1?: Prisma.SortOrder
   vL2?: Prisma.SortOrder
   vL3?: Prisma.SortOrder
@@ -1538,6 +1587,7 @@ export type DeviceSumOrderByAggregateInput = {
   lastValue?: Prisma.SortOrder
   csq?: Prisma.SortOrder
   rsrp?: Prisma.SortOrder
+  assetVersion?: Prisma.SortOrder
   vL1?: Prisma.SortOrder
   vL2?: Prisma.SortOrder
   vL3?: Prisma.SortOrder
@@ -1685,6 +1735,8 @@ export type DeviceCreateWithoutInstallationInput = {
   fwVersion?: string | null
   otaCapable?: boolean | null
   otaState?: string | null
+  assetVersion?: number | null
+  assetOta?: boolean | null
   vL1?: number | null
   vL2?: number | null
   vL3?: number | null
@@ -1737,6 +1789,8 @@ export type DeviceUncheckedCreateWithoutInstallationInput = {
   fwVersion?: string | null
   otaCapable?: boolean | null
   otaState?: string | null
+  assetVersion?: number | null
+  assetOta?: boolean | null
   vL1?: number | null
   vL2?: number | null
   vL3?: number | null
@@ -1805,6 +1859,8 @@ export type DeviceUpdateWithoutInstallationInput = {
   fwVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   otaCapable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   otaState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assetVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  assetOta?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1857,6 +1913,8 @@ export type DeviceUncheckedUpdateWithoutInstallationInput = {
   fwVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   otaCapable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   otaState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assetVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  assetOta?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   vL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   vL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1912,6 +1970,8 @@ export type DeviceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   fwVersion?: boolean
   otaCapable?: boolean
   otaState?: boolean
+  assetVersion?: boolean
+  assetOta?: boolean
   vL1?: boolean
   vL2?: boolean
   vL3?: boolean
@@ -1966,6 +2026,8 @@ export type DeviceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   fwVersion?: boolean
   otaCapable?: boolean
   otaState?: boolean
+  assetVersion?: boolean
+  assetOta?: boolean
   vL1?: boolean
   vL2?: boolean
   vL3?: boolean
@@ -2020,6 +2082,8 @@ export type DeviceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   fwVersion?: boolean
   otaCapable?: boolean
   otaState?: boolean
+  assetVersion?: boolean
+  assetOta?: boolean
   vL1?: boolean
   vL2?: boolean
   vL3?: boolean
@@ -2074,6 +2138,8 @@ export type DeviceSelectScalar = {
   fwVersion?: boolean
   otaCapable?: boolean
   otaState?: boolean
+  assetVersion?: boolean
+  assetOta?: boolean
   vL1?: boolean
   vL2?: boolean
   vL3?: boolean
@@ -2112,7 +2178,7 @@ export type DeviceSelectScalar = {
   updatedAt?: boolean
 }
 
-export type DeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"installationId" | "model" | "capacity" | "moduleStatus" | "numOfMods" | "moduleCapacity" | "lastSeenAt" | "lastValue" | "lastIp" | "csq" | "rsrp" | "fwVersion" | "otaCapable" | "otaState" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "uncompS" | "compS" | "uncompP" | "compP" | "uncompQ" | "compQ" | "uncompH" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "areaTemp" | "moduleTemp" | "fanSpeed" | "totalCapacity" | "operatingCapacity" | "reactivePowerCapacity" | "availableMargin" | "createdAt" | "updatedAt", ExtArgs["result"]["device"]>
+export type DeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"installationId" | "model" | "capacity" | "moduleStatus" | "numOfMods" | "moduleCapacity" | "lastSeenAt" | "lastValue" | "lastIp" | "csq" | "rsrp" | "fwVersion" | "otaCapable" | "otaState" | "assetVersion" | "assetOta" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "uncompS" | "compS" | "uncompP" | "compP" | "uncompQ" | "compQ" | "uncompH" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "areaTemp" | "moduleTemp" | "fanSpeed" | "totalCapacity" | "operatingCapacity" | "reactivePowerCapacity" | "availableMargin" | "createdAt" | "updatedAt", ExtArgs["result"]["device"]>
 export type DeviceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }
@@ -2164,6 +2230,14 @@ export type $DevicePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
      * 텔레메트리 "otaState" (HMI EEPROM 레코드): idle | installing | pending_confirm | confirmed | rollback | failed
      */
     otaState: string | null
+    /**
+     * 텔레메트리 "assetVersion": 화면 데이터(TouchGFX) 번호 (HMI OTA_ASSET_VERSION). 2.4.0 은 보내지 않아 null (= 1)
+     */
+    assetVersion: number | null
+    /**
+     * 텔레메트리 "assetOta": 화면 데이터 OTA 를 받을 수 있는 펌웨어면 true (HMI 2.5.0~)
+     */
+    assetOta: boolean | null
     vL1: number | null
     vL2: number | null
     vL3: number | null
@@ -2638,6 +2712,8 @@ export interface DeviceFieldRefs {
   readonly fwVersion: Prisma.FieldRef<"Device", 'String'>
   readonly otaCapable: Prisma.FieldRef<"Device", 'Boolean'>
   readonly otaState: Prisma.FieldRef<"Device", 'String'>
+  readonly assetVersion: Prisma.FieldRef<"Device", 'Int'>
+  readonly assetOta: Prisma.FieldRef<"Device", 'Boolean'>
   readonly vL1: Prisma.FieldRef<"Device", 'Float'>
   readonly vL2: Prisma.FieldRef<"Device", 'Float'>
   readonly vL3: Prisma.FieldRef<"Device", 'Float'>

@@ -27,6 +27,33 @@ describe("OTA status", () => {
     assert.equal(dev.fwVersion, "2.3.6");
     assert.equal(dev.otaCapable, true);
     assert.equal(dev.otaState, "idle");
+    assert.equal(dev.assetVersion, null, "2.4.0 sends no assetVersion");
+  });
+
+  it("telemetry stores the screen data number and asset OTA support", async () => {
+    const { tokens } = await seedWorld(t.app);
+    await hmi(t.app).post(
+      "/receiver",
+      telemetryPayload({ fw: "2.4.1", otaCapable: true, otaState: "idle", assetVersion: 1, assetOta: false }),
+    );
+    let dev = await prisma.device.findUniqueOrThrow({ where: { installationId: IDS.lotteInst } });
+    assert.equal(dev.assetVersion, 1);
+    assert.equal(dev.assetOta, false);
+
+    // Bad values are ignored; the last good ones stay.
+    await hmi(t.app).post("/receiver", telemetryPayload({ fw: "2.4.1", assetVersion: "2", assetOta: "yes" }));
+    dev = await prisma.device.findUniqueOrThrow({ where: { installationId: IDS.lotteInst } });
+    assert.equal(dev.assetVersion, 1);
+    assert.equal(dev.assetOta, false);
+
+    await hmi(t.app).post("/receiver", telemetryPayload({ fw: "2.5.0", assetVersion: 2, assetOta: true }));
+    const res = await http(t.app).get(`/receiver/ota/status?installationId=${IDS.lotteInst}`, {
+      token: tokens.admin,
+    });
+    assert.equal(res.statusCode, 200);
+    const { device } = res.json();
+    assert.equal(device.assetVersion, 2);
+    assert.equal(device.assetOta, true);
   });
 
   it("records the progress and result of an update, newest first", async () => {

@@ -354,6 +354,8 @@ export default function DeviceDetailTabs({
           fwVersion={device.fwVersion}
           otaCapable={device.otaCapable}
           otaState={device.otaState}
+          assetVersion={device.assetVersion}
+          assetOta={device.assetOta}
           requestedBy={adminUsername}
         />
       )}

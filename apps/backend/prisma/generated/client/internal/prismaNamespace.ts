@@ -1893,6 +1893,8 @@ export const DeviceScalarFieldEnum = {
   fwVersion: 'fwVersion',
   otaCapable: 'otaCapable',
   otaState: 'otaState',
+  assetVersion: 'assetVersion',
+  assetOta: 'assetOta',
   vL1: 'vL1',
   vL2: 'vL2',
   vL3: 'vL3',

@@ -500,6 +500,8 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       fw: body.fw,
       otaCapable: body.otaCapable,
       otaState: body.otaState,
+      assetVersion: body.assetVersion,
+      assetOta: body.assetOta,
       timestamp: body.timestamp,
       ts: body.ts,
     });
