@@ -102,7 +102,7 @@ export const otaRoutes: FastifyPluginAsync = async (server) => {
     if (!q.success) return reply.status(400).send({ message: "installationId 가 필요합니다." });
     const device = await prisma.device.findUnique({
       where: { installationId: q.data.installationId },
-      select: { fwVersion: true, otaCapable: true, otaState: true, lastSeenAt: true },
+      select: { fwVersion: true, otaCapable: true, otaState: true, assetVersion: true, assetOta: true, lastSeenAt: true },
     });
     const events = await otaStatusService.list(q.data.installationId, q.data.limit ?? 30);
     return { device, events };

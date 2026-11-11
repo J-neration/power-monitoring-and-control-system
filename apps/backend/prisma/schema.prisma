@@ -202,6 +202,10 @@ model Device {
   otaCapable     Boolean?
   /// 텔레메트리 "otaState" (HMI EEPROM 레코드): idle | installing | pending_confirm | confirmed | rollback | failed
   otaState       String?
+  /// 텔레메트리 "assetVersion": 화면 데이터(TouchGFX) 번호 (HMI OTA_ASSET_VERSION). 2.4.0 은 보내지 않아 null (= 1)
+  assetVersion   Int?
+  /// 텔레메트리 "assetOta": 화면 데이터 OTA 를 받을 수 있는 펌웨어면 true (HMI 2.5.0~)
+  assetOta       Boolean?
 
   // 전압 (V)
   vL1             Float?

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 /**
  * 펌웨어(OTA) 탭 — 관리자 전용.
- *   - 현재 펌웨어 버전 / OTA 상태 (텔레메트리 fw, otaState)
+ *   - 현재 펌웨어 버전 / 화면 데이터 번호 / OTA 상태 (텔레메트리 fw, assetVersion, otaState)
  *   - 업로드된 OTA 패키지를 골라 OTA 명령 전송 (명령 하나로 다운로드 → 검사 → 자동 적용)
  *   - HMI 가 보낸 진행/결과 이력 (POST /receiver/ota/status)
  * HMI 쪽 동작: HMI 저장소 docs/OTA_DEVELOPMENT_PLAN.md 12장 단계 7–8.
@@ -32,7 +32,13 @@ type OtaEvent = {
 };
 
 type StatusResponse = {
-  device: { fwVersion: string | null; otaCapable: boolean | null; otaState: string | null } | null;
+  device: {
+    fwVersion: string | null;
+    otaCapable: boolean | null;
+    otaState: string | null;
+    assetVersion?: number | null;
+    assetOta?: boolean | null;
+  } | null;
   events: OtaEvent[];
 };
 
@@ -43,6 +49,8 @@ type Props = {
   fwVersion?: string | null;
   otaCapable?: boolean | null;
   otaState?: string | null;
+  assetVersion?: number | null;
+  assetOta?: boolean | null;
   requestedBy?: string;
 };
 
@@ -218,6 +226,8 @@ export default function DeviceFirmwarePanel({
   fwVersion,
   otaCapable,
   otaState,
+  assetVersion,
+  assetOta,
   requestedBy,
 }: Props) {
   const [files, setFiles] = useState<OtaFile[]>([]);
@@ -232,6 +242,10 @@ export default function DeviceFirmwarePanel({
   const current = status?.device?.fwVersion ?? fwVersion ?? null;
   const capable = (status?.device?.otaCapable ?? otaCapable) === true;
   const recordState = status?.device?.otaState ?? otaState ?? null;
+  /** 화면 데이터 번호. 보내지 않는 OTA 펌웨어(2.4.0)는 1번이다(HMI 저장소 docs/OTA_ASSET_PLAN.md 7.1) */
+  const reportedAsset = status?.device?.assetVersion ?? assetVersion ?? null;
+  const assetNo = reportedAsset ?? (capable ? 1 : null);
+  const assetRemote = (status?.device?.assetOta ?? assetOta) === true;
   const events = useMemo(() => status?.events ?? [], [status]);
   const latest = events[0];
   const latestAt = latest ? new Date(latest.createdAt).getTime() : 0;
@@ -408,6 +422,13 @@ export default function DeviceFirmwarePanel({
           <div>
             <dt>현재 버전</dt>
             <dd>{current ? `v${current}` : "알 수 없음"}</dd>
+          </div>
+          <div>
+            <dt>화면 데이터</dt>
+            <dd>
+              {assetNo !== null ? `${assetNo}번` : "알 수 없음"}
+              {assetNo !== null && assetRemote ? " (원격 교체 가능)" : ""}
+            </dd>
           </div>
           <div>
             <dt>OTA 상태</dt>

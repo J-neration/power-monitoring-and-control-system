@@ -519,6 +519,9 @@ export const deviceService = {
     fw?: unknown;
     otaCapable?: unknown;
     otaState?: unknown;
+    /** 화면 데이터 번호와 화면 데이터 OTA 지원 여부 (HMI 2.4.1~) */
+    assetVersion?: unknown;
+    assetOta?: unknown;
     /** Unix 초(또는 ms). 있으면 lastSeenAt·TelemetryRecord.recordedAt에 사용 */
     timestamp?: number | string;
     ts?: number | string;
@@ -585,10 +588,19 @@ export const deviceService = {
       typeof v === "string" && v.trim() ? v.trim().slice(0, max) : undefined;
     const fwVersion = shortStr(payload.fw, 32);
     const otaState = shortStr(payload.otaState, 32);
+    const assetVersion =
+      typeof payload.assetVersion === "number" &&
+      Number.isInteger(payload.assetVersion) &&
+      payload.assetVersion >= 0 &&
+      payload.assetVersion <= 0xffff
+        ? payload.assetVersion
+        : undefined;
     const otaFields = {
       ...(fwVersion !== undefined ? { fwVersion } : {}),
       ...(typeof payload.otaCapable === "boolean" ? { otaCapable: payload.otaCapable } : {}),
       ...(otaState !== undefined ? { otaState } : {}),
+      ...(assetVersion !== undefined ? { assetVersion } : {}),
+      ...(typeof payload.assetOta === "boolean" ? { assetOta: payload.assetOta } : {}),
     };
 
     return prisma.$transaction(async (tx) => {
