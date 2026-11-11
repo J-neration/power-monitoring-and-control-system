@@ -3,10 +3,13 @@
 import { useState, Suspense } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
+import { safeReturnPath } from "../../../lib/safeReturnPath";
 
 function LoginCard() {
   const searchParams = useSearchParams();
   const idleReason = searchParams.get("reason") === "idle";
+  /** 로그인 전에 보던 페이지. 로그인 성공 후 이곳으로 돌아간다 */
+  const returnTo = safeReturnPath(searchParams.get("from"));
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -44,7 +47,7 @@ function LoginCard() {
 
       // 성공: 로딩·비활성 상태 유지한 채 전체 이동 (finally에서 loading 해제하면
       // 대시보드 SSR 전환 전까지 버튼이 다시 활성화되어 중복 클릭 유발)
-      window.location.assign("/");
+      window.location.assign(returnTo);
     } catch {
       setError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.");
       setLoading(false);

@@ -49,7 +49,9 @@ export default function SessionTimeoutGuard() {
     if (loggingOutRef.current) return;
     loggingOutRef.current = true;
     await performLogout();
-    router.replace("/login?reason=idle");
+    // 다시 로그인하면 보던 페이지(탭 쿼리 포함)로 돌아가도록 from 을 넘긴다
+    const from = window.location.pathname + window.location.search;
+    router.replace(`/login?reason=idle&from=${encodeURIComponent(from)}`);
     router.refresh();
   }, [router]);
 
