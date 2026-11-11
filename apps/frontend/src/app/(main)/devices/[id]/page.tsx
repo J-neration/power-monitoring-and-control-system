@@ -8,6 +8,7 @@ import PageLiveRefresh from "../../../../components/PageLiveRefresh";
 import type { DeviceWithInstallation } from "../../../../types/site";
 type Props = {
   params: { id: string };
+  searchParams?: { tab?: string | string[] };
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -19,8 +20,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 const HISTORY_HOURS = 24;
 
-export default async function DeviceDetailPage({ params }: Props) {
+export default async function DeviceDetailPage({ params, searchParams }: Props) {
   const id = decodeURIComponent(params.id);
+  const tabParam = searchParams?.tab;
+  const initialTab = Array.isArray(tabParam) ? tabParam[0] : tabParam;
   const sessionUser = await getSessionUser();
   const isAdmin = sessionUser?.role === "ADMIN";
   /** 영업 열람: 관리자처럼 Fault 이력·장기 이력은 보되 설정·제어는 없다 */
@@ -91,6 +94,7 @@ export default async function DeviceDetailPage({ params }: Props) {
         isInspector={isInspector}
         adminUsername={sessionUser?.username}
         faults={faults}
+        initialTab={initialTab}
       />
     </main>
   );
