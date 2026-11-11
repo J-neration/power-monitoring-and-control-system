@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyHs256Jwt } from "./lib/verifyJwt";
+import { safeReturnPath } from "./lib/safeReturnPath";
 
 const PUBLIC_PATHS = ["/login"];
 const COOKIE_NAME = "pmcs_token";
@@ -45,13 +46,15 @@ export async function middleware(request: NextRequest) {
   // 토큰 없음 → 보호 라우트 접근 시 /login 리다이렉트
   if (!token && !isPublic) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("from", pathname);
+    // 쿼리(?tab= 등)까지 기억해야 로그인 후 같은 화면으로 돌아간다
+    loginUrl.searchParams.set("from", pathname + request.nextUrl.search);
     return finish(NextResponse.redirect(loginUrl));
   }
 
-  // 이미 로그인 상태에서 /login 접근 → 대시보드로 리다이렉트
+  // 이미 로그인 상태에서 /login 접근 → from 이 있으면 그 페이지로, 없으면 대시보드로
   if (token && isPublic) {
-    return finish(NextResponse.redirect(new URL("/", request.url)));
+    const from = safeReturnPath(request.nextUrl.searchParams.get("from"));
+    return finish(NextResponse.redirect(new URL(from, request.url)));
   }
 
   return finish(NextResponse.next());
