@@ -43,6 +43,7 @@ export type OtaStatusEventMinAggregateOutputType = {
   percent: number | null
   fw: string | null
   target: string | null
+  stage: string | null
   error: string | null
   createdAt: Date | null
 }
@@ -55,6 +56,7 @@ export type OtaStatusEventMaxAggregateOutputType = {
   percent: number | null
   fw: string | null
   target: string | null
+  stage: string | null
   error: string | null
   createdAt: Date | null
 }
@@ -67,6 +69,7 @@ export type OtaStatusEventCountAggregateOutputType = {
   percent: number
   fw: number
   target: number
+  stage: number
   error: number
   createdAt: number
   _all: number
@@ -89,6 +92,7 @@ export type OtaStatusEventMinAggregateInputType = {
   percent?: true
   fw?: true
   target?: true
+  stage?: true
   error?: true
   createdAt?: true
 }
@@ -101,6 +105,7 @@ export type OtaStatusEventMaxAggregateInputType = {
   percent?: true
   fw?: true
   target?: true
+  stage?: true
   error?: true
   createdAt?: true
 }
@@ -113,6 +118,7 @@ export type OtaStatusEventCountAggregateInputType = {
   percent?: true
   fw?: true
   target?: true
+  stage?: true
   error?: true
   createdAt?: true
   _all?: true
@@ -212,6 +218,7 @@ export type OtaStatusEventGroupByOutputType = {
   percent: number | null
   fw: string | null
   target: string | null
+  stage: string | null
   error: string | null
   createdAt: Date
   _count: OtaStatusEventCountAggregateOutputType | null
@@ -247,6 +254,7 @@ export type OtaStatusEventWhereInput = {
   percent?: Prisma.IntNullableFilter<"OtaStatusEvent"> | number | null
   fw?: Prisma.StringNullableFilter<"OtaStatusEvent"> | string | null
   target?: Prisma.StringNullableFilter<"OtaStatusEvent"> | string | null
+  stage?: Prisma.StringNullableFilter<"OtaStatusEvent"> | string | null
   error?: Prisma.StringNullableFilter<"OtaStatusEvent"> | string | null
   createdAt?: Prisma.DateTimeFilter<"OtaStatusEvent"> | Date | string
   installation?: Prisma.XOR<Prisma.InstallationScalarRelationFilter, Prisma.InstallationWhereInput>
@@ -260,6 +268,7 @@ export type OtaStatusEventOrderByWithRelationInput = {
   percent?: Prisma.SortOrderInput | Prisma.SortOrder
   fw?: Prisma.SortOrderInput | Prisma.SortOrder
   target?: Prisma.SortOrderInput | Prisma.SortOrder
+  stage?: Prisma.SortOrderInput | Prisma.SortOrder
   error?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   installation?: Prisma.InstallationOrderByWithRelationInput
@@ -276,6 +285,7 @@ export type OtaStatusEventWhereUniqueInput = Prisma.AtLeast<{
   percent?: Prisma.IntNullableFilter<"OtaStatusEvent"> | number | null
   fw?: Prisma.StringNullableFilter<"OtaStatusEvent"> | string | null
   target?: Prisma.StringNullableFilter<"OtaStatusEvent"> | string | null
+  stage?: Prisma.StringNullableFilter<"OtaStatusEvent"> | string | null
   error?: Prisma.StringNullableFilter<"OtaStatusEvent"> | string | null
   createdAt?: Prisma.DateTimeFilter<"OtaStatusEvent"> | Date | string
   installation?: Prisma.XOR<Prisma.InstallationScalarRelationFilter, Prisma.InstallationWhereInput>
@@ -289,6 +299,7 @@ export type OtaStatusEventOrderByWithAggregationInput = {
   percent?: Prisma.SortOrderInput | Prisma.SortOrder
   fw?: Prisma.SortOrderInput | Prisma.SortOrder
   target?: Prisma.SortOrderInput | Prisma.SortOrder
+  stage?: Prisma.SortOrderInput | Prisma.SortOrder
   error?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.OtaStatusEventCountOrderByAggregateInput
@@ -309,6 +320,7 @@ export type OtaStatusEventScalarWhereWithAggregatesInput = {
   percent?: Prisma.IntNullableWithAggregatesFilter<"OtaStatusEvent"> | number | null
   fw?: Prisma.StringNullableWithAggregatesFilter<"OtaStatusEvent"> | string | null
   target?: Prisma.StringNullableWithAggregatesFilter<"OtaStatusEvent"> | string | null
+  stage?: Prisma.StringNullableWithAggregatesFilter<"OtaStatusEvent"> | string | null
   error?: Prisma.StringNullableWithAggregatesFilter<"OtaStatusEvent"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"OtaStatusEvent"> | Date | string
 }
@@ -320,6 +332,7 @@ export type OtaStatusEventCreateInput = {
   percent?: number | null
   fw?: string | null
   target?: string | null
+  stage?: string | null
   error?: string | null
   createdAt?: Date | string
   installation: Prisma.InstallationCreateNestedOneWithoutOtaStatusEventsInput
@@ -333,6 +346,7 @@ export type OtaStatusEventUncheckedCreateInput = {
   percent?: number | null
   fw?: string | null
   target?: string | null
+  stage?: string | null
   error?: string | null
   createdAt?: Date | string
 }
@@ -344,6 +358,7 @@ export type OtaStatusEventUpdateInput = {
   percent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   fw?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   target?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   installation?: Prisma.InstallationUpdateOneRequiredWithoutOtaStatusEventsNestedInput
@@ -357,6 +372,7 @@ export type OtaStatusEventUncheckedUpdateInput = {
   percent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   fw?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   target?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -369,6 +385,7 @@ export type OtaStatusEventCreateManyInput = {
   percent?: number | null
   fw?: string | null
   target?: string | null
+  stage?: string | null
   error?: string | null
   createdAt?: Date | string
 }
@@ -380,6 +397,7 @@ export type OtaStatusEventUpdateManyMutationInput = {
   percent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   fw?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   target?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -392,6 +410,7 @@ export type OtaStatusEventUncheckedUpdateManyInput = {
   percent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   fw?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   target?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -414,6 +433,7 @@ export type OtaStatusEventCountOrderByAggregateInput = {
   percent?: Prisma.SortOrder
   fw?: Prisma.SortOrder
   target?: Prisma.SortOrder
+  stage?: Prisma.SortOrder
   error?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -430,6 +450,7 @@ export type OtaStatusEventMaxOrderByAggregateInput = {
   percent?: Prisma.SortOrder
   fw?: Prisma.SortOrder
   target?: Prisma.SortOrder
+  stage?: Prisma.SortOrder
   error?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -442,6 +463,7 @@ export type OtaStatusEventMinOrderByAggregateInput = {
   percent?: Prisma.SortOrder
   fw?: Prisma.SortOrder
   target?: Prisma.SortOrder
+  stage?: Prisma.SortOrder
   error?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -499,6 +521,7 @@ export type OtaStatusEventCreateWithoutInstallationInput = {
   percent?: number | null
   fw?: string | null
   target?: string | null
+  stage?: string | null
   error?: string | null
   createdAt?: Date | string
 }
@@ -510,6 +533,7 @@ export type OtaStatusEventUncheckedCreateWithoutInstallationInput = {
   percent?: number | null
   fw?: string | null
   target?: string | null
+  stage?: string | null
   error?: string | null
   createdAt?: Date | string
 }
@@ -551,6 +575,7 @@ export type OtaStatusEventScalarWhereInput = {
   percent?: Prisma.IntNullableFilter<"OtaStatusEvent"> | number | null
   fw?: Prisma.StringNullableFilter<"OtaStatusEvent"> | string | null
   target?: Prisma.StringNullableFilter<"OtaStatusEvent"> | string | null
+  stage?: Prisma.StringNullableFilter<"OtaStatusEvent"> | string | null
   error?: Prisma.StringNullableFilter<"OtaStatusEvent"> | string | null
   createdAt?: Prisma.DateTimeFilter<"OtaStatusEvent"> | Date | string
 }
@@ -562,6 +587,7 @@ export type OtaStatusEventCreateManyInstallationInput = {
   percent?: number | null
   fw?: string | null
   target?: string | null
+  stage?: string | null
   error?: string | null
   createdAt?: Date | string
 }
@@ -573,6 +599,7 @@ export type OtaStatusEventUpdateWithoutInstallationInput = {
   percent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   fw?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   target?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -584,6 +611,7 @@ export type OtaStatusEventUncheckedUpdateWithoutInstallationInput = {
   percent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   fw?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   target?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -595,6 +623,7 @@ export type OtaStatusEventUncheckedUpdateManyWithoutInstallationInput = {
   percent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   fw?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   target?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -609,6 +638,7 @@ export type OtaStatusEventSelect<ExtArgs extends runtime.Types.Extensions.Intern
   percent?: boolean
   fw?: boolean
   target?: boolean
+  stage?: boolean
   error?: boolean
   createdAt?: boolean
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
@@ -622,6 +652,7 @@ export type OtaStatusEventSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   percent?: boolean
   fw?: boolean
   target?: boolean
+  stage?: boolean
   error?: boolean
   createdAt?: boolean
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
@@ -635,6 +666,7 @@ export type OtaStatusEventSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   percent?: boolean
   fw?: boolean
   target?: boolean
+  stage?: boolean
   error?: boolean
   createdAt?: boolean
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
@@ -648,11 +680,12 @@ export type OtaStatusEventSelectScalar = {
   percent?: boolean
   fw?: boolean
   target?: boolean
+  stage?: boolean
   error?: boolean
   createdAt?: boolean
 }
 
-export type OtaStatusEventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "installationId" | "commandId" | "state" | "percent" | "fw" | "target" | "error" | "createdAt", ExtArgs["result"]["otaStatusEvent"]>
+export type OtaStatusEventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "installationId" | "commandId" | "state" | "percent" | "fw" | "target" | "stage" | "error" | "createdAt", ExtArgs["result"]["otaStatusEvent"]>
 export type OtaStatusEventInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }
@@ -685,6 +718,10 @@ export type $OtaStatusEventPayload<ExtArgs extends runtime.Types.Extensions.Inte
      * 업데이트 대상 버전
      */
     target: string | null
+    /**
+     * 화면을 바꾸는 OTA 의 단계: "backup"(보관본) | "screen"(새 화면) | "code". 이전 펌웨어는 보내지 않음
+     */
+    stage: string | null
     error: string | null
     createdAt: Date
   }, ExtArgs["result"]["otaStatusEvent"]>
@@ -1118,6 +1155,7 @@ export interface OtaStatusEventFieldRefs {
   readonly percent: Prisma.FieldRef<"OtaStatusEvent", 'Int'>
   readonly fw: Prisma.FieldRef<"OtaStatusEvent", 'String'>
   readonly target: Prisma.FieldRef<"OtaStatusEvent", 'String'>
+  readonly stage: Prisma.FieldRef<"OtaStatusEvent", 'String'>
   readonly error: Prisma.FieldRef<"OtaStatusEvent", 'String'>
   readonly createdAt: Prisma.FieldRef<"OtaStatusEvent", 'DateTime'>
 }

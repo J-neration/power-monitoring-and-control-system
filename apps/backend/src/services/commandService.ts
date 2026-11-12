@@ -16,9 +16,31 @@ import { otaDownloadPath } from "./otaService.js";
 
 export const NO_COMMAND = { id: "", module: -1, power: "" } as const;
 
-/** OTA 명령에 필요한 파일 정보. version 이 null 이면 헤더 없는 일반 파일. */
+/** Poll answer of an ota command (HMI ota_manager.c OtaManager_PrepareCommand). */
+type OtaPollPayload = {
+  id: string;
+  module: number;
+  power: string;
+  ver: string;
+  pid: number | null;
+  asset: number | null;
+  size: number;
+  url: string;
+  /** new screen data package (only when the code needs other screen data) */
+  aurl?: string;
+  asize?: number;
+  /** package of the HMI's current screen data (rollback copy) */
+  burl?: string;
+  bsize?: number;
+  /** never: only setBasic carries fields */
+  fields?: undefined;
+};
+
+/** OTA 명령에 필요한 파일 정보. kind 가 null 이면 헤더 없는 일반 파일. */
 export type OtaCommandFile = {
   id: string;
+  /** "code" | "asset" | null */
+  kind: string | null;
   size: number;
   downloadToken: string;
   version: string | null;
@@ -78,7 +100,21 @@ type CommandRepository = {
   ): Promise<DeviceCommand>;
   listHistory(installationId: string, limit: number): Promise<DeviceCommand[]>;
   findOtaFile(id: string): Promise<OtaCommandFile | null>;
+  /** 가장 최근에 올린 화면 데이터 패키지 (그 번호, 그 제품) */
+  findLatestAssetFile(assetVersion: number, productId: number): Promise<OtaCommandFile | null>;
+  /** 텔레메트리로 받은 화면 데이터 번호와 화면 OTA 지원 여부. 기기 행이 없으면 null */
+  getDeviceAsset(installationId: string): Promise<{ assetVersion: number | null; assetOta: boolean | null } | null>;
 };
+
+const OTA_FILE_SELECT = {
+  id: true,
+  kind: true,
+  size: true,
+  downloadToken: true,
+  version: true,
+  productId: true,
+  assetVersion: true,
+} as const;
 
 class PrismaCommandRepository implements CommandRepository {
   async installationExists(installationId: string): Promise<boolean> {
@@ -201,16 +237,21 @@ class PrismaCommandRepository implements CommandRepository {
   }
 
   async findOtaFile(id: string): Promise<OtaCommandFile | null> {
-    return prisma.otaFile.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        size: true,
-        downloadToken: true,
-        version: true,
-        productId: true,
-        assetVersion: true,
-      },
+    return prisma.otaFile.findUnique({ where: { id }, select: OTA_FILE_SELECT });
+  }
+
+  async findLatestAssetFile(assetVersion: number, productId: number): Promise<OtaCommandFile | null> {
+    return prisma.otaFile.findFirst({
+      where: { kind: "asset", assetVersion, productId },
+      select: OTA_FILE_SELECT,
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  async getDeviceAsset(installationId: string) {
+    return prisma.device.findUnique({
+      where: { installationId },
+      select: { assetVersion: true, assetOta: true },
     });
   }
 }
@@ -309,7 +350,12 @@ export const createCommandService = (
         );
       }
 
-      // ota: HMI itself (module 0), fields = { fileId } of an uploaded OTA package.
+      // ota: HMI itself (module 0), fields = { fileId } of an uploaded code package.
+      // If the package needs other screen data than the HMI has (HMI repo
+      // docs/OTA_ASSET_PLAN.md 11.5), the command also carries the new screen
+      // data package and the package of the HMI's current screen data (the
+      // rollback copy; the HMI skips it when it already keeps one):
+      //   fields = { fileId, assetFileId, backupFileId }
       let otaFields: Prisma.InputJsonValue | null = null;
       if (power === "ota") {
         if (input.module !== 0) {
@@ -323,6 +369,13 @@ export const createCommandService = (
         if (!file) {
           throw new CommandError(404, "OTA_FILE_NOT_FOUND", "ota file not found");
         }
+        if (file.kind === "asset") {
+          throw new CommandError(
+            400,
+            "OTA_FILE_IS_ASSET",
+            "pick a code package: screen data packages are sent along with the code package that needs them",
+          );
+        }
         if (!file.version) {
           throw new CommandError(
             400,
@@ -331,6 +384,38 @@ export const createCommandService = (
           );
         }
         otaFields = { fileId: file.id };
+
+        const device = await repo.getDeviceAsset(installationId);
+        // 2.4.0 does not report it: screen data 1, no screen data OTA (docs 7.1).
+        const deviceAsset = device?.assetVersion ?? 1;
+        const needAsset = file.assetVersion ?? 1;
+        if (needAsset !== deviceAsset) {
+          if (device?.assetOta !== true) {
+            throw new CommandError(
+              400,
+              "OTA_ASSET_NOT_SUPPORTED",
+              `package needs screen data ${needAsset}, the HMI has ${deviceAsset} and cannot take screen data packages (firmware 2.5.0 or later)`,
+            );
+          }
+          const pid = file.productId ?? 1;
+          const screen = await repo.findLatestAssetFile(needAsset, pid);
+          if (!screen) {
+            throw new CommandError(
+              400,
+              "OTA_ASSET_FILE_MISSING",
+              `upload the screen data ${needAsset} package first (tools/ota_pack.py --asset)`,
+            );
+          }
+          const backup = await repo.findLatestAssetFile(deviceAsset, pid);
+          if (!backup) {
+            throw new CommandError(
+              400,
+              "OTA_ASSET_BACKUP_MISSING",
+              `upload the screen data ${deviceAsset} package (the HMI's current screen data, kept for rollback)`,
+            );
+          }
+          otaFields = { fileId: file.id, assetFileId: screen.id, backupFileId: backup.id };
+        }
       }
 
       const exists = await repo.installationExists(installationId);
@@ -407,17 +492,21 @@ export const createCommandService = (
       const sent = await repo.markSent(cmd.id, new Date());
 
       if (sent.power === "ota") {
-        // Short keys: the HMI reads the command into a 512-byte buffer (~220 B used).
-        const fileId =
+        // Short keys: the HMI reads the command into a 1024-byte buffer
+        // (2.5.0+; 512 before). A code-only command is ~220 B, one with the
+        // two screen data URLs ~500 B.
+        const f =
           sent.fields && typeof sent.fields === "object" && !Array.isArray(sent.fields)
-            ? (sent.fields as Record<string, unknown>).fileId
-            : undefined;
-        const file = typeof fileId === "string" ? await repo.findOtaFile(fileId) : null;
+            ? (sent.fields as Record<string, unknown>)
+            : {};
+        const load = async (id: unknown) => (typeof id === "string" ? await repo.findOtaFile(id) : null);
+        const file = await load(f.fileId);
         if (!file || !file.version) {
           await repo.markAck(sent.id, "failed", new Date(), "ota file missing on server");
           return NO_COMMAND;
         }
-        return {
+        const base = opts?.otaBaseUrl ?? "";
+        const payload: OtaPollPayload = {
           id: sent.id,
           module: sent.module,
           power: sent.power,
@@ -425,8 +514,21 @@ export const createCommandService = (
           pid: file.productId,
           asset: file.assetVersion,
           size: file.size,
-          url: `${opts?.otaBaseUrl ?? ""}${otaDownloadPath(file)}`,
+          url: `${base}${otaDownloadPath(file)}`,
         };
+        if (f.assetFileId !== undefined || f.backupFileId !== undefined) {
+          const screen = await load(f.assetFileId);
+          const backup = await load(f.backupFileId);
+          if (!screen || screen.kind !== "asset" || !backup || backup.kind !== "asset") {
+            await repo.markAck(sent.id, "failed", new Date(), "ota screen data file missing on server");
+            return NO_COMMAND;
+          }
+          payload.aurl = `${base}${otaDownloadPath(screen)}`;
+          payload.asize = screen.size;
+          payload.burl = `${base}${otaDownloadPath(backup)}`;
+          payload.bsize = backup.size;
+        }
+        return payload;
       }
 
       const payload: {
