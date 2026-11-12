@@ -157,11 +157,14 @@ const ERROR_LABEL: Record<string, string> = {
   "block table": "패키지 형식 오류",
   layout: "패키지 형식 오류",
   "header crc": "패키지 헤더 손상",
+  "header format": "패키지 헤더 형식 오류",
   magic: "패키지 종류가 다름",
   "product id": "다른 제품용 패키지(거부)",
   not_live: "보관본이 지금 화면 데이터와 다름",
   no_screen: "검증된 새 화면 데이터가 없어 코드를 받지 않음",
   asset_unsupported: "이 펌웨어는 화면 데이터 교체를 지원하지 않음(거부)",
+  live_state: "지난 화면 교체가 아직 끝나지 않음(재부팅 뒤 다시 보내 주세요)",
+  no_backup_url: "보관본 주소가 명령에 없음(거부)",
 };
 
 /** 오류 문구. 화면 단계(보관본, 새 화면)에서 난 오류는 앞에 단계를 붙인다. */
