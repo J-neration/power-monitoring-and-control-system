@@ -409,10 +409,12 @@ export const OtaFileScalarFieldEnum = {
   downloadToken: 'downloadToken',
   uploadedBy: 'uploadedBy',
   createdAt: 'createdAt',
+  kind: 'kind',
   version: 'version',
   productId: 'productId',
   assetVersion: 'assetVersion',
-  imageSize: 'imageSize'
+  imageSize: 'imageSize',
+  rawSha256: 'rawSha256'
 } as const
 
 export type OtaFileScalarFieldEnum = (typeof OtaFileScalarFieldEnum)[keyof typeof OtaFileScalarFieldEnum]
@@ -426,6 +428,7 @@ export const OtaStatusEventScalarFieldEnum = {
   percent: 'percent',
   fw: 'fw',
   target: 'target',
+  stage: 'stage',
   error: 'error',
   createdAt: 'createdAt'
 } as const

@@ -50,10 +50,12 @@ export type OtaFileMinAggregateOutputType = {
   downloadToken: string | null
   uploadedBy: string | null
   createdAt: Date | null
+  kind: string | null
   version: string | null
   productId: number | null
   assetVersion: number | null
   imageSize: number | null
+  rawSha256: string | null
 }
 
 export type OtaFileMaxAggregateOutputType = {
@@ -65,10 +67,12 @@ export type OtaFileMaxAggregateOutputType = {
   downloadToken: string | null
   uploadedBy: string | null
   createdAt: Date | null
+  kind: string | null
   version: string | null
   productId: number | null
   assetVersion: number | null
   imageSize: number | null
+  rawSha256: string | null
 }
 
 export type OtaFileCountAggregateOutputType = {
@@ -80,10 +84,12 @@ export type OtaFileCountAggregateOutputType = {
   downloadToken: number
   uploadedBy: number
   createdAt: number
+  kind: number
   version: number
   productId: number
   assetVersion: number
   imageSize: number
+  rawSha256: number
   _all: number
 }
 
@@ -111,10 +117,12 @@ export type OtaFileMinAggregateInputType = {
   downloadToken?: true
   uploadedBy?: true
   createdAt?: true
+  kind?: true
   version?: true
   productId?: true
   assetVersion?: true
   imageSize?: true
+  rawSha256?: true
 }
 
 export type OtaFileMaxAggregateInputType = {
@@ -126,10 +134,12 @@ export type OtaFileMaxAggregateInputType = {
   downloadToken?: true
   uploadedBy?: true
   createdAt?: true
+  kind?: true
   version?: true
   productId?: true
   assetVersion?: true
   imageSize?: true
+  rawSha256?: true
 }
 
 export type OtaFileCountAggregateInputType = {
@@ -141,10 +151,12 @@ export type OtaFileCountAggregateInputType = {
   downloadToken?: true
   uploadedBy?: true
   createdAt?: true
+  kind?: true
   version?: true
   productId?: true
   assetVersion?: true
   imageSize?: true
+  rawSha256?: true
   _all?: true
 }
 
@@ -243,10 +255,12 @@ export type OtaFileGroupByOutputType = {
   downloadToken: string
   uploadedBy: string | null
   createdAt: Date
+  kind: string | null
   version: string | null
   productId: number | null
   assetVersion: number | null
   imageSize: number | null
+  rawSha256: string | null
   _count: OtaFileCountAggregateOutputType | null
   _avg: OtaFileAvgAggregateOutputType | null
   _sum: OtaFileSumAggregateOutputType | null
@@ -281,10 +295,12 @@ export type OtaFileWhereInput = {
   downloadToken?: Prisma.StringFilter<"OtaFile"> | string
   uploadedBy?: Prisma.StringNullableFilter<"OtaFile"> | string | null
   createdAt?: Prisma.DateTimeFilter<"OtaFile"> | Date | string
+  kind?: Prisma.StringNullableFilter<"OtaFile"> | string | null
   version?: Prisma.StringNullableFilter<"OtaFile"> | string | null
   productId?: Prisma.IntNullableFilter<"OtaFile"> | number | null
   assetVersion?: Prisma.IntNullableFilter<"OtaFile"> | number | null
   imageSize?: Prisma.IntNullableFilter<"OtaFile"> | number | null
+  rawSha256?: Prisma.StringNullableFilter<"OtaFile"> | string | null
 }
 
 export type OtaFileOrderByWithRelationInput = {
@@ -296,10 +312,12 @@ export type OtaFileOrderByWithRelationInput = {
   downloadToken?: Prisma.SortOrder
   uploadedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  kind?: Prisma.SortOrderInput | Prisma.SortOrder
   version?: Prisma.SortOrderInput | Prisma.SortOrder
   productId?: Prisma.SortOrderInput | Prisma.SortOrder
   assetVersion?: Prisma.SortOrderInput | Prisma.SortOrder
   imageSize?: Prisma.SortOrderInput | Prisma.SortOrder
+  rawSha256?: Prisma.SortOrderInput | Prisma.SortOrder
 }
 
 export type OtaFileWhereUniqueInput = Prisma.AtLeast<{
@@ -314,10 +332,12 @@ export type OtaFileWhereUniqueInput = Prisma.AtLeast<{
   data?: Prisma.BytesFilter<"OtaFile"> | runtime.Bytes
   uploadedBy?: Prisma.StringNullableFilter<"OtaFile"> | string | null
   createdAt?: Prisma.DateTimeFilter<"OtaFile"> | Date | string
+  kind?: Prisma.StringNullableFilter<"OtaFile"> | string | null
   version?: Prisma.StringNullableFilter<"OtaFile"> | string | null
   productId?: Prisma.IntNullableFilter<"OtaFile"> | number | null
   assetVersion?: Prisma.IntNullableFilter<"OtaFile"> | number | null
   imageSize?: Prisma.IntNullableFilter<"OtaFile"> | number | null
+  rawSha256?: Prisma.StringNullableFilter<"OtaFile"> | string | null
 }, "id" | "downloadToken">
 
 export type OtaFileOrderByWithAggregationInput = {
@@ -329,10 +349,12 @@ export type OtaFileOrderByWithAggregationInput = {
   downloadToken?: Prisma.SortOrder
   uploadedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  kind?: Prisma.SortOrderInput | Prisma.SortOrder
   version?: Prisma.SortOrderInput | Prisma.SortOrder
   productId?: Prisma.SortOrderInput | Prisma.SortOrder
   assetVersion?: Prisma.SortOrderInput | Prisma.SortOrder
   imageSize?: Prisma.SortOrderInput | Prisma.SortOrder
+  rawSha256?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.OtaFileCountOrderByAggregateInput
   _avg?: Prisma.OtaFileAvgOrderByAggregateInput
   _max?: Prisma.OtaFileMaxOrderByAggregateInput
@@ -352,10 +374,12 @@ export type OtaFileScalarWhereWithAggregatesInput = {
   downloadToken?: Prisma.StringWithAggregatesFilter<"OtaFile"> | string
   uploadedBy?: Prisma.StringNullableWithAggregatesFilter<"OtaFile"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"OtaFile"> | Date | string
+  kind?: Prisma.StringNullableWithAggregatesFilter<"OtaFile"> | string | null
   version?: Prisma.StringNullableWithAggregatesFilter<"OtaFile"> | string | null
   productId?: Prisma.IntNullableWithAggregatesFilter<"OtaFile"> | number | null
   assetVersion?: Prisma.IntNullableWithAggregatesFilter<"OtaFile"> | number | null
   imageSize?: Prisma.IntNullableWithAggregatesFilter<"OtaFile"> | number | null
+  rawSha256?: Prisma.StringNullableWithAggregatesFilter<"OtaFile"> | string | null
 }
 
 export type OtaFileCreateInput = {
@@ -367,10 +391,12 @@ export type OtaFileCreateInput = {
   downloadToken: string
   uploadedBy?: string | null
   createdAt?: Date | string
+  kind?: string | null
   version?: string | null
   productId?: number | null
   assetVersion?: number | null
   imageSize?: number | null
+  rawSha256?: string | null
 }
 
 export type OtaFileUncheckedCreateInput = {
@@ -382,10 +408,12 @@ export type OtaFileUncheckedCreateInput = {
   downloadToken: string
   uploadedBy?: string | null
   createdAt?: Date | string
+  kind?: string | null
   version?: string | null
   productId?: number | null
   assetVersion?: number | null
   imageSize?: number | null
+  rawSha256?: string | null
 }
 
 export type OtaFileUpdateInput = {
@@ -397,10 +425,12 @@ export type OtaFileUpdateInput = {
   downloadToken?: Prisma.StringFieldUpdateOperationsInput | string
   uploadedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   productId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   assetVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imageSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rawSha256?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type OtaFileUncheckedUpdateInput = {
@@ -412,10 +442,12 @@ export type OtaFileUncheckedUpdateInput = {
   downloadToken?: Prisma.StringFieldUpdateOperationsInput | string
   uploadedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   productId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   assetVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imageSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rawSha256?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type OtaFileCreateManyInput = {
@@ -427,10 +459,12 @@ export type OtaFileCreateManyInput = {
   downloadToken: string
   uploadedBy?: string | null
   createdAt?: Date | string
+  kind?: string | null
   version?: string | null
   productId?: number | null
   assetVersion?: number | null
   imageSize?: number | null
+  rawSha256?: string | null
 }
 
 export type OtaFileUpdateManyMutationInput = {
@@ -442,10 +476,12 @@ export type OtaFileUpdateManyMutationInput = {
   downloadToken?: Prisma.StringFieldUpdateOperationsInput | string
   uploadedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   productId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   assetVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imageSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rawSha256?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type OtaFileUncheckedUpdateManyInput = {
@@ -457,10 +493,12 @@ export type OtaFileUncheckedUpdateManyInput = {
   downloadToken?: Prisma.StringFieldUpdateOperationsInput | string
   uploadedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   productId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   assetVersion?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imageSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rawSha256?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type OtaFileCountOrderByAggregateInput = {
@@ -472,10 +510,12 @@ export type OtaFileCountOrderByAggregateInput = {
   downloadToken?: Prisma.SortOrder
   uploadedBy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   version?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   assetVersion?: Prisma.SortOrder
   imageSize?: Prisma.SortOrder
+  rawSha256?: Prisma.SortOrder
 }
 
 export type OtaFileAvgOrderByAggregateInput = {
@@ -494,10 +534,12 @@ export type OtaFileMaxOrderByAggregateInput = {
   downloadToken?: Prisma.SortOrder
   uploadedBy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   version?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   assetVersion?: Prisma.SortOrder
   imageSize?: Prisma.SortOrder
+  rawSha256?: Prisma.SortOrder
 }
 
 export type OtaFileMinOrderByAggregateInput = {
@@ -509,10 +551,12 @@ export type OtaFileMinOrderByAggregateInput = {
   downloadToken?: Prisma.SortOrder
   uploadedBy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   version?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   assetVersion?: Prisma.SortOrder
   imageSize?: Prisma.SortOrder
+  rawSha256?: Prisma.SortOrder
 }
 
 export type OtaFileSumOrderByAggregateInput = {
@@ -537,10 +581,12 @@ export type OtaFileSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   downloadToken?: boolean
   uploadedBy?: boolean
   createdAt?: boolean
+  kind?: boolean
   version?: boolean
   productId?: boolean
   assetVersion?: boolean
   imageSize?: boolean
+  rawSha256?: boolean
 }, ExtArgs["result"]["otaFile"]>
 
 export type OtaFileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -552,10 +598,12 @@ export type OtaFileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   downloadToken?: boolean
   uploadedBy?: boolean
   createdAt?: boolean
+  kind?: boolean
   version?: boolean
   productId?: boolean
   assetVersion?: boolean
   imageSize?: boolean
+  rawSha256?: boolean
 }, ExtArgs["result"]["otaFile"]>
 
 export type OtaFileSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -567,10 +615,12 @@ export type OtaFileSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   downloadToken?: boolean
   uploadedBy?: boolean
   createdAt?: boolean
+  kind?: boolean
   version?: boolean
   productId?: boolean
   assetVersion?: boolean
   imageSize?: boolean
+  rawSha256?: boolean
 }, ExtArgs["result"]["otaFile"]>
 
 export type OtaFileSelectScalar = {
@@ -582,13 +632,15 @@ export type OtaFileSelectScalar = {
   downloadToken?: boolean
   uploadedBy?: boolean
   createdAt?: boolean
+  kind?: boolean
   version?: boolean
   productId?: boolean
   assetVersion?: boolean
   imageSize?: boolean
+  rawSha256?: boolean
 }
 
-export type OtaFileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "size" | "sha256" | "data" | "downloadToken" | "uploadedBy" | "createdAt" | "version" | "productId" | "assetVersion" | "imageSize", ExtArgs["result"]["otaFile"]>
+export type OtaFileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "size" | "sha256" | "data" | "downloadToken" | "uploadedBy" | "createdAt" | "kind" | "version" | "productId" | "assetVersion" | "imageSize" | "rawSha256", ExtArgs["result"]["otaFile"]>
 
 export type $OtaFilePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "OtaFile"
@@ -609,13 +661,22 @@ export type $OtaFilePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     uploadedBy: string | null
     createdAt: Date
     /**
-     * 패키지 헤더(HMI ota_image.h)에서 읽은 값. 헤더가 없는 일반 파일이면 null
-     * (그런 파일로는 ota 명령을 만들 수 없다).
+     * 패키지 종류: "code"(매직 HMI1, 코드) | "asset"(매직 HMIA, 화면 데이터). 일반 파일이면 null
+     */
+    kind: string | null
+    /**
+     * 패키지 헤더(HMI ota_image.h / ota_asset_image.h)에서 읽은 값. 헤더가 없는 일반 파일이면 null
+     * (그런 파일로는 ota 명령을 만들 수 없다). version 은 코드 패키지만 있다.
+     * 화면 패키지: assetVersion = 화면 번호, imageSize = 풀린 화면 데이터 크기
      */
     version: string | null
     productId: number | null
     assetVersion: number | null
     imageSize: number | null
+    /**
+     * 화면 패키지의 풀린 화면 데이터 SHA-256 (hex). 코드 패키지는 null
+     */
+    rawSha256: string | null
   }, ExtArgs["result"]["otaFile"]>
   composites: {}
 }
@@ -1047,10 +1108,12 @@ export interface OtaFileFieldRefs {
   readonly downloadToken: Prisma.FieldRef<"OtaFile", 'String'>
   readonly uploadedBy: Prisma.FieldRef<"OtaFile", 'String'>
   readonly createdAt: Prisma.FieldRef<"OtaFile", 'DateTime'>
+  readonly kind: Prisma.FieldRef<"OtaFile", 'String'>
   readonly version: Prisma.FieldRef<"OtaFile", 'String'>
   readonly productId: Prisma.FieldRef<"OtaFile", 'Int'>
   readonly assetVersion: Prisma.FieldRef<"OtaFile", 'Int'>
   readonly imageSize: Prisma.FieldRef<"OtaFile", 'Int'>
+  readonly rawSha256: Prisma.FieldRef<"OtaFile", 'String'>
 }
     
 
