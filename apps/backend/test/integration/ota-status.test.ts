@@ -27,6 +27,33 @@ describe("OTA status", () => {
     assert.equal(dev.fwVersion, "2.3.6");
     assert.equal(dev.otaCapable, true);
     assert.equal(dev.otaState, "idle");
+    assert.equal(dev.assetVersion, null, "2.4.0 sends no assetVersion");
+  });
+
+  it("telemetry stores the screen data number and asset OTA support", async () => {
+    const { tokens } = await seedWorld(t.app);
+    await hmi(t.app).post(
+      "/receiver",
+      telemetryPayload({ fw: "2.4.1", otaCapable: true, otaState: "idle", assetVersion: 1, assetOta: false }),
+    );
+    let dev = await prisma.device.findUniqueOrThrow({ where: { installationId: IDS.lotteInst } });
+    assert.equal(dev.assetVersion, 1);
+    assert.equal(dev.assetOta, false);
+
+    // Bad values are ignored; the last good ones stay.
+    await hmi(t.app).post("/receiver", telemetryPayload({ fw: "2.4.1", assetVersion: "2", assetOta: "yes" }));
+    dev = await prisma.device.findUniqueOrThrow({ where: { installationId: IDS.lotteInst } });
+    assert.equal(dev.assetVersion, 1);
+    assert.equal(dev.assetOta, false);
+
+    await hmi(t.app).post("/receiver", telemetryPayload({ fw: "2.5.0", assetVersion: 2, assetOta: true }));
+    const res = await http(t.app).get(`/receiver/ota/status?installationId=${IDS.lotteInst}`, {
+      token: tokens.admin,
+    });
+    assert.equal(res.statusCode, 200);
+    const { device } = res.json();
+    assert.equal(device.assetVersion, 2);
+    assert.equal(device.assetOta, true);
   });
 
   it("records the progress and result of an update, newest first", async () => {
@@ -83,5 +110,22 @@ describe("OTA status", () => {
       token: tokens.client,
     });
     assert.equal(res.statusCode, 403);
+  });
+
+  it("keeps the stage of a screen data update; an unknown stage is refused", async () => {
+    const { tokens } = await seedWorld(t.app);
+    const cmd = "cmd_20261112_101010_abcdef";
+    const ok = await status({ id: cmd, state: "downloading", percent: 25, fw: "2.5.0", target: "2.6.0", stage: "screen" });
+    assert.equal(ok.statusCode, 200, JSON.stringify(ok.json()));
+    // old firmware sends no stage
+    assert.equal((await status({ id: cmd, state: "verified", percent: 100, fw: "2.5.0", target: "2.6.0" })).statusCode, 200);
+    assert.equal((await status({ id: cmd, state: "downloading", stage: "logo" })).statusCode, 400);
+
+    const res = await http(t.app).get(`/receiver/ota/status?installationId=${IDS.lotteInst}`, { token: tokens.admin });
+    const { events } = res.json();
+    assert.equal(events.length, 2);
+    assert.equal(events[0].stage, null);
+    assert.equal(events[1].stage, "screen");
+    assert.equal(events[1].percent, 25);
   });
 });

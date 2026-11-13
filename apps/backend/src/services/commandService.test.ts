@@ -91,10 +91,47 @@ class InMemoryRepo {
 
   async markSent(id: string, sentAt: Date) {
     const cmd = this.commands.find((c) => c.id === id);
-    if (!cmd) throw new Error("missing command");
+    if (!cmd || cmd.status !== "pending") return null;
     cmd.status = "sent";
     cmd.sentAt = sentAt;
     return cmd;
+  }
+
+  /** commandIds the HMI sent an OTA status report for */
+  otaReports = new Set<string>();
+
+  async requeueUnansweredOta(installationId: string, sentBefore: Date, maxRedeliveries: number) {
+    const ids: string[] = [];
+    for (const c of this.commands) {
+      if (
+        c.installationId === installationId &&
+        c.power === "ota" &&
+        c.status === "sent" &&
+        c.sentAt &&
+        c.sentAt.getTime() < sentBefore.getTime() &&
+        c.retryCount < maxRedeliveries &&
+        !this.otaReports.has(c.id)
+      ) {
+        c.status = "pending";
+        c.retryCount++;
+        ids.push(c.id);
+      }
+    }
+    return ids;
+  }
+
+  async markOtaReported(
+    id: string,
+    status: "acked" | "failed" | "pending" | "sent" | "expired" | "cancelled",
+    at: Date,
+    message: string,
+  ) {
+    const cmd = this.commands.find((c) => c.id === id);
+    if (!cmd || cmd.power !== "ota" || (cmd.status !== "pending" && cmd.status !== "sent")) return false;
+    cmd.status = status;
+    cmd.ackedAt = at;
+    cmd.ackMessage = message;
+    return true;
   }
 
   async findById(id: string) {
@@ -123,9 +160,22 @@ class InMemoryRepo {
   }
 
   otaFiles = new Map<string, OtaCommandFile>();
+  /** insertion order = upload order */
+  devices = new Map<string, { assetVersion: number | null; assetOta: boolean | null }>();
 
   async findOtaFile(id: string) {
     return this.otaFiles.get(id) ?? null;
+  }
+
+  async findLatestAssetFile(assetVersion: number, productId: number) {
+    const all = [...this.otaFiles.values()].filter(
+      (f) => f.kind === "asset" && f.assetVersion === assetVersion && f.productId === productId,
+    );
+    return all[all.length - 1] ?? null;
+  }
+
+  async getDeviceAsset(installationId: string) {
+    return this.devices.get(installationId) ?? null;
   }
 }
 
@@ -153,12 +203,26 @@ test("create -> poll -> ack success flow", async () => {
 
 const OTA_PKG: OtaCommandFile = {
   id: "file_pkg",
+  kind: "code",
   size: 843872,
   downloadToken: "d5888e466f1564ff9a5445cc498f0b6b",
   version: "2.4.0",
   productId: 1,
   assetVersion: 1,
 };
+
+// Screen data packages (HMI repo docs/OTA_ASSET_PLAN.md 11.5): version null, assetVersion = screen number.
+const ASSET_1: OtaCommandFile = {
+  id: "asset_1",
+  kind: "asset",
+  size: 2877257,
+  downloadToken: "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+  version: null,
+  productId: 1,
+  assetVersion: 1,
+};
+const ASSET_2: OtaCommandFile = { ...ASSET_1, id: "asset_2", assetVersion: 2, downloadToken: "a2".repeat(16) };
+const PKG_SCREEN_2: OtaCommandFile = { ...OTA_PKG, id: "file_260", version: "2.6.0", assetVersion: 2 };
 
 test("ota command: create with a package, poll returns the download spec", async () => {
   const repo = new InMemoryRepo();
@@ -192,7 +256,15 @@ test("ota command: create with a package, poll returns the download spec", async
 test("ota command: bad module, missing file, plain file are rejected", async () => {
   const repo = new InMemoryRepo();
   repo.otaFiles.set(OTA_PKG.id, OTA_PKG);
-  repo.otaFiles.set("plain", { ...OTA_PKG, id: "plain", version: null, productId: null, assetVersion: null });
+  repo.otaFiles.set("plain", {
+    ...OTA_PKG,
+    id: "plain",
+    kind: null,
+    version: null,
+    productId: null,
+    assetVersion: null,
+  });
+  repo.otaFiles.set(ASSET_1.id, ASSET_1);
   const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
   const base = { installationId: "PSVG-RNDTEST5", power: "ota" };
 
@@ -205,6 +277,109 @@ test("ota command: bad module, missing file, plain file are rejected", async () 
   await rejects({ ...base, module: 0 }, "INVALID_FIELDS");
   await rejects({ ...base, module: 0, fields: { fileId: "nope" } }, "OTA_FILE_NOT_FOUND");
   await rejects({ ...base, module: 0, fields: { fileId: "plain" } }, "OTA_FILE_NOT_PACKAGE");
+  await rejects({ ...base, module: 0, fields: { fileId: ASSET_1.id } }, "OTA_FILE_IS_ASSET");
+});
+
+test("ota command: code for other screen data carries the screen and the backup package", async () => {
+  const repo = new InMemoryRepo();
+  for (const f of [ASSET_1, ASSET_2, PKG_SCREEN_2]) repo.otaFiles.set(f.id, f);
+  // a newer upload of screen data 1 is the one sent
+  const asset1b = { ...ASSET_1, id: "asset_1b", downloadToken: "b1".repeat(16) };
+  repo.otaFiles.set(asset1b.id, asset1b);
+  repo.devices.set("PSVG-RNDTEST5", { assetVersion: 1, assetOta: true });
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "ota",
+    fields: { fileId: PKG_SCREEN_2.id },
+  });
+  assert.deepEqual(created.fields, { fileId: PKG_SCREEN_2.id, assetFileId: ASSET_2.id, backupFileId: asset1b.id });
+
+  const host = "https://api-dev.pqms.co.kr";
+  const polled = await service.poll("PSVG-RNDTEST5", { otaBaseUrl: host });
+  assert.deepEqual(polled, {
+    id: created.id,
+    module: 0,
+    power: "ota",
+    ver: "2.6.0",
+    pid: 1,
+    asset: 2,
+    size: 843872,
+    url: `${host}/receiver/ota/file/file_260?t=${OTA_PKG.downloadToken}`,
+    aurl: `${host}/receiver/ota/file/asset_2?t=${ASSET_2.downloadToken}`,
+    asize: 2877257,
+    burl: `${host}/receiver/ota/file/asset_1b?t=${asset1b.downloadToken}`,
+    bsize: 2877257,
+  });
+  // HMI 2.5.0 reads the command into a 1024-byte buffer (modem buffer also 1024 with ~60 B of AT framing).
+  // Real ids are cuid (25 chars), longer than these test ids.
+  const real = JSON.stringify(polled).replace(/file_260|asset_2|asset_1b/g, "x".repeat(25));
+  assert.ok(real.length + 2 < 700, `command is ${real.length} bytes`);
+});
+
+test("ota command: same screen data -> plain code command, no screen data needed", async () => {
+  const repo = new InMemoryRepo();
+  repo.otaFiles.set(PKG_SCREEN_2.id, PKG_SCREEN_2);
+  repo.devices.set("PSVG-RNDTEST5", { assetVersion: 2, assetOta: true });
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "ota",
+    fields: { fileId: PKG_SCREEN_2.id },
+  });
+  assert.deepEqual(created.fields, { fileId: PKG_SCREEN_2.id });
+  const polled = await service.poll("PSVG-RNDTEST5", { otaBaseUrl: "https://h" });
+  assert.equal("aurl" in polled, false);
+  assert.equal("burl" in polled, false);
+});
+
+test("ota command: other screen data is refused without support or packages", async () => {
+  const repo = new InMemoryRepo();
+  repo.otaFiles.set(PKG_SCREEN_2.id, PKG_SCREEN_2);
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+  const input = { installationId: "PSVG-RNDTEST5", module: 0, power: "ota", fields: { fileId: PKG_SCREEN_2.id } };
+  const rejects = (code: string) =>
+    assert.rejects(
+      () => service.create(input),
+      (err: unknown) => err instanceof CommandError && err.code === code,
+    );
+
+  // 2.4.0: no device fields at all (= screen data 1, no screen data OTA)
+  await rejects("OTA_ASSET_NOT_SUPPORTED");
+  repo.devices.set("PSVG-RNDTEST5", { assetVersion: 1, assetOta: false });
+  await rejects("OTA_ASSET_NOT_SUPPORTED");
+
+  repo.devices.set("PSVG-RNDTEST5", { assetVersion: 1, assetOta: true });
+  await rejects("OTA_ASSET_FILE_MISSING");
+  repo.otaFiles.set(ASSET_2.id, ASSET_2);
+  await rejects("OTA_ASSET_BACKUP_MISSING");
+  // a package of another product does not count
+  repo.otaFiles.set("asset_1_p2", { ...ASSET_1, id: "asset_1_p2", productId: 2 });
+  await rejects("OTA_ASSET_BACKUP_MISSING");
+  repo.otaFiles.set(ASSET_1.id, ASSET_1);
+  const ok = await service.create(input);
+  assert.equal(ok.power, "ota");
+});
+
+test("ota command: screen data file deleted before the poll -> failed, nothing sent", async () => {
+  const repo = new InMemoryRepo();
+  for (const f of [ASSET_1, ASSET_2, PKG_SCREEN_2]) repo.otaFiles.set(f.id, f);
+  repo.devices.set("PSVG-RNDTEST5", { assetVersion: 1, assetOta: true });
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "ota",
+    fields: { fileId: PKG_SCREEN_2.id },
+  });
+  repo.otaFiles.delete(ASSET_2.id);
+  assert.deepEqual(await service.poll("PSVG-RNDTEST5"), NO_COMMAND);
+  const cmd = await repo.findById(created.id);
+  assert.equal(cmd?.status, "failed");
+  assert.equal(cmd?.ackMessage, "ota screen data file missing on server");
 });
 
 test("ota command: file deleted before the poll -> failed, nothing sent", async () => {
@@ -489,4 +664,76 @@ test("setBasic infers v5 when only v5-only keys are sent against stale v1v2", as
     startupMethod: "Auto",
     priorityMode: "Harm",
   });
+});
+
+// The poll answer can be lost on the LTE link after the server marked the command
+// sent (field 2026-11-13: sent, then no ACK and no report for 15 minutes).
+test("ota command: handed out again when the HMI never answered", async () => {
+  const repo = new InMemoryRepo();
+  repo.otaFiles.set(OTA_PKG.id, OTA_PKG);
+  const service = createCommandService(repo, {
+    maxModules: 6,
+    ttlSeconds: 900,
+    otaAckTimeoutSeconds: 180,
+    otaMaxRedeliveries: 2,
+  });
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "ota",
+    fields: { fileId: OTA_PKG.id },
+  });
+  const cmd = repo.commands[0];
+
+  assert.equal((await service.poll("PSVG-RNDTEST5")).id, created.id);
+  // within the ACK timeout: not again
+  assert.deepEqual(await service.poll("PSVG-RNDTEST5"), NO_COMMAND);
+
+  // no answer for 3 minutes: the telemetry ACK keeps the HMI polling, the poll hands it out again
+  cmd.sentAt = new Date(Date.now() - 181_000);
+  assert.equal(await service.hasPending("PSVG-RNDTEST5"), true);
+  assert.equal((await service.poll("PSVG-RNDTEST5")).id, created.id);
+  assert.equal(cmd.retryCount, 1);
+
+  cmd.sentAt = new Date(Date.now() - 181_000);
+  assert.equal((await service.poll("PSVG-RNDTEST5")).id, created.id);
+  assert.equal(cmd.retryCount, 2);
+
+  // limit reached: stays sent until the TTL expires it
+  cmd.sentAt = new Date(Date.now() - 181_000);
+  assert.deepEqual(await service.poll("PSVG-RNDTEST5"), NO_COMMAND);
+  assert.equal(cmd.status, "sent");
+});
+
+test("ota command: a status report closes it even without an ACK", async () => {
+  const repo = new InMemoryRepo();
+  repo.otaFiles.set(OTA_PKG.id, OTA_PKG);
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 900, otaAckTimeoutSeconds: 180 });
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "ota",
+    fields: { fileId: OTA_PKG.id },
+  });
+  await service.poll("PSVG-RNDTEST5");
+
+  assert.equal(await service.noteOtaReport(created.id, "downloading"), true);
+  const cmd = repo.commands[0];
+  assert.equal(cmd.status, "acked");
+  assert.equal(cmd.ackMessage, "ota status downloading");
+
+  cmd.sentAt = new Date(Date.now() - 181_000);
+  assert.deepEqual(await service.poll("PSVG-RNDTEST5"), NO_COMMAND);
+  // a later report or the late ACK changes nothing
+  assert.equal(await service.noteOtaReport(created.id, "failed"), false);
+  assert.equal(await service.noteOtaReport("", "failed"), false);
+});
+
+test("non-ota command: never handed out again", async () => {
+  const repo = new InMemoryRepo();
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 900, otaAckTimeoutSeconds: 180 });
+  await service.create({ installationId: "PSVG-RNDTEST5", module: 1, power: "off" });
+  await service.poll("PSVG-RNDTEST5");
+  repo.commands[0].sentAt = new Date(Date.now() - 181_000);
+  assert.deepEqual(await service.poll("PSVG-RNDTEST5"), NO_COMMAND);
 });

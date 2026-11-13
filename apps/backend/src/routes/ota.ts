@@ -6,6 +6,7 @@ import { prisma } from "../lib/prisma.js";
 import { otaStatusService } from "../services/otaStatusService.js";
 import {
   OTA_MAX_FILE_BYTES,
+  OtaDeleteRefused,
   otaDownloadPath,
   otaService,
   OtaUploadError,
@@ -19,7 +20,8 @@ import {
  *   POST   /receiver/ota/files?name=...   관리자. 본문 application/octet-stream.
  *                                         OTA 패키지면 헤더(버전 등)를 저장, 헤더가 깨졌으면 400
  *   GET    /receiver/ota/files            관리자. 목록(메타만)
- *   DELETE /receiver/ota/files/:id        관리자
+ *                                         코드 패키지(HMI1)와 화면 데이터 패키지(HMIA)를 kind 로 구분
+ *   DELETE /receiver/ota/files/:id        관리자. 그 번호의 마지막 화면 패키지는 409(보관본)
  *   GET    /receiver/ota/file/:id?t=...   HMI. Range(206) 지원. x-api-key 대신 파일별 토큰
  *   GET    /receiver/ota/status?installationId=...  관리자. 현재 버전 + OTA 진행/결과 이력
  *   (HMI 의 POST /receiver/ota/status 는 x-api-key 라우트라 receiver.ts 에 있다)
@@ -48,10 +50,12 @@ const toDto = (f: OtaFileMeta) => ({
   sha256: f.sha256,
   uploadedBy: f.uploadedBy,
   createdAt: f.createdAt,
+  kind: f.kind,
   version: f.version,
   productId: f.productId,
   assetVersion: f.assetVersion,
   imageSize: f.imageSize,
+  rawSha256: f.rawSha256,
   downloadPath: otaDownloadPath(f),
 });
 
@@ -90,7 +94,14 @@ export const otaRoutes: FastifyPluginAsync = async (server) => {
         throw error;
       }
       request.log.info(
-        { otaFileId: file.id, name: file.name, size: file.size, version: file.version },
+        {
+          otaFileId: file.id,
+          name: file.name,
+          size: file.size,
+          kind: file.kind,
+          version: file.version,
+          assetVersion: file.assetVersion,
+        },
         "ota file uploaded",
       );
       return reply.status(201).send({ file: toDto(file) });
@@ -102,7 +113,7 @@ export const otaRoutes: FastifyPluginAsync = async (server) => {
     if (!q.success) return reply.status(400).send({ message: "installationId 가 필요합니다." });
     const device = await prisma.device.findUnique({
       where: { installationId: q.data.installationId },
-      select: { fwVersion: true, otaCapable: true, otaState: true, lastSeenAt: true },
+      select: { fwVersion: true, otaCapable: true, otaState: true, assetVersion: true, assetOta: true, lastSeenAt: true },
     });
     const events = await otaStatusService.list(q.data.installationId, q.data.limit ?? 30);
     return { device, events };
@@ -116,7 +127,13 @@ export const otaRoutes: FastifyPluginAsync = async (server) => {
   server.delete("/files/:id", { preHandler: requireAdmin }, async (request, reply) => {
     const params = idParams.safeParse(request.params);
     if (!params.success) return reply.status(400).send({ message: "잘못된 id 입니다." });
-    const removed = await otaService.remove(params.data.id);
+    let removed: boolean;
+    try {
+      removed = await otaService.remove(params.data.id);
+    } catch (error) {
+      if (error instanceof OtaDeleteRefused) return reply.status(409).send({ message: error.message });
+      throw error;
+    }
     if (!removed) return reply.status(404).send({ message: "파일이 없습니다." });
     return reply.status(204).send();
   });

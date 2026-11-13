@@ -11,7 +11,7 @@ import { commandService, CommandError } from "../services/commandService.js";
 import { faultService } from "../services/faultService.js";
 import { notifyAdminAlerts } from "../services/adminAlertService.js";
 import { settingsService, SettingsError } from "../services/settingsService.js";
-import { OTA_STATUS_STATES, otaStatusService } from "../services/otaStatusService.js";
+import { OTA_STATUS_STAGES, OTA_STATUS_STATES, otaStatusService } from "../services/otaStatusService.js";
 import { wsHub } from "../lib/wsHub.js";
 import { matchReceiverApiKey } from "../lib/receiverApiKey.js";
 import * as viewingState from "../lib/viewingState.js";
@@ -106,6 +106,7 @@ const otaStatusSchema = z.object({
   percent: z.number().int().min(0).max(100).optional(),
   fw: z.string().max(32).optional(),
   target: z.string().max(32).optional(),
+  stage: z.enum(OTA_STATUS_STAGES).optional(),
   error: z.string().max(200).optional(),
 });
 
@@ -500,6 +501,8 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       fw: body.fw,
       otaCapable: body.otaCapable,
       otaState: body.otaState,
+      assetVersion: body.assetVersion,
+      assetOta: body.assetOta,
       timestamp: body.timestamp,
       ts: body.ts,
     });
@@ -872,8 +875,11 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       percent: body.percent,
       fw: body.fw,
       target: body.target,
+      stage: body.stage,
       error: body.error,
     });
+    // A report proves the HMI has the command even if its ACK was lost.
+    await commandService.noteOtaReport(body.id, body.state);
     server.log.info(
       {
         installationId: identity.installationId,
@@ -881,6 +887,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
         state: event.state,
         fw: event.fw,
         target: event.target,
+        stage: event.stage,
         error: event.error,
       },
       "OTA status",

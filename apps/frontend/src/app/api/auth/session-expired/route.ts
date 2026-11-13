@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { safeReturnPath } from "../../../../lib/safeReturnPath";
 
 /**
  * GET /api/auth/session-expired?from=/path
@@ -6,8 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
  * back to / while pmcs_token exists — so clear it here, then go to /login.
  */
 export function GET(request: NextRequest) {
-  const from = request.nextUrl.searchParams.get("from") ?? "";
-  const safeFrom = from.startsWith("/") && !from.startsWith("//") ? from : "/";
+  const safeFrom = safeReturnPath(request.nextUrl.searchParams.get("from"));
 
   const loginUrl = new URL("/login", request.url);
   loginUrl.searchParams.set("from", safeFrom);

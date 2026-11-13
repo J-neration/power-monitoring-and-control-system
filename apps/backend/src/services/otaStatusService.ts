@@ -14,6 +14,11 @@ export const OTA_STATUS_STATES = [
 ] as const;
 export type OtaStatusState = (typeof OTA_STATUS_STATES)[number];
 
+/** 화면을 바꾸는 OTA 의 단계 (HMI 저장소 docs/OTA_ASSET_PLAN.md 11.5 ①②③).
+ *  backup = 지금 화면의 보관본 받기, screen = 새 화면 받기, code = 코드 받기·설치. */
+export const OTA_STATUS_STAGES = ["backup", "screen", "code"] as const;
+export type OtaStatusStage = (typeof OTA_STATUS_STAGES)[number];
+
 /** 업데이트가 끝난 상태(웹에서 "진행 중" 표시를 끄는 기준). */
 export const OTA_FINAL_STATES: readonly OtaStatusState[] = ["confirmed", "rolled_back", "failed"];
 
@@ -23,6 +28,7 @@ export type OtaStatusInput = {
   percent?: number | null;
   fw?: string | null;
   target?: string | null;
+  stage?: OtaStatusStage | null;
   error?: string | null;
 };
 
@@ -33,6 +39,7 @@ export type OtaStatusEventDto = {
   percent: number | null;
   fw: string | null;
   target: string | null;
+  stage: string | null;
   error: string | null;
   createdAt: Date;
 };
@@ -57,6 +64,7 @@ export const otaStatusService = {
               : null,
           fw,
           target: clean(input.target, 32),
+          stage: input.stage ?? null,
           error: clean(input.error, 120),
         },
       });

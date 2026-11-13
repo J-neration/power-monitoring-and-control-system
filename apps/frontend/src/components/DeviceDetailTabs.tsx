@@ -27,6 +27,21 @@ import { useWsEvents } from "../hooks/useWsEvents";
 
 type Tab = "monitor" | "analytics" | "settings" | "firmware" | "faults";
 
+const TABS: readonly Tab[] = ["monitor", "analytics", "settings", "firmware", "faults"];
+
+/** URL ?tab= 값을 권한에 맞는 탭으로 변환. 볼 수 없는 탭이면 모니터로. */
+function resolveTab(
+  value: string | undefined,
+  isAdmin: boolean,
+  canViewFaults: boolean,
+): Tab {
+  const tab = TABS.find((t) => t === value);
+  if (!tab) return "monitor";
+  if ((tab === "settings" || tab === "firmware") && !isAdmin) return "monitor";
+  if (tab === "faults" && !canViewFaults) return "monitor";
+  return tab;
+}
+
 const MonitorIcon = () => (
   <svg
     viewBox="0 0 24 24"
@@ -113,6 +128,8 @@ type Props = {
   adminUsername?: string;
   /** Admin 전용: fault 이력 */
   faults?: FaultEvent[];
+  /** URL ?tab= 값. 새로고침해도 보던 탭을 유지하기 위해 사용 */
+  initialTab?: string;
 };
 
 export default function DeviceDetailTabs({
@@ -125,12 +142,24 @@ export default function DeviceDetailTabs({
   isInspector = false,
   adminUsername,
   faults = [],
+  initialTab,
 }: Props) {
-  const [tab, setTab] = useState<Tab>("monitor");
+  const canViewFaults = isAdmin || isViewer || isInspector;
+  const [tab, setTabState] = useState<Tab>(() =>
+    resolveTab(initialTab, isAdmin, canViewFaults),
+  );
   const router = useRouter();
   const activeTab: Tab = tab;
   const remoteControlTab = isAdmin && activeTab === "settings";
-  const canViewFaults = isAdmin || isViewer || isInspector;
+
+  /** 탭 전환 시 URL ?tab= 을 갱신(서버 재요청 없이)해 새로고침해도 같은 탭에 머문다 */
+  const setTab = (next: Tab) => {
+    setTabState(next);
+    const url = new URL(window.location.href);
+    if (next === "monitor") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", next);
+    window.history.replaceState(window.history.state, "", url);
+  };
   const longRangeHistory = isAdmin || isViewer || device.installation.historyVisible === true;
 
   useWsEvents((msg) => {
@@ -354,6 +383,8 @@ export default function DeviceDetailTabs({
           fwVersion={device.fwVersion}
           otaCapable={device.otaCapable}
           otaState={device.otaState}
+          assetVersion={device.assetVersion}
+          assetOta={device.assetOta}
           requestedBy={adminUsername}
         />
       )}

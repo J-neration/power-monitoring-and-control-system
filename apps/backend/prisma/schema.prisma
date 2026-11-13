@@ -202,6 +202,10 @@ model Device {
   otaCapable     Boolean?
   /// 텔레메트리 "otaState" (HMI EEPROM 레코드): idle | installing | pending_confirm | confirmed | rollback | failed
   otaState       String?
+  /// 텔레메트리 "assetVersion": 화면 데이터(TouchGFX) 번호 (HMI OTA_ASSET_VERSION). 2.4.0 은 보내지 않아 null (= 1)
+  assetVersion   Int?
+  /// 텔레메트리 "assetOta": 화면 데이터 OTA 를 받을 수 있는 펌웨어면 true (HMI 2.5.0~)
+  assetOta       Boolean?
 
   // 전압 (V)
   vL1             Float?
@@ -517,12 +521,19 @@ model OtaFile {
   uploadedBy    String?
   createdAt     DateTime @default(now())
 
-  /// 패키지 헤더(HMI ota_image.h)에서 읽은 값. 헤더가 없는 일반 파일이면 null
-  /// (그런 파일로는 ota 명령을 만들 수 없다).
+  /// 패키지 종류: "code"(매직 HMI1, 코드) | "asset"(매직 HMIA, 화면 데이터). 일반 파일이면 null
+  kind          String?
+  /// 패키지 헤더(HMI ota_image.h / ota_asset_image.h)에서 읽은 값. 헤더가 없는 일반 파일이면 null
+  /// (그런 파일로는 ota 명령을 만들 수 없다). version 은 코드 패키지만 있다.
+  /// 화면 패키지: assetVersion = 화면 번호, imageSize = 풀린 화면 데이터 크기
   version       String?
   productId     Int?
   assetVersion  Int?
   imageSize     Int?
+  /// 화면 패키지의 풀린 화면 데이터 SHA-256 (hex). 코드 패키지는 null
+  rawSha256     String?
+
+  @@index([kind, assetVersion])
 }
 
 /// HMI 가 보낸 OTA 진행/결과 (POST /receiver/ota/status). 시간순 이력.
@@ -539,6 +550,8 @@ model OtaStatusEvent {
   fw             String?
   /// 업데이트 대상 버전
   target         String?
+  /// 화면을 바꾸는 OTA 의 단계: "backup"(보관본) | "screen"(새 화면) | "code". 이전 펌웨어는 보내지 않음
+  stage          String?
   error          String?
   createdAt      DateTime     @default(now())
 
