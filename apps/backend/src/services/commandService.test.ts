@@ -91,10 +91,47 @@ class InMemoryRepo {
 
   async markSent(id: string, sentAt: Date) {
     const cmd = this.commands.find((c) => c.id === id);
-    if (!cmd) throw new Error("missing command");
+    if (!cmd || cmd.status !== "pending") return null;
     cmd.status = "sent";
     cmd.sentAt = sentAt;
     return cmd;
+  }
+
+  /** commandIds the HMI sent an OTA status report for */
+  otaReports = new Set<string>();
+
+  async requeueUnansweredOta(installationId: string, sentBefore: Date, maxRedeliveries: number) {
+    const ids: string[] = [];
+    for (const c of this.commands) {
+      if (
+        c.installationId === installationId &&
+        c.power === "ota" &&
+        c.status === "sent" &&
+        c.sentAt &&
+        c.sentAt.getTime() < sentBefore.getTime() &&
+        c.retryCount < maxRedeliveries &&
+        !this.otaReports.has(c.id)
+      ) {
+        c.status = "pending";
+        c.retryCount++;
+        ids.push(c.id);
+      }
+    }
+    return ids;
+  }
+
+  async markOtaReported(
+    id: string,
+    status: "acked" | "failed" | "pending" | "sent" | "expired" | "cancelled",
+    at: Date,
+    message: string,
+  ) {
+    const cmd = this.commands.find((c) => c.id === id);
+    if (!cmd || cmd.power !== "ota" || (cmd.status !== "pending" && cmd.status !== "sent")) return false;
+    cmd.status = status;
+    cmd.ackedAt = at;
+    cmd.ackMessage = message;
+    return true;
   }
 
   async findById(id: string) {
@@ -627,4 +664,76 @@ test("setBasic infers v5 when only v5-only keys are sent against stale v1v2", as
     startupMethod: "Auto",
     priorityMode: "Harm",
   });
+});
+
+// The poll answer can be lost on the LTE link after the server marked the command
+// sent (field 2026-11-13: sent, then no ACK and no report for 15 minutes).
+test("ota command: handed out again when the HMI never answered", async () => {
+  const repo = new InMemoryRepo();
+  repo.otaFiles.set(OTA_PKG.id, OTA_PKG);
+  const service = createCommandService(repo, {
+    maxModules: 6,
+    ttlSeconds: 900,
+    otaAckTimeoutSeconds: 180,
+    otaMaxRedeliveries: 2,
+  });
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "ota",
+    fields: { fileId: OTA_PKG.id },
+  });
+  const cmd = repo.commands[0];
+
+  assert.equal((await service.poll("PSVG-RNDTEST5")).id, created.id);
+  // within the ACK timeout: not again
+  assert.deepEqual(await service.poll("PSVG-RNDTEST5"), NO_COMMAND);
+
+  // no answer for 3 minutes: the telemetry ACK keeps the HMI polling, the poll hands it out again
+  cmd.sentAt = new Date(Date.now() - 181_000);
+  assert.equal(await service.hasPending("PSVG-RNDTEST5"), true);
+  assert.equal((await service.poll("PSVG-RNDTEST5")).id, created.id);
+  assert.equal(cmd.retryCount, 1);
+
+  cmd.sentAt = new Date(Date.now() - 181_000);
+  assert.equal((await service.poll("PSVG-RNDTEST5")).id, created.id);
+  assert.equal(cmd.retryCount, 2);
+
+  // limit reached: stays sent until the TTL expires it
+  cmd.sentAt = new Date(Date.now() - 181_000);
+  assert.deepEqual(await service.poll("PSVG-RNDTEST5"), NO_COMMAND);
+  assert.equal(cmd.status, "sent");
+});
+
+test("ota command: a status report closes it even without an ACK", async () => {
+  const repo = new InMemoryRepo();
+  repo.otaFiles.set(OTA_PKG.id, OTA_PKG);
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 900, otaAckTimeoutSeconds: 180 });
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "ota",
+    fields: { fileId: OTA_PKG.id },
+  });
+  await service.poll("PSVG-RNDTEST5");
+
+  assert.equal(await service.noteOtaReport(created.id, "downloading"), true);
+  const cmd = repo.commands[0];
+  assert.equal(cmd.status, "acked");
+  assert.equal(cmd.ackMessage, "ota status downloading");
+
+  cmd.sentAt = new Date(Date.now() - 181_000);
+  assert.deepEqual(await service.poll("PSVG-RNDTEST5"), NO_COMMAND);
+  // a later report or the late ACK changes nothing
+  assert.equal(await service.noteOtaReport(created.id, "failed"), false);
+  assert.equal(await service.noteOtaReport("", "failed"), false);
+});
+
+test("non-ota command: never handed out again", async () => {
+  const repo = new InMemoryRepo();
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 900, otaAckTimeoutSeconds: 180 });
+  await service.create({ installationId: "PSVG-RNDTEST5", module: 1, power: "off" });
+  await service.poll("PSVG-RNDTEST5");
+  repo.commands[0].sentAt = new Date(Date.now() - 181_000);
+  assert.deepEqual(await service.poll("PSVG-RNDTEST5"), NO_COMMAND);
 });
