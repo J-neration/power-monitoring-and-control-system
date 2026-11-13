@@ -13860,31 +13860,63 @@ body.pmcs-control-room .global-header:hover {
   color: var(--pmcs-text);
 }
 
-.device-firmware-send {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
+/* package tables: one row per package, actions on the right */
+.device-firmware-table td {
+  vertical-align: middle;
 }
 
-.device-firmware-send label {
-  font-size: 13px;
+.device-firmware-version {
+  white-space: nowrap;
+  font-family: var(--pmcs-font-mono);
+}
+
+.device-firmware-state--ok {
+  color: var(--pmcs-accent);
+}
+
+.device-firmware-state--screen {
+  color: #fbbf24;
+}
+
+.device-firmware-state--no {
   color: var(--pmcs-text-muted);
 }
 
-.device-firmware-send select {
-  flex: 1 1 280px;
-  min-width: 0;
-  padding: 8px 10px;
-  border: 1px solid var(--pmcs-panel-border);
-  border-radius: var(--pmcs-radius);
-  background: var(--pmcs-bg-elevated);
-  color: var(--pmcs-text);
+.device-firmware-actions {
+  white-space: nowrap;
+  text-align: right;
 }
 
-.device-firmware-send button:disabled {
+.device-firmware-actions button + button {
+  margin-left: 6px;
+}
+
+.device-firmware-actions button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+/* folded sections (screen data packages, history) */
+.device-firmware-fold {
+  border-top: 1px solid var(--pmcs-divider);
+  padding-top: 8px;
+}
+
+.device-firmware-fold > summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--pmcs-text);
+  padding: 4px 0;
+}
+
+.device-firmware-fold[open] > summary {
+  margin-bottom: 8px;
+}
+
+.device-firmware-fold-note {
+  margin-left: 10px;
+  font-size: 12px;
+  color: var(--pmcs-text-muted);
 }
 
 .device-firmware-hint {
