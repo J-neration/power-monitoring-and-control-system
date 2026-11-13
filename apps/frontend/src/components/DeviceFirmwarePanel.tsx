@@ -4,13 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 /**
  * 펌웨어(OTA) 탭 — 관리자 전용.
- *   - 현재 펌웨어 버전 / 화면 데이터 번호 / OTA 상태 (텔레메트리 fw, assetVersion, otaState)
- *   - 업로드된 OTA 패키지를 골라 OTA 명령 전송 (명령 하나로 다운로드 → 검사 → 자동 적용)
- *   - 화면 데이터 번호가 다른 코드 패키지는 화면 데이터 패키지(새 화면 + 보관본)와 함께 보낸다.
- *     보낼 수 없으면(미지원 장비, 서버에 화면 패키지 없음) 흐리게 표시하고 이유를 보여 준다
- *   - HMI 가 보낸 진행/결과 이력 (POST /receiver/ota/status)
- *   - 서버의 패키지 목록과 삭제 (DELETE /receiver/ota/files/:id). 화면 데이터 번호마다 마지막
- *     패키지는 되돌리기용 보관본이라 서버가 거부(409)하므로 버튼을 막아 둔다
+ *   - 현재 펌웨어 "v버전 · 화면 N" / 화면 원격 교체 가능 여부 / OTA 상태
+ *     (텔레메트리 fw, assetVersion, assetOta, otaState)
+ *   - 코드 패키지 표: 줄마다 이 장비에 보낼 수 있는지(그대로 / 화면도 바뀜 / 보낼 수 없음 + 이유)와
+ *     [보내기] [삭제]. 보내는 사람은 코드 버전만 고른다. 화면 데이터 번호가 다르면 서버가
+ *     화면 데이터 패키지(새 화면 + 보관본)를 명령에 붙인다
+ *   - 화면 데이터 패키지(재료)는 접어 둔다. 번호마다 마지막 패키지는 되돌리기용 보관본이라
+ *     서버가 삭제를 거부(409)하므로 버튼을 막아 둔다
+ *   - HMI 가 보낸 진행/결과 이력 (POST /receiver/ota/status). 접어 두고, 진행 중이면 펼친다
  * HMI 쪽 동작: HMI 저장소 docs/OTA_DEVELOPMENT_PLAN.md 12장 단계 7–8, docs/OTA_ASSET_PLAN.md 11.5.
  */
 
@@ -297,6 +298,8 @@ export default function DeviceFirmwarePanel({
   const [now, setNow] = useState(() => Date.now());
   const [deleteTarget, setDeleteTarget] = useState<OtaFile | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [materialsOpen, setMaterialsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const current = status?.device?.fwVersion ?? fwVersion ?? null;
   const capable = (status?.device?.otaCapable ?? otaCapable) === true;
@@ -367,6 +370,11 @@ export default function DeviceFirmwarePanel({
         ? `${latest.percent}%`
         : undefined;
   const active = stage !== null;
+
+  /** 업데이트가 시작되면 진행 이력을 펼친다 */
+  useEffect(() => {
+    if (active) setHistoryOpen(true);
+  }, [active]);
 
   /** 진행 중에는 1초마다 경과 시간을 갱신 */
   useEffect(() => {
@@ -474,14 +482,39 @@ export default function DeviceFirmwarePanel({
   }, [files]);
   const lastOfItsNumber = (f: OtaFile) =>
     f.kind === "asset" && f.assetVersion != null && (assetCount.get(f.assetVersion) ?? 0) <= 1;
-  /** 목록: 최근에 올린 것부터 */
-  const allFiles = useMemo(() => [...files].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)), [files]);
+  const newestFirst = (a: OtaFile, b: OtaFile) => (a.createdAt < b.createdAt ? 1 : -1);
+  /** 코드 패키지: 높은 버전부터, 같은 버전이면 최근 것부터 */
+  const codeRows = useMemo(
+    () =>
+      [...codeFiles].sort((a, b) =>
+        a.version === b.version
+          ? newestFirst(a, b)
+          : versionNewer(a.version ?? "", b.version ?? "")
+            ? -1
+            : 1,
+      ),
+    [codeFiles],
+  );
+  /** 화면 데이터 패키지(재료)와 헤더 없는 일반 파일: 번호 큰 것부터, 같은 번호면 최근 것부터 */
+  const materialRows = useMemo(
+    () =>
+      files
+        .filter((f) => f.kind === "asset" || !f.version)
+        .sort((a, b) =>
+          (a.assetVersion ?? -1) === (b.assetVersion ?? -1)
+            ? newestFirst(a, b)
+            : (b.assetVersion ?? -1) - (a.assetVersion ?? -1),
+        ),
+    [files],
+  );
   const kindText = (f: OtaFile) =>
     f.kind === "asset"
       ? `화면 데이터 ${f.assetVersion}번`
       : f.version
         ? `코드 v${f.version} · 화면 ${f.assetVersion ?? 1}번`
         : "일반 파일";
+  const kb = (f: OtaFile) => `${Math.round(f.size / 1024).toLocaleString("ko-KR")} KB`;
+  const fileTitle = (f: OtaFile) => `${f.name}${f.uploadedBy ? ` · 올린 사람 ${f.uploadedBy}` : ""}`;
 
   /** 코드 패키지가 장비의 화면 데이터와 다른 번호를 요구할 때, 보낼 수 없는 이유 (보낼 수 있으면 null) */
   const blockedReason = (f: OtaFile): string | null => {
@@ -494,10 +527,37 @@ export default function DeviceFirmwarePanel({
   };
   const changesScreen = (f: OtaFile) => assetNo !== null && (f.assetVersion ?? 1) !== assetNo;
 
+  /** 코드 패키지 한 줄: 이 장비에 보낼 수 있는지와 그 까닭 */
+  const rowState = (f: OtaFile): { text: string; tone: "ok" | "screen" | "no"; canSend: boolean } => {
+    const v = f.version ?? "";
+    if (!capable) return { text: "보낼 수 없음: OTA 미지원 펌웨어", tone: "no", canSend: false };
+    if (current && v === current) return { text: "지금 버전", tone: "no", canSend: false };
+    if (current && !versionNewer(v, current))
+      return { text: "보낼 수 없음: 지금보다 낮은 버전(장비가 거절)", tone: "no", canSend: false };
+    const blocked = blockedReason(f);
+    if (blocked) return { text: `보낼 수 없음: ${blocked}`, tone: "no", canSend: false };
+    if (changesScreen(f))
+      return {
+        text: `화면도 바뀜 (화면 ${assetNo}번 → ${f.assetVersion ?? 1}번, 약 15분)`,
+        tone: "screen",
+        canSend: true,
+      };
+    return { text: "보낼 수 있음 (약 3분)", tone: "ok", canSend: true };
+  };
+
+  /** 화면 데이터 패키지 한 줄의 쓰임 */
+  const materialUse = (f: OtaFile): string => {
+    if (f.kind !== "asset") return "헤더 없는 파일(보낼 수 없음)";
+    const newest = assetFiles.some((x) => x.id === f.id);
+    if (!newest) return "옛 패키지(명령에 쓰이지 않음)";
+    if (f.assetVersion === assetNo) return "이 장비의 지금 화면(되돌리기용 보관본)";
+    if (codeFiles.some((c) => c.assetVersion === f.assetVersion)) return "코드 패키지가 쓰는 화면";
+    return "—";
+  };
+
   const chosen = codeFiles.find((f) => f.id === selected) ?? null;
   const chosenBlocked = chosen ? blockedReason(chosen) : null;
   const chosenScreen = chosen ? changesScreen(chosen) && !chosenBlocked : false;
-  const notNewer = chosen && current ? !versionNewer(chosen.version ?? "", current) : false;
 
   const send = async () => {
     if (!chosen) return;
@@ -580,14 +640,14 @@ export default function DeviceFirmwarePanel({
         <dl className="device-firmware-facts">
           <div>
             <dt>현재 버전</dt>
-            <dd>{current ? `v${current}` : "알 수 없음"}</dd>
+            <dd>
+              {current ? `v${current}` : "알 수 없음"}
+              {assetNo !== null ? ` · 화면 ${assetNo}번` : ""}
+            </dd>
           </div>
           <div>
-            <dt>화면 데이터</dt>
-            <dd>
-              {assetNo !== null ? `${assetNo}번` : "알 수 없음"}
-              {assetNo !== null && assetRemote ? " (원격 교체 가능)" : ""}
-            </dd>
+            <dt>화면 원격 교체</dt>
+            <dd>{assetNo === null ? "알 수 없음" : assetRemote ? "가능" : "미지원(2.5.0 이상 필요)"}</dd>
           </div>
           <div>
             <dt>OTA 상태</dt>
@@ -606,118 +666,107 @@ export default function DeviceFirmwarePanel({
           />
         ) : null}
 
-        <div className="device-firmware-send">
-          <label htmlFor="ota-file">업데이트할 패키지</label>
-          <select
-            id="ota-file"
-            value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-            disabled={!capable || sending}
-          >
-            <option value="">선택하세요</option>
-            {codeFiles.map((f) => {
-              const blocked = blockedReason(f);
-              return (
-                <option key={f.id} value={f.id} disabled={blocked !== null}>
-                  v{f.version} · 화면 {f.assetVersion ?? 1}번 · {f.name} · {Math.round(f.size / 1024)} KB ·{" "}
-                  {fmtTime(f.createdAt)}
-                  {blocked ? ` — 보낼 수 없음: ${blocked}` : changesScreen(f) ? " — 화면 데이터도 바뀜" : ""}
-                </option>
-              );
-            })}
-          </select>
-          <button
-            type="button"
-            className="module-power-confirm-submit module-power-confirm-submit--on"
-            disabled={!chosen || !capable || sending || notNewer || active || chosenBlocked !== null}
-            onClick={() => setConfirmOpen(true)}
-          >
-            OTA 보내기
-          </button>
-        </div>
+        <h4 className="device-firmware-subtitle">코드 패키지</h4>
         <p className="device-firmware-hint">
           {!capable
             ? "이 기기는 OTA를 지원하지 않는 펌웨어입니다. 현장에서 ST-Link로 OTA 펌웨어를 먼저 설치해야 합니다."
-            : notNewer
-              ? "현재 버전보다 높은 버전만 보낼 수 있습니다(HMI가 거절합니다)."
-              : active
-                ? "업데이트가 진행 중입니다. 끝난 뒤 다시 보낼 수 있습니다."
-                : chosenScreen
-                  ? `화면 데이터도 바뀝니다(화면 ${assetNo}번 → ${chosen?.assetVersion ?? 1}번). 보관본과 새 화면을 받은 뒤 코드를 받습니다(전체 약 15분). 화면 데이터를 기록할 때 약 10초씩, 설치할 때 약 15초 멈추고, 새 펌웨어가 화면을 바꾸는 약 2분 동안 화면에는 진행 막대만 보입니다(제어와 통신은 계속). 문제가 있으면 이전 버전과 이전 화면으로 자동 복구됩니다.`
-                  : "명령 하나로 다운로드(약 2분) → 서명 검사 → 자동 적용까지 진행합니다. 적용할 때 약 15초 동안 화면과 제어가 멈춥니다. 새 버전이 정상 동작하지 않으면 이전 버전으로 자동 복구됩니다."}
+            : active
+              ? "업데이트가 진행 중입니다. 끝난 뒤 다시 보낼 수 있습니다."
+              : "버전을 골라 [보내기]를 누르면 명령 하나로 다운로드 → 서명 검사 → 자동 적용까지 진행합니다. 화면 데이터가 바뀌는 버전은 필요한 화면 데이터를 장비가 함께 받습니다. 문제가 있으면 이전 버전(과 이전 화면)으로 자동 복구됩니다."}
         </p>
-        {codeFiles.some((f) => blockedReason(f) !== null) ? (
-          <p className="device-firmware-hint">
-            흐리게 표시된 패키지는 이 장비의 화면 데이터({assetNo}번)와 맞지 않아 지금은 보낼 수 없습니다. 이유는 목록에
-            적혀 있습니다.
-          </p>
-        ) : null}
-
-        <h4 className="device-firmware-subtitle">화면 데이터 패키지</h4>
-        {assetFiles.length === 0 ? (
-          <p className="device-firmware-hint">
-            서버에 화면 데이터 패키지가 없습니다. 화면 데이터가 바뀌는 펌웨어를 보내려면 새 화면과 이 장비의 지금 화면
-            패키지(보관본)가 모두 있어야 합니다.
-          </p>
+        {codeRows.length === 0 ? (
+          <p className="device-firmware-hint">서버에 코드 패키지가 없습니다.</p>
         ) : (
           <div className="fault-table-wrap">
-            <table className="fault-table">
+            <table className="fault-table device-firmware-table">
               <thead>
                 <tr>
-                  <th>화면 번호</th>
-                  <th>파일</th>
+                  <th>버전</th>
+                  <th>이 장비에</th>
                   <th>크기</th>
                   <th>올린 시각</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
-                {assetFiles.map((f) => (
-                  <tr key={f.id}>
-                    <td>
-                      {f.assetVersion}번{f.assetVersion === assetNo ? " (이 장비의 지금 화면)" : ""}
-                    </td>
-                    <td>{f.name}</td>
-                    <td>{Math.round(f.size / 1024).toLocaleString("ko-KR")} KB</td>
-                    <td>{fmtTime(f.createdAt)}</td>
-                  </tr>
-                ))}
+                {codeRows.map((f) => {
+                  const st = rowState(f);
+                  return (
+                    <tr key={f.id} title={fileTitle(f)}>
+                      <td className="device-firmware-version">
+                        v{f.version} · 화면 {f.assetVersion ?? 1}번
+                      </td>
+                      <td className={`device-firmware-state device-firmware-state--${st.tone}`}>{st.text}</td>
+                      <td>{kb(f)}</td>
+                      <td>{fmtTime(f.createdAt)}</td>
+                      <td className="device-firmware-actions">
+                        <button
+                          type="button"
+                          className="module-power-confirm-submit module-power-confirm-submit--on"
+                          disabled={!st.canSend || sending || active}
+                          onClick={() => {
+                            setSelected(f.id);
+                            setConfirmOpen(true);
+                          }}
+                        >
+                          보내기
+                        </button>
+                        <button
+                          type="button"
+                          className="module-power-confirm-cancel"
+                          disabled={deleting || active}
+                          title={active ? "업데이트가 진행 중에는 지울 수 없습니다" : undefined}
+                          onClick={() => setDeleteTarget(f)}
+                        >
+                          삭제
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
 
-        <h4 className="device-firmware-subtitle">서버의 패키지</h4>
-        {allFiles.length === 0 ? (
-          <p className="device-firmware-hint">서버에 올린 패키지가 없습니다.</p>
-        ) : (
-          <>
+        <details
+          className="device-firmware-fold"
+          open={materialsOpen}
+          onToggle={(e) => setMaterialsOpen(e.currentTarget.open)}
+        >
+          <summary>
+            화면 데이터 패키지 (재료) · {materialRows.length}개
+            <span className="device-firmware-fold-note">직접 보내지 않습니다. 코드가 필요로 하면 장비가 받습니다.</span>
+          </summary>
+          {materialRows.length === 0 ? (
             <p className="device-firmware-hint">
-              패키지는 모든 장비가 같이 씁니다. 지우면 어느 장비에도 보낼 수 없습니다. 화면 데이터 번호마다 마지막
-              패키지는 되돌리기용 보관본이라 지울 수 없습니다.
+              서버에 화면 데이터 패키지가 없습니다. 화면 데이터가 바뀌는 버전을 보내려면 새 화면과 이 장비의 지금 화면
+              패키지(보관본)가 모두 있어야 합니다.
             </p>
+          ) : (
             <div className="fault-table-wrap">
-              <table className="fault-table">
+              <table className="fault-table device-firmware-table">
                 <thead>
                   <tr>
-                    <th>종류</th>
-                    <th>파일</th>
+                    <th>번호</th>
+                    <th>쓰임</th>
                     <th>크기</th>
                     <th>올린 시각</th>
-                    <th>올린 사람</th>
                     <th />
                   </tr>
                 </thead>
                 <tbody>
-                  {allFiles.map((f) => {
+                  {materialRows.map((f) => {
                     const locked = lastOfItsNumber(f);
                     return (
-                      <tr key={f.id}>
-                        <td>{kindText(f)}</td>
-                        <td>{f.name}</td>
-                        <td>{Math.round(f.size / 1024).toLocaleString("ko-KR")} KB</td>
+                      <tr key={f.id} title={fileTitle(f)}>
+                        <td className="device-firmware-version">
+                          {f.kind === "asset" ? `화면 ${f.assetVersion}번` : "일반 파일"}
+                        </td>
+                        <td>{materialUse(f)}</td>
+                        <td>{kb(f)}</td>
                         <td>{fmtTime(f.createdAt)}</td>
-                        <td>{f.uploadedBy ?? "—"}</td>
-                        <td>
+                        <td className="device-firmware-actions">
                           <button
                             type="button"
                             className="module-power-confirm-cancel"
@@ -740,44 +789,53 @@ export default function DeviceFirmwarePanel({
                 </tbody>
               </table>
             </div>
-          </>
-        )}
+          )}
+        </details>
 
-        <h4 className="device-firmware-subtitle">진행 이력</h4>
-        {events.length === 0 ? (
-          <p className="device-firmware-hint">아직 기록이 없습니다.</p>
-        ) : (
-          <div className="fault-table-wrap">
-            <table className="fault-table">
-              <thead>
-                <tr>
-                  <th>시각</th>
-                  <th>상태</th>
-                  <th>실행 버전</th>
-                  <th>대상 버전</th>
-                  <th>내용</th>
-                </tr>
-              </thead>
-              <tbody>
-                {events.map((e) => (
-                  <tr key={e.id}>
-                    <td>{fmtTime(e.createdAt)}</td>
-                    <td>
-                      {STATE_LABEL[e.state] ?? e.state}
-                      {e.stage && e.stage !== "code" && STAGE_NAME[e.stage] ? ` · ${STAGE_NAME[e.stage]}` : ""}
-                      {e.state === "downloading" && typeof e.percent === "number" && e.percent > 0
-                        ? ` ${e.percent}%`
-                        : ""}
-                    </td>
-                    <td>{e.fw ? `v${e.fw}` : "—"}</td>
-                    <td>{attemptedTarget(e) ? `v${attemptedTarget(e)}` : "—"}</td>
-                    <td>{errorText(e)}</td>
+        <details
+          className="device-firmware-fold"
+          open={historyOpen}
+          onToggle={(e) => setHistoryOpen(e.currentTarget.open)}
+        >
+          <summary>
+            진행 이력 · {events.length}건
+            {latest ? <span className="device-firmware-fold-note">마지막: {stateText}</span> : null}
+          </summary>
+          {events.length === 0 ? (
+            <p className="device-firmware-hint">아직 기록이 없습니다.</p>
+          ) : (
+            <div className="fault-table-wrap">
+              <table className="fault-table">
+                <thead>
+                  <tr>
+                    <th>시각</th>
+                    <th>상태</th>
+                    <th>실행 버전</th>
+                    <th>대상 버전</th>
+                    <th>내용</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody>
+                  {events.map((e) => (
+                    <tr key={e.id}>
+                      <td>{fmtTime(e.createdAt)}</td>
+                      <td>
+                        {STATE_LABEL[e.state] ?? e.state}
+                        {e.stage && e.stage !== "code" && STAGE_NAME[e.stage] ? ` · ${STAGE_NAME[e.stage]}` : ""}
+                        {e.state === "downloading" && typeof e.percent === "number" && e.percent > 0
+                          ? ` ${e.percent}%`
+                          : ""}
+                      </td>
+                      <td>{e.fw ? `v${e.fw}` : "—"}</td>
+                      <td>{attemptedTarget(e) ? `v${attemptedTarget(e)}` : "—"}</td>
+                      <td>{errorText(e)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </details>
       </div>
 
       {confirmOpen && chosen ? (
@@ -797,7 +855,9 @@ export default function DeviceFirmwarePanel({
           >
             <p className="module-power-confirm-kicker">펌웨어 업데이트 확인</p>
             <h4 id="ota-confirm-title" className="module-power-confirm-title">
-              v{current ?? "?"} → v{chosen.version} 로 업데이트할까요?
+              v{current ?? "?"}
+              {assetNo !== null ? ` · 화면 ${assetNo}번` : ""} → v{chosen.version} · 화면 {chosen.assetVersion ?? 1}번
+              으로 업데이트할까요?
             </h4>
             <p id="ota-confirm-desc" className="module-power-confirm-desc">
               {chosenScreen
