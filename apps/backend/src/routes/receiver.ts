@@ -878,6 +878,8 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       stage: body.stage,
       error: body.error,
     });
+    // A report proves the HMI has the command even if its ACK was lost.
+    await commandService.noteOtaReport(body.id, body.state);
     server.log.info(
       {
         installationId: identity.installationId,

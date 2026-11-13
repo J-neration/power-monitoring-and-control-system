@@ -181,3 +181,79 @@ describe("remote window (viewing)", () => {
     assert.equal(res.statusCode, 404);
   });
 });
+
+// The poll answer can be lost on the LTE link after the server marked it sent
+// (field 2026-11-13: sent, then no ACK and no report until the TTL).
+describe("ota command redelivery", () => {
+  const seedPackage = () =>
+    prisma.otaFile.create({
+      data: {
+        name: "HMI_2.4.2_ota.bin",
+        size: 4,
+        sha256: "0".repeat(64),
+        data: Buffer.from([1, 2, 3, 4]),
+        downloadToken: `tok${Date.now()}${Math.random().toString(36).slice(2, 10)}`,
+        kind: "code",
+        version: "2.4.2",
+        productId: 1,
+        assetVersion: 1,
+      },
+    });
+  const poll = async () => (await hmi(t.app).get(`/receiver/commands?iccid=${IDS.lotteIccid}`)).json();
+  const backdateSent = (id: string) =>
+    prisma.deviceCommand.update({ where: { id }, data: { sentAt: new Date(Date.now() - 181_000) } });
+
+  it("hands an unanswered ota command out again; a status report closes it", async () => {
+    const { tokens } = await seedWorld(t.app);
+    const file = await seedPackage();
+    const { command } = (await createCommand(tokens.admin, { power: "ota", fields: { fileId: file.id } })).json();
+
+    assert.equal((await poll()).id, command.id);
+    assert.deepEqual(await poll(), NO_COMMAND, "not again within the ACK timeout");
+
+    await backdateSent(command.id);
+    const ack = (await hmi(t.app).post("/receiver", telemetryPayload())).json();
+    assert.equal(ack.adminSessionActive, true);
+    const again = await poll();
+    assert.equal(again.id, command.id);
+    assert.equal(again.ver, "2.4.2");
+    let row = await prisma.deviceCommand.findUniqueOrThrow({ where: { id: command.id } });
+    assert.equal(row.status, "sent");
+    assert.equal(row.retryCount, 1);
+
+    // The HMI's ACK is lost but its progress report arrives.
+    const rep = await hmi(t.app).post("/receiver/ota/status", {
+      iccid: IDS.lotteIccid,
+      id: command.id,
+      state: "downloading",
+      percent: 0,
+      fw: "2.4.1",
+      target: "2.4.2",
+    });
+    assert.equal(rep.statusCode, 200);
+    row = await prisma.deviceCommand.findUniqueOrThrow({ where: { id: command.id } });
+    assert.equal(row.status, "acked");
+    assert.equal(row.ackMessage, "ota status downloading");
+
+    await prisma.deviceCommand.update({ where: { id: command.id }, data: { sentAt: new Date(Date.now() - 181_000) } });
+    assert.deepEqual(await poll(), NO_COMMAND);
+
+    // The late ACK is accepted as a repeat.
+    const late = (await hmi(t.app).post("/receiver/commands/ack", { id: command.id, ok: true })).json();
+    assert.equal(late.command.idempotent, true);
+  });
+
+  it("stops handing it out after 3 redeliveries", async () => {
+    const { tokens } = await seedWorld(t.app);
+    const file = await seedPackage();
+    const { command } = (await createCommand(tokens.admin, { power: "ota", fields: { fileId: file.id } })).json();
+    await poll();
+    for (let i = 1; i <= 3; i++) {
+      await backdateSent(command.id);
+      assert.equal((await poll()).id, command.id, `redelivery ${i}`);
+    }
+    await backdateSent(command.id);
+    assert.deepEqual(await poll(), NO_COMMAND);
+    assert.equal((await prisma.deviceCommand.findUniqueOrThrow({ where: { id: command.id } })).status, "sent");
+  });
+});

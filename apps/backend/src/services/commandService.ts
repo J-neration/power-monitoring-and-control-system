@@ -90,7 +90,16 @@ type CommandRepository = {
     fields?: Prisma.InputJsonValue | null;
   }): Promise<DeviceCommand>;
   findOldestPending(installationId: string, now: Date): Promise<DeviceCommand | null>;
-  markSent(id: string, sentAt: Date): Promise<DeviceCommand>;
+  /** pending -> sent. null when the command is no longer pending (cancelled meanwhile). */
+  markSent(id: string, sentAt: Date): Promise<DeviceCommand | null>;
+  /**
+   * ota commands of this installation that the HMI took (sent) before sentBefore
+   * but never answered: no ACK and no OTA status report. Back to pending so the
+   * next poll hands them out again (retryCount + 1, at most maxRedeliveries).
+   */
+  requeueUnansweredOta(installationId: string, sentBefore: Date, maxRedeliveries: number): Promise<string[]>;
+  /** An OTA status report proves the HMI has the command: pending/sent -> acked or failed. */
+  markOtaReported(id: string, status: DeviceCommandStatus, at: Date, message: string): Promise<boolean>;
   findById(id: string): Promise<DeviceCommand | null>;
   markAck(
     id: string,
@@ -198,14 +207,56 @@ class PrismaCommandRepository implements CommandRepository {
     });
   }
 
-  async markSent(id: string, sentAt: Date): Promise<DeviceCommand> {
-    return prisma.deviceCommand.update({
-      where: { id },
+  async markSent(id: string, sentAt: Date): Promise<DeviceCommand | null> {
+    const res = await prisma.deviceCommand.updateMany({
+      where: { id, status: "pending" },
       data: {
         status: "sent",
         sentAt,
       },
     });
+    return res.count === 1 ? prisma.deviceCommand.findUnique({ where: { id } }) : null;
+  }
+
+  async requeueUnansweredOta(
+    installationId: string,
+    sentBefore: Date,
+    maxRedeliveries: number,
+  ): Promise<string[]> {
+    const stale = await prisma.deviceCommand.findMany({
+      where: {
+        installationId,
+        power: "ota",
+        status: "sent",
+        sentAt: { lt: sentBefore },
+        retryCount: { lt: maxRedeliveries },
+      },
+      select: { id: true },
+    });
+    const requeued: string[] = [];
+    for (const { id } of stale) {
+      // A status report without an ACK still means the HMI has it.
+      if ((await prisma.otaStatusEvent.count({ where: { commandId: id } })) > 0) continue;
+      const res = await prisma.deviceCommand.updateMany({
+        where: { id, status: "sent" },
+        data: { status: "pending", retryCount: { increment: 1 } },
+      });
+      if (res.count === 1) requeued.push(id);
+    }
+    return requeued;
+  }
+
+  async markOtaReported(
+    id: string,
+    status: DeviceCommandStatus,
+    at: Date,
+    message: string,
+  ): Promise<boolean> {
+    const res = await prisma.deviceCommand.updateMany({
+      where: { id, power: "ota", status: { in: ["pending", "sent"] } },
+      data: { status, ackedAt: at, ackMessage: message },
+    });
+    return res.count === 1;
   }
 
   async findById(id: string): Promise<DeviceCommand | null> {
@@ -314,11 +365,24 @@ export class CommandError extends Error {
 
 export const createCommandService = (
   repo: CommandRepository,
-  cfg?: { maxModules?: number; ttlSeconds?: number },
+  cfg?: {
+    maxModules?: number;
+    ttlSeconds?: number;
+    otaAckTimeoutSeconds?: number;
+    otaMaxRedeliveries?: number;
+  },
 ) => {
   const maxModules = cfg?.maxModules ?? Number(process.env.COMMAND_MAX_MODULES ?? 6);
   // HMI only starts polling after its next telemetry ACK (~10 min cycle).
   const ttlSeconds = cfg?.ttlSeconds ?? Number(process.env.COMMAND_TTL_SECONDS ?? 900);
+  // An ota command the HMI took but never answered (no ACK, no status report) is
+  // handed out again after this long: the poll answer can be lost on the LTE link
+  // after the server already marked it sent. The HMI ACKs within seconds and
+  // ignores a command id it already took ("duplicate ignored").
+  const otaAckTimeoutSeconds =
+    cfg?.otaAckTimeoutSeconds ?? Number(process.env.OTA_ACK_TIMEOUT_SECONDS ?? 180);
+  const otaMaxRedeliveries =
+    cfg?.otaMaxRedeliveries ?? Number(process.env.OTA_MAX_REDELIVERIES ?? 3);
 
   return {
     policy: {
@@ -485,11 +549,19 @@ export const createCommandService = (
       }
 
       await repo.expireCommands(new Date());
+      await repo.requeueUnansweredOta(
+        installationId,
+        new Date(Date.now() - otaAckTimeoutSeconds * 1000),
+        otaMaxRedeliveries,
+      );
       const cmd = await repo.findOldestPending(installationId, new Date());
       if (!cmd) {
         return NO_COMMAND;
       }
       const sent = await repo.markSent(cmd.id, new Date());
+      if (!sent) {
+        return NO_COMMAND;
+      }
 
       if (sent.power === "ota") {
         // Short keys: the HMI reads the command into a 1024-byte buffer
@@ -552,10 +624,31 @@ export const createCommandService = (
       return payload;
     },
 
+    /**
+     * The HMI sent an OTA status report for this command: it has the command even
+     * if its ACK was lost. Closes the command so it is not handed out again.
+     */
+    async noteOtaReport(commandId: string | null | undefined, state: string): Promise<boolean> {
+      const id = commandId?.trim();
+      if (!id) return false;
+      return repo.markOtaReported(
+        id,
+        state === "failed" ? "failed" : "acked",
+        new Date(),
+        `ota status ${state}`,
+      );
+    },
+
     /** Unexpired command still waiting for the HMI to poll it. */
     async hasPending(installationIdRaw: string): Promise<boolean> {
       const installationId = installationIdRaw?.trim();
       if (!installationId) return false;
+      // Keep the HMI polling while an unanswered ota command waits to be handed out again.
+      await repo.requeueUnansweredOta(
+        installationId,
+        new Date(Date.now() - otaAckTimeoutSeconds * 1000),
+        otaMaxRedeliveries,
+      );
       return (await repo.findOldestPending(installationId, new Date())) !== null;
     },
 
