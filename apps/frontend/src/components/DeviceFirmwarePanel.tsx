@@ -9,6 +9,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
  *   - 화면 데이터 번호가 다른 코드 패키지는 화면 데이터 패키지(새 화면 + 보관본)와 함께 보낸다.
  *     보낼 수 없으면(미지원 장비, 서버에 화면 패키지 없음) 흐리게 표시하고 이유를 보여 준다
  *   - HMI 가 보낸 진행/결과 이력 (POST /receiver/ota/status)
+ *   - 서버의 패키지 목록과 삭제 (DELETE /receiver/ota/files/:id). 화면 데이터 번호마다 마지막
+ *     패키지는 되돌리기용 보관본이라 서버가 거부(409)하므로 버튼을 막아 둔다
  * HMI 쪽 동작: HMI 저장소 docs/OTA_DEVELOPMENT_PLAN.md 12장 단계 7–8, docs/OTA_ASSET_PLAN.md 11.5.
  */
 
@@ -21,6 +23,7 @@ type OtaFile = {
   version: string | null;
   productId: number | null;
   assetVersion: number | null;
+  uploadedBy?: string | null;
   createdAt: string;
 };
 
@@ -292,6 +295,8 @@ export default function DeviceFirmwarePanel({
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState<Sent | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [deleteTarget, setDeleteTarget] = useState<OtaFile | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const current = status?.device?.fwVersion ?? fwVersion ?? null;
   const capable = (status?.device?.otaCapable ?? otaCapable) === true;
@@ -425,19 +430,22 @@ export default function DeviceFirmwarePanel({
     }
   }, [installationId]);
 
+  /** 서버의 패키지 전부(헤더 없는 일반 파일 포함). 보내기 목록은 아래에서 종류별로 거른다 */
+  const loadFiles = useCallback(async () => {
+    try {
+      const res = await fetch("/api/receiver/ota/files", { cache: "no-store" });
+      if (!res.ok) return;
+      const body = (await res.json()) as { files: OtaFile[] };
+      setFiles(body.files ?? []);
+    } catch {
+      /* no list */
+    }
+  }, []);
+
   useEffect(() => {
     void loadStatus();
-    void (async () => {
-      try {
-        const res = await fetch("/api/receiver/ota/files", { cache: "no-store" });
-        if (!res.ok) return;
-        const body = (await res.json()) as { files: OtaFile[] };
-        setFiles((body.files ?? []).filter((f) => f.version || f.kind === "asset"));
-      } catch {
-        /* no list */
-      }
-    })();
-  }, [loadStatus]);
+    void loadFiles();
+  }, [loadStatus, loadFiles]);
 
   useEffect(() => {
     const t = setInterval(() => void loadStatus(), active ? POLL_ACTIVE_MS : POLL_MS);
@@ -456,6 +464,24 @@ export default function DeviceFirmwarePanel({
     return [...byNo.values()].sort((a, b) => (a.assetVersion ?? 0) - (b.assetVersion ?? 0));
   }, [files]);
   const hasAsset = (no: number) => assetFiles.some((f) => f.assetVersion === no);
+  /** 화면 데이터 번호별 패키지 수. 1개뿐이면 서버가 지우지 않는다(보관본) */
+  const assetCount = useMemo(() => {
+    const n = new Map<number, number>();
+    for (const f of files) {
+      if (f.kind === "asset" && f.assetVersion != null) n.set(f.assetVersion, (n.get(f.assetVersion) ?? 0) + 1);
+    }
+    return n;
+  }, [files]);
+  const lastOfItsNumber = (f: OtaFile) =>
+    f.kind === "asset" && f.assetVersion != null && (assetCount.get(f.assetVersion) ?? 0) <= 1;
+  /** 목록: 최근에 올린 것부터 */
+  const allFiles = useMemo(() => [...files].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)), [files]);
+  const kindText = (f: OtaFile) =>
+    f.kind === "asset"
+      ? `화면 데이터 ${f.assetVersion}번`
+      : f.version
+        ? `코드 v${f.version} · 화면 ${f.assetVersion ?? 1}번`
+        : "일반 파일";
 
   /** 코드 패키지가 장비의 화면 데이터와 다른 번호를 요구할 때, 보낼 수 없는 이유 (보낼 수 있으면 null) */
   const blockedReason = (f: OtaFile): string | null => {
@@ -518,6 +544,28 @@ export default function DeviceFirmwarePanel({
       setBanner({ tone: "err", title: "OTA 명령 실패", detail: "서버에 연결할 수 없습니다." });
     } finally {
       setSending(false);
+    }
+  };
+
+  const removeFile = async () => {
+    const f = deleteTarget;
+    if (!f) return;
+    setDeleteTarget(null);
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/receiver/ota/files/${encodeURIComponent(f.id)}`, { method: "DELETE" });
+      if (res.status === 204 || res.status === 404) {
+        if (selected === f.id) setSelected("");
+        setBanner({ tone: "ok", title: `${f.name} 삭제됨` });
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setBanner({ tone: "err", title: "패키지 삭제 실패", detail: body.message ?? `HTTP ${res.status}` });
+      }
+    } catch {
+      setBanner({ tone: "err", title: "패키지 삭제 실패", detail: "서버에 연결할 수 없습니다." });
+    } finally {
+      setDeleting(false);
+      void loadFiles();
     }
   };
 
@@ -638,6 +686,63 @@ export default function DeviceFirmwarePanel({
           </div>
         )}
 
+        <h4 className="device-firmware-subtitle">서버의 패키지</h4>
+        {allFiles.length === 0 ? (
+          <p className="device-firmware-hint">서버에 올린 패키지가 없습니다.</p>
+        ) : (
+          <>
+            <p className="device-firmware-hint">
+              패키지는 모든 장비가 같이 씁니다. 지우면 어느 장비에도 보낼 수 없습니다. 화면 데이터 번호마다 마지막
+              패키지는 되돌리기용 보관본이라 지울 수 없습니다.
+            </p>
+            <div className="fault-table-wrap">
+              <table className="fault-table">
+                <thead>
+                  <tr>
+                    <th>종류</th>
+                    <th>파일</th>
+                    <th>크기</th>
+                    <th>올린 시각</th>
+                    <th>올린 사람</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {allFiles.map((f) => {
+                    const locked = lastOfItsNumber(f);
+                    return (
+                      <tr key={f.id}>
+                        <td>{kindText(f)}</td>
+                        <td>{f.name}</td>
+                        <td>{Math.round(f.size / 1024).toLocaleString("ko-KR")} KB</td>
+                        <td>{fmtTime(f.createdAt)}</td>
+                        <td>{f.uploadedBy ?? "—"}</td>
+                        <td>
+                          <button
+                            type="button"
+                            className="module-power-confirm-cancel"
+                            disabled={locked || deleting || active}
+                            title={
+                              locked
+                                ? `화면 데이터 ${f.assetVersion}번의 마지막 패키지(보관본)라 지울 수 없습니다`
+                                : active
+                                  ? "업데이트가 진행 중에는 지울 수 없습니다"
+                                  : undefined
+                            }
+                            onClick={() => setDeleteTarget(f)}
+                          >
+                            {locked ? "보관본" : "삭제"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
         <h4 className="device-firmware-subtitle">진행 이력</h4>
         {events.length === 0 ? (
           <p className="device-firmware-hint">아직 기록이 없습니다.</p>
@@ -709,6 +814,45 @@ export default function DeviceFirmwarePanel({
                 onClick={() => void send()}
               >
                 업데이트 전송
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {deleteTarget ? (
+        <div
+          className="module-power-confirm-backdrop"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setDeleteTarget(null);
+          }}
+        >
+          <div
+            className="module-power-confirm module-power-confirm--off"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="ota-delete-title"
+            aria-describedby="ota-delete-desc"
+          >
+            <p className="module-power-confirm-kicker">패키지 삭제 확인</p>
+            <h4 id="ota-delete-title" className="module-power-confirm-title">
+              {deleteTarget.name} 을(를) 지울까요?
+            </h4>
+            <p id="ota-delete-desc" className="module-power-confirm-desc">
+              {kindText(deleteTarget)} · {Math.round(deleteTarget.size / 1024).toLocaleString("ko-KR")} KB ·{" "}
+              {fmtTime(deleteTarget.createdAt)}. 서버에서 지워지며 되돌릴 수 없습니다. 모든 장비의 목록에서 사라집니다.
+            </p>
+            <div className="module-power-confirm-actions">
+              <button type="button" className="module-power-confirm-cancel" onClick={() => setDeleteTarget(null)}>
+                취소
+              </button>
+              <button
+                type="button"
+                className="module-power-confirm-submit module-power-confirm-submit--off"
+                onClick={() => void removeFile()}
+              >
+                삭제
               </button>
             </div>
           </div>
