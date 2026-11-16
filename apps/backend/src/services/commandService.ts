@@ -108,6 +108,10 @@ type CommandRepository = {
     ackMessage?: string | null,
   ): Promise<DeviceCommand>;
   listHistory(installationId: string, limit: number): Promise<DeviceCommand[]>;
+  /** Latest ota commands of this installation, newest first. */
+  listOtaCommands(installationId: string, limit: number): Promise<DeviceCommand[]>;
+  /** pending/sent -> cancelled. null when the command is no longer active. */
+  cancelActive(id: string, at: Date, message: string): Promise<DeviceCommand | null>;
   findOtaFile(id: string): Promise<OtaCommandFile | null>;
   /** 가장 최근에 올린 화면 데이터 패키지 (그 번호, 그 제품) */
   findLatestAssetFile(assetVersion: number, productId: number): Promise<OtaCommandFile | null>;
@@ -285,6 +289,22 @@ class PrismaCommandRepository implements CommandRepository {
       orderBy: { createdAt: "desc" },
       take: limit,
     });
+  }
+
+  async listOtaCommands(installationId: string, limit: number): Promise<DeviceCommand[]> {
+    return prisma.deviceCommand.findMany({
+      where: { installationId, power: "ota" },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+  }
+
+  async cancelActive(id: string, at: Date, message: string): Promise<DeviceCommand | null> {
+    const res = await prisma.deviceCommand.updateMany({
+      where: { id, status: { in: ["pending", "sent"] } },
+      data: { status: "cancelled", ackedAt: at, ackMessage: message },
+    });
+    return res.count === 1 ? prisma.deviceCommand.findUnique({ where: { id } }) : null;
   }
 
   async findOtaFile(id: string): Promise<OtaCommandFile | null> {
@@ -678,6 +698,73 @@ export const createCommandService = (
       }
       const limit = Math.min(Math.max(input.limit ?? 50, 1), 200);
       return repo.listHistory(installationId, limit);
+    },
+
+    /**
+     * Admin cancels a command the HMI has not answered yet: pending (not taken)
+     * or sent (taken, no ACK and no status report yet; #171 would hand it out
+     * again). A sent command may already be on the HMI, which then still runs it.
+     */
+    async cancel(input: { id: string; by?: string | null }) {
+      const id = input.id?.trim();
+      if (!id) {
+        throw new CommandError(400, "INVALID_COMMAND_ID", "id is required");
+      }
+      await repo.expireCommands(new Date());
+      const before = await repo.findById(id);
+      if (!before) {
+        throw new CommandError(404, "COMMAND_NOT_FOUND", "command not found");
+      }
+      const wasSent = before.status === "sent";
+      const by = input.by?.trim() || "admin";
+      const cancelled = await repo.cancelActive(id, new Date(), `cancelled by ${by}`.slice(0, 120));
+      if (!cancelled) {
+        const now = (await repo.findById(id)) ?? before;
+        throw new CommandError(409, "COMMAND_NOT_ACTIVE", `command is already ${now.status}`);
+      }
+      return { ...cancelled, wasSent };
+    },
+
+    /**
+     * Latest ota commands for the firmware tab: command state, why it ended
+     * (ackMessage) and the package it carries. Lets the tab show a waiting
+     * command after a page reload, before the HMI has reported anything.
+     */
+    async otaCommands(installationIdRaw: string, limit = 10) {
+      const installationId = installationIdRaw?.trim();
+      if (!installationId) return [];
+      await repo.expireCommands(new Date());
+      const rows = await repo.listOtaCommands(installationId, Math.min(Math.max(limit, 1), 50));
+      const files = new Map<string, OtaCommandFile | null>();
+      const file = async (id: unknown) => {
+        if (typeof id !== "string") return null;
+        if (!files.has(id)) files.set(id, await repo.findOtaFile(id));
+        return files.get(id) ?? null;
+      };
+      return Promise.all(
+        rows.map(async (c) => {
+          const f =
+            c.fields && typeof c.fields === "object" && !Array.isArray(c.fields)
+              ? (c.fields as Record<string, unknown>)
+              : {};
+          const code = await file(f.fileId);
+          return {
+            id: c.id,
+            status: c.status,
+            requestedBy: c.requestedBy,
+            createdAt: c.createdAt,
+            sentAt: c.sentAt,
+            ackedAt: c.ackedAt,
+            ackMessage: c.ackMessage,
+            expiresAt: c.expiresAt,
+            retryCount: c.retryCount,
+            maxRedeliveries: otaMaxRedeliveries,
+            version: code?.version ?? null,
+            assetVersion: code?.assetVersion ?? null,
+            withScreen: f.assetFileId !== undefined,
+          };
+        }),
+      );
     },
   };
 };
