@@ -169,6 +169,58 @@ describe("OTA files", () => {
     assert.match(res.json().message, /CRC/);
   });
 
+  it("ota command: the tab sees it (also after a reload) and an admin can cancel it", async () => {
+    const { tokens } = await seedWorld(t.app);
+    const file = (await upload(t.app, otaPackage(), { token: tokens.admin, name: "HMI_2.4.0_ota_by-JL.bin" })).json()
+      .file;
+    const create = () =>
+      http(t.app).post(
+        "/receiver/commands/create",
+        { installationId: IDS.lotteInst, module: 0, power: "ota", fields: { fileId: file.id } },
+        { token: tokens.admin },
+      );
+    const otaStatus = async () =>
+      (await http(t.app).get(`/receiver/ota/status?installationId=${IDS.lotteInst}`, { token: tokens.admin })).json();
+    const cancel = (id: string, token = tokens.admin) =>
+      http(t.app).post(`/receiver/commands/${encodeURIComponent(id)}/cancel`, undefined, { token });
+
+    const first = (await create()).json().command;
+    let { commands } = await otaStatus();
+    assert.equal(commands.length, 1);
+    assert.equal(commands[0].id, first.id);
+    assert.equal(commands[0].status, "pending");
+    assert.equal(commands[0].version, "2.4.0");
+    assert.equal(commands[0].withScreen, false);
+
+    // only an admin cancels
+    assert.equal((await cancel(first.id, tokens.client)).statusCode, 403);
+    const res = await cancel(first.id);
+    assert.equal(res.statusCode, 200, JSON.stringify(res.json()));
+    assert.equal(res.json().command.status, "cancelled");
+    assert.equal(res.json().command.wasSent, false);
+    // the HMI never gets it, and a new command can be sent
+    assert.equal((await hmi(t.app).get(`/receiver/commands?iccid=${IDS.lotteIccid}`)).json().id, "");
+    assert.equal((await cancel(first.id)).statusCode, 409);
+    assert.equal((await cancel("cmd_nope")).statusCode, 404);
+
+    // a command the HMI took but did not answer can be cancelled too
+    const second = (await create()).json().command;
+    assert.equal((await hmi(t.app).get(`/receiver/commands?iccid=${IDS.lotteIccid}`)).json().id, second.id);
+    const taken = await cancel(second.id);
+    assert.equal(taken.json().command.wasSent, true);
+
+    ({ commands } = await otaStatus());
+    assert.deepEqual(
+      commands.map((c: { id: string; status: string }) => [c.id, c.status]),
+      [
+        [second.id, "cancelled"],
+        [first.id, "cancelled"],
+      ],
+    );
+    assert.ok(commands[0].sentAt, "taken by the HMI before the cancel");
+    assert.match(commands[0].ackMessage, /^cancelled by /);
+  });
+
   it("ota command: the HMI gets version, size and a download URL on its own host", async () => {
     const { tokens } = await seedWorld(t.app);
     const data = otaPackage();

@@ -747,6 +747,30 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
     },
   );
 
+  // Web/Admin -> cancel a command the HMI has not answered yet (pending or sent)
+  server.post(
+    "/commands/:id/cancel",
+    { preHandler: requireAdmin },
+    async (request, reply) => {
+      const { id } = request.params as { id?: string };
+      try {
+        const cmd = await commandService.cancel({ id: id ?? "", by: request.user.username });
+        server.log.info(
+          { commandId: cmd.id, installationId: cmd.installationId, power: cmd.power, wasSent: cmd.wasSent },
+          "Command cancelled",
+        );
+        wsHub.broadcast({ type: "device_updated", installationId: cmd.installationId });
+        return reply.send({ command: cmd });
+      } catch (error) {
+        if (error instanceof CommandError) {
+          return reply.status(error.httpStatus).send({ code: error.code, message: error.message });
+        }
+        server.log.error({ error, id }, "Failed to cancel command");
+        return reply.status(500).send({ message: "Failed to cancel command" });
+      }
+    },
+  );
+
   // Device polling -> oldest pending command
   server.get("/commands", async (request, reply) => {
     if (!hasValidApiKey(request)) {

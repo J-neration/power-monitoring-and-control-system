@@ -11,6 +11,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
  *     화면 데이터 패키지(새 화면 + 보관본)를 명령에 붙인다
  *   - 화면 데이터 패키지(재료)는 접어 둔다. 번호마다 마지막 패키지는 되돌리기용 보관본이라
  *     서버가 삭제를 거부(409)하므로 버튼을 막아 둔다
+ *   - 패키지 표의 "올린 사람": 업로드 도구가 파일 이름 끝에 붙인 _by-이름 (관리자 계정을 같이 씀)
+ *   - 명령 전달 단계는 서버의 명령(pending/sent)으로 그린다: 새로고침해도 남고, [명령 취소]
+ *     (POST /receiver/commands/:id/cancel). 명령 이력(상태, 끝난 이유)은 접어 둔다
  *   - HMI 가 보낸 진행/결과 이력 (POST /receiver/ota/status). 접어 두고, 진행 중이면 펼친다
  * HMI 쪽 동작: HMI 저장소 docs/OTA_DEVELOPMENT_PLAN.md 12장 단계 7–8, docs/OTA_ASSET_PLAN.md 11.5.
  */
@@ -41,6 +44,23 @@ type OtaEvent = {
   createdAt: string;
 };
 
+/** 서버의 OTA 명령 (DeviceCommand, GET /receiver/ota/status 의 commands) */
+type OtaCommand = {
+  id: string;
+  /** pending(HMI가 아직 안 가져감) | sent(가져감, 응답 대기) | acked | failed | expired | cancelled */
+  status: string;
+  requestedBy: string | null;
+  createdAt: string;
+  sentAt: string | null;
+  ackedAt: string | null;
+  ackMessage: string | null;
+  retryCount: number;
+  maxRedeliveries?: number;
+  version: string | null;
+  assetVersion: number | null;
+  withScreen: boolean;
+};
+
 type StatusResponse = {
   device: {
     fwVersion: string | null;
@@ -50,6 +70,8 @@ type StatusResponse = {
     assetOta?: boolean | null;
   } | null;
   events: OtaEvent[];
+  /** 이전 백엔드는 보내지 않음 */
+  commands?: OtaCommand[];
 };
 
 type Banner = { tone: "pending" | "ok" | "err"; title: string; detail?: string };
@@ -180,6 +202,85 @@ function errorText(e: { error: string | null; stage?: string | null }): string {
 
 const FINAL_STATES = new Set(["confirmed", "rolled_back", "failed"]);
 
+const ACTIVE_COMMAND = new Set(["pending", "sent"]);
+const ENDED_COMMAND = new Set(["failed", "expired", "cancelled"]);
+
+/** 명령 상태 (DeviceCommand.status) */
+const COMMAND_LABEL: Record<string, string> = {
+  pending: "대기",
+  sent: "전달됨",
+  acked: "수락",
+  failed: "거부·실패",
+  expired: "만료",
+  cancelled: "취소",
+};
+
+const COMMAND_TONE: Record<string, "ok" | "screen" | "no" | "err"> = {
+  pending: "screen",
+  sent: "screen",
+  acked: "ok",
+  failed: "err",
+  expired: "err",
+  cancelled: "no",
+};
+
+/** HMI 가 명령을 거부할 때의 ACK 메시지 (HMI ota_manager.c OtaManager_PrepareCommand) */
+const REJECT_TEXT: [string, string][] = [
+  ["ota: ver must be newer", "현재보다 높은 버전이 아님(HMI가 거부)"],
+  ["ota: product mismatch", "다른 제품용 펌웨어(HMI가 거부)"],
+  ["ota: asset mismatch", "화면 데이터 번호가 맞지 않음(HMI가 거부)"],
+  ["ota: screen data size", "화면 데이터 패키지 크기 이상(HMI가 거부)"],
+  ["ota: size", "패키지 크기 이상(HMI가 거부)"],
+  ["ota: install pending", "이전 설치가 끝나지 않음(HMI가 거부)"],
+  ["ota: bad", "명령 형식 오류(HMI가 거부)"],
+  ["ota: missing", "명령 형식 오류(HMI가 거부)"],
+];
+
+/** 명령이 지금 어떤 상태인지, 끝났으면 왜 끝났는지 */
+function commandReason(c: OtaCommand): string {
+  const msg = c.ackMessage ?? "";
+  const redelivered =
+    c.retryCount > 0 ? ` · 응답이 없어 다시 내려줌 ${c.retryCount}/${c.maxRedeliveries ?? 3}회` : "";
+  switch (c.status) {
+    case "pending":
+      return `HMI가 가져가기를 기다리는 중(다음 보고 때, 최대 약 10분)${redelivered}`;
+    case "sent":
+      return `HMI가 ${c.sentAt ? fmtTime(c.sentAt) : "?"}에 가져감, 응답 기다리는 중${redelivered}`;
+    case "acked": {
+      if (msg === "ota download started") return "HMI가 받아 업데이트 시작";
+      if (msg === "duplicate ignored") return "HMI가 이미 받은 명령(중복, 무시)";
+      const m = /^ota status (\w+)$/.exec(msg);
+      if (m) return `HMI 진행 보고로 확인(${STATE_LABEL[m[1]] ?? m[1]})`;
+      return msg || "HMI가 받음";
+    }
+    case "failed": {
+      const r = REJECT_TEXT.find(([k]) => msg.startsWith(k));
+      if (r) return r[1];
+      if (msg === "ota file missing on server") return "서버에 코드 패키지가 없음(지워짐)";
+      if (msg === "ota screen data file missing on server") return "서버에 화면 데이터 패키지가 없음(지워짐)";
+      if (msg.startsWith("ota status failed")) return "HMI가 업데이트 실패를 보고(진행 이력 참고)";
+      return msg || "실패";
+    }
+    case "expired":
+      return c.sentAt
+        ? `HMI가 가져갔지만 응답이 없어 15분 뒤 만료${c.retryCount > 0 ? `(다시 내려준 횟수 ${c.retryCount})` : ""}`
+        : "15분 안에 HMI가 가져가지 않아 만료(HMI 통신·LTE 확인)";
+    case "cancelled": {
+      const who = /^cancelled by (.+)$/.exec(msg)?.[1];
+      return `${who ? `${who}이(가) ` : ""}취소${c.sentAt ? " (HMI가 이미 가져간 뒤)" : ""}`;
+    }
+    default:
+      return msg;
+  }
+}
+
+/** 올린 사람: 업로드 도구가 파일 이름 끝에 붙인 "_by-이름"(관리자 계정을 같이 쓰므로).
+ *  없으면 로그인한 계정(uploadedBy). */
+function uploaderOf(f: { name: string; uploadedBy?: string | null }): string {
+  const m = /_by-([A-Za-z0-9_-]{1,20})(?:\.[A-Za-z0-9]+)?$/.exec(f.name);
+  return m?.[1] ?? f.uploadedBy ?? "—";
+}
+
 function fmtTime(iso: string): string {
   const d = new Date(iso);
   return Number.isNaN(d.getTime())
@@ -210,6 +311,9 @@ function ProgressCard({
   now,
   note,
   withScreen,
+  command,
+  onCancel,
+  cancelBusy,
 }: {
   stage: Stage;
   version: string | null;
@@ -217,6 +321,10 @@ function ProgressCard({
   now: number;
   note?: string;
   withScreen: boolean;
+  /** "명령 전달" 단계의 서버 명령 (상태와 취소) */
+  command?: OtaCommand | null;
+  onCancel?: () => void;
+  cancelBusy?: boolean;
 }) {
   const steps = withScreen ? SCREEN_STEPS : STEPS;
   const idx = steps.findIndex((s) => s.key === stage);
@@ -231,7 +339,23 @@ function ProgressCard({
           {note ? ` (${note})` : ""}
         </span>
         <span className="device-firmware-progress-time">{fmtElapsed(elapsed)}</span>
+        {stage === "queued" && command && onCancel && ACTIVE_COMMAND.has(command.status) ? (
+          <button
+            type="button"
+            className="module-power-confirm-cancel device-firmware-progress-cancel"
+            disabled={cancelBusy}
+            onClick={onCancel}
+          >
+            명령 취소
+          </button>
+        ) : null}
       </div>
+      {stage === "queued" && command ? (
+        <p className="device-firmware-command-line">
+          명령 상태: <b>{COMMAND_LABEL[command.status] ?? command.status}</b> · {commandReason(command)}
+          {command.requestedBy ? ` · 보낸 사람 ${command.requestedBy}` : ""}
+        </p>
+      ) : null}
       <ol className="device-firmware-steps">
         {steps.map((s, i) => (
           <li
@@ -300,6 +424,9 @@ export default function DeviceFirmwarePanel({
   const [deleting, setDeleting] = useState(false);
   const [materialsOpen, setMaterialsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [commandsOpen, setCommandsOpen] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<OtaCommand | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   const current = status?.device?.fwVersion ?? fwVersion ?? null;
   const capable = (status?.device?.otaCapable ?? otaCapable) === true;
@@ -324,17 +451,30 @@ export default function DeviceFirmwarePanel({
     ? !FINAL_STATES.has(latest.state) && !installedByFw && now - latestAt < STALE_MS
     : false;
 
+  /** 서버의 OTA 명령. HMI가 아직 응답하지 않은 것(pending, sent)이 있으면 새로고침 뒤에도 "명령 전달"을 보여 준다 */
+  const commands = useMemo(() => status?.commands ?? [], [status]);
+  const activeCmd = commands.find((c) => ACTIVE_COMMAND.has(c.status)) ?? null;
+  const activeCmdHasEvent = activeCmd ? events.some((e) => e.commandId === activeCmd.id) : false;
+  /** 방금 보낸 명령(다음 상태 조회 전까지 서버 목록에 없을 수 있음) */
+  const sentCmd = sent?.commandId ? (commands.find((c) => c.id === sent.commandId) ?? null) : null;
+  /** 보고 없이 끝남(만료, 거부, 취소). acked 는 HMI가 받은 것이라 진행 보고를 계속 기다린다 */
+  const sentEnded = sentCmd !== null && ENDED_COMMAND.has(sentCmd.status);
+
   /** 방금 보낸 명령에 대한 보고가 아직 없으면 "명령 전달" 단계 */
   const sentHasEvent = sent
     ? events.some((e) =>
         sent.commandId ? e.commandId === sent.commandId : new Date(e.createdAt).getTime() >= sent.at,
       )
     : false;
-  const queued = sent !== null && !sentHasEvent && now - sent.at < COMMAND_TTL_MS + SLOW_MS;
+  const queuedBySent = sent !== null && !sentHasEvent && !sentEnded && now - sent.at < COMMAND_TTL_MS + SLOW_MS;
+  const queuedByServer = activeCmd !== null && !activeCmdHasEvent;
+  const queued = queuedByServer || queuedBySent;
+  /** "명령 전달" 단계에 보여 줄 명령: 서버 것이 있으면 그것 */
+  const queuedCmd = queuedByServer ? activeCmd : sentCmd;
 
   /** 진행 중인 명령이 화면 데이터도 바꾸는지: 보낸 명령이거나, 같은 명령의 보고에 화면 단계가 있음 */
   const withScreen =
-    (queued && sent?.withScreen === true) ||
+    (queued && (queuedByServer ? activeCmd?.withScreen === true : sent?.withScreen === true)) ||
     (!!latest &&
       events.some(
         (e) =>
@@ -358,8 +498,16 @@ export default function DeviceFirmwarePanel({
                 ? "confirming"
                 : "installing"
       : null;
-  const stageSince = queued && sent ? sent.at : latestAt;
-  const stageVersion = queued && sent ? sent.version : (latest?.target ?? null);
+  const stageSince = queuedByServer && activeCmd
+    ? new Date(activeCmd.createdAt).getTime()
+    : queued && sent
+      ? sent.at
+      : latestAt;
+  const stageVersion = queuedByServer && activeCmd
+    ? activeCmd.version
+    : queued && sent
+      ? sent.version
+      : (latest?.target ?? null);
   const stageNote =
     stage === "confirming" && recordState === "rollback"
       ? "이전 버전으로 복구 중"
@@ -382,6 +530,18 @@ export default function DeviceFirmwarePanel({
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, [active]);
+
+  /** 보낸 명령이 HMI 보고 없이 끝나면(만료, 거부, 취소) 그 이유를 배너로 */
+  useEffect(() => {
+    if (!sent || !sentCmd || !ENDED_COMMAND.has(sentCmd.status) || sentHasEvent) return;
+    setSent(null);
+    if (sentCmd.status === "cancelled") return; // 취소 배너는 cancelCommand 가 띄운다
+    setBanner({
+      tone: "err",
+      title: sentCmd.status === "expired" ? `v${sent.version} 명령 만료` : `v${sent.version} 명령 거부·실패`,
+      detail: commandReason(sentCmd),
+    });
+  }, [sent, sentCmd, sentHasEvent]);
 
   /** 보낸 명령의 최종 결과가 오면 결과 배너로 바꾼다 */
   useEffect(() => {
@@ -583,7 +743,7 @@ export default function DeviceFirmwarePanel({
           title: "OTA 명령 실패",
           detail:
             body.code === "ACTIVE_COMMAND_EXISTS"
-              ? "이미 대기 중인 명령이 있습니다."
+              ? "이미 대기 중인 명령이 있습니다. 위 진행 카드의 [명령 취소]로 취소한 뒤 다시 보내세요."
               : body.code === "OTA_ASSET_NOT_SUPPORTED"
                 ? "이 장비는 화면 데이터 원격 교체를 지원하지 않습니다."
                 : body.code === "OTA_ASSET_FILE_MISSING" || body.code === "OTA_ASSET_BACKUP_MISSING"
@@ -600,10 +760,47 @@ export default function DeviceFirmwarePanel({
         at: Date.now(),
         withScreen: chosenScreen,
       });
+      void loadStatus(); // 서버 명령(상태, 취소 버튼)을 바로 받아 온다
     } catch {
       setBanner({ tone: "err", title: "OTA 명령 실패", detail: "서버에 연결할 수 없습니다." });
     } finally {
       setSending(false);
+    }
+  };
+
+  /** HMI가 아직 응답하지 않은 명령 취소 (pending, sent) */
+  const cancelCommand = async () => {
+    const c = cancelTarget;
+    if (!c) return;
+    setCancelTarget(null);
+    setCancelling(true);
+    try {
+      const res = await fetch(`/api/receiver/commands/${encodeURIComponent(c.id)}/cancel`, { method: "POST" });
+      const body = await res.json().catch(() => ({}));
+      if (res.ok) {
+        if (sent?.commandId === c.id) setSent(null);
+        setBanner({
+          tone: "ok",
+          title: `v${c.version ?? "?"} 명령 취소됨`,
+          detail: body?.command?.wasSent
+            ? "HMI가 이미 가져간 뒤였습니다. HMI가 받았다면 업데이트가 그대로 진행될 수 있고, 그러면 진행 보고가 여기에 나타납니다."
+            : "HMI에 전달되지 않습니다.",
+        });
+      } else {
+        setBanner({
+          tone: "err",
+          title: "명령을 취소하지 못했습니다",
+          detail:
+            body.code === "COMMAND_NOT_ACTIVE"
+              ? "HMI가 이미 응답했거나 끝난 명령입니다. 명령 이력을 보세요."
+              : (body.message ?? `HTTP ${res.status}`),
+        });
+      }
+    } catch {
+      setBanner({ tone: "err", title: "명령을 취소하지 못했습니다", detail: "서버에 연결할 수 없습니다." });
+    } finally {
+      setCancelling(false);
+      void loadStatus();
     }
   };
 
@@ -663,6 +860,9 @@ export default function DeviceFirmwarePanel({
             now={now}
             note={stageNote}
             withScreen={withScreen}
+            command={stage === "queued" ? queuedCmd : null}
+            onCancel={queuedCmd ? () => setCancelTarget(queuedCmd) : undefined}
+            cancelBusy={cancelling}
           />
         ) : null}
 
@@ -684,6 +884,7 @@ export default function DeviceFirmwarePanel({
                   <th>버전</th>
                   <th>이 장비에</th>
                   <th>크기</th>
+                  <th>올린 사람</th>
                   <th>올린 시각</th>
                   <th />
                 </tr>
@@ -698,6 +899,7 @@ export default function DeviceFirmwarePanel({
                       </td>
                       <td className={`device-firmware-state device-firmware-state--${st.tone}`}>{st.text}</td>
                       <td>{kb(f)}</td>
+                      <td className="device-firmware-uploader">{uploaderOf(f)}</td>
                       <td>{fmtTime(f.createdAt)}</td>
                       <td className="device-firmware-actions">
                         <button
@@ -751,6 +953,7 @@ export default function DeviceFirmwarePanel({
                     <th>번호</th>
                     <th>쓰임</th>
                     <th>크기</th>
+                    <th>올린 사람</th>
                     <th>올린 시각</th>
                     <th />
                   </tr>
@@ -765,6 +968,7 @@ export default function DeviceFirmwarePanel({
                         </td>
                         <td>{materialUse(f)}</td>
                         <td>{kb(f)}</td>
+                        <td className="device-firmware-uploader">{uploaderOf(f)}</td>
                         <td>{fmtTime(f.createdAt)}</td>
                         <td className="device-firmware-actions">
                           <button
@@ -786,6 +990,66 @@ export default function DeviceFirmwarePanel({
                       </tr>
                     );
                   })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </details>
+
+        <details
+          className="device-firmware-fold"
+          open={commandsOpen}
+          onToggle={(e) => setCommandsOpen(e.currentTarget.open)}
+        >
+          <summary>
+            명령 이력 · {commands.length}건
+            {commands[0] ? (
+              <span className="device-firmware-fold-note">
+                마지막: v{commands[0].version ?? "?"} {COMMAND_LABEL[commands[0].status] ?? commands[0].status}
+              </span>
+            ) : null}
+          </summary>
+          {commands.length === 0 ? (
+            <p className="device-firmware-hint">보낸 OTA 명령이 없습니다.</p>
+          ) : (
+            <div className="fault-table-wrap">
+              <table className="fault-table device-firmware-table">
+                <thead>
+                  <tr>
+                    <th>보낸 시각</th>
+                    <th>버전</th>
+                    <th>보낸 사람</th>
+                    <th>명령 상태</th>
+                    <th>내용</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {commands.map((c) => (
+                    <tr key={c.id} title={c.id}>
+                      <td>{fmtTime(c.createdAt)}</td>
+                      <td className="device-firmware-version">
+                        v{c.version ?? "?"} · 화면 {c.assetVersion ?? 1}번{c.withScreen ? " (화면도)" : ""}
+                      </td>
+                      <td className="device-firmware-uploader">{c.requestedBy ?? "—"}</td>
+                      <td className={`device-firmware-state device-firmware-state--${COMMAND_TONE[c.status] ?? "no"}`}>
+                        {COMMAND_LABEL[c.status] ?? c.status}
+                      </td>
+                      <td>{commandReason(c)}</td>
+                      <td className="device-firmware-actions">
+                        {ACTIVE_COMMAND.has(c.status) ? (
+                          <button
+                            type="button"
+                            className="module-power-confirm-cancel"
+                            disabled={cancelling}
+                            onClick={() => setCancelTarget(c)}
+                          >
+                            취소
+                          </button>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -874,6 +1138,46 @@ export default function DeviceFirmwarePanel({
                 onClick={() => void send()}
               >
                 업데이트 전송
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {cancelTarget ? (
+        <div
+          className="module-power-confirm-backdrop"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setCancelTarget(null);
+          }}
+        >
+          <div
+            className="module-power-confirm module-power-confirm--off"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="ota-cancel-title"
+            aria-describedby="ota-cancel-desc"
+          >
+            <p className="module-power-confirm-kicker">명령 취소 확인</p>
+            <h4 id="ota-cancel-title" className="module-power-confirm-title">
+              v{cancelTarget.version ?? "?"} 업데이트 명령을 취소할까요?
+            </h4>
+            <p id="ota-cancel-desc" className="module-power-confirm-desc">
+              {cancelTarget.status === "sent"
+                ? `HMI가 ${cancelTarget.sentAt ? fmtTime(cancelTarget.sentAt) : "이미"}에 가져갔지만 아직 응답이 없습니다. 취소하면 서버가 다시 내려주지 않습니다. 다만 HMI가 이미 받았다면 업데이트는 그대로 진행될 수 있고, 그러면 진행 보고가 이 화면에 나타납니다.`
+                : "HMI가 아직 가져가지 않은 명령입니다. 취소하면 HMI에 전달되지 않습니다."}
+            </p>
+            <div className="module-power-confirm-actions">
+              <button type="button" className="module-power-confirm-cancel" onClick={() => setCancelTarget(null)}>
+                그대로 두기
+              </button>
+              <button
+                type="button"
+                className="module-power-confirm-submit module-power-confirm-submit--off"
+                onClick={() => void cancelCommand()}
+              >
+                명령 취소
               </button>
             </div>
           </div>
