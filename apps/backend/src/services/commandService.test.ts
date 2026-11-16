@@ -159,6 +159,22 @@ class InMemoryRepo {
       .slice(0, limit);
   }
 
+  async listOtaCommands(installationId: string, limit: number) {
+    return this.commands
+      .filter((c) => c.installationId === installationId && c.power === "ota")
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+
+  async cancelActive(id: string, at: Date, message: string) {
+    const cmd = this.commands.find((c) => c.id === id);
+    if (!cmd || (cmd.status !== "pending" && cmd.status !== "sent")) return null;
+    cmd.status = "cancelled";
+    cmd.ackedAt = at;
+    cmd.ackMessage = message;
+    return cmd;
+  }
+
   otaFiles = new Map<string, OtaCommandFile>();
   /** insertion order = upload order */
   devices = new Map<string, { assetVersion: number | null; assetOta: boolean | null }>();
@@ -727,6 +743,97 @@ test("ota command: a status report closes it even without an ACK", async () => {
   // a later report or the late ACK changes nothing
   assert.equal(await service.noteOtaReport(created.id, "failed"), false);
   assert.equal(await service.noteOtaReport("", "failed"), false);
+});
+
+test("cancel: a pending ota command is never handed out and frees the slot", async () => {
+  const repo = new InMemoryRepo();
+  repo.otaFiles.set(OTA_PKG.id, OTA_PKG);
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 900 });
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "ota",
+    fields: { fileId: OTA_PKG.id },
+  });
+
+  const cancelled = await service.cancel({ id: created.id, by: "JL" });
+  assert.equal(cancelled.status, "cancelled");
+  assert.equal(cancelled.ackMessage, "cancelled by JL");
+  assert.equal(cancelled.wasSent, false);
+  assert.deepEqual(await service.poll("PSVG-RNDTEST5"), NO_COMMAND);
+  assert.equal(await service.hasPending("PSVG-RNDTEST5"), false);
+
+  // a new command can be sent right away
+  const again = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "ota",
+    fields: { fileId: OTA_PKG.id },
+  });
+  assert.equal(again.status, "pending");
+});
+
+test("cancel: a sent ota command is not handed out again; a finished one is refused", async () => {
+  const repo = new InMemoryRepo();
+  repo.otaFiles.set(OTA_PKG.id, OTA_PKG);
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 900, otaAckTimeoutSeconds: 180 });
+  const created = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "ota",
+    fields: { fileId: OTA_PKG.id },
+  });
+  await service.poll("PSVG-RNDTEST5");
+
+  const cancelled = await service.cancel({ id: created.id });
+  assert.equal(cancelled.wasSent, true);
+  assert.equal(cancelled.ackMessage, "cancelled by admin");
+  repo.commands[0].sentAt = new Date(Date.now() - 181_000);
+  assert.deepEqual(await service.poll("PSVG-RNDTEST5"), NO_COMMAND);
+
+  await assert.rejects(
+    () => service.cancel({ id: created.id }),
+    (e: unknown) => e instanceof CommandError && e.httpStatus === 409 && e.code === "COMMAND_NOT_ACTIVE",
+  );
+  await assert.rejects(
+    () => service.cancel({ id: "nope" }),
+    (e: unknown) => e instanceof CommandError && e.httpStatus === 404,
+  );
+});
+
+test("otaCommands: newest first with version, screen flag and redelivery limit", async () => {
+  const repo = new InMemoryRepo();
+  repo.otaFiles.set(OTA_PKG.id, OTA_PKG);
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 900, otaMaxRedeliveries: 3 });
+  const first = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "ota",
+    fields: { fileId: OTA_PKG.id },
+  });
+  await service.cancel({ id: first.id, by: "JL" });
+  await service.create({ installationId: "PSVG-RNDTEST5", module: 1, power: "off" });
+  repo.commands[0].createdAt = new Date(Date.now() - 60_000);
+  const second = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "ota",
+    fields: { fileId: OTA_PKG.id },
+  });
+
+  const list = await service.otaCommands("PSVG-RNDTEST5");
+  assert.deepEqual(
+    list.map((c) => [c.id, c.status]),
+    [
+      [second.id, "pending"],
+      [first.id, "cancelled"],
+    ],
+    "ota commands only, newest first",
+  );
+  assert.equal(list[0].version, OTA_PKG.version);
+  assert.equal(list[0].withScreen, false);
+  assert.equal(list[0].maxRedeliveries, 3);
+  assert.deepEqual(await service.otaCommands(""), []);
 });
 
 test("non-ota command: never handed out again", async () => {

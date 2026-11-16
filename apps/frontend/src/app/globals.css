@@ -13882,6 +13882,27 @@ body.pmcs-control-room .global-header:hover {
   color: var(--pmcs-text-muted);
 }
 
+.device-firmware-state--err {
+  color: #f87171;
+}
+
+.device-firmware-uploader {
+  white-space: nowrap;
+}
+
+/* queued OTA command: state line and cancel button in the progress card */
+.device-firmware-command-line {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--pmcs-text);
+  overflow-wrap: anywhere;
+}
+
+.device-firmware-progress-cancel {
+  flex: none;
+}
+
 .device-firmware-actions {
   white-space: nowrap;
   text-align: right;

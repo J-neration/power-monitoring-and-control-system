@@ -4,6 +4,7 @@ import { requireAdmin } from "../middleware/authenticate.js";
 import { parseRange } from "../lib/otaRange.js";
 import { prisma } from "../lib/prisma.js";
 import { otaStatusService } from "../services/otaStatusService.js";
+import { commandService } from "../services/commandService.js";
 import {
   OTA_MAX_FILE_BYTES,
   OtaDeleteRefused,
@@ -24,6 +25,7 @@ import {
  *   DELETE /receiver/ota/files/:id        관리자. 그 번호의 마지막 화면 패키지는 409(보관본)
  *   GET    /receiver/ota/file/:id?t=...   HMI. Range(206) 지원. x-api-key 대신 파일별 토큰
  *   GET    /receiver/ota/status?installationId=...  관리자. 현재 버전 + OTA 진행/결과 이력
+ *                                         + 최근 OTA 명령(상태, 끝난 이유, 버전)
  *   (HMI 의 POST /receiver/ota/status 는 x-api-key 라우트라 receiver.ts 에 있다)
  *
  * 파일 진위는 URL 비밀이 아니라 펌웨어 서명으로 검증한다(HMI 저장소 docs/OTA_DEVELOPMENT_PLAN.md 6장).
@@ -116,7 +118,9 @@ export const otaRoutes: FastifyPluginAsync = async (server) => {
       select: { fwVersion: true, otaCapable: true, otaState: true, assetVersion: true, assetOta: true, lastSeenAt: true },
     });
     const events = await otaStatusService.list(q.data.installationId, q.data.limit ?? 30);
-    return { device, events };
+    // OTA commands (state, why it ended): the tab shows a waiting command after a reload
+    const commands = await commandService.otaCommands(q.data.installationId, 10);
+    return { device, events, commands };
   });
 
   server.get("/files", { preHandler: requireAdmin }, async () => {
