@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { STATUS_LABEL, compareKoNumeric } from "../../lib/deviceStatus";
 import { formatKstMonthDayTime } from "../../lib/kstTime";
 import type { DeviceStatus } from "../../types/site";
+import IccidInput, { formatIccid } from "../Admin/IccidInput";
 
 /** GET /sites/:siteId 의 installations[].device 중 이 화면에서 쓰는 값 */
 type InspectionDevice = {
@@ -220,12 +221,12 @@ export default function InspectionPanel({ siteId }: Props) {
         <div className="admin-sites-form-grid">
           <label className="admin-sites-form-label">
             ICCID <span className="admin-sites-form-hint">(필수, 공백·하이픈 자동 제거)</span>
-            <input
-              ref={iccidRef}
+            <IccidInput
+              inputRef={iccidRef}
               className="admin-sites-input"
-              placeholder="8982…"
+              placeholder="8988 2280 …"
               value={form.iccid}
-              onChange={(e) => setForm((p) => ({ ...p, iccid: e.target.value }))}
+              onChange={(v) => setForm((p) => ({ ...p, iccid: v }))}
               autoComplete="off"
               spellCheck={false}
               autoFocus
@@ -295,7 +296,7 @@ export default function InspectionPanel({ siteId }: Props) {
                     </td>
                     <td>
                       {inst.iccid ? (
-                        <code className="admin-iccid-code">{inst.iccid}</code>
+                        <code className="admin-iccid-code">{formatIccid(inst.iccid)}</code>
                       ) : (
                         <span className="admin-iccid-meta">해제됨</span>
                       )}

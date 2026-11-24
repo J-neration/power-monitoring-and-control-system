@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import type { ClientOptionFromApi, SiteListFromApi } from "../../types/admin";
 import { CLIENT_LABELS } from "../../data/clients";
+import IccidInput from "./IccidInput";
 
 type Props = {
   initialSites: SiteListFromApi[];
@@ -1057,18 +1058,17 @@ export default function AdminSitesPanel({
                                 </div>
                               </td>
                               <td>
-                                <input
-                                  type="text"
+                                <IccidInput
                                   className="admin-iccid-input"
                                   value={inst.iccid}
-                                  onChange={(e) =>
+                                  onChange={(v) =>
                                     updateIccid(
                                       site.siteId,
                                       inst.installationId,
-                                      e.target.value,
+                                      v,
                                     )
                                   }
-                                  placeholder="893404…"
+                                  placeholder="8988 2280 …"
                                   autoComplete="off"
                                   spellCheck={false}
                                 />
