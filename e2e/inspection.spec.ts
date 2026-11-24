@@ -30,7 +30,8 @@ test.describe("shipping inspection account (INSPECTOR)", () => {
 
     const row = page.getByRole("row", { name: /S\/N E2E-001/ });
     await expect(row).toBeVisible();
-    await expect(row.getByText(iccid)).toBeVisible();
+    // 목록에서는 4자리씩 띄어 보여줌
+    await expect(row.getByText("8982 0000 0000 0000 0216")).toBeVisible();
     await expect(row.getByText("수신 대기")).toBeVisible();
 
     // HMI 가 텔레메트리를 보내면 (10초 주기 새로고침) '수신 중'
