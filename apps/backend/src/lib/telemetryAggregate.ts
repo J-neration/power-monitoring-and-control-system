@@ -449,7 +449,30 @@ function groupSamples(
   return groups;
 }
 
-export function insertRawGaps(points: HistoryPoint[], intervalMs: number): HistoryPoint[] {
+/**
+ * 장비가 실제로 보낸 간격(이웃 점 사이 간격의 중앙값).
+ * 간격이 3개 미만이면 판단하지 않는다(null).
+ */
+export function observedIntervalMs(points: HistoryPoint[]): number | null {
+  const diffs: number[] = [];
+  for (let i = 1; i < points.length; i += 1) {
+    const d =
+      new Date(points[i].recordedAt).getTime() -
+      new Date(points[i - 1].recordedAt).getTime();
+    if (d > 0) diffs.push(d);
+  }
+  if (diffs.length < 3) return null;
+  diffs.sort((a, b) => a - b);
+  return diffs[Math.floor(diffs.length / 2)];
+}
+
+/**
+ * 원본 점 사이가 기준 간격의 1.5배보다 벌어지면 누락 표시를 끼운다.
+ * 기준 간격은 설정값(intervalMs)과 장비가 실제로 보낸 간격 중 긴 쪽.
+ * 전송 주기를 30분처럼 늘린 장비는 점마다 누락이 끼어 선이 하나도 안 그려졌다.
+ */
+export function insertRawGaps(points: HistoryPoint[], configuredIntervalMs: number): HistoryPoint[] {
+  const intervalMs = Math.max(configuredIntervalMs, observedIntervalMs(points) ?? 0);
   const out: HistoryPoint[] = [];
   for (let i = 0; i < points.length; i += 1) {
     const point = points[i];
