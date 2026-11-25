@@ -2611,6 +2611,7 @@ main.dashboard-full {
 .lte-signal--critical .lte-signal-bar--on {
   background: #ef4444;
 }
+.lte-signal--unmeasured .lte-signal-bar--on,
 .lte-signal--none .lte-signal-bar--on {
   background: #6b7280;
 }
@@ -2636,6 +2637,11 @@ main.dashboard-full {
 }
 .lte-signal--none .lte-signal-label {
   color: #9ca3af;
+}
+/* 통신은 되는데 신호 값만 없음: 끊김(none)과 구분되게 기울임 */
+.lte-signal--unmeasured .lte-signal-label {
+  color: #9ca3af;
+  font-style: italic;
 }
 
 .lte-signal-meta {

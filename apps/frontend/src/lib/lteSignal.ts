@@ -1,4 +1,16 @@
-export type LteSignalGrade = "excellent" | "fair" | "poor" | "critical" | "none";
+import { isCommLost } from "./commStatus";
+
+/**
+ * none       — 통신 자체가 없음 (한 번도 못 받았거나 30분 넘게 끊김)
+ * unmeasured — 데이터는 받았지만 신호 값이 없음 (CSQ 99 = 모뎀이 아직 못 잼 등)
+ */
+export type LteSignalGrade =
+  | "excellent"
+  | "fair"
+  | "poor"
+  | "critical"
+  | "unmeasured"
+  | "none";
 
 export type LteSignalInfo = {
   grade: LteSignalGrade;
@@ -16,6 +28,7 @@ const GRADE_META: Record<
   fair: { bars: 3, label: "보통" },
   poor: { bars: 2, label: "약함" },
   critical: { bars: 1, label: "매우 약함" },
+  unmeasured: { bars: 0, label: "측정 안 됨" },
   none: { bars: 0, label: "수신 없음" },
 };
 
@@ -31,7 +44,7 @@ function gradeFromCsq(csq: number): LteSignalGrade {
   if (csq >= 15) return "fair";
   if (csq >= 10) return "poor";
   if (csq >= 0 && csq <= 9) return "critical";
-  return "none";
+  return "unmeasured";
 }
 
 /** RSRP 우선, 없으면 CSQ로 LTE 신호 등급 판정 */
@@ -48,7 +61,7 @@ export function getLteSignalInfo(
   const hasCsq = csq != null && Number.isFinite(csq) && csq !== 99;
 
   if (!hasRsrp && !hasCsq) {
-    return { grade: "none", ...GRADE_META.none };
+    return { grade: "unmeasured", ...GRADE_META.unmeasured };
   }
 
   const grade = hasRsrp
@@ -63,6 +76,15 @@ export function getLteSignalInfo(
     ...(hasRsrp ? { rsrp } : {}),
     ...(hasCsq ? { csq: csq as number } : {}),
   };
+}
+
+/**
+ * LTE 표시에서 "통신 없음"으로 볼지. 마지막 수신 시각만 본다.
+ * 모듈 상태(전부 꺼짐/미설치 → 장비 상태 offline)는 통신과 무관하므로 보지 않는다.
+ */
+export function isLteOffline(lastSeenAt?: string | null, now = Date.now()): boolean {
+  if (!lastSeenAt) return true;
+  return isCommLost(lastSeenAt, now);
 }
 
 export function formatLteSignalDetail(info: LteSignalInfo): string | null {

@@ -5,8 +5,8 @@ import {
   formatLastSeen,
   formatLteSignalDetail,
   getLteSignalInfo,
+  isLteOffline,
 } from "../lib/lteSignal";
-import { isCommLost } from "../lib/commStatus";
 import { useHasMounted } from "../hooks/useHasMounted";
 
 type Props = {
@@ -21,8 +21,8 @@ export default function LteSignalIndicator({
   className = "",
 }: Props) {
   const mounted = useHasMounted();
-  const commLost = isCommLost(device?.lastSeenAt);
-  const offline = !device || device.status === "offline" || commLost;
+  // 통신 여부는 마지막 수신 시각으로만 판단 (모듈이 전부 꺼져 있어도 통신은 될 수 있음)
+  const offline = !device || isLteOffline(device.lastSeenAt);
   const info = getLteSignalInfo(device?.rsrp, device?.csq, offline);
   const detail = formatLteSignalDetail(info);
   const lastSeen = mounted ? formatLastSeen(device?.lastSeenAt) : null;
