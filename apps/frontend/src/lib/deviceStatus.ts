@@ -61,7 +61,7 @@ function isStandbyStatus(status: DeviceStatus): boolean {
   return status === "standby" || status === "start";
 }
 
-/** 설치지점이 하나라도 있는 현장. 없는 현장은 목록·지도·관제 순환에서 숨긴다. */
+/** 설치지점이 하나라도 있는 현장. 없는 현장은 지도·관제 순환에서 빼고, 목록에는 "설치지점 없음"으로 보인다. */
 export function siteHasInstallations(site: Site): boolean {
   return site.installations.length > 0;
 }
@@ -70,8 +70,8 @@ export function siteMatchesFilter(
   site: Site,
   filter: StatusFilter,
 ): boolean {
-  // 설치지점이 없는 현장은 목록에 그릴 게 없다 — 지역 묶음·"N현장 · N대" 숫자에서도 뺀다
-  if (filter === "all") return siteHasInstallations(site);
+  // 전체 보기에서는 설치지점이 없는 현장도 목록에 보인다 ("설치지점이 없습니다")
+  if (filter === "all") return true;
   for (const inst of site.installations) {
     const s = inst.device?.status ?? "offline";
     if (filter === "standby" && isStandbyStatus(s)) return true;

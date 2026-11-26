@@ -629,7 +629,10 @@ export default function DashboardClient({
                               ),
                             );
 
-                            if (visibleInstallations.length === 0) return null;
+                            // 상태 필터에 걸리는 설비가 없으면 숨김. 단 전체 보기의 빈 현장은 "설치지점 없음"으로 보인다
+                            const emptySite = site.installations.length === 0;
+                            if (visibleInstallations.length === 0 && !(emptySite && statusFilter === "all"))
+                              return null;
 
                             const siteListName = formatIccidListName(site.name);
 
@@ -651,7 +654,7 @@ export default function DashboardClient({
                                   }}
                                 >
                                   <div
-                                    className={`site-group-dot ${siteStatus}`}
+                                    className={`site-group-dot ${emptySite ? "offline" : siteStatus}`}
                                   />
                                   <div className="site-group-info">
                                     <strong
@@ -665,9 +668,9 @@ export default function DashboardClient({
                                     </span>
                                   </div>
                                   <span
-                                    className={`site-card-badge ${siteStatus}`}
+                                    className={`site-card-badge ${emptySite ? "offline" : siteStatus}`}
                                   >
-                                    {STATUS_LABEL[siteStatus]}
+                                    {emptySite ? "지점 없음" : STATUS_LABEL[siteStatus]}
                                   </span>
                                   {siteHasCommLost(site) ? <CommLostBadge /> : null}
                                   {isSiteSelected && (
@@ -684,6 +687,9 @@ export default function DashboardClient({
                                   >
                                     현장 상세보기 →
                                   </Link>
+                                  {emptySite && (
+                                    <p className="site-group-empty">설치지점이 없습니다</p>
+                                  )}
                                   {visibleInstallations.map((inst) => {
                                     const instStatus =
                                       (inst.device?.status as DeviceStatus) ??
