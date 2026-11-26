@@ -9,6 +9,7 @@ import {
   formatKstMonthDayHour,
   formatKstShortDate,
 } from "../lib/kstTime";
+import { harmonicsSupported, harmonicsUnsupportedText } from "../lib/harmonicsSupport";
 
 /**
  * 이력 탭 → 고조파: 고른 차수 하나의 기간별 추세.
@@ -55,6 +56,7 @@ export default function HarmonicHistoryCharts({
   start,
   aggregation,
   faults = [],
+  fwVersion,
 }: {
   installationId: string;
   period: Period;
@@ -62,7 +64,10 @@ export default function HarmonicHistoryCharts({
   start: string;
   aggregation: Agg;
   faults?: FaultEvent[];
+  /** HMI 펌웨어 버전. v2.5.1 미만이면 고조파를 보내지 않는다. */
+  fwVersion?: string | null;
 }) {
+  const unsupported = harmonicsSupported(fwVersion) === false;
   const [order, setOrder] = useState(5);
   const [payload, setPayload] = useState<HarmonicHistoryPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -186,8 +191,7 @@ export default function HarmonicHistoryCharts({
       <>
         {orderPicker}
         <div className="chart-card chart-card-wide history-empty">
-          <p>{error ?? "이 기간에 받은 고조파 데이터가 없습니다."}</p>
-          <p className="history-empty-sub">고조파는 200A 장치가 1시간마다 1번 보냅니다.</p>
+          <p>{error ?? (unsupported ? harmonicsUnsupportedText(fwVersion) : "데이터 없음")}</p>
         </div>
       </>
     );

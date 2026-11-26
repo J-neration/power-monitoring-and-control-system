@@ -118,6 +118,7 @@ export default function DeviceMonitorBoard({
             installationId={device.installationId}
             isAdmin={isAdmin}
             requestedBy={requestedBy}
+            fwVersion={device.fwVersion}
           />
         </section>
       ) : section === "data" ? (

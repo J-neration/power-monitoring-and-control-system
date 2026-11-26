@@ -23,6 +23,7 @@ import {
 } from "../lib/chartTheme";
 import { formatKstMonthDayTime } from "../lib/kstTime";
 import { useWsEvents } from "../hooks/useWsEvents";
+import { harmonicsSupported, harmonicsUnsupportedText } from "../lib/harmonicsSupport";
 
 // Command TTL (900 s) + margin, same as the data refresh button.
 const COMMAND_ACK_TIMEOUT_MS = 930_000;
@@ -195,11 +196,16 @@ export default function DeviceHarmonicsPanel({
   installationId,
   isAdmin = false,
   requestedBy,
+  fwVersion,
 }: {
   installationId: string;
   isAdmin?: boolean;
   requestedBy?: string;
+  /** HMI 펌웨어 버전. v2.5.1 미만이면 고조파를 보내지 않는다. */
+  fwVersion?: string | null;
 }) {
+  /** false 일 때만 막는다. 버전을 모르면(null) 지금처럼 둔다. */
+  const unsupported = harmonicsSupported(fwVersion) === false;
   const [data, setData] = useState<HarmonicsResponse | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [view, setView] = useState<View>("chart");
@@ -434,7 +440,8 @@ export default function DeviceHarmonicsPanel({
             type="button"
             className="harmonics-refresh-btn"
             onClick={() => void requestNow()}
-            disabled={cmd.tone === "pending" || cmd.tone === "busy"}
+            disabled={unsupported || cmd.tone === "pending" || cmd.tone === "busy"}
+            title={unsupported ? harmonicsUnsupportedText(fwVersion) : undefined}
           >
             {cmd.tone === "pending" ? "갱신 중…" : "↻ 고조파 갱신"}
           </button>
@@ -462,7 +469,9 @@ export default function DeviceHarmonicsPanel({
         <p className="harmonics-empty">
           {loadError
             ? "고조파 데이터를 불러오지 못했습니다."
-            : "아직 받은 고조파 데이터가 없습니다. 200A 장치가 1시간마다 보냅니다."}
+            : unsupported
+              ? harmonicsUnsupportedText(fwVersion)
+              : "데이터 없음"}
         </p>
       ) : view === "table" ? (
         <ChartCard title="차수별 고조파 전류" subtitle={`단위 ${unitLabel}`} wide fill>

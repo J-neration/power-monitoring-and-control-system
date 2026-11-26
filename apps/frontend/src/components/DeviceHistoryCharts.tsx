@@ -132,6 +132,8 @@ type Props = {
   facilityTotal?: number | null;
   /** 주·월·연. 관리자는 항상 true. 고객 계정은 설치지점 설정을 따른다. */
   longRangeVisible?: boolean;
+  /** HMI 펌웨어 버전. 고조파 탭에서 v2.5.1 미만 안내에 쓴다. */
+  fwVersion?: string | null;
 };
 
 export default function DeviceHistoryCharts({
@@ -142,6 +144,7 @@ export default function DeviceHistoryCharts({
   faults = [],
   facilityTotal = null,
   longRangeVisible = true,
+  fwVersion,
 }: Props) {
   const [subTab, setSubTab] = useState<SubTab>("pf");
   const [period, setPeriod] = useState<Period>("day");
@@ -508,6 +511,7 @@ export default function DeviceHistoryCharts({
           start={start}
           aggregation={activeAgg}
           faults={faults}
+          fwVersion={fwVersion}
         />
       </div>
     );
