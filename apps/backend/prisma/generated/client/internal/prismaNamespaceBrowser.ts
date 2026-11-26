@@ -66,7 +66,6 @@ export const ModelName = {
   FaultEvent: 'FaultEvent',
   ModuleFaultState: 'ModuleFaultState',
   ModuleFaultLog: 'ModuleFaultLog',
-  Alarm: 'Alarm',
   DeviceCommand: 'DeviceCommand',
   OtaFile: 'OtaFile',
   OtaStatusEvent: 'OtaStatusEvent',
@@ -151,10 +150,6 @@ export const InstallationScalarFieldEnum = {
   iccid: 'iccid',
   moduleName: 'moduleName',
   historyVisible: 'historyVisible',
-  maintenanceSince: 'maintenanceSince',
-  maintenanceUntil: 'maintenanceUntil',
-  maintenanceBy: 'maintenanceBy',
-  maintenanceNote: 'maintenanceNote',
   webSettingsActive: 'webSettingsActive',
   webSettingsHeartbeatAt: 'webSettingsHeartbeatAt',
   adminSessionActive: 'adminSessionActive',
@@ -389,20 +384,6 @@ export const ModuleFaultLogScalarFieldEnum = {
 } as const
 
 export type ModuleFaultLogScalarFieldEnum = (typeof ModuleFaultLogScalarFieldEnum)[keyof typeof ModuleFaultLogScalarFieldEnum]
-
-
-export const AlarmScalarFieldEnum = {
-  id: 'id',
-  installationId: 'installationId',
-  kind: 'kind',
-  raisedAt: 'raisedAt',
-  clearedAt: 'clearedAt',
-  ackedAt: 'ackedAt',
-  ackedBy: 'ackedBy',
-  ackNote: 'ackNote'
-} as const
-
-export type AlarmScalarFieldEnum = (typeof AlarmScalarFieldEnum)[keyof typeof AlarmScalarFieldEnum]
 
 
 export const DeviceCommandScalarFieldEnum = {
