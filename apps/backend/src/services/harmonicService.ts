@@ -227,6 +227,24 @@ export const harmonicService = {
     return rows.map(toDto);
   },
 
+  /**
+   * HMI 가 아직 응답하지 않은 module 0 명령 (pending, sent, 만료 전).
+   * 고조파 갱신은 module 0 이라 이런 명령이 있으면 새로 만들 수 없다(409). 화면이 탭을 옮겨 와도
+   * "요청 중" 을 다시 보여 주고 버튼을 막는 데 쓴다.
+   */
+  async activeCommand(installationId: string, now = new Date()) {
+    return prisma.deviceCommand.findFirst({
+      where: {
+        installationId,
+        module: 0,
+        status: { in: ["pending", "sent"] },
+        OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
+      },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, power: true, status: true, createdAt: true, expiresAt: true },
+    });
+  },
+
   async latest(installationId: string): Promise<HarmonicRecordDto | null> {
     const row = await prisma.harmonicRecord.findFirst({
       where: { installationId },

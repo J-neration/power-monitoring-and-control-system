@@ -190,6 +190,8 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
   server.post("/:id/viewing/stop", { preHandler: requireAdmin }, async (request, reply) => {
     const { id } = request.params as { id: string };
     await viewingState.stopAdminSession(id);
+    // 다른 탭·다른 관리자 화면의 남은 시간도 바로 꺼지게
+    wsHub.broadcast({ type: "admin_session_closed", installationId: id });
     return reply.send({
       ok: true,
       installationId: id,
@@ -357,11 +359,14 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
     const { hours } = request.query as { hours?: string };
     const parsed = hours ? Number.parseInt(hours, 10) : 168;
     const span = Number.isFinite(parsed) ? Math.min(Math.max(parsed, 1), 24 * 31) : 168;
-    const [latest, records] = await Promise.all([
+    const isAdmin = request.user.role === "ADMIN";
+    const [latest, records, activeCommand] = await Promise.all([
       harmonicService.latest(id),
       harmonicService.list(id, span),
+      // 명령은 관리자만 만들 수 있으므로 관리자에게만 알려 준다
+      isAdmin ? harmonicService.activeCommand(id) : Promise.resolve(null),
     ]);
-    return { unit: "0.01A", hours: span, latest, records };
+    return { unit: "0.01A", hours: span, latest, records, activeCommand };
   });
 
   server.get("/:id/readings", { preHandler: authenticate }, async (request, reply) => {
