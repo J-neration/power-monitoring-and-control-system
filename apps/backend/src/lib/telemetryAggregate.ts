@@ -18,6 +18,8 @@ export const SCALAR_METRICS = [
   "loadCurrentL1",
   "loadCurrentL2",
   "loadCurrentL3",
+  "gridCurrentN",
+  "loadCurrentN",
   "loadCurrentTHDL1",
   "loadCurrentTHDL2",
   "loadCurrentTHDL3",

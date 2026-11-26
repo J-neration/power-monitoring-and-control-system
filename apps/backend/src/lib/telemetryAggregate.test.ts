@@ -39,6 +39,8 @@ describe("retentionConfigFrom", () => {
     assert.equal(cfg.rawPurgeEnabled, false);
     assert.equal(cfg.summaryPurgeEnabled, false);
     assert.equal(cfg.aggregationEnabled, true);
+    assert.equal(cfg.harmonicDays, 365);
+    assert.equal(cfg.harmonicPurgeEnabled, true);
   });
 
   it("reads overrides without code changes", () => {

@@ -9,6 +9,7 @@ import CapacitySnapshot from "./CapacitySnapshot";
 import DeviceDetailChartsLazy from "./DeviceDetailChartsLazy";
 import DeviceOpsBenefitPanel from "./DeviceOpsBenefitPanel";
 import DeviceCompareTable from "./DeviceCompareTable";
+import DeviceHarmonicsPanel from "./DeviceHarmonicsPanel";
 import ModuleSlotGrid from "./ModuleSlotGrid";
 import ThermalSummaryPanel from "./ThermalSummaryPanel";
 
@@ -18,6 +19,7 @@ export type MonitorSection =
   | "thd"
   | "unbalance"
   | "thermal"
+  | "harmonics"
   | "data";
 
 const VIEWS: { key: MonitorSection; label: string }[] = [
@@ -26,6 +28,7 @@ const VIEWS: { key: MonitorSection; label: string }[] = [
   { key: "thd", label: "THD" },
   { key: "unbalance", label: "부하불평형" },
   { key: "thermal", label: "열관리" },
+  { key: "harmonics", label: "고조파" },
   { key: "data", label: "데이터" },
 ];
 
@@ -33,10 +36,15 @@ export default function DeviceMonitorBoard({
   device,
   readings = [],
   savingsReadings = [],
+  isAdmin = false,
+  requestedBy,
 }: {
   device: DeviceWithInstallation;
   readings?: TelemetryReading[];
   savingsReadings?: TimedReading[];
+  /** 고조파 "지금 불러오기" 버튼은 관리자만 */
+  isAdmin?: boolean;
+  requestedBy?: string;
 }) {
   const [section, setSection] = useState<MonitorSection>("overview");
 
@@ -104,6 +112,14 @@ export default function DeviceMonitorBoard({
             <CapacitySnapshot device={device} />
           </div>
         </div>
+      ) : section === "harmonics" ? (
+        <section className="device-monitor-data">
+          <DeviceHarmonicsPanel
+            installationId={device.installationId}
+            isAdmin={isAdmin}
+            requestedBy={requestedBy}
+          />
+        </section>
       ) : section === "data" ? (
         <section className="device-monitor-data">
           <DeviceCompareTable device={device} />

@@ -125,6 +125,7 @@ function PhaseBay({
   title,
   kicker,
   current,
+  neutral,
   thd,
   tpf,
   dpf,
@@ -133,6 +134,8 @@ function PhaseBay({
   title: string;
   kicker: string;
   current: { l1?: number | null; l2?: number | null; l3?: number | null };
+  /** N상 전류 (A). 200A(v3v4)만 값이 있다. 없으면 줄을 숨긴다 */
+  neutral?: number | null;
   thd: { l1?: number | null; l2?: number | null; l3?: number | null };
   tpf?: number | null;
   dpf?: number | null;
@@ -170,6 +173,17 @@ function PhaseBay({
         lowL2={isLowLoadCurrent(current.l2)}
         lowL3={isLowLoadCurrent(current.l3)}
       />
+      {neutral != null ? (
+        <div className="hmi-compare-row hmi-compare-row--neutral">
+          <span className="hmi-compare-tag">
+            IN
+            <span className="hmi-compare-name">N상 전류</span>
+          </span>
+          <span className="hmi-compare-neutral-value">
+            <CompareMetric value={neutral} unit="A" />
+          </span>
+        </div>
+      ) : null}
       <div className="hmi-compare-rule" />
       <PfSum tpf={tpf} dpf={dpf} />
     </article>
@@ -348,6 +362,7 @@ export default function DeviceCompareTable({ device }: Props) {
               kicker="LOAD"
               title="보상 전"
               current={loadCurrent}
+              neutral={device.loadCurrentN}
               thd={loadThd}
               tpf={device.tpf1}
               dpf={device.dpf1}
@@ -382,6 +397,7 @@ export default function DeviceCompareTable({ device }: Props) {
               kicker="GRID"
               title="보상 후"
               current={gridCurrent}
+              neutral={device.gridCurrentN}
               thd={gridThd}
               tpf={device.tpf2}
               dpf={device.dpf2}

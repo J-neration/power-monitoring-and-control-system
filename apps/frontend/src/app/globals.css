@@ -4752,6 +4752,276 @@ main.dashboard-full {
   text-align: right;
 }
 
+/* N상 전류: 값 하나를 L1~L3 칸 전체에 걸쳐 오른쪽 정렬 (200A만 표시) */
+.hmi-compare-neutral-value {
+  grid-column: 2 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 모니터 > 고조파 (DeviceHarmonicsPanel)
+ * 글꼴은 따로 정하지 않는다: 본문은 사이트 기본 글꼴, 그래프 축은 chartTheme,
+ * 표는 Fault 이력과 같은 .fault-table 을 쓴다. */
+.harmonics-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.harmonics-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.harmonics-view-switch {
+  display: inline-flex;
+  padding: 3px;
+  gap: 3px;
+  border: 1px solid var(--pmcs-accent-border);
+  border-radius: 6px;
+  background: var(--pmcs-bg-elevated);
+}
+
+.harmonics-view-switch button {
+  min-width: 64px;
+  padding: 5px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pmcs-text-muted);
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.harmonics-view-switch button:hover {
+  color: var(--pmcs-text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.harmonics-view-switch button[aria-selected="true"] {
+  color: #04110e;
+  background: var(--pmcs-accent);
+}
+
+.harmonics-meta {
+  margin: 0;
+  flex: 1;
+  font-size: 12px;
+  color: var(--pmcs-text-muted);
+}
+
+.harmonics-refresh-btn {
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--pmcs-accent-bright);
+  background: var(--pmcs-accent-dim);
+  border: 1px solid var(--pmcs-accent-border);
+  border-radius: var(--pmcs-radius);
+  cursor: pointer;
+}
+
+.harmonics-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.harmonics-cmd {
+  margin: 0;
+  font-size: 12px;
+}
+
+.harmonics-cmd--pending {
+  color: var(--pmcs-text-muted);
+}
+
+.harmonics-cmd--ok {
+  color: var(--pmcs-accent-bright);
+}
+
+.harmonics-cmd--err {
+  color: #f87171;
+}
+
+.harmonics-empty {
+  margin: 16px 0;
+  font-size: 13px;
+  color: var(--pmcs-text-muted);
+}
+
+.harmonics-fundamental,
+.harmonics-axis-note {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--pmcs-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.harmonics-axis-note {
+  margin: 4px 0 0;
+  font-size: 11px;
+}
+
+/* 상 색 견본 (L1·L2·L3) */
+.harmonics-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* 막대 차트 소제목 옆 L1·L2·L3 색 견본 */
+.harmonics-side-legend {
+  display: flex;
+  gap: 10px;
+  margin: 0 0 0 10px;
+  padding: 0;
+  list-style: none;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--pmcs-text-muted);
+}
+
+.harmonics-side-legend li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 보상 전 / 보상 후 소제목: 선 색으로 구분, 글자는 본문 색 */
+.harmonics-side-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--pmcs-text);
+}
+
+.harmonics-side-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.harmonics-side {
+  min-width: 0;
+}
+
+/* 이력 탭 → 고조파: 차수 선택 줄 (기간 버튼 아래) */
+.harmonics-history-orders {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.harmonics-history-orders-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--pmcs-text-muted);
+}
+
+/* 차트 제목 옆 보상 전(주황)/후(청록) 선 표시 */
+.harmonics-title-leg {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.harmonics-order-select {
+  margin-left: 8px;
+  padding: 2px 6px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--pmcs-text);
+  background: var(--pmcs-bg-elevated);
+  border: 1px solid var(--pmcs-accent-border);
+  border-radius: var(--pmcs-radius);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.harmonics-order-select.is-active {
+  color: var(--pmcs-accent-bright);
+  background: var(--pmcs-accent-dim);
+}
+
+/* 표: .fault-table 위에 숫자 정렬, 보상 전/후 묶음 색만 더한다.
+ * 보상 전 = 주황 띠, 보상 후 = 청록 띠 (사이트의 보상 전/후 색). 숫자 글자색은 본문 색 그대로. */
+.fault-table.harmonics-table th,
+.fault-table.harmonics-table td {
+  padding: 7px 12px;
+}
+
+.fault-table.harmonics-table td,
+.fault-table.harmonics-table thead tr:last-child th {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.fault-table.harmonics-table th[scope="row"] {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--pmcs-text);
+  background: none;
+}
+
+.fault-table.harmonics-table .harmonics-group {
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--pmcs-text);
+}
+
+.fault-table.harmonics-table .harmonics-group.harmonics-col--before {
+  border-top: 3px solid #f59e0b;
+}
+
+.fault-table.harmonics-table .harmonics-group.harmonics-col--after {
+  border-top: 3px solid #00d4aa;
+}
+
+.fault-table.harmonics-table .harmonics-group.harmonics-col--rate {
+  border-top: 3px solid rgba(148, 163, 184, 0.35);
+}
+
+.fault-table.harmonics-table .harmonics-col--before {
+  background: rgba(245, 158, 11, 0.07);
+}
+
+.fault-table.harmonics-table .harmonics-col--after {
+  background: rgba(0, 212, 170, 0.07);
+}
+
+.fault-table.harmonics-table td.harmonics-col--rate {
+  color: var(--pmcs-text-muted);
+}
+
+.fault-table.harmonics-table .harmonics-group,
+.fault-table.harmonics-table .harmonics-group-start {
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fault-table.harmonics-table tbody tr:hover td.harmonics-col--before {
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.fault-table.harmonics-table tbody tr:hover td.harmonics-col--after {
+  background: rgba(0, 212, 170, 0.12);
+}
+
 .hmi-compare-metric {
   display: inline-flex;
   align-items: baseline;
