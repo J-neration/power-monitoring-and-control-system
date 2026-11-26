@@ -49,12 +49,13 @@ function parseEventCodes(text: string): { faults: EventCode[]; statuses: EventCo
   if (parts.length === 0) return null;
   const codes: EventCode[] = [];
   for (const raw of parts) {
-    const match = /^([FS])(\d+)(?:-([01]))?$/i.exec(raw);
+    const match = /^([FSH])(\d+)(?:-([01]))?$/i.exec(raw);
     if (!match) return null;
     const code = `${match[1].toUpperCase()}${match[2]}`;
     const value = match[3] === "0" || match[3] === "1" ? match[3] : undefined;
     const detail = GUIDE_BY_CODE.get(code);
-    const kind = code.startsWith("S") ? "status" : "fault";
+    // S(상태)·H(HMI 자체 이벤트)는 고장이 아니므로 상태 칩으로 표시
+    const kind = code.startsWith("F") ? "fault" : "status";
     const valueLabel = value ? STATUS_VALUE_LABEL[code]?.[value] : undefined;
     const label = valueLabel ?? (detail ? shortDetail(detail) : "");
     codes.push({ raw: value ? `${code}-${value}` : code, label, kind, value });
@@ -193,6 +194,8 @@ const FAULT_CODE_GUIDE: { code: string; detail: string }[] = [
   { code: "F32", detail: "bit2: Bridge arm overcurrent 3" },
   { code: "F33", detail: "bit1: Bridge arm overcurrent 4" },
   { code: "F34", detail: "bit0: Bridge arm overcurrent 5" },
+  // 자료에 없는 자체 코드 — HMI 부팅 시 HMI가 직접 올린다
+  { code: "H1", detail: "HMI power on (HMI 켜짐)" },
 ];
 
 const GUIDE_BY_CODE = new Map(
