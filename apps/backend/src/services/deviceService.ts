@@ -484,6 +484,9 @@ export const deviceService = {
     loadCurrentL1?: number | string;
     loadCurrentL2?: number | string;
     loadCurrentL3?: number | string;
+    /** N상 전류 (A). 200A(v3v4) HMI만 보낸다 */
+    gridCurrentN?: number | string;
+    loadCurrentN?: number | string;
     loadCurrentTHDL1?: number | string;
     loadCurrentTHDL2?: number | string;
     loadCurrentTHDL3?: number | string;
@@ -550,6 +553,9 @@ export const deviceService = {
     const loadCurrentL1 = toNumber(payload.loadCurrentL1);
     const loadCurrentL2 = toNumber(payload.loadCurrentL2);
     const loadCurrentL3 = toNumber(payload.loadCurrentL3);
+
+    const gridCurrentN = toNumber(payload.gridCurrentN);
+    const loadCurrentN = toNumber(payload.loadCurrentN);
 
     const loadCurrentTHDL1 = toNumber(payload.loadCurrentTHDL1);
     const loadCurrentTHDL2 = toNumber(payload.loadCurrentTHDL2);
@@ -667,6 +673,8 @@ export const deviceService = {
         ...(loadCurrentL1 !== undefined ? { loadCurrentL1 } : {}),
         ...(loadCurrentL2 !== undefined ? { loadCurrentL2 } : {}),
         ...(loadCurrentL3 !== undefined ? { loadCurrentL3 } : {}),
+        ...(gridCurrentN !== undefined ? { gridCurrentN } : {}),
+        ...(loadCurrentN !== undefined ? { loadCurrentN } : {}),
         ...(loadCurrentTHDL1 !== undefined ? { loadCurrentTHDL1 } : {}),
         ...(loadCurrentTHDL2 !== undefined ? { loadCurrentTHDL2 } : {}),
         ...(loadCurrentTHDL3 !== undefined ? { loadCurrentTHDL3 } : {}),

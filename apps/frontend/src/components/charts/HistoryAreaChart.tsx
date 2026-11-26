@@ -115,6 +115,31 @@ function historyTimeTicks(data: Record<string, unknown>[]): string[] {
   return [...new Set(idxs)].map((i) => times[i]);
 }
 
+function isNum(value: unknown): boolean {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+/**
+ * 앞뒤가 모두 비어 있는(누락 사이에 낀) 값은 선으로 이어지지 않아
+ * dot={false}면 아무것도 안 그려진다. 그런 점만 작은 원으로 표시한다.
+ */
+function isolatedDot(data: Record<string, unknown>[], dataKey: string, color: string) {
+  function IsolatedDot(props: { cx?: number; cy?: number; index?: number }) {
+    const { cx, cy, index } = props;
+    const key = `${dataKey}-${index ?? "x"}`;
+    if (index == null || cx == null || cy == null || !Number.isFinite(cx) || !Number.isFinite(cy)) {
+      return <g key={key} />;
+    }
+    const isolated =
+      isNum(data[index]?.[dataKey]) &&
+      !isNum(data[index - 1]?.[dataKey]) &&
+      !isNum(data[index + 1]?.[dataKey]);
+    if (!isolated) return <g key={key} />;
+    return <circle key={key} cx={cx} cy={cy} r={2.5} fill={color} stroke="none" />;
+  }
+  return IsolatedDot;
+}
+
 export default function HistoryAreaChart({
   data,
   series,
@@ -172,7 +197,7 @@ export default function HistoryAreaChart({
             stroke={s.stroke}
             strokeDasharray={s.dash ?? (s.dashed ? "4 3" : undefined)}
             fill={s.fill}
-            dot={false}
+            dot={isolatedDot(data, s.dataKey, s.stroke)}
             connectNulls={false}
             stackId={s.stackId}
           />

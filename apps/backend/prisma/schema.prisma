@@ -30,6 +30,8 @@ enum DeviceCommandPower {
   setBasic
   /// HMI firmware update (OTA). module 0, fields = { fileId }
   ota
+  /// 차수별 고조파 전류를 지금 보내 달라는 요청 (200A만). module 0. HMI 는 POST /receiver/harmonics 후 ACK
+  refreshHarmonics
 }
 
 enum DeviceCommandStatus {
@@ -147,6 +149,7 @@ model Installation {
   moduleFaultLogs  ModuleFaultLog[]           // HMI /receiver/faults 수신 이벤트 로그
   deviceSettings   InstallationDeviceSettings? // HMI POST /receiver/settings 스냅샷
   otaStatusEvents  OtaStatusEvent[]           // HMI POST /receiver/ota/status 이력
+  harmonicRecords  HarmonicRecord[]           // HMI POST /receiver/harmonics 이력 (200A)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -219,6 +222,9 @@ model Device {
   loadCurrentL1    Float?
   loadCurrentL2    Float?
   loadCurrentL3    Float?
+  /// N상 전류 (A). 200A(v3v4) HMI만 보낸다. 다른 모델은 null
+  gridCurrentN     Float?
+  loadCurrentN     Float?
 
   // 전류 THD (%)
   loadCurrentTHDL1 Float?
@@ -299,6 +305,9 @@ model TelemetryRecord {
   loadCurrentL1    Float?
   loadCurrentL2    Float?
   loadCurrentL3    Float?
+  /// N상 전류 (A). 200A(v3v4) HMI만 보낸다
+  gridCurrentN     Float?
+  loadCurrentN     Float?
 
   // 전류 THD (%)
   loadCurrentTHDL1 Float?
@@ -556,4 +565,30 @@ model OtaStatusEvent {
   createdAt      DateTime     @default(now())
 
   @@index([installationId, createdAt])
+}
+
+/// 차수별 고조파 전류 (HMI POST /receiver/harmonics). 200A(v3v4) HMI만 보낸다.
+/// 1시간마다 1번(source "hourly") + 명령 refreshHarmonics 를 받았을 때(source "command").
+/// 배열 index 는 orders 와 같은 순서 (보통 1,3,5,…,49 의 25개). 값 단위는 0.01 A 정수.
+model HarmonicRecord {
+  id             String       @id @default(cuid())
+  installationId String
+  installation   Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  /// HMI 측정 시각 (ts). 없으면 수신 시각
+  recordedAt     DateTime     @default(now())
+  receivedAt     DateTime     @default(now())
+  /// "hourly" | "command"
+  source         String       @default("hourly")
+  orders         Int[]
+  /// 보상 전 (LOAD) A/B/C상
+  uncompA        Int[]
+  uncompB        Int[]
+  uncompC        Int[]
+  /// 보상 후 (GRID) A/B/C상
+  compA          Int[]
+  compB          Int[]
+  compC          Int[]
+
+  @@index([installationId, recordedAt])
 }

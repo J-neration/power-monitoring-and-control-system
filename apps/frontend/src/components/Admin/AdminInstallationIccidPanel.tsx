@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { SiteListFromApi } from "../../types/admin";
+import IccidInput from "./IccidInput";
 
 type Props = {
   sites: SiteListFromApi[];
@@ -127,17 +128,16 @@ export default function AdminInstallationIccidPanel({ sites }: Props) {
                   <code className="admin-iccid-code">{r.installationId}</code>
                 </td>
                 <td>
-                  <input
-                    type="text"
+                  <IccidInput
                     className="admin-iccid-input"
                     value={values[r.installationId] ?? ""}
-                    onChange={(e) =>
+                    onChange={(v) =>
                       setValues((prev) => ({
                         ...prev,
-                        [r.installationId]: e.target.value,
+                        [r.installationId]: v,
                       }))
                     }
-                    placeholder="893404…"
+                    placeholder="8988 2280 …"
                     autoComplete="off"
                     spellCheck={false}
                   />

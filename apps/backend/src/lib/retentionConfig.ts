@@ -7,6 +7,8 @@
  * RAW_SAMPLE_INTERVAL_MINUTES=10
  * RAW_PURGE_ENABLED=false          원본 자동 삭제. 기본 꺼짐
  * SUMMARY_PURGE_ENABLED=false      요약 보관기간 초과 삭제. 기본 꺼짐
+ * HARMONIC_RETENTION_DAYS=365      차수별 고조파 기록(HarmonicRecord) 보관 일수
+ * HARMONIC_PURGE_ENABLED=true      고조파 보관기간 초과 삭제. 기본 켜짐 (1년 보관으로 결정, 2026-11-26)
  * AGGREGATION_ENABLED=true
  * AGGREGATION_LATE_HOURS=48        지연 수신을 다시 집계하는 시간
  * AGGREGATION_TICK_MS=600000
@@ -19,6 +21,8 @@ export type RetentionConfig = {
   intervalMinutes: number;
   rawPurgeEnabled: boolean;
   summaryPurgeEnabled: boolean;
+  harmonicDays: number;
+  harmonicPurgeEnabled: boolean;
   aggregationEnabled: boolean;
   lateHours: number;
   tickMs: number;
@@ -61,6 +65,8 @@ export function retentionConfigFrom(
     intervalMinutes: intEnv(env, "RAW_SAMPLE_INTERVAL_MINUTES", 10, 1, 60),
     rawPurgeEnabled: boolEnv(env, "RAW_PURGE_ENABLED", false),
     summaryPurgeEnabled: boolEnv(env, "SUMMARY_PURGE_ENABLED", false),
+    harmonicDays: intEnv(env, "HARMONIC_RETENTION_DAYS", 365, 1, 3650),
+    harmonicPurgeEnabled: boolEnv(env, "HARMONIC_PURGE_ENABLED", true),
     aggregationEnabled: boolEnv(env, "AGGREGATION_ENABLED", true),
     lateHours: intEnv(env, "AGGREGATION_LATE_HOURS", 48, 1, 24 * 30),
     tickMs: intEnv(env, "AGGREGATION_TICK_MS", 10 * 60 * 1000, 60_000, 24 * 60 * 60 * 1000),

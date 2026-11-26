@@ -68,7 +68,8 @@ export const ModelName = {
   ModuleFaultLog: 'ModuleFaultLog',
   DeviceCommand: 'DeviceCommand',
   OtaFile: 'OtaFile',
-  OtaStatusEvent: 'OtaStatusEvent'
+  OtaStatusEvent: 'OtaStatusEvent',
+  HarmonicRecord: 'HarmonicRecord'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -199,6 +200,8 @@ export const DeviceScalarFieldEnum = {
   loadCurrentL1: 'loadCurrentL1',
   loadCurrentL2: 'loadCurrentL2',
   loadCurrentL3: 'loadCurrentL3',
+  gridCurrentN: 'gridCurrentN',
+  loadCurrentN: 'loadCurrentN',
   loadCurrentTHDL1: 'loadCurrentTHDL1',
   loadCurrentTHDL2: 'loadCurrentTHDL2',
   loadCurrentTHDL3: 'loadCurrentTHDL3',
@@ -249,6 +252,8 @@ export const TelemetryRecordScalarFieldEnum = {
   loadCurrentL1: 'loadCurrentL1',
   loadCurrentL2: 'loadCurrentL2',
   loadCurrentL3: 'loadCurrentL3',
+  gridCurrentN: 'gridCurrentN',
+  loadCurrentN: 'loadCurrentN',
   loadCurrentTHDL1: 'loadCurrentTHDL1',
   loadCurrentTHDL2: 'loadCurrentTHDL2',
   loadCurrentTHDL3: 'loadCurrentTHDL3',
@@ -434,6 +439,24 @@ export const OtaStatusEventScalarFieldEnum = {
 } as const
 
 export type OtaStatusEventScalarFieldEnum = (typeof OtaStatusEventScalarFieldEnum)[keyof typeof OtaStatusEventScalarFieldEnum]
+
+
+export const HarmonicRecordScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  recordedAt: 'recordedAt',
+  receivedAt: 'receivedAt',
+  source: 'source',
+  orders: 'orders',
+  uncompA: 'uncompA',
+  uncompB: 'uncompB',
+  uncompC: 'uncompC',
+  compA: 'compA',
+  compB: 'compB',
+  compC: 'compC'
+} as const
+
+export type HarmonicRecordScalarFieldEnum = (typeof HarmonicRecordScalarFieldEnum)[keyof typeof HarmonicRecordScalarFieldEnum]
 
 
 export const SortOrder = {

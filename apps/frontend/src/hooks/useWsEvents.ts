@@ -6,8 +6,10 @@ export type WsMessage =
   | { type: "welcome"; timestamp: number }
   | { type: "device_updated"; installationId: string }
   | { type: "settings_updated"; installationId: string }
+  | { type: "harmonics_updated"; installationId: string }
   | { type: "command_acked"; commandId: string; status: string; installationId: string }
   | { type: "admin_session_opened"; installationId: string; until: string }
+  | { type: "admin_session_closed"; installationId: string }
   | { type: "admin_session_signaled"; installationId: string }
   | { type: "admin_session_linked"; installationId: string };
 

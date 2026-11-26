@@ -53,6 +53,10 @@ export type Device = {
   loadCurrentL2?: number;
   loadCurrentL3?: number;
 
+  /** N상 전류 (A). 200A(v3v4) HMI만 보낸다. 다른 모델은 null */
+  gridCurrentN?: number | null;
+  loadCurrentN?: number | null;
+
   loadCurrentTHDL1?: number;
   loadCurrentTHDL2?: number;
   loadCurrentTHDL3?: number;
@@ -145,6 +149,8 @@ export type TelemetryReading = {
   loadCurrentL1?: number | null;
   loadCurrentL2?: number | null;
   loadCurrentL3?: number | null;
+  gridCurrentN?: number | null;
+  loadCurrentN?: number | null;
 
   loadCurrentTHDL1?: number | null;
   loadCurrentTHDL2?: number | null;

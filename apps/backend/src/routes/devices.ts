@@ -1,6 +1,7 @@
 import { FastifyPluginAsync, type FastifyReply, type FastifyRequest } from "fastify";
 import { deviceService } from "../services/deviceService.js";
 import { watchFactsService } from "../services/watchFactsService.js";
+import { harmonicService } from "../services/harmonicService.js";
 import { authenticate, requireAdmin, requireFaultReader } from "../middleware/authenticate.js";
 import { toUserContext } from "../modules/auth/auth.service.js";
 import type { JwtPayload } from "../modules/auth/auth.types.js";
@@ -60,6 +61,30 @@ const historyPreHandler = async (request: FastifyRequest, reply: FastifyReply) =
   }
   return reply.status(401).send({ message: "인증이 필요합니다." });
 };
+
+const LONG_RANGE_DENIED = "이 설치지점의 주·월·연 이력은 고객 계정에 열려 있지 않습니다.";
+
+/** 고객 계정(CLIENT·SITE)만 historyVisible 로 막는다. 관리자·영업 열람은 항상 볼 수 있다.
+ *  막힌 계정은 일간(종료일 지정 없음, 원본 해상도)만 볼 수 있다. 이력·고조파 이력이 같이 쓴다. */
+function longRangeDenied(
+  request: FastifyRequest,
+  device: { installation: { historyVisible?: boolean | null } },
+  range: { period: string },
+  query: { resolution?: string; end?: string; endDate?: string },
+): boolean {
+  const closed =
+    request.user.role !== "ADMIN" &&
+    request.user.role !== "VIEWER" &&
+    device.installation.historyVisible !== true;
+  if (!closed) return false;
+  const askedResolution = (query.resolution ?? "auto").trim();
+  const hasEnd = Boolean((query.end ?? query.endDate)?.trim());
+  const dayOnly =
+    range.period === "day" &&
+    !hasEnd &&
+    (askedResolution === "" || askedResolution === "auto" || askedResolution === "raw");
+  return !dayOnly;
+}
 
 export const deviceRoutes: FastifyPluginAsync = async (server) => {
   server.get("/", { preHandler: authenticate }, async (request) => {
@@ -165,6 +190,8 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
   server.post("/:id/viewing/stop", { preHandler: requireAdmin }, async (request, reply) => {
     const { id } = request.params as { id: string };
     await viewingState.stopAdminSession(id);
+    // 다른 탭·다른 관리자 화면의 남은 시간도 바로 꺼지게
+    wsHub.broadcast({ type: "admin_session_closed", installationId: id });
     return reply.send({
       ok: true,
       installationId: id,
@@ -245,23 +272,8 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
     if (!device) {
       return reply.status(404).send({ message: "Device not found" });
     }
-    // 고객 계정(CLIENT·SITE)만 historyVisible 로 막는다. 관리자·영업 열람은 항상 볼 수 있다.
-    const longRangeClosed =
-      request.user.role !== "ADMIN" &&
-      request.user.role !== "VIEWER" &&
-      device.installation.historyVisible !== true;
-    if (longRangeClosed) {
-      const askedResolution = (query.resolution ?? "auto").trim();
-      const hasEnd = Boolean((query.end ?? query.endDate)?.trim());
-      const dayOnly =
-        resolved.value.period === "day" &&
-        !hasEnd &&
-        (askedResolution === "" || askedResolution === "auto" || askedResolution === "raw");
-      if (!dayOnly) {
-        return reply.status(403).send({
-          message: "이 설치지점의 주·월·연 이력은 고객 계정에 열려 있지 않습니다.",
-        });
-      }
+    if (longRangeDenied(request, device, resolved.value, query)) {
+      return reply.status(403).send({ message: LONG_RANGE_DENIED });
     }
     const history = await getDeviceHistory(id, resolved.value);
     return { ...history, metric: metric ?? null };
@@ -291,6 +303,70 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
       .map((point) => slimOpsSample(point))
       .filter((point) => point.uncompP != null || point.tpf1 != null || point.dpf1 != null);
     return { samples, from: history.from, to: history.to, source: history.source };
+  });
+
+  /**
+   * 이력 탭 → 고조파: 한 차수(order)의 보상 전/후 A/B/C상 추세 (A 단위).
+   * 기간·시작일·집계·권한은 /:id/history 와 같다. 고조파는 1시간마다 오므로
+   * 일간은 기록 그대로(1시간 간격), 주간은 1시간, 월·연간은 1일 단위로 묶는다.
+   */
+  server.get("/:id/harmonics/history", { preHandler: historyPreHandler }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const query = request.query as {
+      period?: string;
+      start?: string;
+      end?: string;
+      endDate?: string;
+      aggregation?: string;
+      resolution?: string;
+      order?: string;
+    };
+    const order = Number.parseInt(query.order ?? "5", 10);
+    if (!Number.isInteger(order) || order < 1 || order > 99) {
+      return reply.status(400).send({ message: "order 는 1~99 사이 정수여야 합니다." });
+    }
+    const resolved = resolveHistoryQuery({
+      period: query.period,
+      aggregation: query.aggregation,
+      resolution: query.resolution,
+      start: query.start,
+      end: query.end ?? query.endDate,
+      intervalMinutes: 60,
+    });
+    if (!resolved.ok) {
+      return reply.status(400).send({ message: resolved.message });
+    }
+    const device = await deviceService.get({ id }, request.user);
+    if (!device) {
+      return reply.status(404).send({ message: "Device not found" });
+    }
+    if (longRangeDenied(request, device, resolved.value, query)) {
+      return reply.status(403).send({ message: LONG_RANGE_DENIED });
+    }
+    return harmonicService.history(id, resolved.value, order);
+  });
+
+  /**
+   * 차수별 고조파 전류 (200A). latest = 가장 최근 1건, records = 최근 hours 시간 (기본 168 = 7일).
+   * 값은 0.01 A 정수 그대로 준다.
+   */
+  server.get("/:id/harmonics", { preHandler: authenticate }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const device = await deviceService.get({ id }, request.user);
+    if (!device) {
+      return reply.status(404).send({ message: "Device not found" });
+    }
+    const { hours } = request.query as { hours?: string };
+    const parsed = hours ? Number.parseInt(hours, 10) : 168;
+    const span = Number.isFinite(parsed) ? Math.min(Math.max(parsed, 1), 24 * 31) : 168;
+    const isAdmin = request.user.role === "ADMIN";
+    const [latest, records, activeCommand] = await Promise.all([
+      harmonicService.latest(id),
+      harmonicService.list(id, span),
+      // 명령은 관리자만 만들 수 있으므로 관리자에게만 알려 준다
+      isAdmin ? harmonicService.activeCommand(id) : Promise.resolve(null),
+    ]);
+    return { unit: "0.01A", hours: span, latest, records, activeCommand };
   });
 
   server.get("/:id/readings", { preHandler: authenticate }, async (request, reply) => {

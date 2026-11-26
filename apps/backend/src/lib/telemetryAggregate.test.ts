@@ -39,6 +39,8 @@ describe("retentionConfigFrom", () => {
     assert.equal(cfg.rawPurgeEnabled, false);
     assert.equal(cfg.summaryPurgeEnabled, false);
     assert.equal(cfg.aggregationEnabled, true);
+    assert.equal(cfg.harmonicDays, 365);
+    assert.equal(cfg.harmonicPurgeEnabled, true);
   });
 
   it("reads overrides without code changes", () => {
@@ -214,6 +216,31 @@ describe("history series", () => {
     assert.equal(series.points[1].gap, true);
     assert.equal(series.points[1].vL1, undefined);
     assert.notEqual(series.points[1].vL1, 0);
+  });
+
+  it("follows a device that reports every 30 minutes instead of marking every step as a gap", () => {
+    const series = buildHistoryFromSamples({
+      installationId: "dev-1",
+      resolution: "raw",
+      aggregation: "avg",
+      from: at("2026-10-01T00:00:00Z"),
+      to: at("2026-10-01T04:00:00Z"),
+      intervalMs: 10 * 60 * 1000,
+      samples: [
+        sample("2026-10-01T00:00:00Z", { vL1: 220 }),
+        sample("2026-10-01T00:30:00Z", { vL1: 221 }),
+        sample("2026-10-01T01:00:00Z", { vL1: 222 }),
+        sample("2026-10-01T01:30:00Z", { vL1: 223 }),
+        // 01:30 → 03:00 은 실제로 끊긴 구간
+        sample("2026-10-01T03:00:00Z", { vL1: 224 }),
+        sample("2026-10-01T03:30:00Z", { vL1: 225 }),
+      ],
+    });
+    assert.equal(series.gapCount, 1);
+    assert.deepEqual(
+      series.points.map((p) => (p.gap ? "gap" : p.vL1)),
+      [220, 221, 222, 223, "gap", 224, 225],
+    );
   });
 
   it("builds one daily point per KST day and leaves an empty day as a gap", () => {

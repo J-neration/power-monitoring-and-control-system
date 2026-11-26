@@ -53,7 +53,7 @@ class InMemoryRepo {
     id: string;
     installationId: string;
     module: number;
-    power: "on" | "off" | "refresh" | "refreshSettings" | "setBasic" | "ota";
+    power: DeviceCommand["power"];
     requestedBy?: string | null;
     expiresAt?: Date | null;
     fields?: unknown;
@@ -430,6 +430,37 @@ test("invalid module/power are rejected", async () => {
     (err: unknown) =>
       err instanceof CommandError && err.code === "INVALID_POWER" && err.httpStatus === 400,
   );
+});
+
+test("refreshHarmonics: module 0 only, refused for a known non-200A device", async () => {
+  const repo = new InMemoryRepo();
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+  const rejects = (input: Parameters<typeof service.create>[0], code: string) =>
+    assert.rejects(
+      () => service.create(input),
+      (err: unknown) => err instanceof CommandError && err.code === code && err.httpStatus === 400,
+    );
+
+  await rejects({ installationId: "PSVG-RNDTEST5", module: 1, power: "refreshHarmonics" }, "INVALID_MODULE");
+
+  repo.moduleTypes.set("PSVG-RNDTEST5", "v5");
+  await rejects({ installationId: "PSVG-RNDTEST5", module: 0, power: "refreshHarmonics" }, "NOT_SUPPORTED");
+
+  repo.moduleTypes.set("PSVG-RNDTEST5", "v3v4");
+  const cmd = await service.create({ installationId: "PSVG-RNDTEST5", module: 0, power: "refreshHarmonics" });
+  assert.equal(cmd.power, "refreshHarmonics");
+  assert.equal(cmd.fields, null);
+
+  const polled = await service.poll("PSVG-RNDTEST5");
+  assert.equal(polled.id, cmd.id);
+  assert.equal(polled.power, "refreshHarmonics");
+});
+
+test("refreshHarmonics: unknown device type is let through (the HMI answers)", async () => {
+  const repo = new InMemoryRepo();
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+  const cmd = await service.create({ installationId: "PSVG-RNDTEST5", module: 0, power: "refreshHarmonics" });
+  assert.equal(cmd.power, "refreshHarmonics");
 });
 
 test("hasPending is true only until the HMI polls an unexpired command", async () => {
