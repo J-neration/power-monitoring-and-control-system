@@ -8,7 +8,7 @@
  *   1. AWS 로그인(pmcs-dev)과 계정을 확인하고, dev 서버 시크릿(SSM /pmcs-dev/box/env)에서
  *      로컬 개발 계정(pmcs_local, 데이터만·연결 20개·쿼리 60초 제한)의 비밀번호를 읽는다.
  *   2. 로컬 백엔드·프론트가 이 연결을 쓰도록 env 파일 두 개를 만든다 (둘 다 .gitignore 대상).
- *        apps/backend/.env.development.local   DB 접속 정보, dev 서버가 하는 집계·메일은 로컬에서 끔
+ *        apps/backend/.env.development.local   DB 접속 정보, dev 서버가 하는 집계·메일·알람 동기화는 로컬에서 끔
  *        apps/frontend/.env.development.local  API 주소를 로컬 백엔드(localhost:4000)로
  *      .env.development.local 은 .env·.env.local·.env.development 보다 우선하므로 기존 파일은 고치지 않는다.
  *   3. dev 서버로 SSM 포트 포워딩을 건다(서버의 127.0.0.1:5432 → 이 PC 의 127.0.0.1:15432). 구간은 SSM 이 암호화한다.
@@ -147,8 +147,10 @@ writeFileSync(
     // 서버 Postgres 는 TLS 를 쓰지 않는다. 구간은 SSM 세션이 암호화하고, 서버 밖으로는 포트가 열려 있지 않다.
     `DATABASE_URL=postgresql://${DB_USER}:${password}@127.0.0.1:${PORT}/pmcs`,
     "DATABASE_POOL_MAX=5",
-    "# 집계·알림 메일은 AWS dev 서버가 이미 한다. 로컬에서 같이 돌리지 않는다.",
+    "# 집계·알림 메일·알람 동기화는 AWS dev 서버가 이미 한다. 로컬에서 같이 돌리지 않는다.",
+    "# (알람 동기화를 둘이 같이 돌리면 같은 알람이 두 줄 생길 수 있다. 화면은 dev 서버가 기록한 알람을 그대로 본다.)",
     "AGGREGATION_ENABLED=false",
+    "ALARM_SYNC_ENABLED=false",
     "RAW_PURGE_ENABLED=false",
     "SUMMARY_PURGE_ENABLED=false",
     "SMTP_HOST=",
