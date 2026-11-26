@@ -42,6 +42,8 @@ export type TelemetryRecordAvgAggregateOutputType = {
   loadCurrentL1: number | null
   loadCurrentL2: number | null
   loadCurrentL3: number | null
+  gridCurrentN: number | null
+  loadCurrentN: number | null
   loadCurrentTHDL1: number | null
   loadCurrentTHDL2: number | null
   loadCurrentTHDL3: number | null
@@ -83,6 +85,8 @@ export type TelemetryRecordSumAggregateOutputType = {
   loadCurrentL1: number | null
   loadCurrentL2: number | null
   loadCurrentL3: number | null
+  gridCurrentN: number | null
+  loadCurrentN: number | null
   loadCurrentTHDL1: number | null
   loadCurrentTHDL2: number | null
   loadCurrentTHDL3: number | null
@@ -127,6 +131,8 @@ export type TelemetryRecordMinAggregateOutputType = {
   loadCurrentL1: number | null
   loadCurrentL2: number | null
   loadCurrentL3: number | null
+  gridCurrentN: number | null
+  loadCurrentN: number | null
   loadCurrentTHDL1: number | null
   loadCurrentTHDL2: number | null
   loadCurrentTHDL3: number | null
@@ -168,6 +174,8 @@ export type TelemetryRecordMaxAggregateOutputType = {
   loadCurrentL1: number | null
   loadCurrentL2: number | null
   loadCurrentL3: number | null
+  gridCurrentN: number | null
+  loadCurrentN: number | null
   loadCurrentTHDL1: number | null
   loadCurrentTHDL2: number | null
   loadCurrentTHDL3: number | null
@@ -210,6 +218,8 @@ export type TelemetryRecordCountAggregateOutputType = {
   loadCurrentL1: number
   loadCurrentL2: number
   loadCurrentL3: number
+  gridCurrentN: number
+  loadCurrentN: number
   loadCurrentTHDL1: number
   loadCurrentTHDL2: number
   loadCurrentTHDL3: number
@@ -253,6 +263,8 @@ export type TelemetryRecordAvgAggregateInputType = {
   loadCurrentL1?: true
   loadCurrentL2?: true
   loadCurrentL3?: true
+  gridCurrentN?: true
+  loadCurrentN?: true
   loadCurrentTHDL1?: true
   loadCurrentTHDL2?: true
   loadCurrentTHDL3?: true
@@ -294,6 +306,8 @@ export type TelemetryRecordSumAggregateInputType = {
   loadCurrentL1?: true
   loadCurrentL2?: true
   loadCurrentL3?: true
+  gridCurrentN?: true
+  loadCurrentN?: true
   loadCurrentTHDL1?: true
   loadCurrentTHDL2?: true
   loadCurrentTHDL3?: true
@@ -338,6 +352,8 @@ export type TelemetryRecordMinAggregateInputType = {
   loadCurrentL1?: true
   loadCurrentL2?: true
   loadCurrentL3?: true
+  gridCurrentN?: true
+  loadCurrentN?: true
   loadCurrentTHDL1?: true
   loadCurrentTHDL2?: true
   loadCurrentTHDL3?: true
@@ -379,6 +395,8 @@ export type TelemetryRecordMaxAggregateInputType = {
   loadCurrentL1?: true
   loadCurrentL2?: true
   loadCurrentL3?: true
+  gridCurrentN?: true
+  loadCurrentN?: true
   loadCurrentTHDL1?: true
   loadCurrentTHDL2?: true
   loadCurrentTHDL3?: true
@@ -421,6 +439,8 @@ export type TelemetryRecordCountAggregateInputType = {
   loadCurrentL1?: true
   loadCurrentL2?: true
   loadCurrentL3?: true
+  gridCurrentN?: true
+  loadCurrentN?: true
   loadCurrentTHDL1?: true
   loadCurrentTHDL2?: true
   loadCurrentTHDL3?: true
@@ -553,6 +573,8 @@ export type TelemetryRecordGroupByOutputType = {
   loadCurrentL1: number | null
   loadCurrentL2: number | null
   loadCurrentL3: number | null
+  gridCurrentN: number | null
+  loadCurrentN: number | null
   loadCurrentTHDL1: number | null
   loadCurrentTHDL2: number | null
   loadCurrentTHDL3: number | null
@@ -621,6 +643,8 @@ export type TelemetryRecordWhereInput = {
   loadCurrentL1?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   loadCurrentL2?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   loadCurrentL3?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  gridCurrentN?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  loadCurrentN?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   loadCurrentTHDL1?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   loadCurrentTHDL2?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   loadCurrentTHDL3?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
@@ -667,6 +691,8 @@ export type TelemetryRecordOrderByWithRelationInput = {
   loadCurrentL1?: Prisma.SortOrderInput | Prisma.SortOrder
   loadCurrentL2?: Prisma.SortOrderInput | Prisma.SortOrder
   loadCurrentL3?: Prisma.SortOrderInput | Prisma.SortOrder
+  gridCurrentN?: Prisma.SortOrderInput | Prisma.SortOrder
+  loadCurrentN?: Prisma.SortOrderInput | Prisma.SortOrder
   loadCurrentTHDL1?: Prisma.SortOrderInput | Prisma.SortOrder
   loadCurrentTHDL2?: Prisma.SortOrderInput | Prisma.SortOrder
   loadCurrentTHDL3?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -716,6 +742,8 @@ export type TelemetryRecordWhereUniqueInput = Prisma.AtLeast<{
   loadCurrentL1?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   loadCurrentL2?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   loadCurrentL3?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  gridCurrentN?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  loadCurrentN?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   loadCurrentTHDL1?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   loadCurrentTHDL2?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   loadCurrentTHDL3?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
@@ -762,6 +790,8 @@ export type TelemetryRecordOrderByWithAggregationInput = {
   loadCurrentL1?: Prisma.SortOrderInput | Prisma.SortOrder
   loadCurrentL2?: Prisma.SortOrderInput | Prisma.SortOrder
   loadCurrentL3?: Prisma.SortOrderInput | Prisma.SortOrder
+  gridCurrentN?: Prisma.SortOrderInput | Prisma.SortOrder
+  loadCurrentN?: Prisma.SortOrderInput | Prisma.SortOrder
   loadCurrentTHDL1?: Prisma.SortOrderInput | Prisma.SortOrder
   loadCurrentTHDL2?: Prisma.SortOrderInput | Prisma.SortOrder
   loadCurrentTHDL3?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -815,6 +845,8 @@ export type TelemetryRecordScalarWhereWithAggregatesInput = {
   loadCurrentL1?: Prisma.FloatNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
   loadCurrentL2?: Prisma.FloatNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
   loadCurrentL3?: Prisma.FloatNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
+  gridCurrentN?: Prisma.FloatNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
+  loadCurrentN?: Prisma.FloatNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
   loadCurrentTHDL1?: Prisma.FloatNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
   loadCurrentTHDL2?: Prisma.FloatNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
   loadCurrentTHDL3?: Prisma.FloatNullableWithAggregatesFilter<"TelemetryRecord"> | number | null
@@ -859,6 +891,8 @@ export type TelemetryRecordCreateInput = {
   loadCurrentL1?: number | null
   loadCurrentL2?: number | null
   loadCurrentL3?: number | null
+  gridCurrentN?: number | null
+  loadCurrentN?: number | null
   loadCurrentTHDL1?: number | null
   loadCurrentTHDL2?: number | null
   loadCurrentTHDL3?: number | null
@@ -905,6 +939,8 @@ export type TelemetryRecordUncheckedCreateInput = {
   loadCurrentL1?: number | null
   loadCurrentL2?: number | null
   loadCurrentL3?: number | null
+  gridCurrentN?: number | null
+  loadCurrentN?: number | null
   loadCurrentTHDL1?: number | null
   loadCurrentTHDL2?: number | null
   loadCurrentTHDL3?: number | null
@@ -949,6 +985,8 @@ export type TelemetryRecordUpdateInput = {
   loadCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentN?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentN?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -995,6 +1033,8 @@ export type TelemetryRecordUncheckedUpdateInput = {
   loadCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentN?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentN?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1040,6 +1080,8 @@ export type TelemetryRecordCreateManyInput = {
   loadCurrentL1?: number | null
   loadCurrentL2?: number | null
   loadCurrentL3?: number | null
+  gridCurrentN?: number | null
+  loadCurrentN?: number | null
   loadCurrentTHDL1?: number | null
   loadCurrentTHDL2?: number | null
   loadCurrentTHDL3?: number | null
@@ -1084,6 +1126,8 @@ export type TelemetryRecordUpdateManyMutationInput = {
   loadCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentN?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentN?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1129,6 +1173,8 @@ export type TelemetryRecordUncheckedUpdateManyInput = {
   loadCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentN?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentN?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1184,6 +1230,8 @@ export type TelemetryRecordCountOrderByAggregateInput = {
   loadCurrentL1?: Prisma.SortOrder
   loadCurrentL2?: Prisma.SortOrder
   loadCurrentL3?: Prisma.SortOrder
+  gridCurrentN?: Prisma.SortOrder
+  loadCurrentN?: Prisma.SortOrder
   loadCurrentTHDL1?: Prisma.SortOrder
   loadCurrentTHDL2?: Prisma.SortOrder
   loadCurrentTHDL3?: Prisma.SortOrder
@@ -1225,6 +1273,8 @@ export type TelemetryRecordAvgOrderByAggregateInput = {
   loadCurrentL1?: Prisma.SortOrder
   loadCurrentL2?: Prisma.SortOrder
   loadCurrentL3?: Prisma.SortOrder
+  gridCurrentN?: Prisma.SortOrder
+  loadCurrentN?: Prisma.SortOrder
   loadCurrentTHDL1?: Prisma.SortOrder
   loadCurrentTHDL2?: Prisma.SortOrder
   loadCurrentTHDL3?: Prisma.SortOrder
@@ -1269,6 +1319,8 @@ export type TelemetryRecordMaxOrderByAggregateInput = {
   loadCurrentL1?: Prisma.SortOrder
   loadCurrentL2?: Prisma.SortOrder
   loadCurrentL3?: Prisma.SortOrder
+  gridCurrentN?: Prisma.SortOrder
+  loadCurrentN?: Prisma.SortOrder
   loadCurrentTHDL1?: Prisma.SortOrder
   loadCurrentTHDL2?: Prisma.SortOrder
   loadCurrentTHDL3?: Prisma.SortOrder
@@ -1310,6 +1362,8 @@ export type TelemetryRecordMinOrderByAggregateInput = {
   loadCurrentL1?: Prisma.SortOrder
   loadCurrentL2?: Prisma.SortOrder
   loadCurrentL3?: Prisma.SortOrder
+  gridCurrentN?: Prisma.SortOrder
+  loadCurrentN?: Prisma.SortOrder
   loadCurrentTHDL1?: Prisma.SortOrder
   loadCurrentTHDL2?: Prisma.SortOrder
   loadCurrentTHDL3?: Prisma.SortOrder
@@ -1348,6 +1402,8 @@ export type TelemetryRecordSumOrderByAggregateInput = {
   loadCurrentL1?: Prisma.SortOrder
   loadCurrentL2?: Prisma.SortOrder
   loadCurrentL3?: Prisma.SortOrder
+  gridCurrentN?: Prisma.SortOrder
+  loadCurrentN?: Prisma.SortOrder
   loadCurrentTHDL1?: Prisma.SortOrder
   loadCurrentTHDL2?: Prisma.SortOrder
   loadCurrentTHDL3?: Prisma.SortOrder
@@ -1470,6 +1526,8 @@ export type TelemetryRecordCreateWithoutInstallationInput = {
   loadCurrentL1?: number | null
   loadCurrentL2?: number | null
   loadCurrentL3?: number | null
+  gridCurrentN?: number | null
+  loadCurrentN?: number | null
   loadCurrentTHDL1?: number | null
   loadCurrentTHDL2?: number | null
   loadCurrentTHDL3?: number | null
@@ -1514,6 +1572,8 @@ export type TelemetryRecordUncheckedCreateWithoutInstallationInput = {
   loadCurrentL1?: number | null
   loadCurrentL2?: number | null
   loadCurrentL3?: number | null
+  gridCurrentN?: number | null
+  loadCurrentN?: number | null
   loadCurrentTHDL1?: number | null
   loadCurrentTHDL2?: number | null
   loadCurrentTHDL3?: number | null
@@ -1588,6 +1648,8 @@ export type TelemetryRecordScalarWhereInput = {
   loadCurrentL1?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   loadCurrentL2?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   loadCurrentL3?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  gridCurrentN?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
+  loadCurrentN?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   loadCurrentTHDL1?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   loadCurrentTHDL2?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
   loadCurrentTHDL3?: Prisma.FloatNullableFilter<"TelemetryRecord"> | number | null
@@ -1632,6 +1694,8 @@ export type TelemetryRecordCreateManyInstallationInput = {
   loadCurrentL1?: number | null
   loadCurrentL2?: number | null
   loadCurrentL3?: number | null
+  gridCurrentN?: number | null
+  loadCurrentN?: number | null
   loadCurrentTHDL1?: number | null
   loadCurrentTHDL2?: number | null
   loadCurrentTHDL3?: number | null
@@ -1676,6 +1740,8 @@ export type TelemetryRecordUpdateWithoutInstallationInput = {
   loadCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentN?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentN?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1720,6 +1786,8 @@ export type TelemetryRecordUncheckedUpdateWithoutInstallationInput = {
   loadCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentN?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentN?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1764,6 +1832,8 @@ export type TelemetryRecordUncheckedUpdateManyWithoutInstallationInput = {
   loadCurrentL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gridCurrentN?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  loadCurrentN?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL1?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL2?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   loadCurrentTHDL3?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1811,6 +1881,8 @@ export type TelemetryRecordSelect<ExtArgs extends runtime.Types.Extensions.Inter
   loadCurrentL1?: boolean
   loadCurrentL2?: boolean
   loadCurrentL3?: boolean
+  gridCurrentN?: boolean
+  loadCurrentN?: boolean
   loadCurrentTHDL1?: boolean
   loadCurrentTHDL2?: boolean
   loadCurrentTHDL3?: boolean
@@ -1857,6 +1929,8 @@ export type TelemetryRecordSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   loadCurrentL1?: boolean
   loadCurrentL2?: boolean
   loadCurrentL3?: boolean
+  gridCurrentN?: boolean
+  loadCurrentN?: boolean
   loadCurrentTHDL1?: boolean
   loadCurrentTHDL2?: boolean
   loadCurrentTHDL3?: boolean
@@ -1903,6 +1977,8 @@ export type TelemetryRecordSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   loadCurrentL1?: boolean
   loadCurrentL2?: boolean
   loadCurrentL3?: boolean
+  gridCurrentN?: boolean
+  loadCurrentN?: boolean
   loadCurrentTHDL1?: boolean
   loadCurrentTHDL2?: boolean
   loadCurrentTHDL3?: boolean
@@ -1949,6 +2025,8 @@ export type TelemetryRecordSelectScalar = {
   loadCurrentL1?: boolean
   loadCurrentL2?: boolean
   loadCurrentL3?: boolean
+  gridCurrentN?: boolean
+  loadCurrentN?: boolean
   loadCurrentTHDL1?: boolean
   loadCurrentTHDL2?: boolean
   loadCurrentTHDL3?: boolean
@@ -1976,7 +2054,7 @@ export type TelemetryRecordSelectScalar = {
   availableMargin?: boolean
 }
 
-export type TelemetryRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "installationId" | "recordedAt" | "receivedAt" | "moduleStatus" | "numOfMods" | "csq" | "rsrp" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "uncompS" | "compS" | "uncompP" | "compP" | "uncompQ" | "compQ" | "uncompH" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "areaTemp" | "moduleTemp" | "fanSpeed" | "totalCapacity" | "operatingCapacity" | "reactivePowerCapacity" | "availableMargin", ExtArgs["result"]["telemetryRecord"]>
+export type TelemetryRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "installationId" | "recordedAt" | "receivedAt" | "moduleStatus" | "numOfMods" | "csq" | "rsrp" | "vL1" | "vL2" | "vL3" | "gridCurrentL1" | "gridCurrentL2" | "gridCurrentL3" | "loadCurrentL1" | "loadCurrentL2" | "loadCurrentL3" | "gridCurrentN" | "loadCurrentN" | "loadCurrentTHDL1" | "loadCurrentTHDL2" | "loadCurrentTHDL3" | "gridCurrentTHDL1" | "gridCurrentTHDL2" | "gridCurrentTHDL3" | "uncompS" | "compS" | "uncompP" | "compP" | "uncompQ" | "compQ" | "uncompH" | "compH" | "tpf1" | "tpf2" | "dpf1" | "dpf2" | "areaTemp" | "moduleTemp" | "fanSpeed" | "totalCapacity" | "operatingCapacity" | "reactivePowerCapacity" | "availableMargin", ExtArgs["result"]["telemetryRecord"]>
 export type TelemetryRecordInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }
@@ -2019,6 +2097,11 @@ export type $TelemetryRecordPayload<ExtArgs extends runtime.Types.Extensions.Int
     loadCurrentL1: number | null
     loadCurrentL2: number | null
     loadCurrentL3: number | null
+    /**
+     * N상 전류 (A). 200A(v3v4) HMI만 보낸다
+     */
+    gridCurrentN: number | null
+    loadCurrentN: number | null
     loadCurrentTHDL1: number | null
     loadCurrentTHDL2: number | null
     loadCurrentTHDL3: number | null
@@ -2485,6 +2568,8 @@ export interface TelemetryRecordFieldRefs {
   readonly loadCurrentL1: Prisma.FieldRef<"TelemetryRecord", 'Float'>
   readonly loadCurrentL2: Prisma.FieldRef<"TelemetryRecord", 'Float'>
   readonly loadCurrentL3: Prisma.FieldRef<"TelemetryRecord", 'Float'>
+  readonly gridCurrentN: Prisma.FieldRef<"TelemetryRecord", 'Float'>
+  readonly loadCurrentN: Prisma.FieldRef<"TelemetryRecord", 'Float'>
   readonly loadCurrentTHDL1: Prisma.FieldRef<"TelemetryRecord", 'Float'>
   readonly loadCurrentTHDL2: Prisma.FieldRef<"TelemetryRecord", 'Float'>
   readonly loadCurrentTHDL3: Prisma.FieldRef<"TelemetryRecord", 'Float'>

@@ -219,6 +219,9 @@ model Device {
   loadCurrentL1    Float?
   loadCurrentL2    Float?
   loadCurrentL3    Float?
+  /// N상 전류 (A). 200A(v3v4) HMI만 보낸다. 다른 모델은 null
+  gridCurrentN     Float?
+  loadCurrentN     Float?
 
   // 전류 THD (%)
   loadCurrentTHDL1 Float?
@@ -299,6 +302,9 @@ model TelemetryRecord {
   loadCurrentL1    Float?
   loadCurrentL2    Float?
   loadCurrentL3    Float?
+  /// N상 전류 (A). 200A(v3v4) HMI만 보낸다
+  gridCurrentN     Float?
+  loadCurrentN     Float?
 
   // 전류 THD (%)
   loadCurrentTHDL1 Float?

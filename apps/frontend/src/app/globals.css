@@ -4746,6 +4746,13 @@ main.dashboard-full {
   text-align: right;
 }
 
+/* N상 전류: 값 하나를 L1~L3 칸 전체에 걸쳐 오른쪽 정렬 (200A만 표시) */
+.hmi-compare-neutral-value {
+  grid-column: 2 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .hmi-compare-metric {
   display: inline-flex;
   align-items: baseline;

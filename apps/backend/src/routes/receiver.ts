@@ -45,6 +45,9 @@ type ReceiverBody = {
   loadCurrentL1?: number | string;
   loadCurrentL2?: number | string;
   loadCurrentL3?: number | string;
+  /** N상 전류 (A). 200A(v3v4) HMI만 보낸다 */
+  gridCurrentN?: number | string;
+  loadCurrentN?: number | string;
   loadCurrentTHDL1?: number | string;
   loadCurrentTHDL2?: number | string;
   loadCurrentTHDL3?: number | string;
@@ -470,6 +473,8 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       loadCurrentL1: body.loadCurrentL1,
       loadCurrentL2: body.loadCurrentL2,
       loadCurrentL3: body.loadCurrentL3,
+      gridCurrentN: body.gridCurrentN,
+      loadCurrentN: body.loadCurrentN,
       loadCurrentTHDL1: body.loadCurrentTHDL1,
       loadCurrentTHDL2: body.loadCurrentTHDL2,
       loadCurrentTHDL3: body.loadCurrentTHDL3,
