@@ -104,6 +104,7 @@ export default function ViewingBanner({ installationId }: Props) {
   useWsEvents((msg) => {
     if (
       msg.type !== "admin_session_opened" &&
+      msg.type !== "admin_session_closed" &&
       msg.type !== "admin_session_linked" &&
       msg.type !== "admin_session_signaled" &&
       msg.type !== "command_acked"
@@ -114,6 +115,10 @@ export default function ViewingBanner({ installationId }: Props) {
 
     if (msg.type === "admin_session_opened") {
       applyUntil(parseUntil(msg.until));
+      return;
+    }
+    if (msg.type === "admin_session_closed") {
+      applyUntil(null);
       return;
     }
     if (msg.type === "admin_session_linked" || msg.type === "command_acked") {
@@ -146,6 +151,28 @@ export default function ViewingBanner({ installationId }: Props) {
         return;
       }
       applyUntil(next);
+    } catch {
+      setError("서버에 연결할 수 없습니다.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** 원격 연결을 지금 닫는다. HMI 는 다음 정기 보고(최대 약 10분) 때 명령 조회를 멈춘다. */
+  async function closeWindow() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/devices/${encodeURIComponent(installationId)}/viewing/stop`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { message?: string } | null;
+        setError(data?.message ?? "원격 연결을 끄지 못했습니다.");
+        return;
+      }
+      applyUntil(null);
     } catch {
       setError("서버에 연결할 수 없습니다.");
     } finally {
@@ -213,8 +240,19 @@ export default function ViewingBanner({ installationId }: Props) {
         onClick={openWindow}
         disabled={busy}
       >
-        {busy ? "여는 중…" : open ? "15분 연장" : "원격 연결 열기"}
+        {busy ? "처리 중…" : open ? "15분 연장" : "원격 연결 열기"}
       </button>
+      {open ? (
+        <button
+          type="button"
+          className="remote-session-open-btn remote-session-close-btn"
+          onClick={closeWindow}
+          disabled={busy}
+          title="원격 연결을 지금 끕니다. HMI는 다음 정기 보고(최대 약 10분) 때 명령 조회를 멈춥니다."
+        >
+          끄기
+        </button>
+      ) : null}
     </div>
   );
 }
