@@ -9,7 +9,7 @@ import { serverApiBase } from "./serverApiBase";
 export async function forwardToBackend(
   request: NextRequest,
   path: string,
-  method: "GET" | "POST" | "PATCH" | "DELETE",
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
 ): Promise<NextResponse> {
   const token = request.cookies.get("pmcs_token")?.value;
   if (!token) {
@@ -17,7 +17,7 @@ export async function forwardToBackend(
   }
 
   let body: string | undefined;
-  if (method === "POST" || method === "PATCH") {
+  if (method === "POST" || method === "PUT" || method === "PATCH") {
     try {
       body = JSON.stringify(await request.json());
     } catch {

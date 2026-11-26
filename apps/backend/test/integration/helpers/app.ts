@@ -48,6 +48,8 @@ export const http = (app: TestApp) => ({
   get: (url: string, opts?: RequestOptions) => app.inject({ method: "GET", url, ...withAuth(opts) }),
   post: (url: string, payload?: unknown, opts?: RequestOptions) =>
     app.inject({ method: "POST", url, payload: payload as InjectOptions["payload"], ...withAuth(opts) }),
+  put: (url: string, payload?: unknown, opts?: RequestOptions) =>
+    app.inject({ method: "PUT", url, payload: payload as InjectOptions["payload"], ...withAuth(opts) }),
   patch: (url: string, payload?: unknown, opts?: RequestOptions) =>
     app.inject({ method: "PATCH", url, payload: payload as InjectOptions["payload"], ...withAuth(opts) }),
   delete: (url: string, opts?: RequestOptions) =>

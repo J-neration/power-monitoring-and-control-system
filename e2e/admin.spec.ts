@@ -31,6 +31,26 @@ test.describe("admin panel", () => {
     await expect(page.getByText(name)).toHaveCount(0);
   });
 
+  test("clears every installation of the inspection site at once", async ({ page }) => {
+    // 검사 장비 2대 등록 (관리자 API — 화면과 같은 쿠키 세션)
+    for (const [id, label] of [["E2E-INSP-A", "검사대 A"], ["E2E-INSP-B", "검사대 B"]]) {
+      const res = await page.request.post(`/api/admin/sites/${E2E.inspection.siteId}/installations`, {
+        data: { id, label },
+      });
+      expect(res.status(), await res.text()).toBe(201);
+    }
+    await page.goto("/admin/sites");
+    await expect(page.getByText("출고검사", { exact: true })).toBeVisible();
+
+    // 고객 현장에는 일괄 삭제 버튼이 없다
+    await expect(page.getByRole("button", { name: /지점 전체 삭제/ })).toHaveCount(1);
+
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("button", { name: "지점 전체 삭제 (2)" }).click();
+    await expect(page.getByText("출고검사 설치지점 2개를 삭제했습니다.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "지점 전체 삭제 (0)" })).toBeDisabled();
+  });
+
   test("lists accounts in user management", async ({ page }) => {
     await page.goto("/admin/users");
     for (const username of Object.values(E2E.users)) {

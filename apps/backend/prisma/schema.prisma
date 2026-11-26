@@ -126,6 +126,13 @@ model Installation {
   /// 고객 계정의 주·월·연 이력. 하루(24시간) 이력은 항상 보이고, 관리자는 이 값과 관계없이 전부 본다.
   historyVisible Boolean @default(false)
 
+  /// 관제 "점검 중" — 설정되면 이 설비의 알람을 띠·미확인 수·알람음에서 뺀다 (기록은 계속 남김).
+  /// maintenanceSince 가 있으면 점검 중, maintenanceUntil 이 지나면 자동 종료(null 이면 해제할 때까지).
+  maintenanceSince DateTime?
+  maintenanceUntil DateTime?
+  maintenanceBy    String?   @db.VarChar(64)
+  maintenanceNote  String?   @db.VarChar(200)
+
   /// Legacy — HMI ignores. Always leave false; do not use for settings upload.
   webSettingsActive      Boolean   @default(false)
   /// Settings 탭 heartbeat 시각 (legacy, unused)
@@ -150,6 +157,7 @@ model Installation {
   deviceSettings   InstallationDeviceSettings? // HMI POST /receiver/settings 스냅샷
   otaStatusEvents  OtaStatusEvent[]           // HMI POST /receiver/ota/status 이력
   harmonicRecords  HarmonicRecord[]           // HMI POST /receiver/harmonics 이력 (200A)
+  alarms           Alarm[]                    // 관제 알람 발생·해제·확인 기록
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -486,6 +494,32 @@ model ModuleFaultLog {
   occurredAt       DateTime     @default(now())
 
   @@index([installationId, occurredAt])
+}
+
+/// 관제 알람 (대시보드 띠·알람 목록). 설비별 이상/오프라인/통신 끊김이 생기면 한 행을 열고,
+/// 풀리면 clearedAt 을 채운다. 확인(ack)은 서버에 남겨 여러 관제 PC 가 같이 본다.
+/// 상태 4단계: 발생+미확인 / 발생+확인 / 해제+미확인 / 해제+확인(이력).
+/// (installationId, kind) 당 clearedAt 이 null 인 행은 하나뿐 — alarmService 가 1분 동기화로 보장한다.
+model Alarm {
+  id             Int          @id @default(autoincrement())
+  installationId String
+  installation   Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  /// fault | offline | comm_lost (프론트 AlarmStatus 와 동일)
+  kind           String       @db.VarChar(16)
+
+  raisedAt       DateTime     @default(now())
+  clearedAt      DateTime?
+
+  ackedAt        DateTime?
+  /// 확인한 사용자명 (audit)
+  ackedBy        String?      @db.VarChar(64)
+  /// 확인 시 남긴 조치 메모
+  ackNote        String?      @db.VarChar(200)
+
+  @@index([installationId, kind, clearedAt])
+  @@index([clearedAt, ackedAt])
+  @@index([raisedAt])
 }
 
 model DeviceCommand {
