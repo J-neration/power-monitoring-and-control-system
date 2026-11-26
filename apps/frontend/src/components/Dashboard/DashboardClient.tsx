@@ -681,12 +681,14 @@ export default function DashboardClient({
                                 </summary>
 
                                 <div className="site-group-installations">
-                                  <Link
-                                    href={`/sites/${encodeURIComponent(site.id)}`}
-                                    className="site-group-detail-link"
-                                  >
-                                    현장 상세보기 →
-                                  </Link>
+                                  {!emptySite && (
+                                    <Link
+                                      href={`/sites/${encodeURIComponent(site.id)}`}
+                                      className="site-group-detail-link"
+                                    >
+                                      현장 상세보기 →
+                                    </Link>
+                                  )}
                                   {emptySite && (
                                     <p className="site-group-empty">설치지점이 없습니다</p>
                                   )}

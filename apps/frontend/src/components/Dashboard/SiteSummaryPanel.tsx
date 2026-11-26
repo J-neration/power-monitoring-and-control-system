@@ -63,6 +63,9 @@ export default function SiteSummaryPanel({
   }
 
   const siteStatus = deriveSiteStatus(site);
+  // 설치지점이 없는 현장: 상세 페이지에 볼 게 없으므로 링크를 빼고 회색 "지점 없음"으로
+  const emptySite = site.installations.length === 0;
+  const badgeStatus = emptySite ? "offline" : siteStatus;
 
   const stats = site.installations.reduce(
     (acc, inst) => {
@@ -85,31 +88,36 @@ export default function SiteSummaryPanel({
     <div ref={panelRef} className="dash-detail">
       {/* Site header */}
       <div className="detail-site-top">
-        <div className={`detail-status-dot ${siteStatus}`} />
+        <div className={`detail-status-dot ${badgeStatus}`} />
         <div className="detail-site-info">
           <h2 className="detail-site-name">
-            <Link
-              href={siteHref}
-              className="detail-site-name-link"
-            >
-              {site.name}
-            </Link>
+            {emptySite ? (
+              site.name
+            ) : (
+              <Link href={siteHref} className="detail-site-name-link">
+                {site.name}
+              </Link>
+            )}
           </h2>
           <span className="detail-site-addr">
             {CLIENT_LABELS[site.client] ?? site.client} · {site.address}
           </span>
         </div>
         <div className="detail-site-actions">
-          <span className={`detail-status-badge ${siteStatus}`}>
-            {STATUS_LABEL[siteStatus]}
+          <span className={`detail-status-badge ${badgeStatus}`}>
+            {emptySite ? "지점 없음" : STATUS_LABEL[siteStatus]}
           </span>
           {siteHasCommLost(site) ? <CommLostBadge /> : null}
         </div>
       </div>
 
-      <Link href={siteHref} className="detail-site-open">
-        현장 상세보기 →
-      </Link>
+      {emptySite ? (
+        <p className="site-group-empty">설치지점이 없습니다</p>
+      ) : (
+        <Link href={siteHref} className="detail-site-open">
+          현장 상세보기 →
+        </Link>
+      )}
 
       {/* Summary stats */}
       <div className="summary-stats-row">
@@ -233,9 +241,11 @@ export default function SiteSummaryPanel({
       </div>
 
       {/* Footer link */}
-      <Link href={siteHref} className="summary-more-link">
-        현장 상세보기 →
-      </Link>
+      {!emptySite && (
+        <Link href={siteHref} className="summary-more-link">
+          현장 상세보기 →
+        </Link>
+      )}
     </div>
   );
 }
