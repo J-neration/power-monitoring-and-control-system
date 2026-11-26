@@ -150,7 +150,9 @@ export default function DeviceDetailTabs({
   );
   const router = useRouter();
   const activeTab: Tab = tab;
-  const remoteControlTab = isAdmin && activeTab === "settings";
+  /** 원격 연결 상태·데이터 갱신은 장치 단위라 관리자에게 모든 탭에서 보인다.
+   *  보이기만 해서는 원격 연결이 열리지 않는다(버튼·명령으로만 열림). */
+  const showRemoteControls = isAdmin;
 
   /** 탭 전환 시 URL ?tab= 을 갱신(서버 재요청 없이)해 새로고침해도 같은 탭에 머문다 */
   const setTab = (next: Tab) => {
@@ -266,7 +268,7 @@ export default function DeviceDetailTabs({
               </button>
             )}
           </div>
-          {remoteControlTab && (
+          {showRemoteControls && (
             <div className="device-tab-bar-actions">
               <DeviceDataRefreshButton
                 installationId={device.installationId}

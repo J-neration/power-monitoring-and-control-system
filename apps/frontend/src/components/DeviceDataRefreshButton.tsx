@@ -57,7 +57,7 @@ function RefreshStatusCard({ status }: { status: StatusBanner }) {
 }
 
 /**
- * Settings-tab button: enqueue HMI `refresh` (telemetry / monitor metrics only).
+ * Tab-bar button (admin, every tab): enqueue HMI `refresh` (telemetry / monitor metrics only).
  * Does not request a settings snapshot.
  */
 export default function DeviceDataRefreshButton({
