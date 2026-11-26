@@ -54,12 +54,21 @@ const toDto = (r: Row): HarmonicRecordDto => ({
   comp: { a: r.compA, b: r.compB, c: r.compC },
 });
 
-/** HMI 시계가 틀렸으면(5분 넘게 미래, 또는 2024년 이전) 수신 시각을 쓴다. */
+/**
+ * HMI 가 값을 읽은 시각(ts)을 믿을 수 있는 범위.
+ * HMI 는 길어야 30분 전에 읽은 값을 보낸다(200A 백그라운드 읽기 30분 주기).
+ * 그보다 한참 이전이면 HMI 시계(RTC)가 틀린 것이다. 2026-11-26 벤치 보드 RTC 가
+ * 2024-11 로 남아 있어 기록이 2년 전 날짜로 저장됐고, 이력 일간에서 안 보였다.
+ */
+export const HARMONIC_TS_MAX_PAST_MS = 2 * 60 * 60 * 1000;
+export const HARMONIC_TS_MAX_FUTURE_MS = 5 * 60 * 1000;
+
+/** HMI 시계가 틀렸으면(받은 시각보다 2시간 넘게 이전이거나 5분 넘게 미래) 받은 시각을 쓴다. */
 export const harmonicRecordedAt = (ts: number | undefined, now: Date): Date => {
   if (ts === undefined || !Number.isFinite(ts)) return now;
   const ms = ts > 1e12 ? ts : ts * 1000;
-  const minMs = Date.UTC(2024, 0, 1);
-  if (ms < minMs || ms > now.getTime() + 5 * 60 * 1000) return now;
+  const t = now.getTime();
+  if (ms < t - HARMONIC_TS_MAX_PAST_MS || ms > t + HARMONIC_TS_MAX_FUTURE_MS) return now;
   return new Date(ms);
 };
 
