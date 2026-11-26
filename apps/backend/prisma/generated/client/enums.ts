@@ -26,7 +26,8 @@ export const DeviceCommandPower = {
   refresh: 'refresh',
   refreshSettings: 'refreshSettings',
   setBasic: 'setBasic',
-  ota: 'ota'
+  ota: 'ota',
+  refreshHarmonics: 'refreshHarmonics'
 } as const
 
 export type DeviceCommandPower = (typeof DeviceCommandPower)[keyof typeof DeviceCommandPower]

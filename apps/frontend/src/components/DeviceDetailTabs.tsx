@@ -285,6 +285,8 @@ export default function DeviceDetailTabs({
           device={device}
           readings={readings}
           savingsReadings={savingsReadings}
+          isAdmin={isAdmin}
+          requestedBy={adminUsername}
         />
       )}
 

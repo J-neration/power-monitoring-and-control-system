@@ -145,3 +145,10 @@ export type OtaFile = Prisma.OtaFileModel
  * state: downloading | verified | installing | confirmed | rolled_back | failed
  */
 export type OtaStatusEvent = Prisma.OtaStatusEventModel
+/**
+ * Model HarmonicRecord
+ * 차수별 고조파 전류 (HMI POST /receiver/harmonics). 200A(v3v4) HMI만 보낸다.
+ * 1시간마다 1번(source "hourly") + 명령 refreshHarmonics 를 받았을 때(source "command").
+ * 배열 index 는 orders 와 같은 순서 (보통 1,3,5,…,49 의 25개). 값 단위는 0.01 A 정수.
+ */
+export type HarmonicRecord = Prisma.HarmonicRecordModel

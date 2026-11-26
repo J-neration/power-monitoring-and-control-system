@@ -344,6 +344,7 @@ const parsePower = (power: string): DeviceCommandPower | null => {
   // camelCase commands
   if (normalized === "setBasic") return "setBasic";
   if (normalized === "refreshSettings") return "refreshSettings";
+  if (normalized === "refreshHarmonics") return "refreshHarmonics";
   const lower = normalized.toLowerCase() as DeviceCommandPower;
   if (lower === "on" || lower === "off" || lower === "refresh" || lower === "ota") return lower;
   return null;
@@ -430,8 +431,13 @@ export const createCommandService = (
         throw new CommandError(
           400,
           "INVALID_POWER",
-          "power must be 'on', 'off', 'refresh', 'refreshSettings', 'setBasic', or 'ota'",
+          "power must be 'on', 'off', 'refresh', 'refreshSettings', 'setBasic', 'refreshHarmonics', or 'ota'",
         );
+      }
+
+      // refreshHarmonics: the HMI itself (module 0) posts /receiver/harmonics, 200A only.
+      if (power === "refreshHarmonics" && input.module !== 0) {
+        throw new CommandError(400, "INVALID_MODULE", "refreshHarmonics uses module 0 (the HMI itself)");
       }
 
       // ota: HMI itself (module 0), fields = { fileId } of an uploaded code package.
@@ -505,6 +511,18 @@ export const createCommandService = (
       const exists = await repo.installationExists(installationId);
       if (!exists) {
         throw new CommandError(404, "INSTALLATION_NOT_FOUND", "installationId not found");
+      }
+
+      if (power === "refreshHarmonics") {
+        // Unknown type (settings never fetched) is let through; the HMI ACKs "not supported".
+        const storedType = await repo.getModuleType(installationId);
+        if (storedType && storedType !== "v3v4") {
+          throw new CommandError(
+            400,
+            "NOT_SUPPORTED",
+            `refreshHarmonics is only for 200A (v3v4), this device is ${storedType}`,
+          );
+        }
       }
 
       let moduleType: string | null = null;

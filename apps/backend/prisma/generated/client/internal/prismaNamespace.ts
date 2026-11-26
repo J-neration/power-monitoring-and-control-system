@@ -401,7 +401,8 @@ export const ModelName = {
   ModuleFaultLog: 'ModuleFaultLog',
   DeviceCommand: 'DeviceCommand',
   OtaFile: 'OtaFile',
-  OtaStatusEvent: 'OtaStatusEvent'
+  OtaStatusEvent: 'OtaStatusEvent',
+  HarmonicRecord: 'HarmonicRecord'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -417,7 +418,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "clientOption" | "roleOption" | "site" | "installation" | "installationDeviceSettings" | "device" | "telemetryRecord" | "telemetryHourlySummary" | "telemetryDailySummary" | "aggregationState" | "aggregationLog" | "faultEvent" | "moduleFaultState" | "moduleFaultLog" | "deviceCommand" | "otaFile" | "otaStatusEvent"
+    modelProps: "user" | "clientOption" | "roleOption" | "site" | "installation" | "installationDeviceSettings" | "device" | "telemetryRecord" | "telemetryHourlySummary" | "telemetryDailySummary" | "aggregationState" | "aggregationLog" | "faultEvent" | "moduleFaultState" | "moduleFaultLog" | "deviceCommand" | "otaFile" | "otaStatusEvent" | "harmonicRecord"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1753,6 +1754,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    HarmonicRecord: {
+      payload: Prisma.$HarmonicRecordPayload<ExtArgs>
+      fields: Prisma.HarmonicRecordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.HarmonicRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarmonicRecordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.HarmonicRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarmonicRecordPayload>
+        }
+        findFirst: {
+          args: Prisma.HarmonicRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarmonicRecordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.HarmonicRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarmonicRecordPayload>
+        }
+        findMany: {
+          args: Prisma.HarmonicRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarmonicRecordPayload>[]
+        }
+        create: {
+          args: Prisma.HarmonicRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarmonicRecordPayload>
+        }
+        createMany: {
+          args: Prisma.HarmonicRecordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.HarmonicRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarmonicRecordPayload>[]
+        }
+        delete: {
+          args: Prisma.HarmonicRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarmonicRecordPayload>
+        }
+        update: {
+          args: Prisma.HarmonicRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarmonicRecordPayload>
+        }
+        deleteMany: {
+          args: Prisma.HarmonicRecordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.HarmonicRecordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.HarmonicRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarmonicRecordPayload>[]
+        }
+        upsert: {
+          args: Prisma.HarmonicRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarmonicRecordPayload>
+        }
+        aggregate: {
+          args: Prisma.HarmonicRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHarmonicRecord>
+        }
+        groupBy: {
+          args: Prisma.HarmonicRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HarmonicRecordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.HarmonicRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HarmonicRecordCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2145,6 +2220,24 @@ export const OtaStatusEventScalarFieldEnum = {
 export type OtaStatusEventScalarFieldEnum = (typeof OtaStatusEventScalarFieldEnum)[keyof typeof OtaStatusEventScalarFieldEnum]
 
 
+export const HarmonicRecordScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  recordedAt: 'recordedAt',
+  receivedAt: 'receivedAt',
+  source: 'source',
+  orders: 'orders',
+  uncompA: 'uncompA',
+  uncompB: 'uncompB',
+  uncompC: 'uncompC',
+  compA: 'compA',
+  compB: 'compB',
+  compC: 'compC'
+} as const
+
+export type HarmonicRecordScalarFieldEnum = (typeof HarmonicRecordScalarFieldEnum)[keyof typeof HarmonicRecordScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2444,6 +2537,7 @@ export type GlobalOmitConfig = {
   deviceCommand?: Prisma.DeviceCommandOmit
   otaFile?: Prisma.OtaFileOmit
   otaStatusEvent?: Prisma.OtaStatusEventOmit
+  harmonicRecord?: Prisma.HarmonicRecordOmit
 }
 
 /* Types for Logging */

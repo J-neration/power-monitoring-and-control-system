@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma.js";
 import { addDays, addHours, kstDateKey, kstDayStart, kstHourStart } from "../lib/kstBuckets.js";
 import { type ResolvedHistory } from "../lib/historyRange.js";
 import { retentionConfig } from "../lib/retentionConfig.js";
+import { harmonicService } from "./harmonicService.js";
 import {
   ARRAY_METRICS,
   SCALAR_METRICS,
@@ -360,6 +361,8 @@ export type RetentionReport = {
   truncated: boolean;
   hourlyPastRetention: number;
   dailyPastRetention: number;
+  /** 보관기간(HARMONIC_RETENTION_DAYS)이 지나 지운 고조파 기록 수 */
+  harmonicDeletedRows?: number;
   deletedRows: number;
 };
 
@@ -556,7 +559,12 @@ export async function purgeIfEnabled(
       where: { bucketStart: { lt: dailyCutoff } },
     });
   }
-  const report = { ...scanned.report, deletedRows };
+  // 차수별 고조파 기록: 원본 텔레메트리와 따로, 보관 일수가 지나면 지운다 (기본 1년).
+  let harmonicDeletedRows = 0;
+  if (cfg.harmonicPurgeEnabled) {
+    harmonicDeletedRows = await harmonicService.purgeOlderThan(cfg.harmonicDays, now);
+  }
+  const report = { ...scanned.report, deletedRows, harmonicDeletedRows };
   if (options.log !== false) {
     await logAggregation(
       "purge",

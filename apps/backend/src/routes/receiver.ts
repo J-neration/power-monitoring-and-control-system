@@ -12,6 +12,7 @@ import { faultService } from "../services/faultService.js";
 import { notifyAdminAlerts } from "../services/adminAlertService.js";
 import { settingsService, SettingsError } from "../services/settingsService.js";
 import { OTA_STATUS_STAGES, OTA_STATUS_STATES, otaStatusService } from "../services/otaStatusService.js";
+import { HARMONIC_SOURCES, harmonicRecordedAt, harmonicService } from "../services/harmonicService.js";
 import { wsHub } from "../lib/wsHub.js";
 import { matchReceiverApiKey } from "../lib/receiverApiKey.js";
 import * as viewingState from "../lib/viewingState.js";
@@ -112,6 +113,33 @@ const otaStatusSchema = z.object({
   stage: z.enum(OTA_STATUS_STAGES).optional(),
   error: z.string().max(200).optional(),
 });
+
+/** 0.01 A 정수, uint16 범위 */
+const harmonicValuesSchema = z.array(z.number().int().min(0).max(65535)).min(1).max(50);
+const harmonicPhasesSchema = z.object({
+  a: harmonicValuesSchema,
+  b: harmonicValuesSchema,
+  c: harmonicValuesSchema,
+});
+
+const receiverHarmonicsSchema = z
+  .object({
+    iccid: z.string().min(1),
+    /** Unix 초 (HMI 측정 시각) */
+    ts: z.coerce.number().optional(),
+    unit: z.literal("0.01A").optional(),
+    source: z.enum(HARMONIC_SOURCES).optional(),
+    orders: z.array(z.number().int().min(1).max(99)).min(1).max(50),
+    uncomp: harmonicPhasesSchema,
+    comp: harmonicPhasesSchema,
+  })
+  .refine(
+    (b) =>
+      [b.uncomp.a, b.uncomp.b, b.uncomp.c, b.comp.a, b.comp.b, b.comp.c].every(
+        (arr) => arr.length === b.orders.length,
+      ),
+    { message: "every phase array must have the same length as orders" },
+  );
 
 const ackSchema = z.object({
   id: z.string().min(1),
@@ -922,6 +950,40 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       "OTA status",
     );
     wsHub.broadcast({ type: "device_updated", installationId: identity.installationId });
+    return reply.send({ ok: true });
+  });
+
+  // Device -> per-order harmonic currents (200A, hourly + refreshHarmonics).
+  // Same auth and ICCID rules as the OTA status.
+  server.post("/harmonics", async (request, reply) => {
+    if (!hasValidApiKey(request)) {
+      return reply.status(401).send({ message: "Unauthorized" });
+    }
+    const obj = parseJsonObject(request.body);
+    if (!obj) {
+      return reply.status(400).send({ message: "Invalid JSON body" });
+    }
+    const parsed = receiverHarmonicsSchema.safeParse(obj);
+    if (!parsed.success) {
+      return reply.status(400).send({ message: "Invalid harmonics body", errors: parsed.error.flatten() });
+    }
+    const body = parsed.data;
+    const identity = await resolveInstallationIdForReceiver({ iccid: body.iccid });
+    if (!identity.installationId || (receiverRequireIccidOnly() && identity.resolvedVia !== "iccid")) {
+      return reply.status(422).send({ ok: false, message: "unknown iccid" });
+    }
+    const record = await harmonicService.record(identity.installationId, {
+      recordedAt: harmonicRecordedAt(body.ts, new Date()),
+      source: body.source ?? "hourly",
+      orders: body.orders,
+      uncomp: body.uncomp,
+      comp: body.comp,
+    });
+    server.log.info(
+      { installationId: identity.installationId, source: record.source, orders: record.orders.length },
+      "Harmonics received",
+    );
+    wsHub.broadcast({ type: "harmonics_updated", installationId: identity.installationId });
     return reply.send({ ok: true });
   });
 

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ReferenceLine } from "recharts";
 import ChartCard from "./charts/ChartCard";
 import HistoryAreaChart from "./charts/HistoryAreaChart";
+import HarmonicHistoryCharts from "./HarmonicHistoryCharts";
 import type { FaultEvent } from "../lib/api";
 import {
   CHART_COLORS,
@@ -31,7 +32,7 @@ const TEMP_COLORS = [
   CHART_COLORS.warn,
 ];
 
-type SubTab = "pf" | "power" | "thd" | "capacity" | "temp";
+type SubTab = "pf" | "power" | "thd" | "harmonics" | "capacity" | "temp";
 type Period = "day" | "week" | "month" | "year";
 type Agg = "avg" | "min" | "max";
 type Resolution = "raw" | "hourly" | "daily";
@@ -67,6 +68,7 @@ const SUB_TABS: { key: SubTab; label: string }[] = [
   { key: "pf", label: "역률" },
   { key: "power", label: "전력" },
   { key: "thd", label: "THD" },
+  { key: "harmonics", label: "고조파" },
   { key: "capacity", label: "용량" },
   { key: "temp", label: "온도" },
 ];
@@ -205,7 +207,9 @@ export default function DeviceHistoryCharts({
   }, [demoDay, detail, installationId, rangePeriod, start]);
 
   const capUnit = model === "paf" ? "A" : "kvar";
-  const aggDisabled = resolution === "raw";
+  // 고조파는 1시간마다 1건이라 일간만 원본(구간 최소·최대 없음). 주간부터는 1시간·1일로 묶는다.
+  const isHarmonics = subTab === "harmonics";
+  const aggDisabled = isHarmonics ? rangePeriod === "day" : resolution === "raw";
   const activeAgg: Agg = aggDisabled ? "avg" : aggregation;
   const aggLabel = AGGS.find((item) => item.key === activeAgg)?.label ?? "평균";
   const resLabel = resolution === "raw" ? "10분" : resolution === "hourly" ? "1시간" : "1일";
@@ -385,14 +389,18 @@ export default function DeviceHistoryCharts({
             className={`monitor-view-chip${activeAgg === key ? " active" : ""}`}
             aria-pressed={activeAgg === key}
             disabled={aggDisabled && key !== "avg"}
-            title={aggDisabled && key !== "avg" ? "10분 원본에는 구간 최소·최대가 없습니다" : undefined}
+            title={
+              aggDisabled && key !== "avg"
+                ? `${isHarmonics ? "1시간" : "10분"} 원본에는 구간 최소·최대가 없습니다`
+                : undefined
+            }
             onClick={() => setAggregation(key)}
           >
             {label}
           </button>
         ))}
       </div>
-      {rangePeriod === "week" ? (
+      {rangePeriod === "week" && !isHarmonics ? (
         <div className="monitor-view-chips">
           <button
             type="button"
@@ -481,13 +489,29 @@ export default function DeviceHistoryCharts({
           </button>
         ))}
       </div>
-      {dataDateLabel && !loading ? (
+      {dataDateLabel && !loading && !isHarmonics ? (
         <p className="history-data-date-line" aria-label="데이터 기준 날짜">
           {[dataDateLabel, coverageLabel, gapLabel].filter(Boolean).join(" · ")}
         </p>
       ) : null}
     </nav>
   );
+
+  if (isHarmonics) {
+    return (
+      <div className="device-monitor-board">
+        {rangeBar}
+        {nav}
+        <HarmonicHistoryCharts
+          installationId={installationId}
+          period={rangePeriod}
+          start={start}
+          aggregation={activeAgg}
+          faults={faults}
+        />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
