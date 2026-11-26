@@ -61,11 +61,17 @@ function isStandbyStatus(status: DeviceStatus): boolean {
   return status === "standby" || status === "start";
 }
 
+/** 설치지점이 하나라도 있는 현장. 없는 현장은 목록·지도·관제 순환에서 숨긴다. */
+export function siteHasInstallations(site: Site): boolean {
+  return site.installations.length > 0;
+}
+
 export function siteMatchesFilter(
   site: Site,
   filter: StatusFilter,
 ): boolean {
-  if (filter === "all") return true;
+  // 설치지점이 없는 현장은 목록에 그릴 게 없다 — 지역 묶음·"N현장 · N대" 숫자에서도 뺀다
+  if (filter === "all") return siteHasInstallations(site);
   for (const inst of site.installations) {
     const s = inst.device?.status ?? "offline";
     if (filter === "standby" && isStandbyStatus(s)) return true;

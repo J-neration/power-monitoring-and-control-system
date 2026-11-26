@@ -7,6 +7,7 @@ import type { DeviceStatus, Site } from "../types/site";
 import {
   deriveSiteStatus,
   installationMatchesFilter,
+  siteHasInstallations,
   siteMatchesFilter,
   sortByLabel,
   sortSitesByName,
@@ -51,6 +52,12 @@ describe("status filters", () => {
     assert.equal(siteMatchesFilter(s, "fault"), true);
     assert.equal(siteMatchesFilter(s, "offline"), false);
     assert.equal(siteMatchesFilter(s, "comm_lost"), true);
+  });
+
+  it("hides sites without installations, even with the 'all' filter", () => {
+    assert.equal(siteMatchesFilter(site("빈 현장", []), "all"), false);
+    assert.equal(siteHasInstallations(site("빈 현장", [])), false);
+    assert.equal(siteHasInstallations(site("a", [null])), true);
   });
 
   it("does not call a never-reporting device comm-lost", () => {
