@@ -47,7 +47,7 @@ function advancePhase(
 }
 
 /**
- * Remote window status + 「원격 연결 열기」 for the settings tab.
+ * Remote window status + 「원격 연결 열기」 in the device tab bar (admin, every tab).
  * The window is opened by this button or by any command, lasts 15 min on the
  * server, and HMI only learns about it at its next telemetry (~10 min).
  * Countdown uses the server's `until` so other tabs / admins stay in sync.
