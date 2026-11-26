@@ -15027,3 +15027,13 @@ body.pmcs-control-room .global-header:hover {
   font-size: 11px;
   color: var(--pmcs-text-muted);
 }
+
+/* 대시보드 목록: 설치지점이 없는 현장 */
+.site-group-empty {
+  margin: 4px 0 2px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px dashed rgba(148, 163, 184, 0.25);
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.55);
+}
