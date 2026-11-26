@@ -19,6 +19,16 @@ test("harmonicRecordedAt: falls back to the receive time for a missing or wrong 
   assert.equal(harmonicRecordedAt(undefined, now), now);
   assert.equal(harmonicRecordedAt(0, now), now); // HMI clock not set (1970)
   assert.equal(harmonicRecordedAt(now.getTime() / 1000 + 3600, now), now); // 1 h in the future
+  // RTC left at 2024-11-02 (bench board, 2026-11-26): a valid-looking year is not enough
+  assert.equal(harmonicRecordedAt(1730588405, now), now);
+  // 3 h behind
+  assert.equal(harmonicRecordedAt(now.getTime() / 1000 - 3 * 3600, now), now);
+});
+
+test("harmonicRecordedAt: keeps a read up to 2 h old (normal 30 min refresh)", () => {
+  const now = new Date("2026-11-26T03:00:00Z");
+  const ts = now.getTime() / 1000 - 100 * 60;
+  assert.equal(harmonicRecordedAt(ts, now).getTime(), ts * 1000);
 });
 
 
