@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverApiBase } from "../../../../../../lib/serverApiBase";
+import { forwardToBackend } from "../../../../../../lib/inspectionProxy";
 
 const API_BASE = serverApiBase();
 
@@ -31,4 +32,16 @@ export async function POST(
   } catch {
     return NextResponse.json({ message: "서버에 연결할 수 없습니다." }, { status: 503 });
   }
+}
+
+/** 출고검사 현장 설치지점 일괄 삭제 → 백엔드 DELETE /admin/sites/:siteId/installations (관리자, 출고검사 현장만) */
+export async function DELETE(
+  request: NextRequest,
+  context: { params: { siteId: string } },
+) {
+  return forwardToBackend(
+    request,
+    `/admin/sites/${encodeURIComponent(context.params.siteId)}/installations`,
+    "DELETE",
+  );
 }

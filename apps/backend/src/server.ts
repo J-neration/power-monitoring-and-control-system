@@ -13,6 +13,7 @@ import { siteRoutes } from "./routes/sites.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { adminRoutes } from "./routes/admin.js";
 import { inspectionRoutes } from "./routes/inspection.js";
+import { alarmRoutes } from "./routes/alarms.js";
 import type { UserContext } from "./modules/auth/auth.types.js";
 import { wsHub } from "./lib/wsHub.js";
 
@@ -226,6 +227,7 @@ export const buildServer = async (env: Env) => {
   await server.register(inspectionRoutes, { prefix: "/inspection" });
   await server.register(deviceRoutes, { prefix: "/devices" });
   await server.register(siteRoutes, { prefix: "/sites" });
+  await server.register(alarmRoutes, { prefix: "/alarms" });
   await server.register(receiverRoutes, {
     prefix: "/receiver",
     receiverApiKey: env.RECEIVER_API_KEY,

@@ -399,6 +399,7 @@ export const ModelName = {
   FaultEvent: 'FaultEvent',
   ModuleFaultState: 'ModuleFaultState',
   ModuleFaultLog: 'ModuleFaultLog',
+  Alarm: 'Alarm',
   DeviceCommand: 'DeviceCommand',
   OtaFile: 'OtaFile',
   OtaStatusEvent: 'OtaStatusEvent',
@@ -418,7 +419,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "clientOption" | "roleOption" | "site" | "installation" | "installationDeviceSettings" | "device" | "telemetryRecord" | "telemetryHourlySummary" | "telemetryDailySummary" | "aggregationState" | "aggregationLog" | "faultEvent" | "moduleFaultState" | "moduleFaultLog" | "deviceCommand" | "otaFile" | "otaStatusEvent" | "harmonicRecord"
+    modelProps: "user" | "clientOption" | "roleOption" | "site" | "installation" | "installationDeviceSettings" | "device" | "telemetryRecord" | "telemetryHourlySummary" | "telemetryDailySummary" | "aggregationState" | "aggregationLog" | "faultEvent" | "moduleFaultState" | "moduleFaultLog" | "alarm" | "deviceCommand" | "otaFile" | "otaStatusEvent" | "harmonicRecord"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1532,6 +1533,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Alarm: {
+      payload: Prisma.$AlarmPayload<ExtArgs>
+      fields: Prisma.AlarmFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AlarmFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlarmPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AlarmFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlarmPayload>
+        }
+        findFirst: {
+          args: Prisma.AlarmFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlarmPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AlarmFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlarmPayload>
+        }
+        findMany: {
+          args: Prisma.AlarmFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlarmPayload>[]
+        }
+        create: {
+          args: Prisma.AlarmCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlarmPayload>
+        }
+        createMany: {
+          args: Prisma.AlarmCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AlarmCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlarmPayload>[]
+        }
+        delete: {
+          args: Prisma.AlarmDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlarmPayload>
+        }
+        update: {
+          args: Prisma.AlarmUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlarmPayload>
+        }
+        deleteMany: {
+          args: Prisma.AlarmDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AlarmUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AlarmUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlarmPayload>[]
+        }
+        upsert: {
+          args: Prisma.AlarmUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlarmPayload>
+        }
+        aggregate: {
+          args: Prisma.AlarmAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAlarm>
+        }
+        groupBy: {
+          args: Prisma.AlarmGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AlarmGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AlarmCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AlarmCountAggregateOutputType> | number
+        }
+      }
+    }
     DeviceCommand: {
       payload: Prisma.$DeviceCommandPayload<ExtArgs>
       fields: Prisma.DeviceCommandFieldRefs
@@ -1929,6 +2004,10 @@ export const InstallationScalarFieldEnum = {
   iccid: 'iccid',
   moduleName: 'moduleName',
   historyVisible: 'historyVisible',
+  maintenanceSince: 'maintenanceSince',
+  maintenanceUntil: 'maintenanceUntil',
+  maintenanceBy: 'maintenanceBy',
+  maintenanceNote: 'maintenanceNote',
   webSettingsActive: 'webSettingsActive',
   webSettingsHeartbeatAt: 'webSettingsHeartbeatAt',
   adminSessionActive: 'adminSessionActive',
@@ -2163,6 +2242,20 @@ export const ModuleFaultLogScalarFieldEnum = {
 } as const
 
 export type ModuleFaultLogScalarFieldEnum = (typeof ModuleFaultLogScalarFieldEnum)[keyof typeof ModuleFaultLogScalarFieldEnum]
+
+
+export const AlarmScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  kind: 'kind',
+  raisedAt: 'raisedAt',
+  clearedAt: 'clearedAt',
+  ackedAt: 'ackedAt',
+  ackedBy: 'ackedBy',
+  ackNote: 'ackNote'
+} as const
+
+export type AlarmScalarFieldEnum = (typeof AlarmScalarFieldEnum)[keyof typeof AlarmScalarFieldEnum]
 
 
 export const DeviceCommandScalarFieldEnum = {
@@ -2534,6 +2627,7 @@ export type GlobalOmitConfig = {
   faultEvent?: Prisma.FaultEventOmit
   moduleFaultState?: Prisma.ModuleFaultStateOmit
   moduleFaultLog?: Prisma.ModuleFaultLogOmit
+  alarm?: Prisma.AlarmOmit
   deviceCommand?: Prisma.DeviceCommandOmit
   otaFile?: Prisma.OtaFileOmit
   otaStatusEvent?: Prisma.OtaStatusEventOmit

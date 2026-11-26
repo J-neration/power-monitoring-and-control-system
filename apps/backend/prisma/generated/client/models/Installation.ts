@@ -33,6 +33,10 @@ export type InstallationMinAggregateOutputType = {
   iccid: string | null
   moduleName: string | null
   historyVisible: boolean | null
+  maintenanceSince: Date | null
+  maintenanceUntil: Date | null
+  maintenanceBy: string | null
+  maintenanceNote: string | null
   webSettingsActive: boolean | null
   webSettingsHeartbeatAt: Date | null
   adminSessionActive: boolean | null
@@ -49,6 +53,10 @@ export type InstallationMaxAggregateOutputType = {
   iccid: string | null
   moduleName: string | null
   historyVisible: boolean | null
+  maintenanceSince: Date | null
+  maintenanceUntil: Date | null
+  maintenanceBy: string | null
+  maintenanceNote: string | null
   webSettingsActive: boolean | null
   webSettingsHeartbeatAt: Date | null
   adminSessionActive: boolean | null
@@ -65,6 +73,10 @@ export type InstallationCountAggregateOutputType = {
   iccid: number
   moduleName: number
   historyVisible: number
+  maintenanceSince: number
+  maintenanceUntil: number
+  maintenanceBy: number
+  maintenanceNote: number
   webSettingsActive: number
   webSettingsHeartbeatAt: number
   adminSessionActive: number
@@ -83,6 +95,10 @@ export type InstallationMinAggregateInputType = {
   iccid?: true
   moduleName?: true
   historyVisible?: true
+  maintenanceSince?: true
+  maintenanceUntil?: true
+  maintenanceBy?: true
+  maintenanceNote?: true
   webSettingsActive?: true
   webSettingsHeartbeatAt?: true
   adminSessionActive?: true
@@ -99,6 +115,10 @@ export type InstallationMaxAggregateInputType = {
   iccid?: true
   moduleName?: true
   historyVisible?: true
+  maintenanceSince?: true
+  maintenanceUntil?: true
+  maintenanceBy?: true
+  maintenanceNote?: true
   webSettingsActive?: true
   webSettingsHeartbeatAt?: true
   adminSessionActive?: true
@@ -115,6 +135,10 @@ export type InstallationCountAggregateInputType = {
   iccid?: true
   moduleName?: true
   historyVisible?: true
+  maintenanceSince?: true
+  maintenanceUntil?: true
+  maintenanceBy?: true
+  maintenanceNote?: true
   webSettingsActive?: true
   webSettingsHeartbeatAt?: true
   adminSessionActive?: true
@@ -204,6 +228,10 @@ export type InstallationGroupByOutputType = {
   iccid: string | null
   moduleName: string | null
   historyVisible: boolean
+  maintenanceSince: Date | null
+  maintenanceUntil: Date | null
+  maintenanceBy: string | null
+  maintenanceNote: string | null
   webSettingsActive: boolean
   webSettingsHeartbeatAt: Date | null
   adminSessionActive: boolean
@@ -241,6 +269,10 @@ export type InstallationWhereInput = {
   iccid?: Prisma.StringNullableFilter<"Installation"> | string | null
   moduleName?: Prisma.StringNullableFilter<"Installation"> | string | null
   historyVisible?: Prisma.BoolFilter<"Installation"> | boolean
+  maintenanceSince?: Prisma.DateTimeNullableFilter<"Installation"> | Date | string | null
+  maintenanceUntil?: Prisma.DateTimeNullableFilter<"Installation"> | Date | string | null
+  maintenanceBy?: Prisma.StringNullableFilter<"Installation"> | string | null
+  maintenanceNote?: Prisma.StringNullableFilter<"Installation"> | string | null
   webSettingsActive?: Prisma.BoolFilter<"Installation"> | boolean
   webSettingsHeartbeatAt?: Prisma.DateTimeNullableFilter<"Installation"> | Date | string | null
   adminSessionActive?: Prisma.BoolFilter<"Installation"> | boolean
@@ -260,6 +292,7 @@ export type InstallationWhereInput = {
   deviceSettings?: Prisma.XOR<Prisma.InstallationDeviceSettingsNullableScalarRelationFilter, Prisma.InstallationDeviceSettingsWhereInput> | null
   otaStatusEvents?: Prisma.OtaStatusEventListRelationFilter
   harmonicRecords?: Prisma.HarmonicRecordListRelationFilter
+  alarms?: Prisma.AlarmListRelationFilter
 }
 
 export type InstallationOrderByWithRelationInput = {
@@ -269,6 +302,10 @@ export type InstallationOrderByWithRelationInput = {
   iccid?: Prisma.SortOrderInput | Prisma.SortOrder
   moduleName?: Prisma.SortOrderInput | Prisma.SortOrder
   historyVisible?: Prisma.SortOrder
+  maintenanceSince?: Prisma.SortOrderInput | Prisma.SortOrder
+  maintenanceUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  maintenanceBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  maintenanceNote?: Prisma.SortOrderInput | Prisma.SortOrder
   webSettingsActive?: Prisma.SortOrder
   webSettingsHeartbeatAt?: Prisma.SortOrderInput | Prisma.SortOrder
   adminSessionActive?: Prisma.SortOrder
@@ -288,6 +325,7 @@ export type InstallationOrderByWithRelationInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsOrderByWithRelationInput
   otaStatusEvents?: Prisma.OtaStatusEventOrderByRelationAggregateInput
   harmonicRecords?: Prisma.HarmonicRecordOrderByRelationAggregateInput
+  alarms?: Prisma.AlarmOrderByRelationAggregateInput
 }
 
 export type InstallationWhereUniqueInput = Prisma.AtLeast<{
@@ -300,6 +338,10 @@ export type InstallationWhereUniqueInput = Prisma.AtLeast<{
   label?: Prisma.StringFilter<"Installation"> | string
   moduleName?: Prisma.StringNullableFilter<"Installation"> | string | null
   historyVisible?: Prisma.BoolFilter<"Installation"> | boolean
+  maintenanceSince?: Prisma.DateTimeNullableFilter<"Installation"> | Date | string | null
+  maintenanceUntil?: Prisma.DateTimeNullableFilter<"Installation"> | Date | string | null
+  maintenanceBy?: Prisma.StringNullableFilter<"Installation"> | string | null
+  maintenanceNote?: Prisma.StringNullableFilter<"Installation"> | string | null
   webSettingsActive?: Prisma.BoolFilter<"Installation"> | boolean
   webSettingsHeartbeatAt?: Prisma.DateTimeNullableFilter<"Installation"> | Date | string | null
   adminSessionActive?: Prisma.BoolFilter<"Installation"> | boolean
@@ -319,6 +361,7 @@ export type InstallationWhereUniqueInput = Prisma.AtLeast<{
   deviceSettings?: Prisma.XOR<Prisma.InstallationDeviceSettingsNullableScalarRelationFilter, Prisma.InstallationDeviceSettingsWhereInput> | null
   otaStatusEvents?: Prisma.OtaStatusEventListRelationFilter
   harmonicRecords?: Prisma.HarmonicRecordListRelationFilter
+  alarms?: Prisma.AlarmListRelationFilter
 }, "id" | "iccid">
 
 export type InstallationOrderByWithAggregationInput = {
@@ -328,6 +371,10 @@ export type InstallationOrderByWithAggregationInput = {
   iccid?: Prisma.SortOrderInput | Prisma.SortOrder
   moduleName?: Prisma.SortOrderInput | Prisma.SortOrder
   historyVisible?: Prisma.SortOrder
+  maintenanceSince?: Prisma.SortOrderInput | Prisma.SortOrder
+  maintenanceUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  maintenanceBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  maintenanceNote?: Prisma.SortOrderInput | Prisma.SortOrder
   webSettingsActive?: Prisma.SortOrder
   webSettingsHeartbeatAt?: Prisma.SortOrderInput | Prisma.SortOrder
   adminSessionActive?: Prisma.SortOrder
@@ -350,6 +397,10 @@ export type InstallationScalarWhereWithAggregatesInput = {
   iccid?: Prisma.StringNullableWithAggregatesFilter<"Installation"> | string | null
   moduleName?: Prisma.StringNullableWithAggregatesFilter<"Installation"> | string | null
   historyVisible?: Prisma.BoolWithAggregatesFilter<"Installation"> | boolean
+  maintenanceSince?: Prisma.DateTimeNullableWithAggregatesFilter<"Installation"> | Date | string | null
+  maintenanceUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"Installation"> | Date | string | null
+  maintenanceBy?: Prisma.StringNullableWithAggregatesFilter<"Installation"> | string | null
+  maintenanceNote?: Prisma.StringNullableWithAggregatesFilter<"Installation"> | string | null
   webSettingsActive?: Prisma.BoolWithAggregatesFilter<"Installation"> | boolean
   webSettingsHeartbeatAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Installation"> | Date | string | null
   adminSessionActive?: Prisma.BoolWithAggregatesFilter<"Installation"> | boolean
@@ -365,6 +416,10 @@ export type InstallationCreateInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -384,6 +439,7 @@ export type InstallationCreateInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateInput = {
@@ -393,6 +449,10 @@ export type InstallationUncheckedCreateInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -411,6 +471,7 @@ export type InstallationUncheckedCreateInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUpdateInput = {
@@ -419,6 +480,10 @@ export type InstallationUpdateInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -438,6 +503,7 @@ export type InstallationUpdateInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateInput = {
@@ -447,6 +513,10 @@ export type InstallationUncheckedUpdateInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -465,6 +535,7 @@ export type InstallationUncheckedUpdateInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateManyInput = {
@@ -474,6 +545,10 @@ export type InstallationCreateManyInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -489,6 +564,10 @@ export type InstallationUpdateManyMutationInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -505,6 +584,10 @@ export type InstallationUncheckedUpdateManyInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -531,6 +614,10 @@ export type InstallationCountOrderByAggregateInput = {
   iccid?: Prisma.SortOrder
   moduleName?: Prisma.SortOrder
   historyVisible?: Prisma.SortOrder
+  maintenanceSince?: Prisma.SortOrder
+  maintenanceUntil?: Prisma.SortOrder
+  maintenanceBy?: Prisma.SortOrder
+  maintenanceNote?: Prisma.SortOrder
   webSettingsActive?: Prisma.SortOrder
   webSettingsHeartbeatAt?: Prisma.SortOrder
   adminSessionActive?: Prisma.SortOrder
@@ -547,6 +634,10 @@ export type InstallationMaxOrderByAggregateInput = {
   iccid?: Prisma.SortOrder
   moduleName?: Prisma.SortOrder
   historyVisible?: Prisma.SortOrder
+  maintenanceSince?: Prisma.SortOrder
+  maintenanceUntil?: Prisma.SortOrder
+  maintenanceBy?: Prisma.SortOrder
+  maintenanceNote?: Prisma.SortOrder
   webSettingsActive?: Prisma.SortOrder
   webSettingsHeartbeatAt?: Prisma.SortOrder
   adminSessionActive?: Prisma.SortOrder
@@ -563,6 +654,10 @@ export type InstallationMinOrderByAggregateInput = {
   iccid?: Prisma.SortOrder
   moduleName?: Prisma.SortOrder
   historyVisible?: Prisma.SortOrder
+  maintenanceSince?: Prisma.SortOrder
+  maintenanceUntil?: Prisma.SortOrder
+  maintenanceBy?: Prisma.SortOrder
+  maintenanceNote?: Prisma.SortOrder
   webSettingsActive?: Prisma.SortOrder
   webSettingsHeartbeatAt?: Prisma.SortOrder
   adminSessionActive?: Prisma.SortOrder
@@ -731,6 +826,20 @@ export type InstallationUpdateOneRequiredWithoutModuleFaultLogsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.InstallationUpdateToOneWithWhereWithoutModuleFaultLogsInput, Prisma.InstallationUpdateWithoutModuleFaultLogsInput>, Prisma.InstallationUncheckedUpdateWithoutModuleFaultLogsInput>
 }
 
+export type InstallationCreateNestedOneWithoutAlarmsInput = {
+  create?: Prisma.XOR<Prisma.InstallationCreateWithoutAlarmsInput, Prisma.InstallationUncheckedCreateWithoutAlarmsInput>
+  connectOrCreate?: Prisma.InstallationCreateOrConnectWithoutAlarmsInput
+  connect?: Prisma.InstallationWhereUniqueInput
+}
+
+export type InstallationUpdateOneRequiredWithoutAlarmsNestedInput = {
+  create?: Prisma.XOR<Prisma.InstallationCreateWithoutAlarmsInput, Prisma.InstallationUncheckedCreateWithoutAlarmsInput>
+  connectOrCreate?: Prisma.InstallationCreateOrConnectWithoutAlarmsInput
+  upsert?: Prisma.InstallationUpsertWithoutAlarmsInput
+  connect?: Prisma.InstallationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.InstallationUpdateToOneWithWhereWithoutAlarmsInput, Prisma.InstallationUpdateWithoutAlarmsInput>, Prisma.InstallationUncheckedUpdateWithoutAlarmsInput>
+}
+
 export type InstallationCreateNestedOneWithoutCommandsInput = {
   create?: Prisma.XOR<Prisma.InstallationCreateWithoutCommandsInput, Prisma.InstallationUncheckedCreateWithoutCommandsInput>
   connectOrCreate?: Prisma.InstallationCreateOrConnectWithoutCommandsInput
@@ -779,6 +888,10 @@ export type InstallationCreateWithoutSiteInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -797,6 +910,7 @@ export type InstallationCreateWithoutSiteInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutSiteInput = {
@@ -805,6 +919,10 @@ export type InstallationUncheckedCreateWithoutSiteInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -823,6 +941,7 @@ export type InstallationUncheckedCreateWithoutSiteInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutSiteInput = {
@@ -861,6 +980,10 @@ export type InstallationScalarWhereInput = {
   iccid?: Prisma.StringNullableFilter<"Installation"> | string | null
   moduleName?: Prisma.StringNullableFilter<"Installation"> | string | null
   historyVisible?: Prisma.BoolFilter<"Installation"> | boolean
+  maintenanceSince?: Prisma.DateTimeNullableFilter<"Installation"> | Date | string | null
+  maintenanceUntil?: Prisma.DateTimeNullableFilter<"Installation"> | Date | string | null
+  maintenanceBy?: Prisma.StringNullableFilter<"Installation"> | string | null
+  maintenanceNote?: Prisma.StringNullableFilter<"Installation"> | string | null
   webSettingsActive?: Prisma.BoolFilter<"Installation"> | boolean
   webSettingsHeartbeatAt?: Prisma.DateTimeNullableFilter<"Installation"> | Date | string | null
   adminSessionActive?: Prisma.BoolFilter<"Installation"> | boolean
@@ -876,6 +999,10 @@ export type InstallationCreateWithoutDeviceSettingsInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -894,6 +1021,7 @@ export type InstallationCreateWithoutDeviceSettingsInput = {
   moduleFaultLogs?: Prisma.ModuleFaultLogCreateNestedManyWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutDeviceSettingsInput = {
@@ -903,6 +1031,10 @@ export type InstallationUncheckedCreateWithoutDeviceSettingsInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -920,6 +1052,7 @@ export type InstallationUncheckedCreateWithoutDeviceSettingsInput = {
   moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedCreateNestedManyWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutDeviceSettingsInput = {
@@ -944,6 +1077,10 @@ export type InstallationUpdateWithoutDeviceSettingsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -962,6 +1099,7 @@ export type InstallationUpdateWithoutDeviceSettingsInput = {
   moduleFaultLogs?: Prisma.ModuleFaultLogUpdateManyWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutDeviceSettingsInput = {
@@ -971,6 +1109,10 @@ export type InstallationUncheckedUpdateWithoutDeviceSettingsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -988,6 +1130,7 @@ export type InstallationUncheckedUpdateWithoutDeviceSettingsInput = {
   moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedUpdateManyWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutDeviceInput = {
@@ -996,6 +1139,10 @@ export type InstallationCreateWithoutDeviceInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1014,6 +1161,7 @@ export type InstallationCreateWithoutDeviceInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutDeviceInput = {
@@ -1023,6 +1171,10 @@ export type InstallationUncheckedCreateWithoutDeviceInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1040,6 +1192,7 @@ export type InstallationUncheckedCreateWithoutDeviceInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutDeviceInput = {
@@ -1064,6 +1217,10 @@ export type InstallationUpdateWithoutDeviceInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1082,6 +1239,7 @@ export type InstallationUpdateWithoutDeviceInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutDeviceInput = {
@@ -1091,6 +1249,10 @@ export type InstallationUncheckedUpdateWithoutDeviceInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1108,6 +1270,7 @@ export type InstallationUncheckedUpdateWithoutDeviceInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutTelemetryRecordsInput = {
@@ -1116,6 +1279,10 @@ export type InstallationCreateWithoutTelemetryRecordsInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1134,6 +1301,7 @@ export type InstallationCreateWithoutTelemetryRecordsInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutTelemetryRecordsInput = {
@@ -1143,6 +1311,10 @@ export type InstallationUncheckedCreateWithoutTelemetryRecordsInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1160,6 +1332,7 @@ export type InstallationUncheckedCreateWithoutTelemetryRecordsInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutTelemetryRecordsInput = {
@@ -1184,6 +1357,10 @@ export type InstallationUpdateWithoutTelemetryRecordsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1202,6 +1379,7 @@ export type InstallationUpdateWithoutTelemetryRecordsInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutTelemetryRecordsInput = {
@@ -1211,6 +1389,10 @@ export type InstallationUncheckedUpdateWithoutTelemetryRecordsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1228,6 +1410,7 @@ export type InstallationUncheckedUpdateWithoutTelemetryRecordsInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutHourlySummariesInput = {
@@ -1236,6 +1419,10 @@ export type InstallationCreateWithoutHourlySummariesInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1254,6 +1441,7 @@ export type InstallationCreateWithoutHourlySummariesInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutHourlySummariesInput = {
@@ -1263,6 +1451,10 @@ export type InstallationUncheckedCreateWithoutHourlySummariesInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1280,6 +1472,7 @@ export type InstallationUncheckedCreateWithoutHourlySummariesInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutHourlySummariesInput = {
@@ -1304,6 +1497,10 @@ export type InstallationUpdateWithoutHourlySummariesInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1322,6 +1519,7 @@ export type InstallationUpdateWithoutHourlySummariesInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutHourlySummariesInput = {
@@ -1331,6 +1529,10 @@ export type InstallationUncheckedUpdateWithoutHourlySummariesInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1348,6 +1550,7 @@ export type InstallationUncheckedUpdateWithoutHourlySummariesInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutDailySummariesInput = {
@@ -1356,6 +1559,10 @@ export type InstallationCreateWithoutDailySummariesInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1374,6 +1581,7 @@ export type InstallationCreateWithoutDailySummariesInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutDailySummariesInput = {
@@ -1383,6 +1591,10 @@ export type InstallationUncheckedCreateWithoutDailySummariesInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1400,6 +1612,7 @@ export type InstallationUncheckedCreateWithoutDailySummariesInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutDailySummariesInput = {
@@ -1424,6 +1637,10 @@ export type InstallationUpdateWithoutDailySummariesInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1442,6 +1659,7 @@ export type InstallationUpdateWithoutDailySummariesInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutDailySummariesInput = {
@@ -1451,6 +1669,10 @@ export type InstallationUncheckedUpdateWithoutDailySummariesInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1468,6 +1690,7 @@ export type InstallationUncheckedUpdateWithoutDailySummariesInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutFaultEventsInput = {
@@ -1476,6 +1699,10 @@ export type InstallationCreateWithoutFaultEventsInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1494,6 +1721,7 @@ export type InstallationCreateWithoutFaultEventsInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutFaultEventsInput = {
@@ -1503,6 +1731,10 @@ export type InstallationUncheckedCreateWithoutFaultEventsInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1520,6 +1752,7 @@ export type InstallationUncheckedCreateWithoutFaultEventsInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutFaultEventsInput = {
@@ -1544,6 +1777,10 @@ export type InstallationUpdateWithoutFaultEventsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1562,6 +1799,7 @@ export type InstallationUpdateWithoutFaultEventsInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutFaultEventsInput = {
@@ -1571,6 +1809,10 @@ export type InstallationUncheckedUpdateWithoutFaultEventsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1588,6 +1830,7 @@ export type InstallationUncheckedUpdateWithoutFaultEventsInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutModuleFaultStatesInput = {
@@ -1596,6 +1839,10 @@ export type InstallationCreateWithoutModuleFaultStatesInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1614,6 +1861,7 @@ export type InstallationCreateWithoutModuleFaultStatesInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutModuleFaultStatesInput = {
@@ -1623,6 +1871,10 @@ export type InstallationUncheckedCreateWithoutModuleFaultStatesInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1640,6 +1892,7 @@ export type InstallationUncheckedCreateWithoutModuleFaultStatesInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutModuleFaultStatesInput = {
@@ -1664,6 +1917,10 @@ export type InstallationUpdateWithoutModuleFaultStatesInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1682,6 +1939,7 @@ export type InstallationUpdateWithoutModuleFaultStatesInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutModuleFaultStatesInput = {
@@ -1691,6 +1949,10 @@ export type InstallationUncheckedUpdateWithoutModuleFaultStatesInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1708,6 +1970,7 @@ export type InstallationUncheckedUpdateWithoutModuleFaultStatesInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutModuleFaultLogsInput = {
@@ -1716,6 +1979,10 @@ export type InstallationCreateWithoutModuleFaultLogsInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1734,6 +2001,7 @@ export type InstallationCreateWithoutModuleFaultLogsInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutModuleFaultLogsInput = {
@@ -1743,6 +2011,10 @@ export type InstallationUncheckedCreateWithoutModuleFaultLogsInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1760,6 +2032,7 @@ export type InstallationUncheckedCreateWithoutModuleFaultLogsInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutModuleFaultLogsInput = {
@@ -1784,6 +2057,10 @@ export type InstallationUpdateWithoutModuleFaultLogsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1802,6 +2079,7 @@ export type InstallationUpdateWithoutModuleFaultLogsInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutModuleFaultLogsInput = {
@@ -1811,6 +2089,10 @@ export type InstallationUncheckedUpdateWithoutModuleFaultLogsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1828,6 +2110,147 @@ export type InstallationUncheckedUpdateWithoutModuleFaultLogsInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUncheckedUpdateManyWithoutInstallationNestedInput
+}
+
+export type InstallationCreateWithoutAlarmsInput = {
+  id: string
+  label: string
+  iccid?: string | null
+  moduleName?: string | null
+  historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
+  webSettingsActive?: boolean
+  webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  site: Prisma.SiteCreateNestedOneWithoutInstallationsInput
+  device?: Prisma.DeviceCreateNestedOneWithoutInstallationInput
+  telemetryRecords?: Prisma.TelemetryRecordCreateNestedManyWithoutInstallationInput
+  hourlySummaries?: Prisma.TelemetryHourlySummaryCreateNestedManyWithoutInstallationInput
+  dailySummaries?: Prisma.TelemetryDailySummaryCreateNestedManyWithoutInstallationInput
+  commands?: Prisma.DeviceCommandCreateNestedManyWithoutInstallationInput
+  faultEvents?: Prisma.FaultEventCreateNestedManyWithoutInstallationInput
+  moduleFaultStates?: Prisma.ModuleFaultStateCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogCreateNestedManyWithoutInstallationInput
+  deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
+  harmonicRecords?: Prisma.HarmonicRecordCreateNestedManyWithoutInstallationInput
+}
+
+export type InstallationUncheckedCreateWithoutAlarmsInput = {
+  id: string
+  siteId: string
+  label: string
+  iccid?: string | null
+  moduleName?: string | null
+  historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
+  webSettingsActive?: boolean
+  webSettingsHeartbeatAt?: Date | string | null
+  adminSessionActive?: boolean
+  adminSessionHeartbeatAt?: Date | string | null
+  adminSessionUserId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  device?: Prisma.DeviceUncheckedCreateNestedOneWithoutInstallationInput
+  telemetryRecords?: Prisma.TelemetryRecordUncheckedCreateNestedManyWithoutInstallationInput
+  hourlySummaries?: Prisma.TelemetryHourlySummaryUncheckedCreateNestedManyWithoutInstallationInput
+  dailySummaries?: Prisma.TelemetryDailySummaryUncheckedCreateNestedManyWithoutInstallationInput
+  commands?: Prisma.DeviceCommandUncheckedCreateNestedManyWithoutInstallationInput
+  faultEvents?: Prisma.FaultEventUncheckedCreateNestedManyWithoutInstallationInput
+  moduleFaultStates?: Prisma.ModuleFaultStateUncheckedCreateNestedManyWithoutInstallationInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedCreateNestedManyWithoutInstallationInput
+  deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
+  harmonicRecords?: Prisma.HarmonicRecordUncheckedCreateNestedManyWithoutInstallationInput
+}
+
+export type InstallationCreateOrConnectWithoutAlarmsInput = {
+  where: Prisma.InstallationWhereUniqueInput
+  create: Prisma.XOR<Prisma.InstallationCreateWithoutAlarmsInput, Prisma.InstallationUncheckedCreateWithoutAlarmsInput>
+}
+
+export type InstallationUpsertWithoutAlarmsInput = {
+  update: Prisma.XOR<Prisma.InstallationUpdateWithoutAlarmsInput, Prisma.InstallationUncheckedUpdateWithoutAlarmsInput>
+  create: Prisma.XOR<Prisma.InstallationCreateWithoutAlarmsInput, Prisma.InstallationUncheckedCreateWithoutAlarmsInput>
+  where?: Prisma.InstallationWhereInput
+}
+
+export type InstallationUpdateToOneWithWhereWithoutAlarmsInput = {
+  where?: Prisma.InstallationWhereInput
+  data: Prisma.XOR<Prisma.InstallationUpdateWithoutAlarmsInput, Prisma.InstallationUncheckedUpdateWithoutAlarmsInput>
+}
+
+export type InstallationUpdateWithoutAlarmsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  label?: Prisma.StringFieldUpdateOperationsInput | string
+  iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  site?: Prisma.SiteUpdateOneRequiredWithoutInstallationsNestedInput
+  device?: Prisma.DeviceUpdateOneWithoutInstallationNestedInput
+  telemetryRecords?: Prisma.TelemetryRecordUpdateManyWithoutInstallationNestedInput
+  hourlySummaries?: Prisma.TelemetryHourlySummaryUpdateManyWithoutInstallationNestedInput
+  dailySummaries?: Prisma.TelemetryDailySummaryUpdateManyWithoutInstallationNestedInput
+  commands?: Prisma.DeviceCommandUpdateManyWithoutInstallationNestedInput
+  faultEvents?: Prisma.FaultEventUpdateManyWithoutInstallationNestedInput
+  moduleFaultStates?: Prisma.ModuleFaultStateUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUpdateManyWithoutInstallationNestedInput
+  deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
+  harmonicRecords?: Prisma.HarmonicRecordUpdateManyWithoutInstallationNestedInput
+}
+
+export type InstallationUncheckedUpdateWithoutAlarmsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  label?: Prisma.StringFieldUpdateOperationsInput | string
+  iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminSessionHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminSessionUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  device?: Prisma.DeviceUncheckedUpdateOneWithoutInstallationNestedInput
+  telemetryRecords?: Prisma.TelemetryRecordUncheckedUpdateManyWithoutInstallationNestedInput
+  hourlySummaries?: Prisma.TelemetryHourlySummaryUncheckedUpdateManyWithoutInstallationNestedInput
+  dailySummaries?: Prisma.TelemetryDailySummaryUncheckedUpdateManyWithoutInstallationNestedInput
+  commands?: Prisma.DeviceCommandUncheckedUpdateManyWithoutInstallationNestedInput
+  faultEvents?: Prisma.FaultEventUncheckedUpdateManyWithoutInstallationNestedInput
+  moduleFaultStates?: Prisma.ModuleFaultStateUncheckedUpdateManyWithoutInstallationNestedInput
+  moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedUpdateManyWithoutInstallationNestedInput
+  deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
+  otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
+  harmonicRecords?: Prisma.HarmonicRecordUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutCommandsInput = {
@@ -1836,6 +2259,10 @@ export type InstallationCreateWithoutCommandsInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1854,6 +2281,7 @@ export type InstallationCreateWithoutCommandsInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutCommandsInput = {
@@ -1863,6 +2291,10 @@ export type InstallationUncheckedCreateWithoutCommandsInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1880,6 +2312,7 @@ export type InstallationUncheckedCreateWithoutCommandsInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutCommandsInput = {
@@ -1904,6 +2337,10 @@ export type InstallationUpdateWithoutCommandsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1922,6 +2359,7 @@ export type InstallationUpdateWithoutCommandsInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutCommandsInput = {
@@ -1931,6 +2369,10 @@ export type InstallationUncheckedUpdateWithoutCommandsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1948,6 +2390,7 @@ export type InstallationUncheckedUpdateWithoutCommandsInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutOtaStatusEventsInput = {
@@ -1956,6 +2399,10 @@ export type InstallationCreateWithoutOtaStatusEventsInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -1974,6 +2421,7 @@ export type InstallationCreateWithoutOtaStatusEventsInput = {
   moduleFaultLogs?: Prisma.ModuleFaultLogCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutOtaStatusEventsInput = {
@@ -1983,6 +2431,10 @@ export type InstallationUncheckedCreateWithoutOtaStatusEventsInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -2000,6 +2452,7 @@ export type InstallationUncheckedCreateWithoutOtaStatusEventsInput = {
   moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutOtaStatusEventsInput = {
@@ -2024,6 +2477,10 @@ export type InstallationUpdateWithoutOtaStatusEventsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2042,6 +2499,7 @@ export type InstallationUpdateWithoutOtaStatusEventsInput = {
   moduleFaultLogs?: Prisma.ModuleFaultLogUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutOtaStatusEventsInput = {
@@ -2051,6 +2509,10 @@ export type InstallationUncheckedUpdateWithoutOtaStatusEventsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2068,6 +2530,7 @@ export type InstallationUncheckedUpdateWithoutOtaStatusEventsInput = {
   moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateWithoutHarmonicRecordsInput = {
@@ -2076,6 +2539,10 @@ export type InstallationCreateWithoutHarmonicRecordsInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -2094,6 +2561,7 @@ export type InstallationCreateWithoutHarmonicRecordsInput = {
   moduleFaultLogs?: Prisma.ModuleFaultLogCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationUncheckedCreateWithoutHarmonicRecordsInput = {
@@ -2103,6 +2571,10 @@ export type InstallationUncheckedCreateWithoutHarmonicRecordsInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -2120,6 +2592,7 @@ export type InstallationUncheckedCreateWithoutHarmonicRecordsInput = {
   moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedCreateNestedManyWithoutInstallationInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedCreateNestedOneWithoutInstallationInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedCreateNestedManyWithoutInstallationInput
+  alarms?: Prisma.AlarmUncheckedCreateNestedManyWithoutInstallationInput
 }
 
 export type InstallationCreateOrConnectWithoutHarmonicRecordsInput = {
@@ -2144,6 +2617,10 @@ export type InstallationUpdateWithoutHarmonicRecordsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2162,6 +2639,7 @@ export type InstallationUpdateWithoutHarmonicRecordsInput = {
   moduleFaultLogs?: Prisma.ModuleFaultLogUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutHarmonicRecordsInput = {
@@ -2171,6 +2649,10 @@ export type InstallationUncheckedUpdateWithoutHarmonicRecordsInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2188,6 +2670,7 @@ export type InstallationUncheckedUpdateWithoutHarmonicRecordsInput = {
   moduleFaultLogs?: Prisma.ModuleFaultLogUncheckedUpdateManyWithoutInstallationNestedInput
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationCreateManySiteInput = {
@@ -2196,6 +2679,10 @@ export type InstallationCreateManySiteInput = {
   iccid?: string | null
   moduleName?: string | null
   historyVisible?: boolean
+  maintenanceSince?: Date | string | null
+  maintenanceUntil?: Date | string | null
+  maintenanceBy?: string | null
+  maintenanceNote?: string | null
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: Date | string | null
   adminSessionActive?: boolean
@@ -2211,6 +2698,10 @@ export type InstallationUpdateWithoutSiteInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2229,6 +2720,7 @@ export type InstallationUpdateWithoutSiteInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateWithoutSiteInput = {
@@ -2237,6 +2729,10 @@ export type InstallationUncheckedUpdateWithoutSiteInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2255,6 +2751,7 @@ export type InstallationUncheckedUpdateWithoutSiteInput = {
   deviceSettings?: Prisma.InstallationDeviceSettingsUncheckedUpdateOneWithoutInstallationNestedInput
   otaStatusEvents?: Prisma.OtaStatusEventUncheckedUpdateManyWithoutInstallationNestedInput
   harmonicRecords?: Prisma.HarmonicRecordUncheckedUpdateManyWithoutInstallationNestedInput
+  alarms?: Prisma.AlarmUncheckedUpdateManyWithoutInstallationNestedInput
 }
 
 export type InstallationUncheckedUpdateManyWithoutSiteInput = {
@@ -2263,6 +2760,10 @@ export type InstallationUncheckedUpdateManyWithoutSiteInput = {
   iccid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   moduleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   historyVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenanceBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maintenanceNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webSettingsActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   webSettingsHeartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminSessionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2287,6 +2788,7 @@ export type InstallationCountOutputType = {
   moduleFaultLogs: number
   otaStatusEvents: number
   harmonicRecords: number
+  alarms: number
 }
 
 export type InstallationCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2299,6 +2801,7 @@ export type InstallationCountOutputTypeSelect<ExtArgs extends runtime.Types.Exte
   moduleFaultLogs?: boolean | InstallationCountOutputTypeCountModuleFaultLogsArgs
   otaStatusEvents?: boolean | InstallationCountOutputTypeCountOtaStatusEventsArgs
   harmonicRecords?: boolean | InstallationCountOutputTypeCountHarmonicRecordsArgs
+  alarms?: boolean | InstallationCountOutputTypeCountAlarmsArgs
 }
 
 /**
@@ -2374,6 +2877,13 @@ export type InstallationCountOutputTypeCountHarmonicRecordsArgs<ExtArgs extends 
   where?: Prisma.HarmonicRecordWhereInput
 }
 
+/**
+ * InstallationCountOutputType without action
+ */
+export type InstallationCountOutputTypeCountAlarmsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AlarmWhereInput
+}
+
 
 export type InstallationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2382,6 +2892,10 @@ export type InstallationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   iccid?: boolean
   moduleName?: boolean
   historyVisible?: boolean
+  maintenanceSince?: boolean
+  maintenanceUntil?: boolean
+  maintenanceBy?: boolean
+  maintenanceNote?: boolean
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: boolean
   adminSessionActive?: boolean
@@ -2401,6 +2915,7 @@ export type InstallationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   deviceSettings?: boolean | Prisma.Installation$deviceSettingsArgs<ExtArgs>
   otaStatusEvents?: boolean | Prisma.Installation$otaStatusEventsArgs<ExtArgs>
   harmonicRecords?: boolean | Prisma.Installation$harmonicRecordsArgs<ExtArgs>
+  alarms?: boolean | Prisma.Installation$alarmsArgs<ExtArgs>
   _count?: boolean | Prisma.InstallationCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["installation"]>
 
@@ -2411,6 +2926,10 @@ export type InstallationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   iccid?: boolean
   moduleName?: boolean
   historyVisible?: boolean
+  maintenanceSince?: boolean
+  maintenanceUntil?: boolean
+  maintenanceBy?: boolean
+  maintenanceNote?: boolean
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: boolean
   adminSessionActive?: boolean
@@ -2428,6 +2947,10 @@ export type InstallationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   iccid?: boolean
   moduleName?: boolean
   historyVisible?: boolean
+  maintenanceSince?: boolean
+  maintenanceUntil?: boolean
+  maintenanceBy?: boolean
+  maintenanceNote?: boolean
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: boolean
   adminSessionActive?: boolean
@@ -2445,6 +2968,10 @@ export type InstallationSelectScalar = {
   iccid?: boolean
   moduleName?: boolean
   historyVisible?: boolean
+  maintenanceSince?: boolean
+  maintenanceUntil?: boolean
+  maintenanceBy?: boolean
+  maintenanceNote?: boolean
   webSettingsActive?: boolean
   webSettingsHeartbeatAt?: boolean
   adminSessionActive?: boolean
@@ -2454,7 +2981,7 @@ export type InstallationSelectScalar = {
   updatedAt?: boolean
 }
 
-export type InstallationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "siteId" | "label" | "iccid" | "moduleName" | "historyVisible" | "webSettingsActive" | "webSettingsHeartbeatAt" | "adminSessionActive" | "adminSessionHeartbeatAt" | "adminSessionUserId" | "createdAt" | "updatedAt", ExtArgs["result"]["installation"]>
+export type InstallationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "siteId" | "label" | "iccid" | "moduleName" | "historyVisible" | "maintenanceSince" | "maintenanceUntil" | "maintenanceBy" | "maintenanceNote" | "webSettingsActive" | "webSettingsHeartbeatAt" | "adminSessionActive" | "adminSessionHeartbeatAt" | "adminSessionUserId" | "createdAt" | "updatedAt", ExtArgs["result"]["installation"]>
 export type InstallationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
   device?: boolean | Prisma.Installation$deviceArgs<ExtArgs>
@@ -2468,6 +2995,7 @@ export type InstallationInclude<ExtArgs extends runtime.Types.Extensions.Interna
   deviceSettings?: boolean | Prisma.Installation$deviceSettingsArgs<ExtArgs>
   otaStatusEvents?: boolean | Prisma.Installation$otaStatusEventsArgs<ExtArgs>
   harmonicRecords?: boolean | Prisma.Installation$harmonicRecordsArgs<ExtArgs>
+  alarms?: boolean | Prisma.Installation$alarmsArgs<ExtArgs>
   _count?: boolean | Prisma.InstallationCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type InstallationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2492,6 +3020,7 @@ export type $InstallationPayload<ExtArgs extends runtime.Types.Extensions.Intern
     deviceSettings: Prisma.$InstallationDeviceSettingsPayload<ExtArgs> | null
     otaStatusEvents: Prisma.$OtaStatusEventPayload<ExtArgs>[]
     harmonicRecords: Prisma.$HarmonicRecordPayload<ExtArgs>[]
+    alarms: Prisma.$AlarmPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2509,6 +3038,14 @@ export type $InstallationPayload<ExtArgs extends runtime.Types.Extensions.Intern
      * 고객 계정의 주·월·연 이력. 하루(24시간) 이력은 항상 보이고, 관리자는 이 값과 관계없이 전부 본다.
      */
     historyVisible: boolean
+    /**
+     * 관제 "점검 중" — 설정되면 이 설비의 알람을 띠·미확인 수·알람음에서 뺀다 (기록은 계속 남김).
+     * maintenanceSince 가 있으면 점검 중, maintenanceUntil 이 지나면 자동 종료(null 이면 해제할 때까지).
+     */
+    maintenanceSince: Date | null
+    maintenanceUntil: Date | null
+    maintenanceBy: string | null
+    maintenanceNote: string | null
     /**
      * Legacy — HMI ignores. Always leave false; do not use for settings upload.
      */
@@ -2935,6 +3472,7 @@ export interface Prisma__InstallationClient<T, Null = never, ExtArgs extends run
   deviceSettings<T extends Prisma.Installation$deviceSettingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Installation$deviceSettingsArgs<ExtArgs>>): Prisma.Prisma__InstallationDeviceSettingsClient<runtime.Types.Result.GetResult<Prisma.$InstallationDeviceSettingsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   otaStatusEvents<T extends Prisma.Installation$otaStatusEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Installation$otaStatusEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OtaStatusEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   harmonicRecords<T extends Prisma.Installation$harmonicRecordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Installation$harmonicRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$HarmonicRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  alarms<T extends Prisma.Installation$alarmsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Installation$alarmsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AlarmPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2970,6 +3508,10 @@ export interface InstallationFieldRefs {
   readonly iccid: Prisma.FieldRef<"Installation", 'String'>
   readonly moduleName: Prisma.FieldRef<"Installation", 'String'>
   readonly historyVisible: Prisma.FieldRef<"Installation", 'Boolean'>
+  readonly maintenanceSince: Prisma.FieldRef<"Installation", 'DateTime'>
+  readonly maintenanceUntil: Prisma.FieldRef<"Installation", 'DateTime'>
+  readonly maintenanceBy: Prisma.FieldRef<"Installation", 'String'>
+  readonly maintenanceNote: Prisma.FieldRef<"Installation", 'String'>
   readonly webSettingsActive: Prisma.FieldRef<"Installation", 'Boolean'>
   readonly webSettingsHeartbeatAt: Prisma.FieldRef<"Installation", 'DateTime'>
   readonly adminSessionActive: Prisma.FieldRef<"Installation", 'Boolean'>
@@ -3624,6 +4166,30 @@ export type Installation$harmonicRecordsArgs<ExtArgs extends runtime.Types.Exten
   take?: number
   skip?: number
   distinct?: Prisma.HarmonicRecordScalarFieldEnum | Prisma.HarmonicRecordScalarFieldEnum[]
+}
+
+/**
+ * Installation.alarms
+ */
+export type Installation$alarmsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Alarm
+   */
+  select?: Prisma.AlarmSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Alarm
+   */
+  omit?: Prisma.AlarmOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AlarmInclude<ExtArgs> | null
+  where?: Prisma.AlarmWhereInput
+  orderBy?: Prisma.AlarmOrderByWithRelationInput | Prisma.AlarmOrderByWithRelationInput[]
+  cursor?: Prisma.AlarmWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AlarmScalarFieldEnum | Prisma.AlarmScalarFieldEnum[]
 }
 
 /**

@@ -37,6 +37,7 @@ function toSiteRows(initialSites: SiteListFromApi[] | null | undefined): SiteRow
         client: s.client ?? "",
         region: s.region ?? "기타",
         address: s.address ?? "",
+        inspection: s.inspection === true,
         installations: (s.installations ?? []).flatMap((i) => {
           if (!i || typeof i.id !== "string") return [];
           return [
@@ -97,6 +98,8 @@ type SiteRow = {
   client: string;
   region: string;
   address: string;
+  /** 출고검사 현장 — 설치지점 일괄 삭제 버튼 표시 */
+  inspection?: boolean;
   installations: InstRow[];
 };
 
@@ -277,6 +280,8 @@ export default function AdminSitesPanel({
     Record<string, { type: "ok" | "err"; text: string }>
   >({});
   const [deletingSite, setDeletingSite] = useState<string | null>(null);
+  /** 출고검사 현장 설치지점 일괄 삭제 중인 siteId */
+  const [clearingSite, setClearingSite] = useState<string | null>(null);
   const [deletingInst, setDeletingInst] = useState<string | null>(null);
 
   const [editingSiteId, setEditingSiteId] = useState<string | null>(null);
@@ -534,6 +539,45 @@ export default function AdminSitesPanel({
       showFlash("err", "네트워크 오류");
     } finally {
       setDeletingSite(null);
+    }
+  }
+
+  // ── 출고검사 현장: 설치지점 일괄 삭제 ─────────────────
+  async function handleClearInspectionSite(site: SiteRow) {
+    const n = site.installations.length;
+    if (n === 0) return;
+    if (
+      !confirm(
+        `출고검사 현장 "${site.name}"의 설치지점 ${n}개를 모두 삭제하시겠습니까?
+` +
+          `검사 장비의 장치·이력·알람 데이터가 함께 삭제되며 되돌릴 수 없습니다.
+` +
+          `(ICCID 등록도 같이 사라지므로, 실제 현장으로 옮길 장비는 먼저 옮기세요.)`,
+      )
+    )
+      return;
+    setClearingSite(site.siteId);
+    try {
+      const res = await fetch(
+        `/api/admin/sites/${encodeURIComponent(site.siteId)}/installations`,
+        { method: "DELETE" },
+      );
+      const data = (await res.json().catch(() => ({}))) as {
+        message?: string;
+        deleted?: number;
+      };
+      if (!res.ok) {
+        showFlash("err", data.message ?? `오류 (${res.status})`);
+        return;
+      }
+      setSites((prev) =>
+        prev.map((s) => (s.siteId === site.siteId ? { ...s, installations: [] } : s)),
+      );
+      showFlash("ok", `출고검사 설치지점 ${data.deleted ?? n}개를 삭제했습니다.`);
+    } catch {
+      showFlash("err", "네트워크 오류");
+    } finally {
+      setClearingSite(null);
     }
   }
 
@@ -914,6 +958,9 @@ export default function AdminSitesPanel({
                       <span className="admin-sites-name">
                         {site.name}
                       </span>
+                      {site.inspection && (
+                        <span className="admin-sites-inspection-tag">출고검사</span>
+                      )}
                       <span className="admin-sites-meta">
                         {clientLabelMap[site.client] ?? site.client} · {site.region} · 설치지점{" "}
                         {site.installations.length}개
@@ -925,6 +972,21 @@ export default function AdminSitesPanel({
                     onClick={(e) => e.stopPropagation()}
                   >
                     <code className="admin-iccid-code">{site.siteId}</code>
+                    {site.inspection && (
+                      <button
+                        type="button"
+                        className="admin-sites-del-btn admin-sites-clear-btn"
+                        disabled={
+                          clearingSite === site.siteId || site.installations.length === 0
+                        }
+                        onClick={() => handleClearInspectionSite(site)}
+                        title="검사가 끝난 장비의 설치지점을 한 번에 삭제"
+                      >
+                        {clearingSite === site.siteId
+                          ? "삭제 중…"
+                          : `지점 전체 삭제 (${site.installations.length})`}
+                      </button>
+                    )}
                     {editingSiteId !== site.siteId ? (
                       <button
                         type="button"

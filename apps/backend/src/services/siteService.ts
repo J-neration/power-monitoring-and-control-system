@@ -3,7 +3,7 @@ import { canSeeIccid, type UserContext } from "../modules/auth/auth.types.js";
 import { prisma } from "../lib/prisma.js";
 
 /* ─── 권한별 Site WHERE 필터 ──────────────────────── */
-const siteWhereFilter = (ctx: UserContext) => {
+export const siteWhereFilter = (ctx: UserContext) => {
   if (ctx.role === "ADMIN" || ctx.role === "VIEWER" || ctx.role === "INSPECTOR") return {};
   if (ctx.role === "CLIENT") return { client: ctx.clientKey };
   return { id: ctx.siteId }; // SITE
@@ -55,6 +55,8 @@ export const siteService = {
         installations: {
           include: siteInstallInclude,
         },
+        // 출고검사 현장 표시용 (검사 계정이 묶인 현장)
+        users: { where: { role: "INSPECTOR" }, select: { id: true }, take: 1 },
       },
       orderBy: { name: "asc" },
     });
@@ -80,6 +82,8 @@ export const siteService = {
         region: site.region,
         address: site.address,
         installationCount: site.installations.length,
+        /** 출고검사 현장 — 관리자 현장관리에서 설치지점 일괄 삭제 버튼을 보인다 */
+        inspection: site.users.length > 0,
         status: deriveSiteStatus(statusInputs),
         installations: enrichedInstallations,
       };
@@ -197,6 +201,19 @@ export const siteService = {
     if (!inst) return false;
     await prisma.installation.delete({ where: { id: installationId } });
     return true;
+  },
+
+  /** 출고검사 현장인지 (검사 계정 INSPECTOR 가 묶인 현장) */
+  isInspectionSite: async (siteId: string) =>
+    (await prisma.user.count({ where: { siteId, role: "INSPECTOR" } })) > 0,
+
+  /**
+   * 현장의 설치지점 전부 삭제 (Device·이력·알람 cascade). 출고검사 현장 정리용 — 호출 전에 isInspectionSite 확인.
+   * @returns 지운 개수
+   */
+  deleteAllInstallations: async (siteId: string) => {
+    const { count } = await prisma.installation.deleteMany({ where: { siteId } });
+    return count;
   },
 
   /* ─── 상세페이지용: Site + Installations + Device ─ */

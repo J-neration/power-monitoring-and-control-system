@@ -129,6 +129,14 @@ export type ModuleFaultState = Prisma.ModuleFaultStateModel
  */
 export type ModuleFaultLog = Prisma.ModuleFaultLogModel
 /**
+ * Model Alarm
+ * 관제 알람 (대시보드 띠·알람 목록). 설비별 이상/오프라인/통신 끊김이 생기면 한 행을 열고,
+ * 풀리면 clearedAt 을 채운다. 확인(ack)은 서버에 남겨 여러 관제 PC 가 같이 본다.
+ * 상태 4단계: 발생+미확인 / 발생+확인 / 해제+미확인 / 해제+확인(이력).
+ * (installationId, kind) 당 clearedAt 이 null 인 행은 하나뿐 — alarmService 가 1분 동기화로 보장한다.
+ */
+export type Alarm = Prisma.AlarmModel
+/**
  * Model DeviceCommand
  * 
  */

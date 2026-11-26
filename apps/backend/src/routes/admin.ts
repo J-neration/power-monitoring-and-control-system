@@ -250,6 +250,23 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
     }
   });
 
+  /* ── DELETE /admin/sites/:siteId/installations ─── 출고검사 현장 설치지점 일괄 삭제 */
+  // 검사가 끝난 장비를 한 번에 정리한다. 실수로 고객 현장을 비우지 않도록 출고검사 현장만 허용.
+  server.delete("/sites/:siteId/installations", { preHandler: requireAdmin }, async (request, reply) => {
+    const { siteId } = request.params as { siteId: string };
+    if (!(await siteService.exists(siteId))) {
+      return reply.status(404).send({ message: "현장을 찾을 수 없습니다." });
+    }
+    if (!(await siteService.isInspectionSite(siteId))) {
+      return reply
+        .status(409)
+        .send({ message: "출고검사 현장만 설치지점을 일괄 삭제할 수 있습니다." });
+    }
+    const deleted = await siteService.deleteAllInstallations(siteId);
+    request.log.info({ siteId, deleted, by: request.user.username }, "inspection installations cleared");
+    return reply.send({ deleted });
+  });
+
   /* ── DELETE /admin/installations/:installationId ───── 설치지점 삭제 */
   server.delete("/installations/:installationId", { preHandler: requireAdmin }, async (request, reply) => {
     const { installationId } = request.params as { installationId: string };
