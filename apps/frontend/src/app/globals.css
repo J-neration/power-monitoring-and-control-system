@@ -5029,6 +5029,9 @@ main.dashboard-full {
   flex: 1;
   min-height: 0;
   position: relative;
+  /* 툴팁이 자리 잡기 전 한순간 차트 밖으로 나가며 패널에 스크롤이 깜빡이던 것을 막는다.
+     자리 잡은 툴팁은 차트 안(allowEscapeViewBox 기본값 false)이라 잘리지 않는다. */
+  overflow: hidden;
 }
 
 .harmonics-side-plot .recharts-responsive-container {
@@ -11294,6 +11297,19 @@ body.pmcs-control-room .global-header:hover {
 .remote-session-open-btn:disabled {
   opacity: 0.55;
   cursor: wait;
+}
+
+/* 원격 연결 끄기: 연장 버튼보다 한 단계 약하게 */
+.remote-session-close-btn {
+  color: var(--pmcs-text-muted);
+  background: transparent;
+  border-color: rgba(148, 163, 184, 0.4);
+}
+
+.remote-session-close-btn:hover:not(:disabled) {
+  color: #fecaca;
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.55);
 }
 
 .remote-session-error {

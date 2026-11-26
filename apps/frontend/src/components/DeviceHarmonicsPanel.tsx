@@ -1,15 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
+  Rectangle,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
+  type BarShapeProps,
 } from "recharts";
 import ChartCard from "./charts/ChartCard";
 import {
@@ -63,10 +64,20 @@ type HarmonicRecord = {
   comp: Phases;
 };
 
+/** HMI 가 아직 응답하지 않은 module 0 명령 (관리자에게만 온다). 있으면 새 명령을 만들 수 없다(409). */
+type ActiveCommand = {
+  id: string;
+  power: string;
+  status: string;
+  createdAt: string;
+  expiresAt: string | null;
+};
+
 type HarmonicsResponse = {
   latest: HarmonicRecord | null;
   /** 모니터는 latest 만 쓴다. 추세는 이력 탭 → 고조파 */
   records: HarmonicRecord[];
+  activeCommand?: ActiveCommand | null;
 };
 
 type View = "chart" | "table";
@@ -76,8 +87,24 @@ type Unit = "A" | "%";
 
 type CommandState =
   | { tone: "idle" }
-  | { tone: "pending"; commandId: string }
+  /** 고조파 갱신 대기. restoredAt = 탭을 다시 열었을 때 서버에서 찾은 명령의 요청 시각 */
+  | { tone: "pending"; commandId: string; deadline: number; restoredAt?: string }
+  /** 다른 module 0 명령(데이터 갱신 등)을 HMI 가 처리 중이라 지금은 요청할 수 없음 */
+  | { tone: "busy"; power: string }
   | { tone: "ok" | "err"; text: string };
+
+const COMMAND_LABEL: Record<string, string> = {
+  refresh: "데이터 갱신",
+  refreshSettings: "설정 불러오기",
+  setBasic: "설정 변경",
+  ota: "펌웨어 업데이트",
+  on: "켜기",
+  off: "끄기",
+};
+
+/** 서버 명령의 응답 기한: 만료 시각(없으면 요청 + TTL) + 여유 */
+const commandDeadline = (c: ActiveCommand) =>
+  (c.expiresAt ? new Date(c.expiresAt).getTime() : new Date(c.createdAt).getTime() + 900_000) + 30_000;
 
 /** 0.01 A 정수 → A */
 const toAmp = (v: number | undefined): number | null =>
@@ -117,6 +144,11 @@ const niceTicks = (max: number): number[] => {
 };
 
 const fmtTick = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
+
+/** 막대 모양: 값이 0이면 minPointSize 높이로 흐리게 그린다 */
+const zeroAwareBar = (props: BarShapeProps) => (
+  <Rectangle {...props} fillOpacity={props.value === 0 ? ZERO_BAR_OPACITY : 1} />
+);
 
 type Row = Record<string, number | string | null>;
 
@@ -173,8 +205,30 @@ export default function DeviceHarmonicsPanel({
   const [view, setView] = useState<View>("chart");
   const [unit, setUnit] = useState<Unit>("A");
   const [cmd, setCmd] = useState<CommandState>({ tone: "idle" });
+  /** 이 화면에서 응답(ACK)을 받은 명령. 늦게 도착한 조회 결과가 끝난 명령을 다시 "대기"로 되돌리지 않게 한다. */
+  const finishedIds = useRef(new Set<string>());
 
-  const load = useCallback(async () => {
+  /** 서버의 처리 중 명령으로 버튼 상태를 맞춘다. 탭을 옮겼다 와도 "요청 중" 이 남는다. */
+  const syncCommand = useCallback((active: ActiveCommand | null | undefined) => {
+    setCmd((prev) => {
+      if (active && !finishedIds.current.has(active.id)) {
+        if (active.power === "refreshHarmonics") {
+          if (prev.tone === "pending" && prev.commandId === active.id) return prev;
+          return {
+            tone: "pending",
+            commandId: active.id,
+            deadline: commandDeadline(active),
+            restoredAt: active.createdAt,
+          };
+        }
+        return { tone: "busy", power: active.power };
+      }
+      // 처리 중인 명령이 없다: 끝났거나(만료·취소 포함) 원래 없음
+      return prev.tone === "pending" || prev.tone === "busy" ? { tone: "idle" } : prev;
+    });
+  }, []);
+
+  const load = useCallback(async (): Promise<HarmonicsResponse | null> => {
     try {
       const res = await fetch(
         `/api/devices/${encodeURIComponent(installationId)}/harmonics?hours=1`,
@@ -182,44 +236,58 @@ export default function DeviceHarmonicsPanel({
       );
       if (!res.ok) {
         setLoadError(true);
-        return;
+        return null;
       }
-      setData((await res.json()) as HarmonicsResponse);
+      const body = (await res.json()) as HarmonicsResponse;
+      setData(body);
       setLoadError(false);
+      if (isAdmin) syncCommand(body.activeCommand);
+      return body;
     } catch {
       setLoadError(true);
+      return null;
     }
-  }, [installationId]);
+  }, [installationId, isAdmin, syncCommand]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   const pendingId = cmd.tone === "pending" ? cmd.commandId : null;
+  const pendingDeadline = cmd.tone === "pending" ? cmd.deadline : 0;
 
   useEffect(() => {
     if (!pendingId) return;
-    const timer = setTimeout(() => {
-      setCmd({ tone: "err", text: "HMI 응답 시간 초과 (15분). 실행 여부를 확인할 수 없습니다." });
-    }, COMMAND_ACK_TIMEOUT_MS);
+    const timer = setTimeout(
+      () => {
+        setCmd({ tone: "err", text: "HMI 응답 시간 초과 (15분). 실행 여부를 확인할 수 없습니다." });
+      },
+      Math.max(0, pendingDeadline - Date.now()),
+    );
     return () => clearTimeout(timer);
-  }, [pendingId]);
+  }, [pendingId, pendingDeadline]);
 
   useWsEvents((msg) => {
-    if (msg.type === "harmonics_updated" && msg.installationId === installationId) {
+    if (!("installationId" in msg) || msg.installationId !== installationId) return;
+    if (msg.type === "harmonics_updated") {
       void load();
+      return;
     }
-    if (
-      msg.type === "command_acked" &&
-      msg.installationId === installationId &&
-      pendingId &&
-      msg.commandId === pendingId
-    ) {
-      setCmd(
-        msg.status === "acked"
-          ? { tone: "ok", text: "HMI가 고조파 데이터를 보냈습니다." }
-          : { tone: "err", text: "HMI가 요청을 처리하지 못했습니다 (200A가 아니거나 전송 실패)." },
-      );
+    if (msg.type === "command_acked") {
+      finishedIds.current.add(msg.commandId);
+      if (pendingId && msg.commandId === pendingId) {
+        setCmd(
+          msg.status === "acked"
+            ? { tone: "ok", text: "HMI가 고조파 데이터를 보냈습니다." }
+            : { tone: "err", text: "HMI가 요청을 처리하지 못했습니다 (200A가 아니거나 전송 실패)." },
+        );
+      }
+      // 다른 명령이 끝났으면 버튼을 다시 풀기 위해 다시 조회
+      void load();
+      return;
+    }
+    // 명령 취소는 device_updated 로 온다
+    if (msg.type === "device_updated" && (cmd.tone === "pending" || cmd.tone === "busy")) {
       void load();
     }
   });
@@ -243,11 +311,23 @@ export default function DeviceHarmonicsPanel({
         code?: string;
         command?: { id: string };
       };
+      if (body.code === "ACTIVE_COMMAND_EXISTS") {
+        // 이미 처리 중인 명령이 있다: 서버에서 다시 읽어 "요청 중" 또는 "다른 명령 처리 중" 으로 표시
+        const fresh = await load();
+        if (!fresh?.activeCommand) {
+          setCmd({ tone: "err", text: "HMI가 처리 중인 명령이 있습니다. 응답이 온 뒤 다시 눌러 주세요." });
+        }
+        return;
+      }
       if (!res.ok || !body.command?.id) {
         setCmd({ tone: "err", text: body.message ?? body.code ?? `HTTP ${res.status}` });
         return;
       }
-      setCmd({ tone: "pending", commandId: body.command.id });
+      setCmd({
+        tone: "pending",
+        commandId: body.command.id,
+        deadline: Date.now() + COMMAND_ACK_TIMEOUT_MS,
+      });
     } catch {
       setCmd({ tone: "err", text: "서버에 연결하지 못했습니다." });
     }
@@ -295,6 +375,12 @@ export default function DeviceHarmonicsPanel({
 
   const unitLabel = unit === "A" ? "A" : "% (기본파 대비)";
 
+  /** 보상 전/후 두 차트가 함께 쓰는 세로 눈금 (둘 중 큰 값 기준) */
+  const sharedTicks = useMemo(
+    () => niceTicks(Math.max(rowsMax(spectrum.uncomp), rowsMax(spectrum.comp))),
+    [spectrum],
+  );
+
   return (
     <div className="harmonics-panel">
       <div className="harmonics-toolbar">
@@ -305,7 +391,7 @@ export default function DeviceHarmonicsPanel({
             aria-selected={view === "chart"}
             onClick={() => setView("chart")}
           >
-            그래프 보기
+            그래프
           </button>
           <button
             type="button"
@@ -313,7 +399,7 @@ export default function DeviceHarmonicsPanel({
             aria-selected={view === "table"}
             onClick={() => setView("table")}
           >
-            표 보기
+            표
           </button>
         </div>
         <div className="harmonics-view-switch harmonics-unit-switch" role="radiogroup" aria-label="단위">
@@ -348,16 +434,23 @@ export default function DeviceHarmonicsPanel({
             type="button"
             className="harmonics-refresh-btn"
             onClick={() => void requestNow()}
-            disabled={cmd.tone === "pending"}
+            disabled={cmd.tone === "pending" || cmd.tone === "busy"}
           >
-            {cmd.tone === "pending" ? "HMI 응답 대기 중…" : "지금 불러오기"}
+            {cmd.tone === "pending" ? "갱신 중…" : "↻ 고조파 갱신"}
           </button>
         ) : null}
       </div>
 
       {cmd.tone === "pending" ? (
         <p className="harmonics-cmd harmonics-cmd--pending" role="status">
-          요청을 등록했습니다. HMI가 다음 명령 확인 때 보냅니다 (최대 약 10분).
+          {cmd.restoredAt
+            ? `고조파 갱신을 이미 요청했습니다 (${formatKstMonthDayTime(cmd.restoredAt)}). HMI가 다음 명령 확인 때 보냅니다.`
+            : "요청을 등록했습니다. HMI가 다음 명령 확인 때 보냅니다 (최대 약 10분)."}
+        </p>
+      ) : cmd.tone === "busy" ? (
+        <p className="harmonics-cmd harmonics-cmd--pending" role="status">
+          HMI가 다른 명령({COMMAND_LABEL[cmd.power] ?? cmd.power})을 처리하는 중입니다. 끝나면 고조파 갱신을
+          누를 수 있습니다.
         </p>
       ) : cmd.tone === "ok" || cmd.tone === "err" ? (
         <p className={`harmonics-cmd harmonics-cmd--${cmd.tone}`} role="status">
@@ -480,7 +573,8 @@ export default function DeviceHarmonicsPanel({
           ) : null}
           <div className="harmonics-side-stack">
             {SIDES.map(({ key: side, label }) => {
-              const ticks = niceTicks(rowsMax(spectrum[side]));
+              // 보상 전/후 세로 눈금을 같게: 막대 높이로 얼마나 줄었는지 바로 비교된다
+              const ticks = sharedTicks;
               return (
                 <div key={side} className="harmonics-side">
                   <SpectrumTitle side={side} label={label} />
@@ -511,6 +605,8 @@ export default function DeviceHarmonicsPanel({
                           cursor={TOOLTIP_CURSOR}
                           labelFormatter={(l) => `${label} · ${l}차`}
                           formatter={(v) => fmtWithUnit(typeof v === "number" ? v : null, unit)}
+                          // 이동 애니메이션 중 툴팁이 차트 밖으로 잠깐 나가 패널에 스크롤이 깜빡였다
+                          isAnimationActive={false}
                         />
                         {PHASES.map((p) => (
                           <Bar
@@ -522,14 +618,8 @@ export default function DeviceHarmonicsPanel({
                             maxBarSize={9}
                             // 0 도 막대가 사라지지 않게 바닥에 낮은 막대를 흐리게 그린다 (값 없음 null 은 그리지 않음)
                             minPointSize={ZERO_BAR_PX}
-                          >
-                            {spectrum[side].map((row) => (
-                              <Cell
-                                key={`${p.key}-${row.order}`}
-                                fillOpacity={row[p.key] === 0 ? ZERO_BAR_OPACITY : 1}
-                              />
-                            ))}
-                          </Bar>
+                            shape={zeroAwareBar}
+                          />
                         ))}
                       </BarChart>
                     </ResponsiveContainer>
@@ -540,8 +630,8 @@ export default function DeviceHarmonicsPanel({
           </div>
           <p className="harmonics-axis-note">
             {unit === "A"
-              ? "가로: 차수 · 세로: 전류 (A). 보상 후는 값이 작아서 보상 전과 세로 눈금이 다릅니다. 바닥의 흐린 막대는 0입니다."
-              : "가로: 차수 · 세로: 같은 상 기본파(1차) 대비 %. 보상 전은 보상 전 기본파, 보상 후는 보상 후 기본파로 나눕니다. 바닥의 흐린 막대는 0입니다."}
+              ? "가로: 차수 · 세로: 전류 (A). 보상 전과 보상 후는 같은 세로 눈금입니다. 바닥의 흐린 막대는 0입니다."
+              : "가로: 차수 · 세로: 같은 상 기본파(1차) 대비 %. 보상 전은 보상 전 기본파, 보상 후는 보상 후 기본파로 나눕니다. 두 차트는 같은 세로 눈금입니다. 바닥의 흐린 막대는 0입니다."}
           </p>
         </ChartCard>
       )}
