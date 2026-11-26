@@ -5,6 +5,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -46,6 +47,10 @@ const SIDES: { key: Side; label: string; tone: "before" | "after" }[] = [
   { key: "uncomp", label: "보상 전", tone: "before" },
   { key: "comp", label: "보상 후", tone: "after" },
 ];
+
+/** 값이 0인 막대: 높이(px)와 투명도. 측정 분해능(약 0.06 A) 아래라 0으로 온 상도 자리가 보이게 한다. */
+const ZERO_BAR_PX = 4;
+const ZERO_BAR_OPACITY = 0.6;
 
 type Phases = { a: number[]; b: number[]; c: number[] };
 
@@ -515,7 +520,16 @@ export default function DeviceHarmonicsPanel({
                             fill={SPECTRUM_COLORS[side][p.key]}
                             radius={[3, 3, 0, 0]}
                             maxBarSize={9}
-                          />
+                            // 0 도 막대가 사라지지 않게 바닥에 낮은 막대를 흐리게 그린다 (값 없음 null 은 그리지 않음)
+                            minPointSize={ZERO_BAR_PX}
+                          >
+                            {spectrum[side].map((row) => (
+                              <Cell
+                                key={`${p.key}-${row.order}`}
+                                fillOpacity={row[p.key] === 0 ? ZERO_BAR_OPACITY : 1}
+                              />
+                            ))}
+                          </Bar>
                         ))}
                       </BarChart>
                     </ResponsiveContainer>
@@ -526,8 +540,8 @@ export default function DeviceHarmonicsPanel({
           </div>
           <p className="harmonics-axis-note">
             {unit === "A"
-              ? "가로: 차수 · 세로: 전류 (A). 보상 후는 값이 작아서 보상 전과 세로 눈금이 다릅니다."
-              : "가로: 차수 · 세로: 같은 상 기본파(1차) 대비 %. 보상 전은 보상 전 기본파, 보상 후는 보상 후 기본파로 나눕니다."}
+              ? "가로: 차수 · 세로: 전류 (A). 보상 후는 값이 작아서 보상 전과 세로 눈금이 다릅니다. 바닥의 흐린 막대는 0입니다."
+              : "가로: 차수 · 세로: 같은 상 기본파(1차) 대비 %. 보상 전은 보상 전 기본파, 보상 후는 보상 후 기본파로 나눕니다. 바닥의 흐린 막대는 0입니다."}
           </p>
         </ChartCard>
       )}
