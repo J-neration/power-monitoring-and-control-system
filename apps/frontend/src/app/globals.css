@@ -4805,7 +4805,8 @@ main.dashboard-full {
   background: rgba(255, 255, 255, 0.04);
 }
 
-.harmonics-view-switch button[aria-selected="true"] {
+.harmonics-view-switch button[aria-selected="true"],
+.harmonics-view-switch button[aria-checked="true"] {
   color: #04110e;
   background: var(--pmcs-accent);
 }
@@ -4856,17 +4857,111 @@ main.dashboard-full {
   color: var(--pmcs-text-muted);
 }
 
-.harmonics-fundamental,
-.harmonics-axis-note {
-  margin: 0 0 6px;
-  font-size: 12px;
-  color: var(--pmcs-text-muted);
-  font-variant-numeric: tabular-nums;
+.harmonics-unit-switch button {
+  min-width: 40px;
+  padding: 5px 10px;
 }
 
 .harmonics-axis-note {
-  margin: 4px 0 0;
+  margin: 0;
   font-size: 11px;
+  color: var(--pmcs-text-muted);
+}
+
+/* 기본파(1차) 줄: 막대에서 빠진 1차 전류를 큰 숫자로 보여 준다 */
+.harmonics-fund {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  align-items: stretch;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.harmonics-fund-head {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 14px;
+  border-radius: var(--pmcs-radius);
+  background: var(--pmcs-accent-dim);
+  border: 1px solid var(--pmcs-accent-border);
+}
+
+.harmonics-fund-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--pmcs-accent-bright);
+}
+
+.harmonics-fund-sub {
+  font-size: 11px;
+  color: var(--pmcs-text-muted);
+}
+
+.harmonics-fund-side {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 14px;
+  border-radius: var(--pmcs-radius);
+  background: var(--pmcs-bg-elevated);
+  border: 1px solid var(--pmcs-panel-border);
+  border-left-width: 3px;
+}
+
+.harmonics-fund-side--before {
+  border-left-color: #ef4444;
+}
+
+.harmonics-fund-side--after {
+  border-left-color: #22c55e;
+}
+
+.harmonics-fund-side-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--pmcs-text);
+  white-space: nowrap;
+}
+
+.harmonics-fund-values {
+  display: flex;
+  flex: 1;
+  justify-content: space-around;
+  gap: 12px;
+  margin: 0;
+}
+
+.harmonics-fund-value dt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--pmcs-text-muted);
+}
+
+.harmonics-fund-value dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--pmcs-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.harmonics-fund-value dd small {
+  margin-left: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--pmcs-text-muted);
+}
+
+/* 표의 1차(기본파) 줄 강조 */
+.fault-table.harmonics-table tr.harmonics-row-fundamental th,
+.fault-table.harmonics-table tr.harmonics-row-fundamental td {
+  font-weight: 700;
+  border-bottom: 2px solid var(--pmcs-accent-border);
 }
 
 /* 상 색 견본 (L1·L2·L3) */
@@ -4907,14 +5002,55 @@ main.dashboard-full {
   color: var(--pmcs-text);
 }
 
+/* 그래프 카드가 화면 아래까지 차도록: 보상 전/후 차트가 남은 높이를 반씩 나눈다 */
+.harmonics-panel > .chart-card-fill {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+
 .harmonics-side-stack {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
 .harmonics-side {
+  flex: 1;
   min-width: 0;
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+}
+
+.harmonics-side-plot {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.harmonics-side-plot .recharts-responsive-container {
+  position: absolute !important;
+  inset: 0;
+}
+
+.harmonics-table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+@media (max-width: 1280px) {
+  .harmonics-fund {
+    grid-template-columns: 1fr;
+  }
+
+  .harmonics-side-plot {
+    flex: none;
+    height: 200px;
+  }
 }
 
 /* 이력 탭 → 고조파: 차수 선택 줄 (기간 버튼 아래) */

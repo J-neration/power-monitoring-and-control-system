@@ -25,8 +25,6 @@ import { useWsEvents } from "../hooks/useWsEvents";
 // Command TTL (900 s) + margin, same as the data refresh button.
 const COMMAND_ACK_TIMEOUT_MS = 930_000;
 
-const SPECTRUM_H = 190;
-
 type Phase = "a" | "b" | "c";
 
 /** 상 색: 이력 탭(파랑·노랑·분홍)과 같은 순서. 어두운 배경에서 색약 구분 검사 통과. */
@@ -68,6 +66,9 @@ type HarmonicsResponse = {
 
 type View = "chart" | "table";
 
+/** A = 전류 그대로, % = 같은 상·같은 쪽(보상 전/후) 기본파(1차) 대비. 고조파 기준(IEC·IEEE 519)은 % 로 정한다. */
+type Unit = "A" | "%";
+
 type CommandState =
   | { tone: "idle" }
   | { tone: "pending"; commandId: string }
@@ -78,7 +79,20 @@ const toAmp = (v: number | undefined): number | null =>
   typeof v === "number" && Number.isFinite(v) ? v / 100 : null;
 
 const fmtNum = (v: number | null) => (v == null ? "-" : v.toFixed(2));
-const fmtAmp = (v: number | null) => (v == null ? "-" : `${v.toFixed(2)} A`);
+
+/** 표·툴팁 값: A 는 소수 둘째 자리, % 는 첫째 자리 */
+const fmtValue = (v: number | null, unit: Unit) =>
+  v == null ? "-" : unit === "A" ? v.toFixed(2) : v.toFixed(1);
+const fmtWithUnit = (v: number | null, unit: Unit) =>
+  v == null ? "-" : unit === "A" ? `${v.toFixed(2)} A` : `${v.toFixed(1)} %`;
+
+/** 전류(A) → 단위 변환. % 는 기본파(A)가 0 이하이면 계산할 수 없어 null. */
+const convert = (amp: number | null, fund: number | null, unit: Unit): number | null => {
+  if (amp == null) return null;
+  if (unit === "A") return amp;
+  if (fund == null || fund <= 0) return null;
+  return (amp / fund) * 100;
+};
 
 const reductionPct = (before: number | null, after: number | null): string => {
   if (before == null || after == null || before <= 0) return "-";
@@ -152,6 +166,7 @@ export default function DeviceHarmonicsPanel({
   const [data, setData] = useState<HarmonicsResponse | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [view, setView] = useState<View>("chart");
+  const [unit, setUnit] = useState<Unit>("A");
   const [cmd, setCmd] = useState<CommandState>({ tone: "idle" });
 
   const load = useCallback(async () => {
@@ -235,7 +250,29 @@ export default function DeviceHarmonicsPanel({
 
   const latest = data?.latest ?? null;
 
-  /** 보상 전/후 막대: 차수마다 L1·L2·L3 나란히. 1차(기본파)는 너무 커서 숫자로 따로 보여 준다. */
+  /** 기본파(1차) 전류(A). 보상 전/후 × L1~L3. 1차가 없으면 null. */
+  const fundamentalAmp = useMemo(() => {
+    if (!latest) return null;
+    const i = latest.orders.indexOf(1);
+    if (i < 0) return null;
+    const out = {} as Record<Side, Record<Phase, number | null>>;
+    for (const { key: side } of SIDES) {
+      out[side] = { a: null, b: null, c: null };
+      for (const { key } of PHASES) out[side][key] = toAmp(latest[side][key][i]);
+    }
+    return out;
+  }, [latest]);
+
+  /** 차수 i, side, 상의 값을 지금 단위로 */
+  const valueAt = useCallback(
+    (side: Side, phase: Phase, i: number): number | null => {
+      if (!latest) return null;
+      return convert(toAmp(latest[side][phase][i]), fundamentalAmp?.[side][phase] ?? null, unit);
+    },
+    [latest, fundamentalAmp, unit],
+  );
+
+  /** 보상 전/후 막대: 차수마다 L1·L2·L3 나란히. 1차(기본파)는 너무 커서 위 기본파 줄에 따로 보여 준다. */
   const spectrum = useMemo(() => {
     const out: Record<Side, Row[]> = { uncomp: [], comp: [] };
     if (!latest) return out;
@@ -243,23 +280,15 @@ export default function DeviceHarmonicsPanel({
       out[side] = latest.orders
         .map((order, i) => {
           const row: Row = { order, label: `${order}` };
-          for (const { key } of PHASES) row[key] = toAmp(latest[side][key][i]);
+          for (const { key } of PHASES) row[key] = valueAt(side, key, i);
           return row;
         })
         .filter((row) => row.order !== 1);
     }
     return out;
-  }, [latest]);
+  }, [latest, valueAt]);
 
-  const fundamental = useMemo(() => {
-    if (!latest) return null;
-    const i = latest.orders.indexOf(1);
-    if (i < 0) return null;
-    return SIDES.map(({ key: side, label }) => ({
-      label,
-      text: PHASES.map(({ key, label: ph }) => `${ph} ${fmtNum(toAmp(latest[side][key][i]))}`).join(" · "),
-    }));
-  }, [latest]);
+  const unitLabel = unit === "A" ? "A" : "% (기본파 대비)";
 
   return (
     <div className="harmonics-panel">
@@ -280,6 +309,26 @@ export default function DeviceHarmonicsPanel({
             onClick={() => setView("table")}
           >
             표 보기
+          </button>
+        </div>
+        <div className="harmonics-view-switch harmonics-unit-switch" role="radiogroup" aria-label="단위">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={unit === "A"}
+            onClick={() => setUnit("A")}
+            title="전류 크기 (A)"
+          >
+            A
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={unit === "%"}
+            onClick={() => setUnit("%")}
+            title="같은 상 기본파(1차) 대비 %"
+          >
+            %
           </button>
         </div>
         <p className="harmonics-meta">
@@ -318,8 +367,8 @@ export default function DeviceHarmonicsPanel({
             : "아직 받은 고조파 데이터가 없습니다. 200A 장치가 1시간마다 보냅니다."}
         </p>
       ) : view === "table" ? (
-        <ChartCard title="차수별 고조파 전류" subtitle="단위 A" wide>
-          <div className="fault-table-wrap">
+        <ChartCard title="차수별 고조파 전류" subtitle={`단위 ${unitLabel}`} wide fill>
+          <div className="fault-table-wrap harmonics-table-wrap">
             <table className="fault-table harmonics-table">
               <thead>
                 <tr>
@@ -352,17 +401,20 @@ export default function DeviceHarmonicsPanel({
               </thead>
               <tbody>
                 {latest.orders.map((o, i) => {
-                  const before = PHASES.map(({ key }) => toAmp(latest.uncomp[key][i]));
-                  const after = PHASES.map(({ key }) => toAmp(latest.comp[key][i]));
+                  // 저감률은 단위와 상관없이 전류(A)로 계산한다.
+                  const beforeA = PHASES.map(({ key }) => toAmp(latest.uncomp[key][i]));
+                  const afterA = PHASES.map(({ key }) => toAmp(latest.comp[key][i]));
+                  const before = PHASES.map(({ key }) => valueAt("uncomp", key, i));
+                  const after = PHASES.map(({ key }) => valueAt("comp", key, i));
                   return (
-                    <tr key={o}>
-                      <th scope="row">{o}차</th>
+                    <tr key={o} className={o === 1 ? "harmonics-row-fundamental" : undefined}>
+                      <th scope="row">{o === 1 ? "1차 (기본파)" : `${o}차`}</th>
                       {before.map((v, pi) => (
                         <td
                           key={`b${pi}`}
                           className={`harmonics-col--before${pi === 0 ? " harmonics-group-start" : ""}`}
                         >
-                          {fmtNum(v)}
+                          {fmtValue(v, unit)}
                         </td>
                       ))}
                       {after.map((v, pi) => (
@@ -370,15 +422,15 @@ export default function DeviceHarmonicsPanel({
                           key={`a${pi}`}
                           className={`harmonics-col--after${pi === 0 ? " harmonics-group-start" : ""}`}
                         >
-                          {fmtNum(v)}
+                          {fmtValue(v, unit)}
                         </td>
                       ))}
-                      {before.map((v, pi) => (
+                      {beforeA.map((v, pi) => (
                         <td
                           key={`r${pi}`}
                           className={`harmonics-col--rate${pi === 0 ? " harmonics-group-start" : ""}`}
                         >
-                          {reductionPct(v, after[pi])}
+                          {o === 1 ? "-" : reductionPct(v, afterA[pi])}
                         </td>
                       ))}
                     </tr>
@@ -389,20 +441,46 @@ export default function DeviceHarmonicsPanel({
           </div>
         </ChartCard>
       ) : (
-        <>
-          <ChartCard title="차수별 고조파 전류" subtitle="3~49차" wide>
-            {fundamental ? (
-              <p className="harmonics-fundamental">
-                기본파(1차, A) — {fundamental.map((f) => `${f.label}: ${f.text}`).join("  /  ")}
-              </p>
-            ) : null}
-            <div className="harmonics-side-stack">
-              {SIDES.map(({ key: side, label }) => {
-                const ticks = niceTicks(rowsMax(spectrum[side]));
-                return (
-                  <div key={side} className="harmonics-side">
-                    <SpectrumTitle side={side} label={label} />
-                    <ResponsiveContainer width="100%" height={SPECTRUM_H}>
+        <ChartCard title="차수별 고조파 전류" subtitle={`3~49차 · 단위 ${unitLabel}`} wide fill>
+          {fundamentalAmp ? (
+            <div className="harmonics-fund" aria-label="기본파(1차) 전류">
+              <div className="harmonics-fund-head">
+                <span className="harmonics-fund-title">기본파</span>
+                <span className="harmonics-fund-sub">1차 전류 (A)</span>
+              </div>
+              {SIDES.map(({ key: side, label, tone }) => (
+                <div key={side} className={`harmonics-fund-side harmonics-fund-side--${tone}`}>
+                  <span className="harmonics-fund-side-label">{label}</span>
+                  <dl className="harmonics-fund-values">
+                    {PHASES.map((p) => (
+                      <div key={p.key} className="harmonics-fund-value">
+                        <dt>
+                          <span
+                            className="harmonics-swatch"
+                            style={{ background: SPECTRUM_COLORS[side][p.key] }}
+                            aria-hidden
+                          />
+                          {p.label}
+                        </dt>
+                        <dd>
+                          {fmtNum(fundamentalAmp[side][p.key])}
+                          <small>A</small>
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          <div className="harmonics-side-stack">
+            {SIDES.map(({ key: side, label }) => {
+              const ticks = niceTicks(rowsMax(spectrum[side]));
+              return (
+                <div key={side} className="harmonics-side">
+                  <SpectrumTitle side={side} label={label} />
+                  <div className="harmonics-side-plot">
+                    <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={spectrum[side]}
                         margin={{ top: 6, right: 12, left: 0, bottom: 0 }}
@@ -427,7 +505,7 @@ export default function DeviceHarmonicsPanel({
                           {...tooltipProps}
                           cursor={TOOLTIP_CURSOR}
                           labelFormatter={(l) => `${label} · ${l}차`}
-                          formatter={(v) => fmtAmp(typeof v === "number" ? v : null)}
+                          formatter={(v) => fmtWithUnit(typeof v === "number" ? v : null, unit)}
                         />
                         {PHASES.map((p) => (
                           <Bar
@@ -442,14 +520,16 @@ export default function DeviceHarmonicsPanel({
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                );
-              })}
-            </div>
-            <p className="harmonics-axis-note">
-              가로: 차수 · 세로: 전류 (A). 보상 후는 값이 작아서 보상 전과 세로 눈금이 다릅니다.
-            </p>
-          </ChartCard>
-        </>
+                </div>
+              );
+            })}
+          </div>
+          <p className="harmonics-axis-note">
+            {unit === "A"
+              ? "가로: 차수 · 세로: 전류 (A). 보상 후는 값이 작아서 보상 전과 세로 눈금이 다릅니다."
+              : "가로: 차수 · 세로: 같은 상 기본파(1차) 대비 %. 보상 전은 보상 전 기본파, 보상 후는 보상 후 기본파로 나눕니다."}
+          </p>
+        </ChartCard>
       )}
     </div>
   );
