@@ -40,6 +40,7 @@ import {
   compareKoNumeric,
   deriveSiteStatus,
   installationMatchesFilter,
+  siteHasInstallations,
   siteMatchesFilter,
   siteHasCommLost,
   sortSitesByName,
@@ -130,15 +131,17 @@ export default function DashboardClient({
   canAckAlarms?: boolean;
 }) {
   const router = useRouter();
+  // 처음 선택할 현장: 설치지점이 있는 첫 현장 (빈 현장은 목록·지도·순환에서 숨기므로 고르지 않는다)
+  const initialSite = sites.find(siteHasInstallations) ?? sites[0];
   const [selectedSiteId, setSelectedSiteId] = useState<string>(
-    sites[0]?.id ?? "",
+    initialSite?.id ?? "",
   );
   const [selectedInstallationId, setSelectedInstallationId] = useState<
     string | null
   >(null);
   const [focusSeq, setFocusSeq] = useState(0);
   const [openRegion, setOpenRegion] = useState<string | null>(
-    sites[0]?.region ?? null,
+    initialSite?.region ?? null,
   );
   const [scrollToRegion, setScrollToRegion] = useState<string | null>(null);
   const sidebarListRef = useRef<HTMLDivElement>(null);
