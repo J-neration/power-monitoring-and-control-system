@@ -10658,6 +10658,33 @@ body.pmcs-control-room .global-header:hover {
   margin: 0 0 8px;
 }
 
+/* 이력 탭 위쪽: 1줄 항목 탭 + 기간·집계(오른쪽), 2줄 데이터 날짜 + 날짜 입력(오른쪽) */
+.history-head {
+  flex-shrink: 0;
+  margin: 0 0 8px;
+}
+
+.history-head-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.history-head .monitor-view-nav {
+  margin: 0 0 6px;
+}
+
+.history-head .history-range-bar {
+  margin: 0 0 0 auto;
+  justify-content: flex-end;
+}
+
+.history-head-sub .history-data-date-line {
+  margin: 0;
+  white-space: nowrap;
+}
+
 .history-range-input {
   height: 32px;
   padding: 0 8px;

@@ -300,6 +300,7 @@ export default function DeviceDetailTabs({
           model={device.model}
           faults={faults}
           longRangeVisible={longRangeHistory}
+          fwVersion={device.fwVersion}
           facilityTotal={facilityCapacity(
             device.totalCapacity,
             sumModuleCapacity(
