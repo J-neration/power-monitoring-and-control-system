@@ -11,8 +11,9 @@ type Props = {
   canAck?: boolean;
 };
 
+/** -1 = HMI 자체 이벤트 (H…) */
 function moduleLabel(module: number): string {
-  return `M${module + 1}`;
+  return module < 0 ? "HMI" : `M${module + 1}`;
 }
 
 function faultLabel(f: { eventName?: string | null; desc: string }): string {
@@ -26,15 +27,20 @@ type EventCode = {
   raw: string;
   label: string;
   kind: "fault" | "status";
-  value?: "0" | "1";
+  value?: string;
 };
 
-/** S 코드는 `S5-1`처럼 값까지 온다. 1/0 뜻은 자료의 상태 설명이다. */
-const STATUS_VALUE_LABEL: Record<string, Record<"0" | "1", string>> = {
+/**
+ * S·H 코드는 `S5-1`, `H1-2`처럼 값까지 온다.
+ * S 의 1/0 은 자료의 상태 설명, S0 은 보상 운전 시작/정지, H1 의 값은 HMI 리셋 원인(RCC CSR)이다.
+ */
+const STATUS_VALUE_LABEL: Record<string, Record<string, string>> = {
+  S0: { "1": "comp on", "0": "comp off" },
   S1: { "1": "commissioning authorized", "0": "commissioning unauthorized" },
   S3: { "1": "authorized", "0": "unauthorized" },
   S4: { "1": "trial operation", "0": "long-term operation" },
   S5: { "1": "user on", "0": "user power off" },
+  H1: { "1": "power-on reset", "2": "watchdog reset", "3": "software reset", "4": "reset pin" },
 };
 
 function shortDetail(detail: string): string {
@@ -49,12 +55,13 @@ function parseEventCodes(text: string): { faults: EventCode[]; statuses: EventCo
   if (parts.length === 0) return null;
   const codes: EventCode[] = [];
   for (const raw of parts) {
-    const match = /^([FS])(\d+)(?:-([01]))?$/i.exec(raw);
+    const match = /^([FSH])(\d+)(?:-(\d+))?$/i.exec(raw);
     if (!match) return null;
     const code = `${match[1].toUpperCase()}${match[2]}`;
-    const value = match[3] === "0" || match[3] === "1" ? match[3] : undefined;
+    const value = match[3];
     const detail = GUIDE_BY_CODE.get(code);
-    const kind = code.startsWith("S") ? "status" : "fault";
+    // S(상태)·H(HMI 자체 이벤트)는 고장이 아니므로 상태 칩으로 표시
+    const kind = code.startsWith("F") ? "fault" : "status";
     const valueLabel = value ? STATUS_VALUE_LABEL[code]?.[value] : undefined;
     const label = valueLabel ?? (detail ? shortDetail(detail) : "");
     codes.push({ raw: value ? `${code}-${value}` : code, label, kind, value });
@@ -88,7 +95,7 @@ function EventCodes({ text }: { text: string }) {
           {groups.statuses.map((item, index) => (
             <span
               key={`${item.raw}-${index}`}
-              className={`fault-code-chip fault-code-chip-status${item.value === "0" ? " is-off" : ""}`}
+              className={`fault-code-chip fault-code-chip-status${item.value === "0" && item.raw.startsWith("S") ? " is-off" : ""}`}
             >
               <b>{item.raw}</b>
               {item.label ? <span>{item.label}</span> : null}
@@ -133,9 +140,10 @@ function formatKst(iso: string): string {
   return new Date(iso).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
 }
 
-type FaultStatus = "active" | "acknowledged" | "updated" | "resolved" | "history";
+type FaultStatus = "active" | "acknowledged" | "updated" | "resolved" | "history" | "event";
 
 function faultStatus(f: FaultEvent): FaultStatus {
+  if (f.kind === "event") return "event";
   if (f.active) return "active";
   if (f.acknowledgedAt) return "acknowledged";
   if (f.resolvedAt && f.endReason === "updated") return "updated";
@@ -149,12 +157,13 @@ const STATUS_LABEL: Record<FaultStatus, string> = {
   updated: "갱신됨",
   resolved: "해제됨",
   history: "이력",
+  event: "기록",
 };
 
 /** 이벤트 코드와 맞춰 보는 기준표. 문구는 자료 원문 그대로 둔다. */
 const FAULT_CODE_GUIDE: { code: string; detail: string }[] = [
   { code: "F0", detail: "Fault(no info)" },
-  { code: "S0", detail: "START (COMP ON)" },
+  { code: "S0", detail: "START (COMP ON) state (1: comp on; 0: comp off)" },
   { code: "S1", detail: "bit7: Commissioning authorization status (1: authorized; 0: unauthorized)" },
   { code: "S3", detail: "bit5: Authorization status (1: authorized; 0: unauthorized)" },
   { code: "S4", detail: "bit4: Trial operation status (1: trial operation; 0: long-term operation)" },
@@ -193,6 +202,8 @@ const FAULT_CODE_GUIDE: { code: string; detail: string }[] = [
   { code: "F32", detail: "bit2: Bridge arm overcurrent 3" },
   { code: "F33", detail: "bit1: Bridge arm overcurrent 4" },
   { code: "F34", detail: "bit0: Bridge arm overcurrent 5" },
+  // 자료에 없는 HMI 자체 코드 — HMI 가 재시작한 뒤 첫 서버 연결 때 리셋 원인과 함께 올린다
+  { code: "H1", detail: "HMI restart (1: power-on reset; 2: watchdog reset; 3: software reset; 4: reset pin)" },
 ];
 
 const GUIDE_BY_CODE = new Map(
@@ -318,28 +329,34 @@ export default function DeviceFaultHistory({ installationId, faults, canAck = tr
                       key={f.id}
                       className={status === "active" ? "fault-row-active" : ""}
                     >
-                      <td className="fault-time">
-                        <span className="fault-time-abs">
-                          {formatKst(f.occurredAt)}
-                        </span>
-                        <span className="fault-time-rel">
-                          {relativeTime(f.occurredAt)}
-                        </span>
+                      {/* td 에 display:flex 를 주면 표 칸이 아니게 되어 이웃한 두 시각 칸이
+                          한 칸으로 합쳐지고 뒤 칸이 한 칸씩 밀린다. flex 는 안쪽 div 에만 준다. */}
+                      <td>
+                        <div className="fault-time">
+                          <span className="fault-time-abs">
+                            {formatKst(f.occurredAt)}
+                          </span>
+                          <span className="fault-time-rel">
+                            {relativeTime(f.occurredAt)}
+                          </span>
+                        </div>
                       </td>
-                      <td className="fault-time">
-                        {f.resolvedAt ? (
-                          <>
-                            <span className="fault-time-abs">
-                              {formatKst(f.resolvedAt)}
-                            </span>
-                            <span className="fault-time-rel">
-                              {f.endReason === "updated" ? "새 코드로 갱신 · " : ""}
-                              지속 {durationLabel(f.occurredAt, f.resolvedAt)}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="fault-time-rel">—</span>
-                        )}
+                      <td>
+                        <div className="fault-time">
+                          {f.resolvedAt ? (
+                            <>
+                              <span className="fault-time-abs">
+                                {formatKst(f.resolvedAt)}
+                              </span>
+                              <span className="fault-time-rel">
+                                {f.endReason === "updated" ? "새 코드로 갱신 · " : ""}
+                                지속 {durationLabel(f.occurredAt, f.resolvedAt)}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="fault-time-rel">—</span>
+                          )}
+                        </div>
                       </td>
                       <td>
                         <span className="fault-module-badge">

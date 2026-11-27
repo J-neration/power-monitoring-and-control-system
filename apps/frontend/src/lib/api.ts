@@ -15,6 +15,7 @@ import {
 
 export type FaultEvent = {
   id: string;
+  /** 0부터 모듈 번호 (M1 = 0). -1 = HMI 자체 이벤트 */
   module: number;
   desc: string;
   occurredAt: string;
@@ -29,6 +30,8 @@ export type FaultEvent = {
   endReason?: "cleared" | "updated" | null;
   /** 사용자 Acknowledge 시각 */
   acknowledgedAt?: string | null;
+  /** event: 1회성 기록 (HMI 재시작 H…, 모듈 상태 변화 S…). 없으면 고장 */
+  kind?: "event";
 };
 
 const apiBase = (() => {

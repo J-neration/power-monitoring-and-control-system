@@ -27,6 +27,30 @@ const eventNamePatch = (fault: ReceiverFaultUpsertInput) =>
     : { eventName: normalizeEventNameForDb(fault.eventName) };
 
 /**
+ * 고장이 아니라 한 번 남기는 기록(1회성 이벤트). HMI 는 고장과 같은 /receiver/faults 로 보낸다.
+ * - hmi: H… HMI 자체 이벤트. H1-x = HMI 재시작 (x: 1 전원 켜짐, 2 워치독 리셋, 3 소프트웨어 리셋, 4 리셋 핀)
+ * - status: S… 200A 모듈 상태 변화. S0-1/S0-0 = 보상 운전 시작/정지, S1·S3·S4·S5 = 상태 비트
+ * 모듈 고장 상태(ModuleFaultState)는 건드리지 않고, 이력(ModuleFaultLog)에 event "EVENT" 로만 남긴다.
+ * 예전 서버는 이 이벤트를 RAISE 로 저장했으므로, 이름이 맞으면 RAISE 기록도 1회성으로 읽는다.
+ */
+export type OneShotEventKind = "hmi" | "status";
+
+export const oneShotEventKind = (eventName?: string | null): OneShotEventKind | null => {
+  const t = (eventName ?? "").trim().toUpperCase();
+  if (/^H\d+(-\d+)?$/.test(t)) return "hmi";
+  if (/^S\d+(-\d+)?$/.test(t)) return "status";
+  return null;
+};
+
+/** HMI 이벤트는 모듈이 아니라 HMI 자체의 기록이라 faultCode 0 으로 저장한다 (화면 모듈 칸 "HMI").
+ *  HMI 는 예전 서버(faultCode 1~6만 받음)와 맞추려고 1 로 보낸다. */
+export const HMI_EVENT_FAULT_CODE = 0;
+
+/** 이력 로그 한 줄이 1회성 이벤트인지 (새 "EVENT" 또는 예전 서버가 RAISE 로 남긴 H·S) */
+const isOneShotLog = (log: { event: string; eventName: string | null }): boolean =>
+  log.event === "EVENT" || (log.event === "RAISE" && oneShotEventKind(log.eventName) != null);
+
+/**
  * CLEAR 뒤 이 시간 안에 같은 모듈 RAISE 가 오면 해제가 아니라 코드 갱신으로 본다.
  * HMI 는 fault 중 코드가 바뀌면 CLEAR·RAISE 를 같은 배치로 보내므로 실제 간격은 수 ms 다.
  */
@@ -46,6 +70,8 @@ type FaultListRow = {
   /** 끝난 이유 — cleared: HMI 해제, updated: 풀리지 않은 채 새 코드로 갱신 */
   endReason?: "cleared" | "updated" | null;
   acknowledgedAt?: Date | null;
+  /** event: 1회성 기록 (HMI 재시작 H…, 모듈 상태 변화 S…). 없으면 고장 */
+  kind?: "event";
 };
 
 /**
@@ -185,7 +211,12 @@ const dedupeModuleStatesByFaultCode = <
 const isModuleStateActive = (s: {
   lastEvent: string;
   acknowledgedAt: Date | null;
-}): boolean => s.lastEvent === "RAISE" && s.acknowledgedAt == null;
+  eventName?: string | null;
+}): boolean =>
+  s.lastEvent === "RAISE" &&
+  s.acknowledgedAt == null &&
+  // 예전 서버가 H1 등을 모듈 고장 상태로 남긴 행은 고장이 아니다
+  oneShotEventKind(s.eventName) == null;
 
 type ModuleStateRow = {
   id: string;
@@ -216,6 +247,7 @@ type ModuleLogRow = {
  * - CLEAR 없이 RAISE 가 또 와도 앞 건은 "갱신"으로 닫는다.
  * - 앞 RAISE 없이 온 CLEAR 는 버린다 (로그 조회 범위 밖에서 시작한 건).
  * - 모듈마다 가장 최근 건에만 현재 상태(활성·확인)를 붙인다.
+ * - 1회성 이벤트(H·S)는 고장 건을 열거나 닫지 않고, 그 자리에 기록 한 줄로만 남긴다.
  */
 const buildOccurrenceRows = (
   logs: ModuleLogRow[],
@@ -225,7 +257,26 @@ const buildOccurrenceRows = (
   const open = new Map<number, FaultListRow>();
   /** 방금 CLEAR 로 닫힌 건 — 곧 RAISE 가 따라오면 "갱신"으로 바꾼다 */
   const justCleared = new Map<number, FaultListRow>();
+  const eventRows: FaultListRow[] = [];
   for (const log of logs) {
+    if (isOneShotLog(log)) {
+      const hmi = log.faultCode === HMI_EVENT_FAULT_CODE || oneShotEventKind(log.eventName) === "hmi";
+      eventRows.push({
+        id: `mfl-${log.id}`,
+        // HMI 이벤트는 모듈 -1 (화면 "HMI"), 모듈 상태는 그 모듈
+        module: hmi ? -1 : log.faultCode - 1,
+        desc: "",
+        occurredAt: log.occurredAt,
+        installationId: log.installationId,
+        eventName: log.eventName,
+        active: false,
+        resolvedAt: null,
+        endReason: null,
+        acknowledgedAt: null,
+        kind: "event",
+      });
+      continue;
+    }
     const list = byCode.get(log.faultCode) ?? [];
     byCode.set(log.faultCode, list);
     if (log.event === "RAISE") {
@@ -284,6 +335,7 @@ const buildOccurrenceRows = (
     }
     rows.push(...list);
   }
+  rows.push(...eventRows);
   return rows;
 };
 
@@ -312,7 +364,7 @@ const mergeFaultLists = (
   // 로그가 생기기 전(마이그레이션 이전)에 들어온 모듈은 현재 상태 한 줄로만 보여준다.
   const loggedCodes = new Set(logs.map((l) => l.faultCode));
   const fromState: FaultListRow[] = states
-    .filter((s) => !loggedCodes.has(s.faultCode))
+    .filter((s) => !loggedCodes.has(s.faultCode) && oneShotEventKind(s.eventName) == null)
     .map((s) => ({
       id: `mfs-${s.id}`,
       module: s.faultCode - 1,
@@ -465,9 +517,10 @@ export const faultService = {
    * POST /receiver/faults* — Modbus faultCode(1–6)당 한 행 upsert + ModuleFaultLog 한 줄 추가.
    * 시각은 DB `updatedAt`(갱신 시각)과 CLEAR 시 `resolvedAt`(서버 수신 시각)만 사용.
    *
-   * TODO(HMI): HMI remote_fault_batch.c 는 4초 배치 안에서 (faultCode, RAISE/CLEAR) 키당 한 줄만
-   * 남긴다. 같은 모듈이 4초 안에 두 번 이상 바뀌면(예: RAISE F11 → 코드 변경 CLEAR → RAISE F3)
-   * 뒤 RAISE 가 빠져 서버는 해제로 보게 된다. HMI 쪽에서 중복 키를 버리지 말고 순서대로 쌓도록 고쳐야 한다.
+   * H·S 이름의 RAISE 는 1회성 이벤트로 이력에만 남긴다 (oneShotEventKind).
+   *
+   * HMI remote_fault_batch.c 는 예전에 4초 배치 안에서 (faultCode, RAISE/CLEAR) 키당 한 줄만 남겨
+   * 같은 모듈의 두 번째 이벤트를 버렸다. HMI 의 H·S 전송 변경에서 이벤트 이름까지 키에 넣어 고쳤다.
    */
   upsertReceiverFaultState: async (params: {
     installationId: string;
@@ -477,6 +530,21 @@ export const faultService = {
     const { installationId, fault, criticalChannel = false } = params;
 
     const enCreate = normalizeEventNameForDb(fault.eventName);
+
+    // 1회성 이벤트(H·S): 모듈 고장 상태는 그대로 두고 이력에 기록만 남긴다.
+    const oneShot = fault.event === "RAISE" ? oneShotEventKind(fault.eventName) : null;
+    if (oneShot) {
+      await prisma.moduleFaultLog.create({
+        data: {
+          installationId,
+          faultCode: oneShot === "hmi" ? HMI_EVENT_FAULT_CODE : fault.faultCode,
+          event: "EVENT",
+          eventName: enCreate,
+          criticalChannel,
+        },
+      });
+      return null;
+    }
 
     // 상태(덮어쓰기)와 이력 로그(추가)를 한 트랜잭션으로 남긴다.
     const log = prisma.moduleFaultLog.create({

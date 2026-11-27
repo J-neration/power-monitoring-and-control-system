@@ -80,6 +80,8 @@ function buildMarkers(faults: FaultEvent[], data: TimeRow[]): Marker[] {
 
   const grouped = new Map<string, { labels: Set<string>; index: number }>();
   for (const fault of faults) {
+    // HMI 재시작·모듈 상태 변화 기록은 고장이 아니므로 차트 고장 표시에서 뺀다
+    if (fault.kind === "event") continue;
     const at = new Date(fault.occurredAt).getTime();
     if (!Number.isFinite(at) || at < range.start || at > range.end) continue;
     const x = nearestTime(fault.occurredAt, data) ?? fmtChartTime(fault.occurredAt);
