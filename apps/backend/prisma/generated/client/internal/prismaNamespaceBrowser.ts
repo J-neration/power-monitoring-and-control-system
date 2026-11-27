@@ -173,6 +173,7 @@ export const InstallationDeviceSettingsScalarFieldEnum = {
   moduleType: 'moduleType',
   numOfMods: 'numOfMods',
   basic: 'basic',
+  lte: 'lte',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

@@ -57,6 +57,7 @@ export type InstallationDeviceSettingsCountAggregateOutputType = {
   moduleType: number
   numOfMods: number
   basic: number
+  lte: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -92,6 +93,7 @@ export type InstallationDeviceSettingsCountAggregateInputType = {
   moduleType?: true
   numOfMods?: true
   basic?: true
+  lte?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -188,6 +190,7 @@ export type InstallationDeviceSettingsGroupByOutputType = {
   moduleType: string
   numOfMods: number
   basic: runtime.JsonValue
+  lte: runtime.JsonValue | null
   createdAt: Date
   updatedAt: Date
   _count: InstallationDeviceSettingsCountAggregateOutputType | null
@@ -220,6 +223,7 @@ export type InstallationDeviceSettingsWhereInput = {
   moduleType?: Prisma.StringFilter<"InstallationDeviceSettings"> | string
   numOfMods?: Prisma.IntFilter<"InstallationDeviceSettings"> | number
   basic?: Prisma.JsonFilter<"InstallationDeviceSettings">
+  lte?: Prisma.JsonNullableFilter<"InstallationDeviceSettings">
   createdAt?: Prisma.DateTimeFilter<"InstallationDeviceSettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InstallationDeviceSettings"> | Date | string
   installation?: Prisma.XOR<Prisma.InstallationScalarRelationFilter, Prisma.InstallationWhereInput>
@@ -230,6 +234,7 @@ export type InstallationDeviceSettingsOrderByWithRelationInput = {
   moduleType?: Prisma.SortOrder
   numOfMods?: Prisma.SortOrder
   basic?: Prisma.SortOrder
+  lte?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   installation?: Prisma.InstallationOrderByWithRelationInput
@@ -243,6 +248,7 @@ export type InstallationDeviceSettingsWhereUniqueInput = Prisma.AtLeast<{
   moduleType?: Prisma.StringFilter<"InstallationDeviceSettings"> | string
   numOfMods?: Prisma.IntFilter<"InstallationDeviceSettings"> | number
   basic?: Prisma.JsonFilter<"InstallationDeviceSettings">
+  lte?: Prisma.JsonNullableFilter<"InstallationDeviceSettings">
   createdAt?: Prisma.DateTimeFilter<"InstallationDeviceSettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InstallationDeviceSettings"> | Date | string
   installation?: Prisma.XOR<Prisma.InstallationScalarRelationFilter, Prisma.InstallationWhereInput>
@@ -253,6 +259,7 @@ export type InstallationDeviceSettingsOrderByWithAggregationInput = {
   moduleType?: Prisma.SortOrder
   numOfMods?: Prisma.SortOrder
   basic?: Prisma.SortOrder
+  lte?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.InstallationDeviceSettingsCountOrderByAggregateInput
@@ -270,6 +277,7 @@ export type InstallationDeviceSettingsScalarWhereWithAggregatesInput = {
   moduleType?: Prisma.StringWithAggregatesFilter<"InstallationDeviceSettings"> | string
   numOfMods?: Prisma.IntWithAggregatesFilter<"InstallationDeviceSettings"> | number
   basic?: Prisma.JsonWithAggregatesFilter<"InstallationDeviceSettings">
+  lte?: Prisma.JsonNullableWithAggregatesFilter<"InstallationDeviceSettings">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"InstallationDeviceSettings"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"InstallationDeviceSettings"> | Date | string
 }
@@ -278,6 +286,7 @@ export type InstallationDeviceSettingsCreateInput = {
   moduleType: string
   numOfMods?: number
   basic: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lte?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   installation: Prisma.InstallationCreateNestedOneWithoutDeviceSettingsInput
@@ -288,6 +297,7 @@ export type InstallationDeviceSettingsUncheckedCreateInput = {
   moduleType: string
   numOfMods?: number
   basic: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lte?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -296,6 +306,7 @@ export type InstallationDeviceSettingsUpdateInput = {
   moduleType?: Prisma.StringFieldUpdateOperationsInput | string
   numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
   basic?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lte?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   installation?: Prisma.InstallationUpdateOneRequiredWithoutDeviceSettingsNestedInput
@@ -306,6 +317,7 @@ export type InstallationDeviceSettingsUncheckedUpdateInput = {
   moduleType?: Prisma.StringFieldUpdateOperationsInput | string
   numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
   basic?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lte?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -315,6 +327,7 @@ export type InstallationDeviceSettingsCreateManyInput = {
   moduleType: string
   numOfMods?: number
   basic: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lte?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -323,6 +336,7 @@ export type InstallationDeviceSettingsUpdateManyMutationInput = {
   moduleType?: Prisma.StringFieldUpdateOperationsInput | string
   numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
   basic?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lte?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -332,6 +346,7 @@ export type InstallationDeviceSettingsUncheckedUpdateManyInput = {
   moduleType?: Prisma.StringFieldUpdateOperationsInput | string
   numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
   basic?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lte?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -346,6 +361,7 @@ export type InstallationDeviceSettingsCountOrderByAggregateInput = {
   moduleType?: Prisma.SortOrder
   numOfMods?: Prisma.SortOrder
   basic?: Prisma.SortOrder
+  lte?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -410,6 +426,7 @@ export type InstallationDeviceSettingsCreateWithoutInstallationInput = {
   moduleType: string
   numOfMods?: number
   basic: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lte?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -418,6 +435,7 @@ export type InstallationDeviceSettingsUncheckedCreateWithoutInstallationInput = 
   moduleType: string
   numOfMods?: number
   basic: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lte?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -442,6 +460,7 @@ export type InstallationDeviceSettingsUpdateWithoutInstallationInput = {
   moduleType?: Prisma.StringFieldUpdateOperationsInput | string
   numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
   basic?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lte?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -450,6 +469,7 @@ export type InstallationDeviceSettingsUncheckedUpdateWithoutInstallationInput = 
   moduleType?: Prisma.StringFieldUpdateOperationsInput | string
   numOfMods?: Prisma.IntFieldUpdateOperationsInput | number
   basic?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lte?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -461,6 +481,7 @@ export type InstallationDeviceSettingsSelect<ExtArgs extends runtime.Types.Exten
   moduleType?: boolean
   numOfMods?: boolean
   basic?: boolean
+  lte?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
@@ -471,6 +492,7 @@ export type InstallationDeviceSettingsSelectCreateManyAndReturn<ExtArgs extends 
   moduleType?: boolean
   numOfMods?: boolean
   basic?: boolean
+  lte?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
@@ -481,6 +503,7 @@ export type InstallationDeviceSettingsSelectUpdateManyAndReturn<ExtArgs extends 
   moduleType?: boolean
   numOfMods?: boolean
   basic?: boolean
+  lte?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
@@ -491,11 +514,12 @@ export type InstallationDeviceSettingsSelectScalar = {
   moduleType?: boolean
   numOfMods?: boolean
   basic?: boolean
+  lte?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type InstallationDeviceSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"installationId" | "moduleType" | "numOfMods" | "basic" | "createdAt" | "updatedAt", ExtArgs["result"]["installationDeviceSettings"]>
+export type InstallationDeviceSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"installationId" | "moduleType" | "numOfMods" | "basic" | "lte" | "createdAt" | "updatedAt", ExtArgs["result"]["installationDeviceSettings"]>
 export type InstallationDeviceSettingsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }
@@ -522,6 +546,10 @@ export type $InstallationDeviceSettingsPayload<ExtArgs extends runtime.Types.Ext
      * settings.basic[] — UI engineering units (not raw Modbus)
      */
     basic: runtime.JsonValue
+    /**
+     * HMI 가 보고한 LTE 설정 { postPeriodMin: 10 | 30 | 60 }. 이 값을 보내지 않는 펌웨어면 null
+     */
+    lte: runtime.JsonValue | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["installationDeviceSettings"]>
@@ -952,6 +980,7 @@ export interface InstallationDeviceSettingsFieldRefs {
   readonly moduleType: Prisma.FieldRef<"InstallationDeviceSettings", 'String'>
   readonly numOfMods: Prisma.FieldRef<"InstallationDeviceSettings", 'Int'>
   readonly basic: Prisma.FieldRef<"InstallationDeviceSettings", 'Json'>
+  readonly lte: Prisma.FieldRef<"InstallationDeviceSettings", 'Json'>
   readonly createdAt: Prisma.FieldRef<"InstallationDeviceSettings", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"InstallationDeviceSettings", 'DateTime'>
 }

@@ -14,12 +14,30 @@ export type ModuleType = "v1v2" | "v3v4" | "v5";
 
 export type BasicSettingRow = Record<string, number | string | boolean | null>;
 
+/** LTE telemetry POST period choices (minutes) the HMI firmware accepts. */
+export const LTE_POST_PERIODS_MIN = [10, 30, 60] as const;
+
+export type LteSettings = { postPeriodMin: number };
+
 export type DeviceSettingsSnapshot = {
   installationId: string;
   moduleType: ModuleType;
   numOfMods: number;
   basic: BasicSettingRow[];
+  /** LTE settings reported by the HMI; null when the firmware never sent them. */
+  lte: LteSettings | null;
   updatedAt: string;
+};
+
+export const isLtePostPeriod = (v: unknown): v is number =>
+  typeof v === "number" &&
+  (LTE_POST_PERIODS_MIN as readonly number[]).includes(v);
+
+/** Stored Json -> LteSettings, or null when missing / malformed. */
+const readStoredLte = (raw: unknown): LteSettings | null => {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const period = (raw as Record<string, unknown>).postPeriodMin;
+  return isLtePostPeriod(period) ? { postPeriodMin: period } : null;
 };
 
 const MODULE_TYPES = new Set<string>(["v1v2", "v3v4", "v5"]);
@@ -188,6 +206,8 @@ export const settingsService = {
     /** Top-level array (preferred). Also accepted per-row in basic[]. */
     moduleCapacity?: unknown;
     basic: unknown[];
+    /** Validated LTE settings; omitted keeps the stored value (older firmware). */
+    lte?: LteSettings;
   }): Promise<{ installationId: string }> {
     const moduleType = input.moduleType.trim().toLowerCase();
     if (!MODULE_TYPES.has(moduleType)) {
@@ -222,6 +242,10 @@ export const settingsService = {
       ? injectCapacityIntoRows(basic, moduleCapacity)
       : basic;
 
+    const lte = input.lte
+      ? ({ postPeriodMin: input.lte.postPeriodMin } as Prisma.InputJsonValue)
+      : undefined;
+
     await prisma.installationDeviceSettings.upsert({
       where: { installationId: identity.installationId },
       create: {
@@ -229,11 +253,14 @@ export const settingsService = {
         moduleType,
         numOfMods,
         basic: storedBasic as Prisma.InputJsonValue,
+        ...(lte !== undefined ? { lte } : {}),
       },
       update: {
         moduleType,
         numOfMods,
         basic: storedBasic as Prisma.InputJsonValue,
+        // Absent lte (older firmware) leaves the stored value as is.
+        ...(lte !== undefined ? { lte } : {}),
       },
     });
 
@@ -262,6 +289,7 @@ export const settingsService = {
       moduleType: row.moduleType as ModuleType,
       numOfMods: row.numOfMods,
       basic: migrateStoredBasic(rawBasic, row.moduleType),
+      lte: readStoredLte(row.lte),
       updatedAt: row.updatedAt.toISOString(),
     };
   },

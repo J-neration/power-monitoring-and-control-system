@@ -9,6 +9,7 @@ import DeviceModulePowerPanel from "./DeviceModulePowerPanel";
 import DeviceSettingsPanel from "./DeviceSettingsPanel";
 import DeviceFirmwarePanel from "./DeviceFirmwarePanel";
 import DeviceSettingsSyncBar from "./DeviceSettingsSyncBar";
+import DeviceLteSettingsPanel from "./DeviceLteSettingsPanel";
 import DeviceDataRefreshButton from "./DeviceDataRefreshButton";
 import DeviceFaultHistory from "./DeviceFaultHistory";
 import ViewingBanner from "./ViewingBanner";
@@ -26,6 +27,9 @@ import {
 import { useWsEvents } from "../hooks/useWsEvents";
 
 type Tab = "monitor" | "analytics" | "settings" | "firmware" | "faults";
+
+/** 설정 탭 안의 하위 탭 */
+type SettingsSubTab = "module" | "lte";
 
 const TABS: readonly Tab[] = ["monitor", "analytics", "settings", "firmware", "faults"];
 
@@ -148,6 +152,7 @@ export default function DeviceDetailTabs({
   const [tab, setTabState] = useState<Tab>(() =>
     resolveTab(initialTab, isAdmin, canViewFaults),
   );
+  const [settingsSubTab, setSettingsSubTab] = useState<SettingsSubTab>("module");
   const router = useRouter();
   const activeTab: Tab = tab;
   /** 원격 연결 상태·데이터 갱신은 장치 단위라 관리자에게 모든 탭에서 보인다.
@@ -313,6 +318,32 @@ export default function DeviceDetailTabs({
 
       {activeTab === "settings" && isAdmin && (
         <div className="device-settings-console">
+          <div
+            className="monitor-view-chips device-settings-subtabs"
+            role="tablist"
+            aria-label="설정 구분"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={settingsSubTab === "module"}
+              className={`monitor-view-chip${settingsSubTab === "module" ? " active" : ""}`}
+              onClick={() => setSettingsSubTab("module")}
+            >
+              모듈 설정
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={settingsSubTab === "lte"}
+              className={`monitor-view-chip${settingsSubTab === "lte" ? " active" : ""}`}
+              onClick={() => setSettingsSubTab("lte")}
+            >
+              LTE 통신 설정
+            </button>
+          </div>
+          {settingsSubTab === "module" && (
+          <>
           <details className="device-settings-help">
             <summary>
               <span className="device-settings-help-chevron" aria-hidden>
@@ -381,6 +412,22 @@ export default function DeviceDetailTabs({
               capUnit={device.model === "paf" ? "A" : "kvar"}
             />
           </div>
+          </>
+          )}
+          {settingsSubTab === "lte" && (
+          <>
+          <DeviceSettingsSyncBar
+            installationId={device.installationId}
+            requestedBy={adminUsername}
+          />
+          <div className="device-settings-layout">
+            <DeviceLteSettingsPanel
+              installationId={device.installationId}
+              requestedBy={adminUsername}
+            />
+          </div>
+          </>
+          )}
         </div>
       )}
 
