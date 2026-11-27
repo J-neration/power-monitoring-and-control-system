@@ -626,3 +626,25 @@ model HarmonicRecord {
 
   @@index([installationId, recordedAt])
 }
+
+/// HMI ↔ 서버 송수신 원문 (어드민 "통신 로그" 창). /receiver 로 들어온 HMI 요청과 서버 응답을 그대로 남긴다.
+/// HMI 가 이미 보내는 데이터라 LTE 데이터는 늘지 않는다. 서버 DB 만 쓰고, 짧게 보관한다
+/// (RECEIVER_LOG_RETENTION_DAYS, 기본 7일. 끄기: RECEIVER_LOG_ENABLED=false).
+model ReceiverLog {
+  id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
+  method       String   @db.VarChar(8)
+  /// 쿼리 포함 경로 (예: /receiver, /receiver/commands?iccid=…)
+  path         String   @db.VarChar(300)
+  statusCode   Int
+  durationMs   Int
+  /// 요청 본문 또는 쿼리에서 읽은 ICCID. 설치지점 이름은 조회할 때 붙인다
+  iccid        String?  @db.VarChar(32)
+  ip           String?  @db.VarChar(64)
+  /// 요청·응답 원문 (최대 16KB, 넘으면 잘라서 저장)
+  requestBody  String?
+  responseBody String?
+
+  @@index([createdAt])
+  @@index([iccid, createdAt])
+}

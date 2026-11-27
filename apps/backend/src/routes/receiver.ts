@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync, FastifyRequest } from "fastify";
+import { Readable } from "node:stream";
 import {
   deviceService,
   ensureInstallationForIccid,
@@ -14,6 +15,8 @@ import { settingsService, SettingsError } from "../services/settingsService.js";
 import { OTA_STATUS_STAGES, OTA_STATUS_STATES, otaStatusService } from "../services/otaStatusService.js";
 import { HARMONIC_SOURCES, harmonicRecordedAt, harmonicService } from "../services/harmonicService.js";
 import { wsHub } from "../lib/wsHub.js";
+import { retentionConfig } from "../lib/retentionConfig.js";
+import { bodyToText, pickIccid, receiverLogService } from "../services/receiverLogService.js";
 import { matchReceiverApiKey } from "../lib/receiverApiKey.js";
 import * as viewingState from "../lib/viewingState.js";
 import {
@@ -25,6 +28,9 @@ import {
   temperatureAlertLine,
   type AlertLine,
 } from "../lib/moduleAlerts.js";
+
+/** Fastify 기본 bodyLimit 과 같다 (1MB). 통신 로그용으로 원문을 읽을 때 상한. */
+const RECEIVER_BODY_LIMIT = 1024 * 1024;
 
 type ReceiverOptions = { receiverApiKey: string; previousReceiverApiKey?: string };
 
@@ -265,6 +271,57 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
     return version;
   };
   const hasValidApiKey = (request: FastifyRequest) => receiverKeyVersion(request) !== null;
+
+  /* HMI 통신 로그 (어드민 "통신 로그" 창). x-api-key 를 단 요청(=HMI)만 남긴다 —
+   * 관제 웹의 명령 생성·이력 조회는 JWT 라 빠진다. 키가 틀린 401 도 남겨 오류 찾기에 쓴다.
+   * 저장은 응답을 보낸 뒤에 하고, 실패해도 HMI 응답에는 영향이 없다. */
+  if (retentionConfig().receiverLogEnabled) {
+    const requestText = new WeakMap<FastifyRequest, string>();
+    const responseText = new WeakMap<FastifyRequest, string>();
+    // JSON 해석 전 원문을 잡아 둔다 — 깨진 JSON(400)도 HMI 가 보낸 그대로 보이게.
+    server.addHook("preParsing", async (request, _reply, payload) => {
+      if (request.headers["x-api-key"] === undefined) return payload;
+      const chunks: Buffer[] = [];
+      let size = 0;
+      for await (const chunk of payload) {
+        const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as string);
+        size += buf.length;
+        if (size > RECEIVER_BODY_LIMIT) {
+          throw Object.assign(new Error("Request body is too large"), { statusCode: 413 });
+        }
+        chunks.push(buf);
+      }
+      const raw = Buffer.concat(chunks);
+      requestText.set(request, raw.toString("utf-8"));
+      const replay = Readable.from([raw]) as Readable & { receivedEncodedLength?: number };
+      replay.receivedEncodedLength = raw.length;
+      return replay;
+    });
+    server.addHook("onSend", async (request, _reply, payload) => {
+      if (request.headers["x-api-key"] !== undefined && typeof payload === "string") {
+        responseText.set(request, payload);
+      }
+      return payload;
+    });
+    server.addHook("onResponse", async (request, reply) => {
+      if (request.headers["x-api-key"] === undefined) return;
+      const response = responseText.get(request);
+      const raw = requestText.get(request) ?? request.body;
+      void receiverLogService.record(
+        {
+          method: request.method,
+          path: request.url,
+          statusCode: reply.statusCode,
+          durationMs: reply.elapsedTime,
+          iccid: pickIccid(raw, request.query),
+          ip: request.ip,
+          requestBody: bodyToText(raw),
+          responseBody: response ? bodyToText(response) : null,
+        },
+        request.log,
+      );
+    });
+  }
 
   const notifyCriticalFault = (payload: {
     installationId: string;
