@@ -9,7 +9,7 @@ import {
 import { z } from "zod";
 import { requireAdmin } from "../middleware/authenticate.js";
 import { commandService, CommandError } from "../services/commandService.js";
-import { faultService } from "../services/faultService.js";
+import { faultService, oneShotEventKind } from "../services/faultService.js";
 import { notifyAdminAlerts } from "../services/adminAlertService.js";
 import { settingsService, SettingsError } from "../services/settingsService.js";
 import { OTA_STATUS_STAGES, OTA_STATUS_STATES, otaStatusService } from "../services/otaStatusService.js";
@@ -407,8 +407,10 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       }
       return reply.status(400).send({ message: "Invalid iccid" });
     }
+    // 1회성 이벤트(H·S)는 고장이 아니므로 고장 알림 메일을 보내지 않는다
     const isNewRaise =
       event === "RAISE" &&
+      oneShotEventKind(eventName) == null &&
       (await faultService.isNewFaultRaise(identity.installationId, faultCode));
     await faultService.upsertReceiverFaultState({
       installationId: identity.installationId,
@@ -468,7 +470,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
     }
     const newRaises = [];
     for (const fault of parsed.data.faults) {
-      if (fault.event !== "RAISE") continue;
+      if (fault.event !== "RAISE" || oneShotEventKind(fault.eventName) != null) continue;
       if (await faultService.isNewFaultRaise(identity.installationId, fault.faultCode)) {
         newRaises.push(fault);
       }

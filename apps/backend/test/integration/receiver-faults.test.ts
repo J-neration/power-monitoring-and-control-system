@@ -230,6 +230,68 @@ describe("fault history", () => {
     );
   });
 
+  it("keeps HMI restarts (H1-x) and module status changes (S) as one-shot records", async () => {
+    const { tokens } = await seedWorld(t.app);
+    const send = (faults: unknown[]) => hmi(t.app).post("/receiver/faults", { iccid: IDS.lotteIccid, faults });
+
+    // M1 has a real fault. The HMI restarts (H1-2, sent on faultCode 1 like the firmware) and
+    // M1 reports a status change in the same batch. Neither may touch the M1 fault.
+    await send([{ faultCode: 1, event: "RAISE", eventName: "F10" }]);
+    await ageLogs(60_000);
+    const res = await send([
+      { faultCode: 1, event: "RAISE", eventName: "H1-2" },
+      { faultCode: 1, event: "RAISE", eventName: "S0-0" },
+    ]);
+    assert.equal(res.statusCode, 201);
+
+    const state = await faultState(IDS.lotteInst, 1);
+    assert.equal(state?.eventName, "F10", "the module fault state is unchanged");
+    assert.equal(state?.repeatCount, 1);
+    const logs = await prisma.moduleFaultLog.findMany({ orderBy: { id: "asc" } });
+    assert.deepEqual(
+      logs.map((l) => [l.faultCode, l.event, l.eventName]),
+      [
+        [1, "RAISE", "F10"],
+        [0, "EVENT", "H1-2"], // HMI itself
+        [1, "EVENT", "S0-0"],
+      ],
+    );
+
+    const faults = (await http(t.app).get(`/devices/${IDS.lotteInst}/faults`, { token: tokens.admin })).json()
+      .faults as Array<{ module: number; eventName: string; active: boolean; endReason: string | null; kind?: string }>;
+    const byName = new Map(faults.map((f) => [f.eventName, f]));
+    assert.deepEqual(
+      [byName.get("F10")?.active, byName.get("F10")?.endReason],
+      [true, null],
+      "the real fault stays active and is not ended as an update",
+    );
+    assert.deepEqual(
+      ["H1-2", "S0-0"].map((n) => [byName.get(n)?.module, byName.get(n)?.kind, byName.get(n)?.active]),
+      [
+        [-1, "event", false],
+        [0, "event", false],
+      ],
+    );
+  });
+
+  it("reads H1 rows stored as module faults by the old server as HMI events", async () => {
+    const { tokens } = await seedWorld(t.app);
+    // what the server before this change wrote for the first-boot H1
+    await prisma.moduleFaultLog.create({
+      data: { installationId: IDS.lotteInst, faultCode: 1, event: "RAISE", eventName: "H1" },
+    });
+    await prisma.moduleFaultState.create({
+      data: { installationId: IDS.lotteInst, faultCode: 1, lastEvent: "RAISE", eventName: "H1", repeatCount: 1 },
+    });
+
+    const faults = (await http(t.app).get(`/devices/${IDS.lotteInst}/faults`, { token: tokens.admin })).json()
+      .faults as Array<{ module: number; eventName: string; active: boolean; kind?: string }>;
+    assert.deepEqual(
+      faults.map((f) => [f.module, f.eventName, f.active, f.kind]),
+      [[-1, "H1", false, "event"]],
+    );
+  });
+
   it("marks only the latest occurrence as acknowledged", async () => {
     const { tokens } = await seedWorld(t.app);
     const send = (faults: unknown[]) => hmi(t.app).post("/receiver/faults", { iccid: IDS.lotteIccid, faults });
