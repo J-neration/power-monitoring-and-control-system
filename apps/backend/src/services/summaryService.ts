@@ -4,6 +4,7 @@ import { addDays, addHours, kstDateKey, kstDayStart, kstHourStart } from "../lib
 import { type ResolvedHistory } from "../lib/historyRange.js";
 import { retentionConfig } from "../lib/retentionConfig.js";
 import { harmonicService } from "./harmonicService.js";
+import { receiverLogService } from "./receiverLogService.js";
 import {
   ARRAY_METRICS,
   SCALAR_METRICS,
@@ -363,6 +364,7 @@ export type RetentionReport = {
   dailyPastRetention: number;
   /** 보관기간(HARMONIC_RETENTION_DAYS)이 지나 지운 고조파 기록 수 */
   harmonicDeletedRows?: number;
+  receiverLogDeletedRows?: number;
   deletedRows: number;
 };
 
@@ -564,7 +566,14 @@ export async function purgeIfEnabled(
   if (cfg.harmonicPurgeEnabled) {
     harmonicDeletedRows = await harmonicService.purgeOlderThan(cfg.harmonicDays, now);
   }
-  const report = { ...scanned.report, deletedRows, harmonicDeletedRows };
+  // HMI 통신 로그: 디버깅용이라 짧게 (기본 7일). 켜고 끄는 것과 관계없이 지난 건 지운다.
+  let receiverLogDeletedRows = 0;
+  try {
+    receiverLogDeletedRows = await receiverLogService.purgeOlderThan(cfg.receiverLogDays, now);
+  } catch {
+    // 테이블이 아직 없으면(마이그레이션 전) 건너뛴다.
+  }
+  const report = { ...scanned.report, deletedRows, harmonicDeletedRows, receiverLogDeletedRows };
   if (options.log !== false) {
     await logAggregation(
       "purge",

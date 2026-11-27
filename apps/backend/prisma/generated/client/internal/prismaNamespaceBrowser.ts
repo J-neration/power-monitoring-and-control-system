@@ -66,10 +66,12 @@ export const ModelName = {
   FaultEvent: 'FaultEvent',
   ModuleFaultState: 'ModuleFaultState',
   ModuleFaultLog: 'ModuleFaultLog',
+  Alarm: 'Alarm',
   DeviceCommand: 'DeviceCommand',
   OtaFile: 'OtaFile',
   OtaStatusEvent: 'OtaStatusEvent',
-  HarmonicRecord: 'HarmonicRecord'
+  HarmonicRecord: 'HarmonicRecord',
+  ReceiverLog: 'ReceiverLog'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -150,6 +152,10 @@ export const InstallationScalarFieldEnum = {
   iccid: 'iccid',
   moduleName: 'moduleName',
   historyVisible: 'historyVisible',
+  maintenanceSince: 'maintenanceSince',
+  maintenanceUntil: 'maintenanceUntil',
+  maintenanceBy: 'maintenanceBy',
+  maintenanceNote: 'maintenanceNote',
   webSettingsActive: 'webSettingsActive',
   webSettingsHeartbeatAt: 'webSettingsHeartbeatAt',
   adminSessionActive: 'adminSessionActive',
@@ -386,6 +392,20 @@ export const ModuleFaultLogScalarFieldEnum = {
 export type ModuleFaultLogScalarFieldEnum = (typeof ModuleFaultLogScalarFieldEnum)[keyof typeof ModuleFaultLogScalarFieldEnum]
 
 
+export const AlarmScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  kind: 'kind',
+  raisedAt: 'raisedAt',
+  clearedAt: 'clearedAt',
+  ackedAt: 'ackedAt',
+  ackedBy: 'ackedBy',
+  ackNote: 'ackNote'
+} as const
+
+export type AlarmScalarFieldEnum = (typeof AlarmScalarFieldEnum)[keyof typeof AlarmScalarFieldEnum]
+
+
 export const DeviceCommandScalarFieldEnum = {
   id: 'id',
   installationId: 'installationId',
@@ -457,6 +477,22 @@ export const HarmonicRecordScalarFieldEnum = {
 } as const
 
 export type HarmonicRecordScalarFieldEnum = (typeof HarmonicRecordScalarFieldEnum)[keyof typeof HarmonicRecordScalarFieldEnum]
+
+
+export const ReceiverLogScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  method: 'method',
+  path: 'path',
+  statusCode: 'statusCode',
+  durationMs: 'durationMs',
+  iccid: 'iccid',
+  ip: 'ip',
+  requestBody: 'requestBody',
+  responseBody: 'responseBody'
+} as const
+
+export type ReceiverLogScalarFieldEnum = (typeof ReceiverLogScalarFieldEnum)[keyof typeof ReceiverLogScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -7,6 +7,8 @@ import { siteService } from "../services/siteService.js";
 import { registryService } from "../services/registryService.js";
 import { validatePassword } from "../modules/auth/passwordPolicy.js";
 import { inspectRetention, purgeIfEnabled, runAggregationPass } from "../services/summaryService.js";
+import { receiverLogService } from "../services/receiverLogService.js";
+import { retentionConfig } from "../lib/retentionConfig.js";
 
 const firstZodMessage = (error: z.ZodError) =>
   error.issues[0]?.message ?? "입력값이 올바르지 않습니다.";
@@ -448,6 +450,38 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
       return reply.status(500).send({ message: result.message });
     }
     return reply.send(result);
+  });
+
+  /**
+   * HMI 통신 로그 (관리자만). 최신순, beforeId 로 다음 페이지.
+   * ?installationId= | ?iccid=  &path=/receiver/commands  &q=검색어  &errorsOnly=1  &limit=50
+   */
+  server.get("/receiver-logs", { preHandler: requireAdmin }, async (request, reply) => {
+    const q = request.query as Record<string, string | undefined>;
+    const beforeId = q.beforeId ? Number.parseInt(q.beforeId, 10) : undefined;
+    const limit = q.limit ? Number.parseInt(q.limit, 10) : undefined;
+    try {
+      const result = await receiverLogService.list({
+        installationId: q.installationId?.trim() || undefined,
+        iccid: q.iccid?.trim() || undefined,
+        path: q.path?.trim() || undefined,
+        q: q.q?.trim().slice(0, 100) || undefined,
+        errorsOnly: q.errorsOnly === "1" || q.errorsOnly === "true",
+        beforeId: Number.isFinite(beforeId) ? beforeId : undefined,
+        limit: Number.isFinite(limit) ? limit : undefined,
+      });
+      const cfg = retentionConfig();
+      return reply.send({
+        ...result,
+        enabled: cfg.receiverLogEnabled,
+        retentionDays: cfg.receiverLogDays,
+      });
+    } catch (error) {
+      request.log.error({ error }, "receiver log list failed");
+      return reply.status(503).send({
+        message: "통신 로그 테이블이 없습니다. prisma migrate deploy 를 먼저 실행하세요.",
+      });
+    }
   });
 
   /* ── Registry: 역할 옵션 ─────────────────────────── */
