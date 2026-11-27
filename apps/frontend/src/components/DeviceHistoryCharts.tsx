@@ -22,6 +22,7 @@ import {
 } from "../lib/kstTime";
 import { DEMO_HISTORY_INSTALLATION_ID } from "../lib/demoHistoryReadings";
 import type { TelemetryReading } from "../types/site";
+import { intervalLabel, observedIntervalMinutes } from "../lib/reportInterval";
 
 const TEMP_COLORS = [
   CHART_COLORS.load,
@@ -215,12 +216,17 @@ export default function DeviceHistoryCharts({
   const aggDisabled = isHarmonics ? rangePeriod === "day" : resolution === "raw";
   const activeAgg: Agg = aggDisabled ? "avg" : aggregation;
   const aggLabel = AGGS.find((item) => item.key === activeAgg)?.label ?? "평균";
-  const resLabel = resolution === "raw" ? "10분" : resolution === "hourly" ? "1시간" : "1일";
+  // 장비마다 보고 주기가 달라(10/30/60분) 받은 기록에서 구한다.
+  const rawLabel = intervalLabel(
+    observedIntervalMinutes(readings) ??
+      (resolution === "raw" && remote?.points ? observedIntervalMinutes(remote.points) : null),
+  );
+  const resLabel = resolution === "raw" ? rawLabel : resolution === "hourly" ? "1시간" : "1일";
   const periodLabel = PERIODS.find((item) => item.key === rangePeriod)?.label ?? "일간";
   const rangeLabel = `${resLabel}${resolution === "raw" ? "" : ` ${aggLabel}`}`;
   const hoursLabel =
     resolution === "raw" && rangePeriod === "day" && !start
-      ? `최근 ${hours}시간 · 10분`
+      ? `최근 ${hours}시간 · ${rawLabel}`
       : rangePeriod === "day"
         ? `${periodLabel} · ${rangeLabel}`
         : rangeLabel;
@@ -395,7 +401,7 @@ export default function DeviceHistoryCharts({
             disabled={aggDisabled && key !== "avg"}
             title={
               aggDisabled && key !== "avg"
-                ? `${isHarmonics ? "1시간" : "10분"} 원본에는 구간 최소·최대가 없습니다`
+                ? `${isHarmonics ? "1시간" : rawLabel === "원본" ? "" : `${rawLabel} `}원본에는 구간 최소·최대가 없습니다`
                 : undefined
             }
             onClick={() => setAggregation(key)}
@@ -411,7 +417,7 @@ export default function DeviceHistoryCharts({
             className={`monitor-view-chip${detail ? " active" : ""}`}
             onClick={() => setDetail((value) => !value)}
           >
-            10분 상세
+            {rawLabel === "원본" ? "원본 상세" : `${rawLabel} 상세`}
           </button>
         </div>
       ) : null}
