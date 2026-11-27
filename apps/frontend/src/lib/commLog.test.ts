@@ -48,6 +48,14 @@ test("summarize: one readable line", () => {
   assert.equal(summarize(row({ method: "GET", path: "/receiver/commands?iccid=1", responseBody: "{}" })), "대기 중인 명령 없음");
 });
 
+test("summarize: harmonics report says whether voltages came along", () => {
+  const base = { iccid: "1", source: "hourly", orders: [1, 3, 5] };
+  const harm = (body: Record<string, unknown>) =>
+    summarize(row({ path: "/receiver/harmonics", requestBody: JSON.stringify(body) }));
+  assert.equal(harm(base), "3개 차수 · 정기 측정");
+  assert.equal(harm({ ...base, volt: { a: [2200, 3, 4] } }), "3개 차수 · 정기 측정 · 전압 포함");
+});
+
 test("summarize: an empty string is shown as missing, not 0", () => {
   const s = summarize(row({ requestBody: JSON.stringify({ vL1: 219.9, vL2: "", vL3: null }) }));
   assert.equal(s, "전압 219.9 / – / –V");

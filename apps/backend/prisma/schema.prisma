@@ -623,6 +623,12 @@ model HarmonicRecord {
   compA          Int[]
   compB          Int[]
   compC          Int[]
+  /// 계통 전압 고조파 (Vsa/Vsb/Vsc, 0.1 V 정수). 전압을 보내지 않는 펌웨어면 빈 배열
+  voltA          Int[]        @default([])
+  voltB          Int[]        @default([])
+  voltC          Int[]        @default([])
+  /// 전압을 읽은 시각. 전류와 따로 읽으므로 다를 수 있다. 전압이 없으면 null
+  voltRecordedAt DateTime?
 
   @@index([installationId, recordedAt])
 }

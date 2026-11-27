@@ -63,6 +63,8 @@ type HarmonicRecord = {
   orders: number[];
   uncomp: Phases;
   comp: Phases;
+  /** 계통 전압 고조파 (0.1 V 정수). 전압을 보내지 않는 펌웨어면 null, 예전 서버면 없음 */
+  volt?: (Phases & { recordedAt: string }) | null;
 };
 
 /** HMI 가 아직 응답하지 않은 module 0 명령 (관리자에게만 온다). 있으면 새 명령을 만들 수 없다(409). */
@@ -83,7 +85,11 @@ type HarmonicsResponse = {
 
 type View = "chart" | "table";
 
-/** A = 전류 그대로, % = 같은 상·같은 쪽(보상 전/후) 기본파(1차) 대비. 고조파 기준(IEC·IEEE 519)은 % 로 정한다. */
+/** 무엇을 보나: 전류(보상 전/후) 또는 계통 전압 */
+type Quantity = "current" | "volt";
+
+/** A = 크기 그대로 (전압 보기에서는 V), % = 같은 상·같은 쪽(보상 전/후) 기본파(1차) 대비.
+ *  고조파 기준(IEC·IEEE 519)은 % 로 정한다. */
 type Unit = "A" | "%";
 
 type CommandState =
@@ -112,6 +118,16 @@ const toAmp = (v: number | undefined): number | null =>
   typeof v === "number" && Number.isFinite(v) ? v / 100 : null;
 
 const fmtNum = (v: number | null) => (v == null ? "-" : v.toFixed(2));
+
+/** 0.1 V 정수 → V */
+const toVolt = (v: number | undefined): number | null =>
+  typeof v === "number" && Number.isFinite(v) ? v / 10 : null;
+
+/** 전압 표·툴팁 값: V 는 소수 첫째 자리, % 는 둘째 자리 (전압 고조파는 보통 몇 % 아래라서) */
+const fmtVoltValue = (v: number | null, unit: Unit) =>
+  v == null ? "-" : unit === "A" ? v.toFixed(1) : v.toFixed(2);
+const fmtVoltWithUnit = (v: number | null, unit: Unit) =>
+  v == null ? "-" : unit === "A" ? `${v.toFixed(1)} V` : `${v.toFixed(2)} %`;
 
 /** 표·툴팁 값: A 는 소수 둘째 자리, % 는 첫째 자리 */
 const fmtValue = (v: number | null, unit: Unit) =>
@@ -209,6 +225,7 @@ export default function DeviceHarmonicsPanel({
   const [data, setData] = useState<HarmonicsResponse | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [view, setView] = useState<View>("chart");
+  const [quantity, setQuantity] = useState<Quantity>("current");
   const [unit, setUnit] = useState<Unit>("A");
   const [cmd, setCmd] = useState<CommandState>({ tone: "idle" });
   /** 이 화면에서 응답(ACK)을 받은 명령. 늦게 도착한 조회 결과가 끝난 명령을 다시 "대기"로 되돌리지 않게 한다. */
@@ -380,6 +397,39 @@ export default function DeviceHarmonicsPanel({
   }, [latest, valueAt]);
 
   const unitLabel = unit === "A" ? "A" : "% (기본파 대비)";
+  const voltUnitLabel = unit === "A" ? "V" : "% (기본파 대비)";
+
+  const volt = latest?.volt ?? null;
+
+  /** 기본파(1차) 전압(V) L1~L3. 1차가 없으면 null. */
+  const fundamentalVolt = useMemo((): Record<Phase, number | null> | null => {
+    if (!latest || !volt) return null;
+    const i = latest.orders.indexOf(1);
+    if (i < 0) return null;
+    return { a: toVolt(volt.a[i]), b: toVolt(volt.b[i]), c: toVolt(volt.c[i]) };
+  }, [latest, volt]);
+
+  const voltAt = useCallback(
+    (phase: Phase, i: number): number | null => {
+      if (!volt) return null;
+      return convert(toVolt(volt[phase][i]), fundamentalVolt?.[phase] ?? null, unit);
+    },
+    [volt, fundamentalVolt, unit],
+  );
+
+  /** 전압 막대: 차수마다 L1·L2·L3. 1차는 위 기본파 줄에 따로. */
+  const voltSpectrum = useMemo((): Row[] => {
+    if (!latest || !volt) return [];
+    return latest.orders
+      .map((order, i) => {
+        const row: Row = { order, label: `${order}` };
+        for (const { key } of PHASES) row[key] = voltAt(key, i);
+        return row;
+      })
+      .filter((row) => row.order !== 1);
+  }, [latest, volt, voltAt]);
+
+  const voltTicks = useMemo(() => niceTicks(rowsMax(voltSpectrum)), [voltSpectrum]);
 
   /** 보상 전/후 두 차트가 함께 쓰는 세로 눈금 (둘 중 큰 값 기준) */
   const sharedTicks = useMemo(
@@ -390,6 +440,24 @@ export default function DeviceHarmonicsPanel({
   return (
     <div className="harmonics-panel">
       <div className="harmonics-toolbar">
+        <div className="harmonics-view-switch" role="tablist" aria-label="전류 또는 전압">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={quantity === "current"}
+            onClick={() => setQuantity("current")}
+          >
+            전류
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={quantity === "volt"}
+            onClick={() => setQuantity("volt")}
+          >
+            전압
+          </button>
+        </div>
         <div className="harmonics-view-switch" role="tablist" aria-label="보기 방식">
           <button
             type="button"
@@ -414,9 +482,9 @@ export default function DeviceHarmonicsPanel({
             role="radio"
             aria-checked={unit === "A"}
             onClick={() => setUnit("A")}
-            title="전류 크기 (A)"
+            title={quantity === "volt" ? "전압 크기 (V)" : "전류 크기 (A)"}
           >
-            A
+            {quantity === "volt" ? "V" : "A"}
           </button>
           <button
             type="button"
@@ -432,6 +500,10 @@ export default function DeviceHarmonicsPanel({
           {latest
             ? `마지막 수신 ${formatKstMonthDayTime(latest.recordedAt)} · ${
                 latest.source === "command" ? "요청" : "1시간 주기"
+              }${
+                quantity === "volt" && volt && volt.recordedAt !== latest.recordedAt
+                  ? ` · 전압 측정 ${formatKstMonthDayTime(volt.recordedAt)}`
+                  : ""
               }`
             : null}
         </p>
@@ -473,6 +545,143 @@ export default function DeviceHarmonicsPanel({
               ? harmonicsUnsupportedText(fwVersion)
               : "데이터 없음"}
         </p>
+      ) : quantity === "volt" && !volt ? (
+        <p className="harmonics-empty">
+          전압 고조파 데이터 없음 (HMI가 전압 고조파를 보내는 펌웨어로 업데이트된 뒤 표시됩니다)
+        </p>
+      ) : quantity === "volt" && volt && view === "table" ? (
+        <ChartCard title="차수별 고조파 전압" subtitle={`계통 전압 · 단위 ${voltUnitLabel}`} wide fill>
+          <div className="fault-table-wrap harmonics-table-wrap">
+            <table className="fault-table harmonics-table">
+              <thead>
+                <tr>
+                  <th rowSpan={2} scope="col">
+                    차수
+                  </th>
+                  <th colSpan={3} scope="colgroup" className="harmonics-group harmonics-col--volt">
+                    계통 전압
+                  </th>
+                </tr>
+                <tr>
+                  {PHASES.map((p, pi) => (
+                    <th
+                      key={p.key}
+                      scope="col"
+                      className={`harmonics-col--volt${pi === 0 ? " harmonics-group-start" : ""}`}
+                    >
+                      {p.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {latest.orders.map((o, i) => (
+                  <tr key={o} className={o === 1 ? "harmonics-row-fundamental" : undefined}>
+                    <th scope="row">{o === 1 ? "1차 (기본파)" : `${o}차`}</th>
+                    {PHASES.map(({ key }, pi) => (
+                      <td
+                        key={key}
+                        className={`harmonics-col--volt${pi === 0 ? " harmonics-group-start" : ""}`}
+                      >
+                        {fmtVoltValue(voltAt(key, i), unit)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </ChartCard>
+      ) : quantity === "volt" && volt ? (
+        <ChartCard title="차수별 고조파 전압" subtitle={`계통 전압 · 3~49차 · 단위 ${voltUnitLabel}`} wide fill>
+          {fundamentalVolt ? (
+            <div className="harmonics-fund harmonics-fund--single" aria-label="기본파(1차) 전압">
+              <div className="harmonics-fund-head">
+                <span className="harmonics-fund-title">기본파</span>
+                <span className="harmonics-fund-sub">1차 전압 (V)</span>
+              </div>
+              <div className="harmonics-fund-side harmonics-fund-side--volt">
+                <span className="harmonics-fund-side-label">계통 전압</span>
+                <dl className="harmonics-fund-values">
+                  {PHASES.map((p) => {
+                    const v = fundamentalVolt[p.key];
+                    return (
+                      <div key={p.key} className="harmonics-fund-value">
+                        <dt>
+                          <span className="harmonics-swatch" style={{ background: p.color }} aria-hidden />
+                          {p.label}
+                        </dt>
+                        <dd>
+                          {v == null ? "-" : v.toFixed(1)}
+                          <small>V</small>
+                        </dd>
+                      </div>
+                    );
+                  })}
+                </dl>
+              </div>
+            </div>
+          ) : null}
+          <div className="harmonics-side-stack">
+            <div className="harmonics-side">
+              <div className="harmonics-side-title">
+                <span>계통 전압</span>
+                <ul className="harmonics-side-legend">
+                  {PHASES.map((p) => (
+                    <li key={p.key}>
+                      <span className="harmonics-swatch" style={{ background: p.color }} aria-hidden />
+                      {p.label}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="harmonics-side-plot">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={voltSpectrum}
+                    margin={{ top: 6, right: 12, left: 0, bottom: 0 }}
+                    barGap={1}
+                    barCategoryGap="18%"
+                  >
+                    <CartesianGrid {...GRID} vertical={false} />
+                    <XAxis dataKey="label" {...AXIS} interval={0} tick={{ ...AXIS.tick, fontSize: 10 }} />
+                    <YAxis
+                      {...AXIS}
+                      width={44}
+                      domain={[0, voltTicks[voltTicks.length - 1]]}
+                      ticks={voltTicks}
+                      tickFormatter={fmtTick}
+                    />
+                    <Tooltip
+                      {...tooltipProps}
+                      cursor={TOOLTIP_CURSOR}
+                      labelFormatter={(l) => `계통 전압 · ${l}차`}
+                      formatter={(v) => fmtVoltWithUnit(typeof v === "number" ? v : null, unit)}
+                      isAnimationActive={false}
+                    />
+                    {PHASES.map((p) => (
+                      <Bar
+                        key={p.key}
+                        dataKey={p.key}
+                        name={p.label}
+                        fill={p.color}
+                        radius={[3, 3, 0, 0]}
+                        maxBarSize={9}
+                        minPointSize={ZERO_BAR_PX}
+                        shape={zeroAwareBar}
+                      />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+          <p className="harmonics-axis-note">
+            {unit === "A"
+              ? "가로: 차수 · 세로: 계통 전압 (V). 바닥의 흐린 막대는 0입니다."
+              : "가로: 차수 · 세로: 같은 상 기본파(1차) 전압 대비 %. 바닥의 흐린 막대는 0입니다."}
+          </p>
+        </ChartCard>
       ) : view === "table" ? (
         <ChartCard title="차수별 고조파 전류" subtitle={`단위 ${unitLabel}`} wide fill>
           <div className="fault-table-wrap harmonics-table-wrap">

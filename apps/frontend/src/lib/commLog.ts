@@ -34,7 +34,7 @@ export const COMM_KINDS: CommKind[] = [
   { path: "/receiver/faults/critical", label: "긴급 고장", hint: "즉시 알려야 하는 고장 발생·해제" },
   { path: "/receiver/settings", label: "설정값 보고", hint: "HMI 기본 설정값" },
   { path: "/receiver/ota/status", label: "펌웨어 업데이트", hint: "원격 업데이트(OTA) 진행 상황" },
-  { path: "/receiver/harmonics", label: "고조파 보고", hint: "차수별 고조파 전류" },
+  { path: "/receiver/harmonics", label: "고조파 보고", hint: "차수별 고조파 전류·전압" },
 ];
 
 export function pathOnly(path: string): string {
@@ -311,7 +311,8 @@ export function summarize(row: ReceiverLogRow): string {
   }
   if (p === "/receiver/harmonics" && body) {
     const orders = Array.isArray(body.orders) ? body.orders.length : 0;
-    return `${orders}개 차수 · ${body.source === "command" ? "요청받아 측정" : "정기 측정"}`;
+    const volt = body.volt && typeof body.volt === "object" ? " · 전압 포함" : "";
+    return `${orders}개 차수 · ${body.source === "command" ? "요청받아 측정" : "정기 측정"}${volt}`;
   }
   if (p === "/receiver/settings" && body) {
     return [body.moduleType, body.numOfMods != null ? `모듈 ${String(body.numOfMods)}대` : null]

@@ -473,7 +473,11 @@ export const HarmonicRecordScalarFieldEnum = {
   uncompC: 'uncompC',
   compA: 'compA',
   compB: 'compB',
-  compC: 'compC'
+  compC: 'compC',
+  voltA: 'voltA',
+  voltB: 'voltB',
+  voltC: 'voltC',
+  voltRecordedAt: 'voltRecordedAt'
 } as const
 
 export type HarmonicRecordScalarFieldEnum = (typeof HarmonicRecordScalarFieldEnum)[keyof typeof HarmonicRecordScalarFieldEnum]

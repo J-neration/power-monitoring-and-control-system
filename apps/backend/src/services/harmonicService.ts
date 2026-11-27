@@ -3,14 +3,18 @@ import { kstDayStart, kstHourStart } from "../lib/kstBuckets.js";
 import type { ResolvedHistory } from "../lib/historyRange.js";
 
 /**
- * 차수별 고조파 전류 (HMI 저장소 docs/LTE_HARMONIC_DATA_PLAN.md 3장).
+ * 차수별 고조파 전류·전압 (HMI 저장소 docs/LTE_HARMONIC_DATA_PLAN.md 3장, 3-1장).
  * 200A HMI 가 1시간마다 1번, 그리고 명령 refreshHarmonics 를 받았을 때 보낸다.
- * 값은 0.01 A 단위 정수 그대로 저장한다. A 로 바꾸는 일은 화면이 한다.
+ * 전류는 0.01 A, 전압은 0.1 V 단위 정수 그대로 저장한다. A·V 로 바꾸는 일은 화면이 한다.
+ * 전압(volt)은 HMI 펌웨어가 보낼 때만 있다. 없으면 빈 배열 / null.
  */
 export const HARMONIC_SOURCES = ["hourly", "command"] as const;
 export type HarmonicSource = (typeof HARMONIC_SOURCES)[number];
 
 export type HarmonicPhases = { a: number[]; b: number[]; c: number[] };
+
+/** 전압 고조파: 0.1 V 정수 A/B/C상 + 읽은 시각 */
+export type HarmonicVoltage = HarmonicPhases & { recordedAt: Date };
 
 export type HarmonicInput = {
   recordedAt: Date;
@@ -18,6 +22,7 @@ export type HarmonicInput = {
   orders: number[];
   uncomp: HarmonicPhases;
   comp: HarmonicPhases;
+  volt?: HarmonicVoltage;
 };
 
 export type HarmonicRecordDto = {
@@ -28,6 +33,8 @@ export type HarmonicRecordDto = {
   orders: number[];
   uncomp: HarmonicPhases;
   comp: HarmonicPhases;
+  /** 전압을 보내지 않는 펌웨어면 null */
+  volt: HarmonicVoltage | null;
 };
 
 type Row = {
@@ -42,6 +49,10 @@ type Row = {
   compA: number[];
   compB: number[];
   compC: number[];
+  voltA: number[];
+  voltB: number[];
+  voltC: number[];
+  voltRecordedAt: Date | null;
 };
 
 const toDto = (r: Row): HarmonicRecordDto => ({
@@ -52,6 +63,10 @@ const toDto = (r: Row): HarmonicRecordDto => ({
   orders: r.orders,
   uncomp: { a: r.uncompA, b: r.uncompB, c: r.uncompC },
   comp: { a: r.compA, b: r.compB, c: r.compC },
+  volt:
+    r.voltA.length > 0 || r.voltB.length > 0 || r.voltC.length > 0
+      ? { a: r.voltA, b: r.voltB, c: r.voltC, recordedAt: r.voltRecordedAt ?? r.recordedAt }
+      : null,
 });
 
 /**
@@ -72,11 +87,34 @@ export const harmonicRecordedAt = (ts: number | undefined, now: Date): Date => {
   return new Date(ms);
 };
 
-/** 이력 탭 한 점: 한 차수의 보상 전/후 A/B/C상 (A 단위, 값 없으면 null) */
+/**
+ * 전압을 읽은 시각. HMI 는 전류 ts 와 전압 volt.ts 를 같은 RTC 로 찍는다.
+ * 그래서 둘의 차이(전압이 몇 초 늦게, 또는 지난 값이라 몇 시간 일찍 읽힘)만 믿고,
+ * 기준은 이미 검사한 전류 시각(recordedAt)에 둔다. RTC 가 통째로 틀려도 차이는 맞다.
+ * 차이를 모르면(둘 중 하나 없음) 전류 시각과 같다고 본다.
+ */
+export const harmonicVoltRecordedAt = (
+  recordedAt: Date,
+  ts: number | undefined,
+  voltTs: number | undefined,
+): Date => {
+  if (ts === undefined || voltTs === undefined || !Number.isFinite(ts) || !Number.isFinite(voltTs)) {
+    return recordedAt;
+  }
+  const toMs = (v: number) => (v > 1e12 ? v : v * 1000);
+  const t = recordedAt.getTime() + (toMs(voltTs) - toMs(ts));
+  // 전류보다 미래일 수는 거의 없다 (전류 다음에 바로 읽음). 몇 분 넘게 미래면 버린다.
+  return t > recordedAt.getTime() + HARMONIC_TS_MAX_FUTURE_MS ? recordedAt : new Date(t);
+};
+
+type Triple = { a: number | null; b: number | null; c: number | null };
+
+/** 이력 탭 한 점: 한 차수의 보상 전/후 A/B/C상 (A 단위)과 전압 A/B/C상 (V 단위). 값 없으면 null */
 export type HarmonicHistoryPoint = {
   recordedAt: Date;
-  uncomp: { a: number | null; b: number | null; c: number | null };
-  comp: { a: number | null; b: number | null; c: number | null };
+  uncomp: Triple;
+  comp: Triple;
+  volt: Triple;
 };
 
 export type HarmonicHistorySample = {
@@ -88,15 +126,22 @@ export type HarmonicHistorySample = {
   compA: number[];
   compB: number[];
   compC: number[];
+  voltA: number[];
+  voltB: number[];
+  voltC: number[];
 };
 
+/** [묶음, 상, 칸, 정수 → 단위 나눗수]. 전류 0.01 A → A, 전압 0.1 V → V */
 const SERIES = [
-  ["uncomp", "a", "uncompA"],
-  ["uncomp", "b", "uncompB"],
-  ["uncomp", "c", "uncompC"],
-  ["comp", "a", "compA"],
-  ["comp", "b", "compB"],
-  ["comp", "c", "compC"],
+  ["uncomp", "a", "uncompA", 100],
+  ["uncomp", "b", "uncompB", 100],
+  ["uncomp", "c", "uncompC", 100],
+  ["comp", "a", "compA", 100],
+  ["comp", "b", "compB", 100],
+  ["comp", "c", "compC", 100],
+  ["volt", "a", "voltA", 10],
+  ["volt", "b", "voltB", 10],
+  ["volt", "c", "voltC", 10],
 ] as const;
 
 const round2 = (v: number) => Math.round(v * 100) / 100;
@@ -105,7 +150,7 @@ const round2 = (v: number) => Math.round(v * 100) / 100;
  * 기록들에서 한 차수만 뽑아 이력 점으로 만든다. DB 없이 계산만 한다.
  * - raw: 기록 1건 = 점 1개 (HMI 는 1시간마다 보내므로 1시간 간격)
  * - hourly / daily: KST 시·일 단위로 묶고 aggregation(min/avg/max)을 적용. 묶음 시각 = 구간 시작
- * 값은 0.01 A 정수 → A.
+ * 값은 0.01 A 정수 → A, 0.1 V 정수 → V. 전압이 없는 기록은 전압이 null.
  */
 export function buildHarmonicHistory(
   samples: HarmonicHistorySample[],
@@ -116,9 +161,9 @@ export function buildHarmonicHistory(
   const pick = (s: HarmonicHistorySample) => {
     const i = s.orders.indexOf(order);
     const out: Record<string, number | null> = {};
-    for (const [, , col] of SERIES) {
+    for (const [, , col, div] of SERIES) {
       const v = i < 0 ? undefined : s[col][i];
-      out[col] = typeof v === "number" && Number.isFinite(v) ? v / 100 : null;
+      out[col] = typeof v === "number" && Number.isFinite(v) ? v / div : null;
     }
     return out;
   };
@@ -126,6 +171,7 @@ export function buildHarmonicHistory(
     recordedAt,
     uncomp: { a: v.uncompA, b: v.uncompB, c: v.uncompC },
     comp: { a: v.compA, b: v.compB, c: v.compC },
+    volt: { a: v.voltA, b: v.voltB, c: v.voltC },
   });
 
   const sorted = [...samples].sort((x, y) => x.recordedAt.getTime() - y.recordedAt.getTime());
@@ -171,6 +217,9 @@ export const harmonicService = {
         compA: true,
         compB: true,
         compC: true,
+        voltA: true,
+        voltB: true,
+        voltC: true,
       },
     });
     const latest = await prisma.harmonicRecord.findFirst({
@@ -180,6 +229,7 @@ export const harmonicService = {
     });
     return {
       unit: "A",
+      voltUnit: "V",
       order,
       orders: latest?.orders ?? [],
       period: range.period,
@@ -211,6 +261,14 @@ export const harmonicService = {
         compA: input.comp.a,
         compB: input.comp.b,
         compC: input.comp.c,
+        ...(input.volt
+          ? {
+              voltA: input.volt.a,
+              voltB: input.volt.b,
+              voltC: input.volt.c,
+              voltRecordedAt: input.volt.recordedAt,
+            }
+          : {}),
       },
     });
     return toDto(row);
