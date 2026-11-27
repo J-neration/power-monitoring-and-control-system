@@ -284,87 +284,90 @@ export default function DeviceFaultHistory({ installationId, faults, canAck = tr
           </div>
         </div>
 
-        <details className="fault-code-guide">
-          <summary>
-            <span className="fault-code-guide-chevron" aria-hidden>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                <path
-                  d="M6 9l6 6 6-6"
-                  stroke="currentColor"
-                  strokeWidth="2.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            오류 코드 표
-            <span className="fault-code-guide-hint">
-              고장 코드 (F)
-            </span>
-          </summary>
-          <div className="fault-code-guide-body">
-            <div className="fault-table-wrap fault-code-guide-table">
-              <table className="fault-table">
-                <thead>
-                  <tr>
-                    <th>오류코드</th>
-                    <th>내용</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {FAULT_CODE_GUIDE.map((row) => (
-                    <tr key={`${row.code}-${row.detail}`}>
-                      <td className="fault-code-cell">{row.code}</td>
-                      <td>{row.detail}</td>
+        {/* 오류 코드 표 | 상태·이벤트 코드 표 — 좌우 배치 (좁은 화면은 위아래) */}
+        <div className="fault-code-guides">
+          <details className="fault-code-guide">
+            <summary>
+              <span className="fault-code-guide-chevron" aria-hidden>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                  <path
+                    d="M6 9l6 6 6-6"
+                    stroke="currentColor"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              오류 코드 표
+              <span className="fault-code-guide-hint">
+                고장 코드 (F)
+              </span>
+            </summary>
+            <div className="fault-code-guide-body">
+              <div className="fault-table-wrap fault-code-guide-table">
+                <table className="fault-table">
+                  <thead>
+                    <tr>
+                      <th>오류코드</th>
+                      <th>내용</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {FAULT_CODE_GUIDE.map((row) => (
+                      <tr key={`${row.code}-${row.detail}`}>
+                        <td className="fault-code-cell">{row.code}</td>
+                        <td>{row.detail}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        </details>
+          </details>
 
-        <details className="fault-code-guide">
-          <summary>
-            <span className="fault-code-guide-chevron" aria-hidden>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                <path
-                  d="M6 9l6 6 6-6"
-                  stroke="currentColor"
-                  strokeWidth="2.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            상태·이벤트 코드 표
-            <span className="fault-code-guide-hint">
-              모듈 상태 (S) · HMI 이벤트 (H) — 상태 &apos;기록&apos;
-            </span>
-          </summary>
-          <div className="fault-code-guide-body">
-            <div className="fault-table-wrap fault-code-guide-table">
-              <table className="fault-table">
-                <thead>
-                  <tr>
-                    <th>코드</th>
-                    <th>구분</th>
-                    <th>내용</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {STATUS_EVENT_GUIDE.map((row) => (
-                    <tr key={row.code}>
-                      <td className="fault-code-cell">{row.code}</td>
-                      <td>{row.group}</td>
-                      <td>{row.detail}</td>
+          <details className="fault-code-guide">
+            <summary>
+              <span className="fault-code-guide-chevron" aria-hidden>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                  <path
+                    d="M6 9l6 6 6-6"
+                    stroke="currentColor"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              상태·이벤트 코드 표
+              <span className="fault-code-guide-hint">
+                모듈 상태 (S) · HMI 이벤트 (H) — 상태 &apos;기록&apos;
+              </span>
+            </summary>
+            <div className="fault-code-guide-body">
+              <div className="fault-table-wrap fault-code-guide-table">
+                <table className="fault-table">
+                  <thead>
+                    <tr>
+                      <th>코드</th>
+                      <th>구분</th>
+                      <th>내용</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {STATUS_EVENT_GUIDE.map((row) => (
+                      <tr key={row.code}>
+                        <td className="fault-code-cell">{row.code}</td>
+                        <td>{row.group}</td>
+                        <td>{row.detail}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        </details>
+          </details>
+        </div>
 
         {faults.length === 0 ? (
           <p className="fault-empty">최근 fault 이력이 없습니다.</p>

@@ -12980,9 +12980,18 @@ body.pmcs-control-room .global-header:hover {
   background: rgba(0, 0, 0, 0.12);
 }
 
-/* 오류 코드 표 + 상태·이벤트 코드 표: 카드 간격(16px)보다 붙여 한 묶음으로 */
-.fault-code-guide + .fault-code-guide {
-  margin-top: -8px;
+/* 오류 코드 표 | 상태·이벤트 코드 표: 좌우 배치. 하나만 펼쳐도 다른 쪽 높이는 그대로 */
+.fault-code-guides {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 12px;
+}
+
+@media (max-width: 960px) {
+  .fault-code-guides {
+    grid-template-columns: 1fr;
+  }
 }
 
 .fault-code-guide > summary {
