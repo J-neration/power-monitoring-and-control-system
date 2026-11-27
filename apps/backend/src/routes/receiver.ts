@@ -13,7 +13,12 @@ import { faultService } from "../services/faultService.js";
 import { notifyAdminAlerts } from "../services/adminAlertService.js";
 import { settingsService, SettingsError } from "../services/settingsService.js";
 import { OTA_STATUS_STAGES, OTA_STATUS_STATES, otaStatusService } from "../services/otaStatusService.js";
-import { HARMONIC_SOURCES, harmonicRecordedAt, harmonicService } from "../services/harmonicService.js";
+import {
+  HARMONIC_SOURCES,
+  harmonicRecordedAt,
+  harmonicService,
+  harmonicVoltRecordedAt,
+} from "../services/harmonicService.js";
 import { wsHub } from "../lib/wsHub.js";
 import { retentionConfig } from "../lib/retentionConfig.js";
 import { bodyToText, pickIccid, receiverLogService } from "../services/receiverLogService.js";
@@ -120,7 +125,7 @@ const otaStatusSchema = z.object({
   error: z.string().max(200).optional(),
 });
 
-/** 0.01 A 정수, uint16 범위 */
+/** 0.01 A (전압은 0.1 V) 정수, uint16 범위 */
 const harmonicValuesSchema = z.array(z.number().int().min(0).max(65535)).min(1).max(50);
 const harmonicPhasesSchema = z.object({
   a: harmonicValuesSchema,
@@ -138,12 +143,26 @@ const receiverHarmonicsSchema = z
     orders: z.array(z.number().int().min(1).max(99)).min(1).max(50),
     uncomp: harmonicPhasesSchema,
     comp: harmonicPhasesSchema,
+    /** 계통 전압 고조파 (HMI 3-1장). 예전 펌웨어는 보내지 않는다 */
+    volt: harmonicPhasesSchema
+      .extend({
+        /** Unix 초 (전압을 읽은 HMI 시각) */
+        ts: z.coerce.number().optional(),
+        unit: z.literal("0.1V").optional(),
+      })
+      .optional(),
   })
   .refine(
     (b) =>
-      [b.uncomp.a, b.uncomp.b, b.uncomp.c, b.comp.a, b.comp.b, b.comp.c].every(
-        (arr) => arr.length === b.orders.length,
-      ),
+      [
+        b.uncomp.a,
+        b.uncomp.b,
+        b.uncomp.c,
+        b.comp.a,
+        b.comp.b,
+        b.comp.c,
+        ...(b.volt ? [b.volt.a, b.volt.b, b.volt.c] : []),
+      ].every((arr) => arr.length === b.orders.length),
     { message: "every phase array must have the same length as orders" },
   );
 
@@ -1013,7 +1032,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
     return reply.send({ ok: true });
   });
 
-  // Device -> per-order harmonic currents (200A, hourly + refreshHarmonics).
+  // Device -> per-order harmonic currents (+ voltages, optional) (200A, hourly + refreshHarmonics).
   // Same auth and ICCID rules as the OTA status.
   server.post("/harmonics", async (request, reply) => {
     if (!hasValidApiKey(request)) {
@@ -1032,15 +1051,31 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
     if (!identity.installationId || (receiverRequireIccidOnly() && identity.resolvedVia !== "iccid")) {
       return reply.status(422).send({ ok: false, message: "unknown iccid" });
     }
+    const recordedAt = harmonicRecordedAt(body.ts, new Date());
     const record = await harmonicService.record(identity.installationId, {
-      recordedAt: harmonicRecordedAt(body.ts, new Date()),
+      recordedAt,
       source: body.source ?? "hourly",
       orders: body.orders,
       uncomp: body.uncomp,
       comp: body.comp,
+      ...(body.volt
+        ? {
+            volt: {
+              a: body.volt.a,
+              b: body.volt.b,
+              c: body.volt.c,
+              recordedAt: harmonicVoltRecordedAt(recordedAt, body.ts, body.volt.ts),
+            },
+          }
+        : {}),
     });
     server.log.info(
-      { installationId: identity.installationId, source: record.source, orders: record.orders.length },
+      {
+        installationId: identity.installationId,
+        source: record.source,
+        orders: record.orders.length,
+        volt: record.volt != null,
+      },
       "Harmonics received",
     );
     wsHub.broadcast({ type: "harmonics_updated", installationId: identity.installationId });

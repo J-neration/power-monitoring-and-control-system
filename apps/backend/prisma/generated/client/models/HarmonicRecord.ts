@@ -36,6 +36,9 @@ export type HarmonicRecordAvgAggregateOutputType = {
   compA: number | null
   compB: number | null
   compC: number | null
+  voltA: number | null
+  voltB: number | null
+  voltC: number | null
 }
 
 export type HarmonicRecordSumAggregateOutputType = {
@@ -46,6 +49,9 @@ export type HarmonicRecordSumAggregateOutputType = {
   compA: number[]
   compB: number[]
   compC: number[]
+  voltA: number[]
+  voltB: number[]
+  voltC: number[]
 }
 
 export type HarmonicRecordMinAggregateOutputType = {
@@ -54,6 +60,7 @@ export type HarmonicRecordMinAggregateOutputType = {
   recordedAt: Date | null
   receivedAt: Date | null
   source: string | null
+  voltRecordedAt: Date | null
 }
 
 export type HarmonicRecordMaxAggregateOutputType = {
@@ -62,6 +69,7 @@ export type HarmonicRecordMaxAggregateOutputType = {
   recordedAt: Date | null
   receivedAt: Date | null
   source: string | null
+  voltRecordedAt: Date | null
 }
 
 export type HarmonicRecordCountAggregateOutputType = {
@@ -77,6 +85,10 @@ export type HarmonicRecordCountAggregateOutputType = {
   compA: number
   compB: number
   compC: number
+  voltA: number
+  voltB: number
+  voltC: number
+  voltRecordedAt: number
   _all: number
 }
 
@@ -89,6 +101,9 @@ export type HarmonicRecordAvgAggregateInputType = {
   compA?: true
   compB?: true
   compC?: true
+  voltA?: true
+  voltB?: true
+  voltC?: true
 }
 
 export type HarmonicRecordSumAggregateInputType = {
@@ -99,6 +114,9 @@ export type HarmonicRecordSumAggregateInputType = {
   compA?: true
   compB?: true
   compC?: true
+  voltA?: true
+  voltB?: true
+  voltC?: true
 }
 
 export type HarmonicRecordMinAggregateInputType = {
@@ -107,6 +125,7 @@ export type HarmonicRecordMinAggregateInputType = {
   recordedAt?: true
   receivedAt?: true
   source?: true
+  voltRecordedAt?: true
 }
 
 export type HarmonicRecordMaxAggregateInputType = {
@@ -115,6 +134,7 @@ export type HarmonicRecordMaxAggregateInputType = {
   recordedAt?: true
   receivedAt?: true
   source?: true
+  voltRecordedAt?: true
 }
 
 export type HarmonicRecordCountAggregateInputType = {
@@ -130,6 +150,10 @@ export type HarmonicRecordCountAggregateInputType = {
   compA?: true
   compB?: true
   compC?: true
+  voltA?: true
+  voltB?: true
+  voltC?: true
+  voltRecordedAt?: true
   _all?: true
 }
 
@@ -232,6 +256,10 @@ export type HarmonicRecordGroupByOutputType = {
   compA: number[]
   compB: number[]
   compC: number[]
+  voltA: number[]
+  voltB: number[]
+  voltC: number[]
+  voltRecordedAt: Date | null
   _count: HarmonicRecordCountAggregateOutputType | null
   _avg: HarmonicRecordAvgAggregateOutputType | null
   _sum: HarmonicRecordSumAggregateOutputType | null
@@ -270,6 +298,10 @@ export type HarmonicRecordWhereInput = {
   compA?: Prisma.IntNullableListFilter<"HarmonicRecord">
   compB?: Prisma.IntNullableListFilter<"HarmonicRecord">
   compC?: Prisma.IntNullableListFilter<"HarmonicRecord">
+  voltA?: Prisma.IntNullableListFilter<"HarmonicRecord">
+  voltB?: Prisma.IntNullableListFilter<"HarmonicRecord">
+  voltC?: Prisma.IntNullableListFilter<"HarmonicRecord">
+  voltRecordedAt?: Prisma.DateTimeNullableFilter<"HarmonicRecord"> | Date | string | null
   installation?: Prisma.XOR<Prisma.InstallationScalarRelationFilter, Prisma.InstallationWhereInput>
 }
 
@@ -286,6 +318,10 @@ export type HarmonicRecordOrderByWithRelationInput = {
   compA?: Prisma.SortOrder
   compB?: Prisma.SortOrder
   compC?: Prisma.SortOrder
+  voltA?: Prisma.SortOrder
+  voltB?: Prisma.SortOrder
+  voltC?: Prisma.SortOrder
+  voltRecordedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   installation?: Prisma.InstallationOrderByWithRelationInput
 }
 
@@ -305,6 +341,10 @@ export type HarmonicRecordWhereUniqueInput = Prisma.AtLeast<{
   compA?: Prisma.IntNullableListFilter<"HarmonicRecord">
   compB?: Prisma.IntNullableListFilter<"HarmonicRecord">
   compC?: Prisma.IntNullableListFilter<"HarmonicRecord">
+  voltA?: Prisma.IntNullableListFilter<"HarmonicRecord">
+  voltB?: Prisma.IntNullableListFilter<"HarmonicRecord">
+  voltC?: Prisma.IntNullableListFilter<"HarmonicRecord">
+  voltRecordedAt?: Prisma.DateTimeNullableFilter<"HarmonicRecord"> | Date | string | null
   installation?: Prisma.XOR<Prisma.InstallationScalarRelationFilter, Prisma.InstallationWhereInput>
 }, "id">
 
@@ -321,6 +361,10 @@ export type HarmonicRecordOrderByWithAggregationInput = {
   compA?: Prisma.SortOrder
   compB?: Prisma.SortOrder
   compC?: Prisma.SortOrder
+  voltA?: Prisma.SortOrder
+  voltB?: Prisma.SortOrder
+  voltC?: Prisma.SortOrder
+  voltRecordedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.HarmonicRecordCountOrderByAggregateInput
   _avg?: Prisma.HarmonicRecordAvgOrderByAggregateInput
   _max?: Prisma.HarmonicRecordMaxOrderByAggregateInput
@@ -344,6 +388,10 @@ export type HarmonicRecordScalarWhereWithAggregatesInput = {
   compA?: Prisma.IntNullableListFilter<"HarmonicRecord">
   compB?: Prisma.IntNullableListFilter<"HarmonicRecord">
   compC?: Prisma.IntNullableListFilter<"HarmonicRecord">
+  voltA?: Prisma.IntNullableListFilter<"HarmonicRecord">
+  voltB?: Prisma.IntNullableListFilter<"HarmonicRecord">
+  voltC?: Prisma.IntNullableListFilter<"HarmonicRecord">
+  voltRecordedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"HarmonicRecord"> | Date | string | null
 }
 
 export type HarmonicRecordCreateInput = {
@@ -358,6 +406,10 @@ export type HarmonicRecordCreateInput = {
   compA?: Prisma.HarmonicRecordCreatecompAInput | number[]
   compB?: Prisma.HarmonicRecordCreatecompBInput | number[]
   compC?: Prisma.HarmonicRecordCreatecompCInput | number[]
+  voltA?: Prisma.HarmonicRecordCreatevoltAInput | number[]
+  voltB?: Prisma.HarmonicRecordCreatevoltBInput | number[]
+  voltC?: Prisma.HarmonicRecordCreatevoltCInput | number[]
+  voltRecordedAt?: Date | string | null
   installation: Prisma.InstallationCreateNestedOneWithoutHarmonicRecordsInput
 }
 
@@ -374,6 +426,10 @@ export type HarmonicRecordUncheckedCreateInput = {
   compA?: Prisma.HarmonicRecordCreatecompAInput | number[]
   compB?: Prisma.HarmonicRecordCreatecompBInput | number[]
   compC?: Prisma.HarmonicRecordCreatecompCInput | number[]
+  voltA?: Prisma.HarmonicRecordCreatevoltAInput | number[]
+  voltB?: Prisma.HarmonicRecordCreatevoltBInput | number[]
+  voltC?: Prisma.HarmonicRecordCreatevoltCInput | number[]
+  voltRecordedAt?: Date | string | null
 }
 
 export type HarmonicRecordUpdateInput = {
@@ -388,6 +444,10 @@ export type HarmonicRecordUpdateInput = {
   compA?: Prisma.HarmonicRecordUpdatecompAInput | number[]
   compB?: Prisma.HarmonicRecordUpdatecompBInput | number[]
   compC?: Prisma.HarmonicRecordUpdatecompCInput | number[]
+  voltA?: Prisma.HarmonicRecordUpdatevoltAInput | number[]
+  voltB?: Prisma.HarmonicRecordUpdatevoltBInput | number[]
+  voltC?: Prisma.HarmonicRecordUpdatevoltCInput | number[]
+  voltRecordedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   installation?: Prisma.InstallationUpdateOneRequiredWithoutHarmonicRecordsNestedInput
 }
 
@@ -404,6 +464,10 @@ export type HarmonicRecordUncheckedUpdateInput = {
   compA?: Prisma.HarmonicRecordUpdatecompAInput | number[]
   compB?: Prisma.HarmonicRecordUpdatecompBInput | number[]
   compC?: Prisma.HarmonicRecordUpdatecompCInput | number[]
+  voltA?: Prisma.HarmonicRecordUpdatevoltAInput | number[]
+  voltB?: Prisma.HarmonicRecordUpdatevoltBInput | number[]
+  voltC?: Prisma.HarmonicRecordUpdatevoltCInput | number[]
+  voltRecordedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type HarmonicRecordCreateManyInput = {
@@ -419,6 +483,10 @@ export type HarmonicRecordCreateManyInput = {
   compA?: Prisma.HarmonicRecordCreatecompAInput | number[]
   compB?: Prisma.HarmonicRecordCreatecompBInput | number[]
   compC?: Prisma.HarmonicRecordCreatecompCInput | number[]
+  voltA?: Prisma.HarmonicRecordCreatevoltAInput | number[]
+  voltB?: Prisma.HarmonicRecordCreatevoltBInput | number[]
+  voltC?: Prisma.HarmonicRecordCreatevoltCInput | number[]
+  voltRecordedAt?: Date | string | null
 }
 
 export type HarmonicRecordUpdateManyMutationInput = {
@@ -433,6 +501,10 @@ export type HarmonicRecordUpdateManyMutationInput = {
   compA?: Prisma.HarmonicRecordUpdatecompAInput | number[]
   compB?: Prisma.HarmonicRecordUpdatecompBInput | number[]
   compC?: Prisma.HarmonicRecordUpdatecompCInput | number[]
+  voltA?: Prisma.HarmonicRecordUpdatevoltAInput | number[]
+  voltB?: Prisma.HarmonicRecordUpdatevoltBInput | number[]
+  voltC?: Prisma.HarmonicRecordUpdatevoltCInput | number[]
+  voltRecordedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type HarmonicRecordUncheckedUpdateManyInput = {
@@ -448,6 +520,10 @@ export type HarmonicRecordUncheckedUpdateManyInput = {
   compA?: Prisma.HarmonicRecordUpdatecompAInput | number[]
   compB?: Prisma.HarmonicRecordUpdatecompBInput | number[]
   compC?: Prisma.HarmonicRecordUpdatecompCInput | number[]
+  voltA?: Prisma.HarmonicRecordUpdatevoltAInput | number[]
+  voltB?: Prisma.HarmonicRecordUpdatevoltBInput | number[]
+  voltC?: Prisma.HarmonicRecordUpdatevoltCInput | number[]
+  voltRecordedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type HarmonicRecordListRelationFilter = {
@@ -473,6 +549,10 @@ export type HarmonicRecordCountOrderByAggregateInput = {
   compA?: Prisma.SortOrder
   compB?: Prisma.SortOrder
   compC?: Prisma.SortOrder
+  voltA?: Prisma.SortOrder
+  voltB?: Prisma.SortOrder
+  voltC?: Prisma.SortOrder
+  voltRecordedAt?: Prisma.SortOrder
 }
 
 export type HarmonicRecordAvgOrderByAggregateInput = {
@@ -483,6 +563,9 @@ export type HarmonicRecordAvgOrderByAggregateInput = {
   compA?: Prisma.SortOrder
   compB?: Prisma.SortOrder
   compC?: Prisma.SortOrder
+  voltA?: Prisma.SortOrder
+  voltB?: Prisma.SortOrder
+  voltC?: Prisma.SortOrder
 }
 
 export type HarmonicRecordMaxOrderByAggregateInput = {
@@ -491,6 +574,7 @@ export type HarmonicRecordMaxOrderByAggregateInput = {
   recordedAt?: Prisma.SortOrder
   receivedAt?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  voltRecordedAt?: Prisma.SortOrder
 }
 
 export type HarmonicRecordMinOrderByAggregateInput = {
@@ -499,6 +583,7 @@ export type HarmonicRecordMinOrderByAggregateInput = {
   recordedAt?: Prisma.SortOrder
   receivedAt?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  voltRecordedAt?: Prisma.SortOrder
 }
 
 export type HarmonicRecordSumOrderByAggregateInput = {
@@ -509,6 +594,9 @@ export type HarmonicRecordSumOrderByAggregateInput = {
   compA?: Prisma.SortOrder
   compB?: Prisma.SortOrder
   compC?: Prisma.SortOrder
+  voltA?: Prisma.SortOrder
+  voltB?: Prisma.SortOrder
+  voltC?: Prisma.SortOrder
 }
 
 export type HarmonicRecordCreateNestedManyWithoutInstallationInput = {
@@ -581,6 +669,18 @@ export type HarmonicRecordCreatecompCInput = {
   set: number[]
 }
 
+export type HarmonicRecordCreatevoltAInput = {
+  set: number[]
+}
+
+export type HarmonicRecordCreatevoltBInput = {
+  set: number[]
+}
+
+export type HarmonicRecordCreatevoltCInput = {
+  set: number[]
+}
+
 export type HarmonicRecordUpdateordersInput = {
   set?: number[]
   push?: number | number[]
@@ -616,6 +716,21 @@ export type HarmonicRecordUpdatecompCInput = {
   push?: number | number[]
 }
 
+export type HarmonicRecordUpdatevoltAInput = {
+  set?: number[]
+  push?: number | number[]
+}
+
+export type HarmonicRecordUpdatevoltBInput = {
+  set?: number[]
+  push?: number | number[]
+}
+
+export type HarmonicRecordUpdatevoltCInput = {
+  set?: number[]
+  push?: number | number[]
+}
+
 export type HarmonicRecordCreateWithoutInstallationInput = {
   id?: string
   recordedAt?: Date | string
@@ -628,6 +743,10 @@ export type HarmonicRecordCreateWithoutInstallationInput = {
   compA?: Prisma.HarmonicRecordCreatecompAInput | number[]
   compB?: Prisma.HarmonicRecordCreatecompBInput | number[]
   compC?: Prisma.HarmonicRecordCreatecompCInput | number[]
+  voltA?: Prisma.HarmonicRecordCreatevoltAInput | number[]
+  voltB?: Prisma.HarmonicRecordCreatevoltBInput | number[]
+  voltC?: Prisma.HarmonicRecordCreatevoltCInput | number[]
+  voltRecordedAt?: Date | string | null
 }
 
 export type HarmonicRecordUncheckedCreateWithoutInstallationInput = {
@@ -642,6 +761,10 @@ export type HarmonicRecordUncheckedCreateWithoutInstallationInput = {
   compA?: Prisma.HarmonicRecordCreatecompAInput | number[]
   compB?: Prisma.HarmonicRecordCreatecompBInput | number[]
   compC?: Prisma.HarmonicRecordCreatecompCInput | number[]
+  voltA?: Prisma.HarmonicRecordCreatevoltAInput | number[]
+  voltB?: Prisma.HarmonicRecordCreatevoltBInput | number[]
+  voltC?: Prisma.HarmonicRecordCreatevoltCInput | number[]
+  voltRecordedAt?: Date | string | null
 }
 
 export type HarmonicRecordCreateOrConnectWithoutInstallationInput = {
@@ -686,6 +809,10 @@ export type HarmonicRecordScalarWhereInput = {
   compA?: Prisma.IntNullableListFilter<"HarmonicRecord">
   compB?: Prisma.IntNullableListFilter<"HarmonicRecord">
   compC?: Prisma.IntNullableListFilter<"HarmonicRecord">
+  voltA?: Prisma.IntNullableListFilter<"HarmonicRecord">
+  voltB?: Prisma.IntNullableListFilter<"HarmonicRecord">
+  voltC?: Prisma.IntNullableListFilter<"HarmonicRecord">
+  voltRecordedAt?: Prisma.DateTimeNullableFilter<"HarmonicRecord"> | Date | string | null
 }
 
 export type HarmonicRecordCreateManyInstallationInput = {
@@ -700,6 +827,10 @@ export type HarmonicRecordCreateManyInstallationInput = {
   compA?: Prisma.HarmonicRecordCreatecompAInput | number[]
   compB?: Prisma.HarmonicRecordCreatecompBInput | number[]
   compC?: Prisma.HarmonicRecordCreatecompCInput | number[]
+  voltA?: Prisma.HarmonicRecordCreatevoltAInput | number[]
+  voltB?: Prisma.HarmonicRecordCreatevoltBInput | number[]
+  voltC?: Prisma.HarmonicRecordCreatevoltCInput | number[]
+  voltRecordedAt?: Date | string | null
 }
 
 export type HarmonicRecordUpdateWithoutInstallationInput = {
@@ -714,6 +845,10 @@ export type HarmonicRecordUpdateWithoutInstallationInput = {
   compA?: Prisma.HarmonicRecordUpdatecompAInput | number[]
   compB?: Prisma.HarmonicRecordUpdatecompBInput | number[]
   compC?: Prisma.HarmonicRecordUpdatecompCInput | number[]
+  voltA?: Prisma.HarmonicRecordUpdatevoltAInput | number[]
+  voltB?: Prisma.HarmonicRecordUpdatevoltBInput | number[]
+  voltC?: Prisma.HarmonicRecordUpdatevoltCInput | number[]
+  voltRecordedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type HarmonicRecordUncheckedUpdateWithoutInstallationInput = {
@@ -728,6 +863,10 @@ export type HarmonicRecordUncheckedUpdateWithoutInstallationInput = {
   compA?: Prisma.HarmonicRecordUpdatecompAInput | number[]
   compB?: Prisma.HarmonicRecordUpdatecompBInput | number[]
   compC?: Prisma.HarmonicRecordUpdatecompCInput | number[]
+  voltA?: Prisma.HarmonicRecordUpdatevoltAInput | number[]
+  voltB?: Prisma.HarmonicRecordUpdatevoltBInput | number[]
+  voltC?: Prisma.HarmonicRecordUpdatevoltCInput | number[]
+  voltRecordedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type HarmonicRecordUncheckedUpdateManyWithoutInstallationInput = {
@@ -742,6 +881,10 @@ export type HarmonicRecordUncheckedUpdateManyWithoutInstallationInput = {
   compA?: Prisma.HarmonicRecordUpdatecompAInput | number[]
   compB?: Prisma.HarmonicRecordUpdatecompBInput | number[]
   compC?: Prisma.HarmonicRecordUpdatecompCInput | number[]
+  voltA?: Prisma.HarmonicRecordUpdatevoltAInput | number[]
+  voltB?: Prisma.HarmonicRecordUpdatevoltBInput | number[]
+  voltC?: Prisma.HarmonicRecordUpdatevoltCInput | number[]
+  voltRecordedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -759,6 +902,10 @@ export type HarmonicRecordSelect<ExtArgs extends runtime.Types.Extensions.Intern
   compA?: boolean
   compB?: boolean
   compC?: boolean
+  voltA?: boolean
+  voltB?: boolean
+  voltC?: boolean
+  voltRecordedAt?: boolean
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["harmonicRecord"]>
 
@@ -775,6 +922,10 @@ export type HarmonicRecordSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   compA?: boolean
   compB?: boolean
   compC?: boolean
+  voltA?: boolean
+  voltB?: boolean
+  voltC?: boolean
+  voltRecordedAt?: boolean
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["harmonicRecord"]>
 
@@ -791,6 +942,10 @@ export type HarmonicRecordSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   compA?: boolean
   compB?: boolean
   compC?: boolean
+  voltA?: boolean
+  voltB?: boolean
+  voltC?: boolean
+  voltRecordedAt?: boolean
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["harmonicRecord"]>
 
@@ -807,9 +962,13 @@ export type HarmonicRecordSelectScalar = {
   compA?: boolean
   compB?: boolean
   compC?: boolean
+  voltA?: boolean
+  voltB?: boolean
+  voltC?: boolean
+  voltRecordedAt?: boolean
 }
 
-export type HarmonicRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "installationId" | "recordedAt" | "receivedAt" | "source" | "orders" | "uncompA" | "uncompB" | "uncompC" | "compA" | "compB" | "compC", ExtArgs["result"]["harmonicRecord"]>
+export type HarmonicRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "installationId" | "recordedAt" | "receivedAt" | "source" | "orders" | "uncompA" | "uncompB" | "uncompC" | "compA" | "compB" | "compC" | "voltA" | "voltB" | "voltC" | "voltRecordedAt", ExtArgs["result"]["harmonicRecord"]>
 export type HarmonicRecordInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   installation?: boolean | Prisma.InstallationDefaultArgs<ExtArgs>
 }
@@ -850,6 +1009,16 @@ export type $HarmonicRecordPayload<ExtArgs extends runtime.Types.Extensions.Inte
     compA: number[]
     compB: number[]
     compC: number[]
+    /**
+     * 계통 전압 고조파 (Vsa/Vsb/Vsc, 0.1 V 정수). 전압을 보내지 않는 펌웨어면 빈 배열
+     */
+    voltA: number[]
+    voltB: number[]
+    voltC: number[]
+    /**
+     * 전압을 읽은 시각. 전류와 따로 읽으므로 다를 수 있다. 전압이 없으면 null
+     */
+    voltRecordedAt: Date | null
   }, ExtArgs["result"]["harmonicRecord"]>
   composites: {}
 }
@@ -1286,6 +1455,10 @@ export interface HarmonicRecordFieldRefs {
   readonly compA: Prisma.FieldRef<"HarmonicRecord", 'Int[]'>
   readonly compB: Prisma.FieldRef<"HarmonicRecord", 'Int[]'>
   readonly compC: Prisma.FieldRef<"HarmonicRecord", 'Int[]'>
+  readonly voltA: Prisma.FieldRef<"HarmonicRecord", 'Int[]'>
+  readonly voltB: Prisma.FieldRef<"HarmonicRecord", 'Int[]'>
+  readonly voltC: Prisma.FieldRef<"HarmonicRecord", 'Int[]'>
+  readonly voltRecordedAt: Prisma.FieldRef<"HarmonicRecord", 'DateTime'>
 }
     
 

@@ -13,7 +13,8 @@ import { harmonicsSupported, harmonicsUnsupportedText } from "../lib/harmonicsSu
 
 /**
  * 이력 탭 → 고조파: 고른 차수 하나의 기간별 추세.
- * 보상 전 차트 1개, 보상 후 차트 1개. 각 차트에 L1·L2·L3 선 (상끼리 비교).
+ * 보상 전 차트 1개, 보상 후 차트 1개, 전압을 받은 기록이 있으면 계통 전압 차트 1개.
+ * 각 차트에 L1·L2·L3 선 (상끼리 비교).
  * 기간·시작일·집계는 이력 탭 위쪽 버튼(DeviceHistoryCharts)을 그대로 따른다.
  */
 
@@ -41,7 +42,8 @@ type HarmonicHistoryPayload = {
   orders: number[];
   resolution: Resolution;
   aggregation: Agg;
-  points: { recordedAt: string; uncomp: Triple; comp: Triple }[];
+  /** volt: 예전 서버면 없음, 전압을 안 보낸 기록이면 값이 null */
+  points: { recordedAt: string; uncomp: Triple; comp: Triple; volt?: Triple }[];
   message?: string;
 };
 
@@ -125,21 +127,25 @@ export default function HarmonicHistoryCharts({
       aL1: p.comp.a,
       aL2: p.comp.b,
       aL3: p.comp.c,
+      vL1: p.volt?.a ?? null,
+      vL2: p.volt?.b ?? null,
+      vL3: p.volt?.c ?? null,
     }));
   }, [payload, resolution]);
 
-  const hasData = data.some((row) =>
-    [row.bL1, row.bL2, row.bL3, row.aL1, row.aL2, row.aL3].some((v) => v != null),
-  );
+  const hasVolt = data.some((row) => [row.vL1, row.vL2, row.vL3].some((v) => v != null));
+  const hasData =
+    hasVolt ||
+    data.some((row) => [row.bL1, row.bL2, row.bL3, row.aL1, row.aL2, row.aL3].some((v) => v != null));
 
-  const series = (prefix: "b" | "a") =>
+  const series = (prefix: "b" | "a" | "v") =>
     PHASES.map((p) => ({
       dataKey: `${prefix}${p.label}`,
       name: p.label,
       stroke: p.color,
       fill: `url(#harm-${prefix}-${p.key})`,
     }));
-  const grads = (prefix: "b" | "a") =>
+  const grads = (prefix: "b" | "a" | "v") =>
     PHASES.map((p) => ({ id: `harm-${prefix}-${p.key}`, color: p.color, opacity: 0.12 }));
 
   const orderPicker = (
@@ -224,6 +230,18 @@ export default function HarmonicHistoryCharts({
             />
           </ChartCard>
         ))}
+        {hasVolt ? (
+          <ChartCard title={`${order}차 고조파 전압 (V)`} subtitle={`— 계통 전압 · ${rangeLabel}`} wide>
+            <HistoryAreaChart
+              data={data}
+              grads={grads("v")}
+              series={series("v")}
+              yDomain={[0, "auto"]}
+              yUnit=" V"
+              faults={faults}
+            />
+          </ChartCard>
+        ) : null}
       </div>
     </>
   );
