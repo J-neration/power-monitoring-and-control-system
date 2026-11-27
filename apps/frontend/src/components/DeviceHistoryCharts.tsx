@@ -22,6 +22,7 @@ import {
 } from "../lib/kstTime";
 import { DEMO_HISTORY_INSTALLATION_ID } from "../lib/demoHistoryReadings";
 import type { TelemetryReading } from "../types/site";
+import { intervalLabel, observedIntervalMinutes } from "../lib/reportInterval";
 
 const TEMP_COLORS = [
   CHART_COLORS.load,
@@ -132,6 +133,8 @@ type Props = {
   facilityTotal?: number | null;
   /** 주·월·연. 관리자는 항상 true. 고객 계정은 설치지점 설정을 따른다. */
   longRangeVisible?: boolean;
+  /** HMI 펌웨어 버전. 고조파 탭에서 v2.5.1 미만 안내에 쓴다. */
+  fwVersion?: string | null;
 };
 
 export default function DeviceHistoryCharts({
@@ -142,6 +145,7 @@ export default function DeviceHistoryCharts({
   faults = [],
   facilityTotal = null,
   longRangeVisible = true,
+  fwVersion,
 }: Props) {
   const [subTab, setSubTab] = useState<SubTab>("pf");
   const [period, setPeriod] = useState<Period>("day");
@@ -212,12 +216,17 @@ export default function DeviceHistoryCharts({
   const aggDisabled = isHarmonics ? rangePeriod === "day" : resolution === "raw";
   const activeAgg: Agg = aggDisabled ? "avg" : aggregation;
   const aggLabel = AGGS.find((item) => item.key === activeAgg)?.label ?? "평균";
-  const resLabel = resolution === "raw" ? "10분" : resolution === "hourly" ? "1시간" : "1일";
+  // 장비마다 보고 주기가 달라(10/30/60분) 받은 기록에서 구한다.
+  const rawLabel = intervalLabel(
+    observedIntervalMinutes(readings) ??
+      (resolution === "raw" && remote?.points ? observedIntervalMinutes(remote.points) : null),
+  );
+  const resLabel = resolution === "raw" ? rawLabel : resolution === "hourly" ? "1시간" : "1일";
   const periodLabel = PERIODS.find((item) => item.key === rangePeriod)?.label ?? "일간";
   const rangeLabel = `${resLabel}${resolution === "raw" ? "" : ` ${aggLabel}`}`;
   const hoursLabel =
     resolution === "raw" && rangePeriod === "day" && !start
-      ? `최근 ${hours}시간 · 10분`
+      ? `최근 ${hours}시간 · ${rawLabel}`
       : rangePeriod === "day"
         ? `${periodLabel} · ${rangeLabel}`
         : rangeLabel;
@@ -359,7 +368,8 @@ export default function DeviceHistoryCharts({
   const gapLabel = remote && remote.gapCount > 0 ? `누락 ${remote.gapCount}` : "";
   const todayStart = todayStartLocal();
 
-  const rangeBar = (
+  /** 기간·집계 버튼: 항목 탭 줄 오른쪽 */
+  const rangeChips = (
     <div className="history-range-bar">
       {longRangeVisible ? (
         <div className="monitor-view-chips" role="tablist" aria-label="조회 기간">
@@ -391,7 +401,7 @@ export default function DeviceHistoryCharts({
             disabled={aggDisabled && key !== "avg"}
             title={
               aggDisabled && key !== "avg"
-                ? `${isHarmonics ? "1시간" : "10분"} 원본에는 구간 최소·최대가 없습니다`
+                ? `${isHarmonics ? "1시간" : rawLabel === "원본" ? "" : `${rawLabel} `}원본에는 구간 최소·최대가 없습니다`
                 : undefined
             }
             onClick={() => setAggregation(key)}
@@ -407,10 +417,16 @@ export default function DeviceHistoryCharts({
             className={`monitor-view-chip${detail ? " active" : ""}`}
             onClick={() => setDetail((value) => !value)}
           >
-            10분 상세
+            {rawLabel === "원본" ? "원본 상세" : `${rawLabel} 상세`}
           </button>
         </div>
       ) : null}
+    </div>
+  );
+
+  /** 시작 시각·날짜 입력: 둘째 줄 오른쪽 */
+  const rangeInputs = (
+    <div className="history-range-bar">
       {rangePeriod === "day" ? (
         <>
           <input
@@ -473,41 +489,48 @@ export default function DeviceHistoryCharts({
     </div>
   );
 
-  const nav = (
-    <nav className="monitor-view-nav" aria-label="이력 화면">
-      <div className="monitor-view-chips" role="tablist">
-        {SUB_TABS.map(({ key, label }) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            aria-selected={subTab === key}
-            className={`monitor-view-chip${subTab === key ? " active" : ""}`}
-            onClick={() => setSubTab(key)}
-          >
-            {label}
-          </button>
-        ))}
+  /** 위쪽: 1줄 = 항목 탭(왼쪽) + 기간·집계(오른쪽), 2줄 = 데이터 날짜(왼쪽) + 날짜 입력(오른쪽) */
+  const header = (
+    <div className="history-head">
+      <nav className="monitor-view-nav history-head-row" aria-label="이력 화면">
+        <div className="monitor-view-chips" role="tablist">
+          {SUB_TABS.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={subTab === key}
+              className={`monitor-view-chip${subTab === key ? " active" : ""}`}
+              onClick={() => setSubTab(key)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {rangeChips}
+      </nav>
+      <div className="history-head-row history-head-sub">
+        {dataDateLabel && !loading && !isHarmonics ? (
+          <p className="history-data-date-line" aria-label="데이터 기준 날짜">
+            {[dataDateLabel, coverageLabel, gapLabel].filter(Boolean).join(" · ")}
+          </p>
+        ) : null}
+        {rangeInputs}
       </div>
-      {dataDateLabel && !loading && !isHarmonics ? (
-        <p className="history-data-date-line" aria-label="데이터 기준 날짜">
-          {[dataDateLabel, coverageLabel, gapLabel].filter(Boolean).join(" · ")}
-        </p>
-      ) : null}
-    </nav>
+    </div>
   );
 
   if (isHarmonics) {
     return (
       <div className="device-monitor-board">
-        {rangeBar}
-        {nav}
+        {header}
         <HarmonicHistoryCharts
           installationId={installationId}
           period={rangePeriod}
           start={start}
           aggregation={activeAgg}
           faults={faults}
+          fwVersion={fwVersion}
         />
       </div>
     );
@@ -516,8 +539,7 @@ export default function DeviceHistoryCharts({
   if (loading) {
     return (
       <div className="device-monitor-board">
-        {rangeBar}
-        {nav}
+        {header}
         <div className="history-loading" role="status" aria-live="polite" aria-busy="true">
           <span className="history-loading-spinner" aria-hidden />
           <span className="history-loading-label">이력을 불러오는 중</span>
@@ -529,8 +551,7 @@ export default function DeviceHistoryCharts({
   if (!chartReadings.some((row) => !(row as { gap?: boolean }).gap)) {
     return (
       <div className="device-monitor-board">
-        {rangeBar}
-        {nav}
+        {header}
         <div className="chart-card chart-card-wide history-empty">
           <p>{error ?? `${hoursLabel} 수신된 데이터가 없습니다.`}</p>
           <p className="history-empty-sub">
@@ -559,8 +580,7 @@ export default function DeviceHistoryCharts({
 
   return (
     <div className="device-monitor-board">
-      {rangeBar}
-      {nav}
+      {header}
       {error ? <p className="history-energy-note">{error}</p> : null}
 
       <div className="device-history-body device-charts-grid">

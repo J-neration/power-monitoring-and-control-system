@@ -9,6 +9,7 @@ const env = loadEnv();
 const server = await buildServer(env);
 let stopAggregation = () => {};
 let stopFreshnessCheck = () => {};
+let stopAlarmSync = () => {};
 
 let shuttingDown = false;
 const shutdown = async (signal: string) => {
@@ -18,6 +19,7 @@ const shutdown = async (signal: string) => {
   try {
     stopAggregation();
     stopFreshnessCheck();
+    stopAlarmSync();
     await server.close();
   } finally {
     process.exit(0);
@@ -33,6 +35,8 @@ try {
   stopAggregation = startAggregationScheduler(server.log);
   const { startDeviceFreshnessCheck } = await import("./services/deviceFreshnessCheck.js");
   stopFreshnessCheck = startDeviceFreshnessCheck(server.log);
+  const { startAlarmSync } = await import("./services/alarmService.js");
+  stopAlarmSync = startAlarmSync(server.log);
 } catch (error) {
   const err = error as NodeJS.ErrnoException;
   if (err?.code === "EADDRINUSE") {

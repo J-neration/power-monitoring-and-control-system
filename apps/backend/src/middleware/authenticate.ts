@@ -54,6 +54,21 @@ export const requireFaultReader = async (
 };
 
 /**
+ * 관제 알람 확인(ack) — 관리자·고객사(CLIENT). 범위(자기 고객사 현장)는 alarmService 가 거른다.
+ */
+export const requireAlarmAcker = async (
+  request: FastifyRequest,
+  reply: FastifyReply
+) => {
+  await authenticate(request, reply);
+  if (reply.sent) return;
+  const role = request.user.role;
+  if (role !== "ADMIN" && role !== "CLIENT") {
+    return reply.status(403).send({ message: "알람 확인 권한이 없습니다." });
+  }
+};
+
+/**
  * 출고검사 전용 API (/inspection/*). 관리자는 기존 /admin API 를 쓴다.
  * 범위는 토큰의 siteId(검사 현장) 하나로 고정된다.
  */

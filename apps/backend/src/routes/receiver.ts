@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync, FastifyRequest } from "fastify";
+import { Readable } from "node:stream";
 import {
   deviceService,
   ensureInstallationForIccid,
@@ -12,8 +13,15 @@ import { faultService } from "../services/faultService.js";
 import { notifyAdminAlerts } from "../services/adminAlertService.js";
 import { settingsService, SettingsError } from "../services/settingsService.js";
 import { OTA_STATUS_STAGES, OTA_STATUS_STATES, otaStatusService } from "../services/otaStatusService.js";
-import { HARMONIC_SOURCES, harmonicRecordedAt, harmonicService } from "../services/harmonicService.js";
+import {
+  HARMONIC_SOURCES,
+  harmonicRecordedAt,
+  harmonicService,
+  harmonicVoltRecordedAt,
+} from "../services/harmonicService.js";
 import { wsHub } from "../lib/wsHub.js";
+import { retentionConfig } from "../lib/retentionConfig.js";
+import { bodyToText, pickIccid, receiverLogService } from "../services/receiverLogService.js";
 import { matchReceiverApiKey } from "../lib/receiverApiKey.js";
 import * as viewingState from "../lib/viewingState.js";
 import {
@@ -25,6 +33,9 @@ import {
   temperatureAlertLine,
   type AlertLine,
 } from "../lib/moduleAlerts.js";
+
+/** Fastify 기본 bodyLimit 과 같다 (1MB). 통신 로그용으로 원문을 읽을 때 상한. */
+const RECEIVER_BODY_LIMIT = 1024 * 1024;
 
 type ReceiverOptions = { receiverApiKey: string; previousReceiverApiKey?: string };
 
@@ -114,7 +125,7 @@ const otaStatusSchema = z.object({
   error: z.string().max(200).optional(),
 });
 
-/** 0.01 A 정수, uint16 범위 */
+/** 0.01 A (전압은 0.1 V) 정수, uint16 범위 */
 const harmonicValuesSchema = z.array(z.number().int().min(0).max(65535)).min(1).max(50);
 const harmonicPhasesSchema = z.object({
   a: harmonicValuesSchema,
@@ -132,12 +143,26 @@ const receiverHarmonicsSchema = z
     orders: z.array(z.number().int().min(1).max(99)).min(1).max(50),
     uncomp: harmonicPhasesSchema,
     comp: harmonicPhasesSchema,
+    /** 계통 전압 고조파 (HMI 3-1장). 예전 펌웨어는 보내지 않는다 */
+    volt: harmonicPhasesSchema
+      .extend({
+        /** Unix 초 (전압을 읽은 HMI 시각) */
+        ts: z.coerce.number().optional(),
+        unit: z.literal("0.1V").optional(),
+      })
+      .optional(),
   })
   .refine(
     (b) =>
-      [b.uncomp.a, b.uncomp.b, b.uncomp.c, b.comp.a, b.comp.b, b.comp.c].every(
-        (arr) => arr.length === b.orders.length,
-      ),
+      [
+        b.uncomp.a,
+        b.uncomp.b,
+        b.uncomp.c,
+        b.comp.a,
+        b.comp.b,
+        b.comp.c,
+        ...(b.volt ? [b.volt.a, b.volt.b, b.volt.c] : []),
+      ].every((arr) => arr.length === b.orders.length),
     { message: "every phase array must have the same length as orders" },
   );
 
@@ -266,6 +291,57 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
   };
   const hasValidApiKey = (request: FastifyRequest) => receiverKeyVersion(request) !== null;
 
+  /* HMI 통신 로그 (어드민 "통신 로그" 창). x-api-key 를 단 요청(=HMI)만 남긴다 —
+   * 관제 웹의 명령 생성·이력 조회는 JWT 라 빠진다. 키가 틀린 401 도 남겨 오류 찾기에 쓴다.
+   * 저장은 응답을 보낸 뒤에 하고, 실패해도 HMI 응답에는 영향이 없다. */
+  if (retentionConfig().receiverLogEnabled) {
+    const requestText = new WeakMap<FastifyRequest, string>();
+    const responseText = new WeakMap<FastifyRequest, string>();
+    // JSON 해석 전 원문을 잡아 둔다 — 깨진 JSON(400)도 HMI 가 보낸 그대로 보이게.
+    server.addHook("preParsing", async (request, _reply, payload) => {
+      if (request.headers["x-api-key"] === undefined) return payload;
+      const chunks: Buffer[] = [];
+      let size = 0;
+      for await (const chunk of payload) {
+        const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as string);
+        size += buf.length;
+        if (size > RECEIVER_BODY_LIMIT) {
+          throw Object.assign(new Error("Request body is too large"), { statusCode: 413 });
+        }
+        chunks.push(buf);
+      }
+      const raw = Buffer.concat(chunks);
+      requestText.set(request, raw.toString("utf-8"));
+      const replay = Readable.from([raw]) as Readable & { receivedEncodedLength?: number };
+      replay.receivedEncodedLength = raw.length;
+      return replay;
+    });
+    server.addHook("onSend", async (request, _reply, payload) => {
+      if (request.headers["x-api-key"] !== undefined && typeof payload === "string") {
+        responseText.set(request, payload);
+      }
+      return payload;
+    });
+    server.addHook("onResponse", async (request, reply) => {
+      if (request.headers["x-api-key"] === undefined) return;
+      const response = responseText.get(request);
+      const raw = requestText.get(request) ?? request.body;
+      void receiverLogService.record(
+        {
+          method: request.method,
+          path: request.url,
+          statusCode: reply.statusCode,
+          durationMs: reply.elapsedTime,
+          iccid: pickIccid(raw, request.query),
+          ip: request.ip,
+          requestBody: bodyToText(raw),
+          responseBody: response ? bodyToText(response) : null,
+        },
+        request.log,
+      );
+    });
+  }
+
   const notifyCriticalFault = (payload: {
     installationId: string;
     iccid: string;
@@ -355,6 +431,8 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       event,
       ts: Math.floor(Date.now() / 1000),
     });
+    // 열린 장비·현장 화면이 바로 고장 이력을 다시 읽게 한다 (화면은 이 신호로만 새로고침).
+    wsHub.broadcast({ type: "device_updated", installationId: identity.installationId });
     return reply.status(201).send({ ok: true });
   });
 
@@ -404,6 +482,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       identity.installationId,
       newRaises.map((fault) => faultCodeAlertLine(fault.faultCode, fault.eventName)),
     );
+    wsHub.broadcast({ type: "device_updated", installationId: identity.installationId });
     return reply.status(201).send({ ok: true });
   });
 
@@ -953,7 +1032,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
     return reply.send({ ok: true });
   });
 
-  // Device -> per-order harmonic currents (200A, hourly + refreshHarmonics).
+  // Device -> per-order harmonic currents (+ voltages, optional) (200A, hourly + refreshHarmonics).
   // Same auth and ICCID rules as the OTA status.
   server.post("/harmonics", async (request, reply) => {
     if (!hasValidApiKey(request)) {
@@ -972,15 +1051,31 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
     if (!identity.installationId || (receiverRequireIccidOnly() && identity.resolvedVia !== "iccid")) {
       return reply.status(422).send({ ok: false, message: "unknown iccid" });
     }
+    const recordedAt = harmonicRecordedAt(body.ts, new Date());
     const record = await harmonicService.record(identity.installationId, {
-      recordedAt: harmonicRecordedAt(body.ts, new Date()),
+      recordedAt,
       source: body.source ?? "hourly",
       orders: body.orders,
       uncomp: body.uncomp,
       comp: body.comp,
+      ...(body.volt
+        ? {
+            volt: {
+              a: body.volt.a,
+              b: body.volt.b,
+              c: body.volt.c,
+              recordedAt: harmonicVoltRecordedAt(recordedAt, body.ts, body.volt.ts),
+            },
+          }
+        : {}),
     });
     server.log.info(
-      { installationId: identity.installationId, source: record.source, orders: record.orders.length },
+      {
+        installationId: identity.installationId,
+        source: record.source,
+        orders: record.orders.length,
+        volt: record.volt != null,
+      },
       "Harmonics received",
     );
     wsHub.broadcast({ type: "harmonics_updated", installationId: identity.installationId });

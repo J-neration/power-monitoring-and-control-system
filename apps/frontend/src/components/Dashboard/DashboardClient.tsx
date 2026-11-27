@@ -24,12 +24,13 @@ const KoreaMap = dynamic(() => import("./KoreaMap"), {
 import LteRadarOverlay from "./LteRadarOverlay";
 import CommLostBadge from "../CommLostBadge";
 import AlarmTicker from "./AlarmTicker";
-import AlarmPanel from "./AlarmPanel";
+import AlarmDrawer, { AlarmCounts, AlarmListView } from "./AlarmDrawer";
 import ControlRoomToolbar from "./ControlRoomToolbar";
 import EventLogPanel from "./EventLogPanel";
 import { useWsEvents } from "../../hooks/useWsEvents";
 import { bindPageRefresh, schedulePageRefresh } from "../../lib/pageRefresh";
-import { useAlarmAck } from "../../hooks/useAlarmAck";
+import { useAlarmSound } from "../../hooks/useAlarmSound";
+import { useServerAlarms } from "../../hooks/useServerAlarms";
 import { useControlRoomMode } from "../../hooks/useControlRoomMode";
 import { useEventLog } from "../../hooks/useEventLog";
 import { buildAlarms } from "../../lib/alarms";
@@ -39,6 +40,7 @@ import {
   compareKoNumeric,
   deriveSiteStatus,
   installationMatchesFilter,
+  siteHasInstallations,
   siteMatchesFilter,
   siteHasCommLost,
   sortSitesByName,
@@ -120,17 +122,26 @@ function LiveIndicator({
   );
 }
 
-export default function DashboardClient({ sites }: { sites: Site[] }) {
+export default function DashboardClient({
+  sites,
+  canAckAlarms = false,
+}: {
+  sites: Site[];
+  /** 관리자·고객사 계정: 알람 목록에서 한 건씩 확인 가능 */
+  canAckAlarms?: boolean;
+}) {
   const router = useRouter();
+  // 처음 선택할 현장: 설치지점이 있는 첫 현장 (빈 현장은 목록·지도·순환에서 숨기므로 고르지 않는다)
+  const initialSite = sites.find(siteHasInstallations) ?? sites[0];
   const [selectedSiteId, setSelectedSiteId] = useState<string>(
-    sites[0]?.id ?? "",
+    initialSite?.id ?? "",
   );
   const [selectedInstallationId, setSelectedInstallationId] = useState<
     string | null
   >(null);
   const [focusSeq, setFocusSeq] = useState(0);
   const [openRegion, setOpenRegion] = useState<string | null>(
-    sites[0]?.region ?? null,
+    initialSite?.region ?? null,
   );
   const [scrollToRegion, setScrollToRegion] = useState<string | null>(null);
   const sidebarListRef = useRef<HTMLDivElement>(null);
@@ -230,17 +241,12 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
   } = useControlRoomMode(sites, selectedSiteId, handleSelectSite);
   layoutRef.current = layout;
 
-  const alarms = useMemo(() => buildAlarms(sites), [sites]);
-  const {
-    unackedCount,
-    soundOn,
-    ackOne,
-    ackAll,
-    toggleSound,
-    isAcked,
-  } = useAlarmAck(alarms);
+  // 현재 장비 상태로 만든 알람 문구 (THD·마지막 수신) — 띠 문구용. 미확인·확인은 서버 알람 기준
+  const liveAlarms = useMemo(() => buildAlarms(sites), [sites]);
 
   const eventLogEntries = useEventLog(sites);
+
+  const [alarmDrawerOpen, setAlarmDrawerOpen] = useState(false);
 
   const triggerRefresh = useCallback(() => {
     schedulePageRefresh(() => {
@@ -257,6 +263,21 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
     }, REFRESH_SEC * 1000);
     return () => clearInterval(tick);
   }, [triggerRefresh]);
+
+  const serverAlarms = useServerAlarms(refreshEpoch);
+  const { soundOn, toggleSound } = useAlarmSound(
+    serverAlarms.unackedCount,
+    serverAlarms.loaded,
+  );
+
+  const handleAlarmSelectSite = useCallback(
+    (siteId: string, installationId?: string) => {
+      handleSelectSite(siteId, installationId);
+      // 좁은 화면에서는 서랍이 지도를 가리므로 닫는다
+      if (isCompactRef.current) setAlarmDrawerOpen(false);
+    },
+    [handleSelectSite],
+  );
 
   useWsEvents((msg) => {
     if (msg.type === "device_updated") {
@@ -373,13 +394,30 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
 
       {layout !== "alarm" && (
         <AlarmTicker
-          sites={sites}
-          unackedCount={unackedCount}
+          alarms={serverAlarms.alarms}
+          loaded={serverAlarms.loaded}
+          liveAlarms={liveAlarms}
           soundOn={soundOn}
           onToggleSound={toggleSound}
-          onAckAll={ackAll}
+          onOpenList={() => setAlarmDrawerOpen(true)}
         />
       )}
+
+      <AlarmDrawer
+        open={alarmDrawerOpen}
+        onClose={() => setAlarmDrawerOpen(false)}
+        alarms={serverAlarms.alarms}
+        loaded={serverAlarms.loaded}
+        error={serverAlarms.error}
+        canAck={canAckAlarms}
+        onAck={serverAlarms.ack}
+        onAckMany={serverAlarms.ackMany}
+        onSelectSite={handleAlarmSelectSite}
+        maintenance={serverAlarms.maintenance}
+        shelved={serverAlarms.shelved}
+        onSetMaintenance={serverAlarms.setMaintenance}
+        onClearMaintenance={serverAlarms.clearMaintenance}
+      />
 
       {layout !== "alarm" && <EventLogPanel entries={eventLogEntries} />}
 
@@ -428,17 +466,39 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
         {layout === "alarm" ? (
           <>
             <div className="dash-alarm-column">
-              <AlarmPanel
-                alarms={alarms}
-                unackedCount={unackedCount}
-                isAcked={isAcked}
-                onAck={ackOne}
-                onAckAll={ackAll}
-                soundOn={soundOn}
-                onToggleSound={toggleSound}
-                onSelectSite={handleSelectSite}
-                selectedSiteId={selectedSiteId}
-              />
+              <div className="alarm-panel alarm-panel--server">
+                <div className="alarm-panel-head">
+                  <h3 className="alarm-panel-title">
+                    알람 목록{" "}
+                    <AlarmCounts alarms={serverAlarms.alarms} loaded={serverAlarms.loaded} />
+                  </h3>
+                  <div className="alarm-panel-actions">
+                    <button
+                      type="button"
+                      className="alarm-action-btn"
+                      onClick={toggleSound}
+                      title={soundOn ? "알람음 끄기" : "알람음 켜기"}
+                    >
+                      {soundOn ? "🔔" : "🔕"}
+                    </button>
+                  </div>
+                </div>
+                <AlarmListView
+                  alarms={serverAlarms.alarms}
+                  loaded={serverAlarms.loaded}
+                  error={serverAlarms.error}
+                  canAck={canAckAlarms}
+                  onAck={serverAlarms.ack}
+                  onAckMany={serverAlarms.ackMany}
+                  onSelectSite={handleSelectSite}
+                  maintenance={serverAlarms.maintenance}
+                  shelved={serverAlarms.shelved}
+                  onSetMaintenance={serverAlarms.setMaintenance}
+                  onClearMaintenance={serverAlarms.clearMaintenance}
+                  selectedSiteId={selectedSiteId}
+                  active
+                />
+              </div>
             </div>
             <SiteSummaryPanel
               site={selectedSite}
@@ -569,7 +629,10 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                               ),
                             );
 
-                            if (visibleInstallations.length === 0) return null;
+                            // 상태 필터에 걸리는 설비가 없으면 숨김. 단 전체 보기의 빈 현장은 "설치지점 없음"으로 보인다
+                            const emptySite = site.installations.length === 0;
+                            if (visibleInstallations.length === 0 && !(emptySite && statusFilter === "all"))
+                              return null;
 
                             const siteListName = formatIccidListName(site.name);
 
@@ -591,7 +654,7 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                   }}
                                 >
                                   <div
-                                    className={`site-group-dot ${siteStatus}`}
+                                    className={`site-group-dot ${emptySite ? "offline" : siteStatus}`}
                                   />
                                   <div className="site-group-info">
                                     <strong
@@ -605,9 +668,9 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                     </span>
                                   </div>
                                   <span
-                                    className={`site-card-badge ${siteStatus}`}
+                                    className={`site-card-badge ${emptySite ? "offline" : siteStatus}`}
                                   >
-                                    {STATUS_LABEL[siteStatus]}
+                                    {emptySite ? "지점 없음" : STATUS_LABEL[siteStatus]}
                                   </span>
                                   {siteHasCommLost(site) ? <CommLostBadge /> : null}
                                   {isSiteSelected && (
@@ -618,12 +681,17 @@ export default function DashboardClient({ sites }: { sites: Site[] }) {
                                 </summary>
 
                                 <div className="site-group-installations">
-                                  <Link
-                                    href={`/sites/${encodeURIComponent(site.id)}`}
-                                    className="site-group-detail-link"
-                                  >
-                                    현장 상세보기 →
-                                  </Link>
+                                  {!emptySite && (
+                                    <Link
+                                      href={`/sites/${encodeURIComponent(site.id)}`}
+                                      className="site-group-detail-link"
+                                    >
+                                      현장 상세보기 →
+                                    </Link>
+                                  )}
+                                  {emptySite && (
+                                    <p className="site-group-empty">설치지점이 없습니다</p>
+                                  )}
                                   {visibleInstallations.map((inst) => {
                                     const instStatus =
                                       (inst.device?.status as DeviceStatus) ??

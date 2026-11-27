@@ -80,7 +80,23 @@ export default async function DeviceDetailPage({ params, searchParams }: Props) 
               {deviceLabel}
             </span>
           </nav>
-          <PageLiveRefresh installationIds={[device.installationId]} />
+          <div className="device-header-actions">
+            {isAdmin && (
+              <Link
+                href={`/admin/comm-logs?installationId=${encodeURIComponent(device.installationId)}`}
+                className="device-commlog-link"
+                title="이 설비가 서버와 주고받은 원본 데이터(관리자 전용)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <polyline points="7 9 10 12 7 15" />
+                  <line x1="12" y1="15" x2="17" y2="15" />
+                </svg>
+                통신 로그
+              </Link>
+            )}
+            <PageLiveRefresh installationIds={[device.installationId]} />
+          </div>
         </div>
       </section>
 

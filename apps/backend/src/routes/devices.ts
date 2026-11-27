@@ -306,7 +306,7 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
   });
 
   /**
-   * 이력 탭 → 고조파: 한 차수(order)의 보상 전/후 A/B/C상 추세 (A 단위).
+   * 이력 탭 → 고조파: 한 차수(order)의 보상 전/후 A/B/C상 추세 (A 단위)와 전압 A/B/C상 (V 단위).
    * 기간·시작일·집계·권한은 /:id/history 와 같다. 고조파는 1시간마다 오므로
    * 일간은 기록 그대로(1시간 간격), 주간은 1시간, 월·연간은 1일 단위로 묶는다.
    */
@@ -347,8 +347,8 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
   });
 
   /**
-   * 차수별 고조파 전류 (200A). latest = 가장 최근 1건, records = 최근 hours 시간 (기본 168 = 7일).
-   * 값은 0.01 A 정수 그대로 준다.
+   * 차수별 고조파 전류·전압 (200A). latest = 가장 최근 1건, records = 최근 hours 시간 (기본 168 = 7일).
+   * 값은 전류 0.01 A, 전압 0.1 V 정수 그대로 준다 (전압이 없으면 volt = null).
    */
   server.get("/:id/harmonics", { preHandler: authenticate }, async (request, reply) => {
     const { id } = request.params as { id: string };
@@ -366,7 +366,7 @@ export const deviceRoutes: FastifyPluginAsync = async (server) => {
       // 명령은 관리자만 만들 수 있으므로 관리자에게만 알려 준다
       isAdmin ? harmonicService.activeCommand(id) : Promise.resolve(null),
     ]);
-    return { unit: "0.01A", hours: span, latest, records, activeCommand };
+    return { unit: "0.01A", voltUnit: "0.1V", hours: span, latest, records, activeCommand };
   });
 
   server.get("/:id/readings", { preHandler: authenticate }, async (request, reply) => {

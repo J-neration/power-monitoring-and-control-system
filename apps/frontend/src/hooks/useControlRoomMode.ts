@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Site } from "../types/site";
-import { sortSitesByPriority } from "../lib/deviceStatus";
+import { siteHasInstallations, sortSitesByPriority } from "../lib/deviceStatus";
 
 export type DashboardLayout = "default" | "map" | "alarm";
 
@@ -17,8 +17,9 @@ export function useControlRoomMode(
   const [controlRoom, setControlRoom] = useState(false);
   const [autoRotate, setAutoRotate] = useState(false);
 
+  // 설치지점(장비)이 없는 현장은 보여줄 게 없으므로 순환에서 뺀다
   const rotateTargets = useMemo(
-    () => sortSitesByPriority(sites).map((s) => s.id),
+    () => sortSitesByPriority(sites.filter(siteHasInstallations)).map((s) => s.id),
     [sites],
   );
 

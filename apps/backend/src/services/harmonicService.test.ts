@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   buildHarmonicHistory,
   harmonicRecordedAt,
+  harmonicVoltRecordedAt,
   type HarmonicHistorySample,
 } from "./harmonicService.js";
 
@@ -32,7 +33,21 @@ test("harmonicRecordedAt: keeps a read up to 2 h old (normal 30 min refresh)", (
 });
 
 
-const sample = (iso: string, v5: number): HarmonicHistorySample => ({
+test("harmonicVoltRecordedAt: keeps the HMI gap between the current and voltage reads", () => {
+  const recordedAt = new Date("2026-11-27T03:00:00Z");
+  const ts = 1764212400; // any HMI clock: only the difference counts
+  // voltage read 2 s after the currents
+  assert.equal(harmonicVoltRecordedAt(recordedAt, ts, ts + 2).toISOString(), "2026-11-27T03:00:02.000Z");
+  // last voltage read failed: the value is from 3 h earlier
+  assert.equal(harmonicVoltRecordedAt(recordedAt, ts, ts - 3 * 3600).toISOString(), "2026-11-27T00:00:00.000Z");
+  // a time missing: same as the currents
+  assert.equal(harmonicVoltRecordedAt(recordedAt, undefined, ts), recordedAt);
+  assert.equal(harmonicVoltRecordedAt(recordedAt, ts, undefined), recordedAt);
+  // far in the future of the currents: not believable
+  assert.equal(harmonicVoltRecordedAt(recordedAt, ts, ts + 3600), recordedAt);
+});
+
+const sample = (iso: string, v5: number, volt = true): HarmonicHistorySample => ({
   recordedAt: new Date(iso),
   orders: [1, 3, 5],
   uncompA: [10000, 200, v5],
@@ -41,6 +56,10 @@ const sample = (iso: string, v5: number): HarmonicHistorySample => ({
   compA: [10000, 20, Math.round(v5 / 10)],
   compB: [10000, 20, Math.round(v5 / 10)],
   compC: [10000, 20, Math.round(v5 / 10)],
+  // 0.1 V: 1st 220.0 V, 5th v5/100 V
+  voltA: volt ? [2200, 30, Math.round(v5 / 10)] : [],
+  voltB: volt ? [2210, 30, Math.round(v5 / 10) + 5] : [],
+  voltC: volt ? [2190, 30, Math.round(v5 / 10) + 10] : [],
 });
 
 test("buildHarmonicHistory raw: one point per record, picked order in A", () => {
@@ -54,6 +73,18 @@ test("buildHarmonicHistory raw: one point per record, picked order in A", () => 
   assert.equal(pts[0].recordedAt.toISOString(), "2026-11-26T00:00:00.000Z"); // sorted
   assert.deepEqual(pts[1].uncomp, { a: 30, b: 31, c: 32 });
   assert.deepEqual(pts[1].comp, { a: 3, b: 3, c: 3 });
+  assert.deepEqual(pts[1].volt, { a: 30, b: 30.5, c: 31 });
+});
+
+test("buildHarmonicHistory: a record without voltage gives null voltage, currents unchanged", () => {
+  const rows = [sample("2026-11-26T00:00:00Z", 3000, false), sample("2026-11-26T01:00:00Z", 1000)];
+  const raw = buildHarmonicHistory(rows, 5, "raw", "avg");
+  assert.deepEqual(raw[0].volt, { a: null, b: null, c: null });
+  assert.deepEqual(raw[0].uncomp, { a: 30, b: 31, c: 32 });
+  // in a bucket the record without voltage is left out of the voltage average
+  const daily = buildHarmonicHistory(rows, 5, "daily", "avg");
+  assert.equal(daily[0].volt.a, 10);
+  assert.equal(daily[0].uncomp.a, 20);
 });
 
 test("buildHarmonicHistory daily: buckets by KST day with min/avg/max", () => {

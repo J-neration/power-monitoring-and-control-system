@@ -6,6 +6,8 @@ export type SiteListFromApi = {
   region: string;
   address: string;
   installationCount: number;
+  /** 출고검사 현장 (검사 계정이 묶인 현장) — 설치지점 일괄 삭제 대상 */
+  inspection?: boolean;
   status: string;
   installations: SiteListInstallationFromApi[];
 };

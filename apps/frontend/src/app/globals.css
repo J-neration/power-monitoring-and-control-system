@@ -46,6 +46,13 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  /* 사이트 전체: 스크롤바는 그리지 않는다. 휠·터치·키보드 스크롤은 그대로 된다.
+   * (이력 카드·표·패널마다 기본 스크롤바가 붙어 화면이 어수선했다) */
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
 }
 
 body {
@@ -4812,10 +4819,49 @@ main.dashboard-full {
 }
 
 .harmonics-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   flex: 1;
   font-size: 12px;
   color: var(--pmcs-text-muted);
+}
+
+/* 측정 시각: 작은 이름표 + 또렷한 숫자 */
+.harmonics-meta-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.harmonics-meta-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--pmcs-text-muted);
+}
+
+.harmonics-meta-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pmcs-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 보낸 이유: 1시간 주기 / 갱신 요청 */
+.harmonics-meta-badge {
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--pmcs-panel-border);
+  font-size: 11px;
+  color: var(--pmcs-text-muted);
+  white-space: nowrap;
+}
+
+.harmonics-meta-badge.is-command {
+  color: var(--pmcs-accent-bright);
+  border-color: var(--pmcs-accent-border);
+  background: var(--pmcs-accent-dim);
 }
 
 .harmonics-refresh-btn {
@@ -4916,6 +4962,15 @@ main.dashboard-full {
 
 .harmonics-fund-side--after {
   border-left-color: #22c55e;
+}
+
+/* 전압 보기: 기본파 칸이 하나뿐이다 (계통 전압) */
+.harmonics-fund--single {
+  grid-template-columns: auto 1fr;
+}
+
+.harmonics-fund-side--volt {
+  border-left-color: #a78bfa;
 }
 
 .harmonics-fund-side-label {
@@ -5065,6 +5120,11 @@ main.dashboard-full {
   margin: 0 0 8px;
 }
 
+/* 이력 → 고조파: [전류 | 전압] 전환과 차수 선택 사이를 띄운다 */
+.harmonics-history-quantity {
+  margin-right: 8px;
+}
+
 .harmonics-history-orders-label {
   font-size: 12px;
   font-weight: 700;
@@ -5097,9 +5157,36 @@ main.dashboard-full {
 
 /* 표: .fault-table 위에 숫자 정렬, 보상 전/후 묶음 색만 더한다.
  * 보상 전 = 주황 띠, 보상 후 = 청록 띠 (사이트의 보상 전/후 색). 숫자 글자색은 본문 색 그대로. */
+/* 고조파 표: 숫자를 크게, 줄 간격을 넉넉하게 */
+.fault-table.harmonics-table {
+  font-size: 15px;
+}
+
 .fault-table.harmonics-table th,
 .fault-table.harmonics-table td {
-  padding: 7px 12px;
+  padding: 9px 16px;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+/* 상 이름 줄 (L1·L2·L3): 작고 흐린 기본 머리글 대신 읽히는 크기로 */
+.fault-table.harmonics-table thead tr:last-child th {
+  font-size: 13px;
+  letter-spacing: 0;
+  color: var(--pmcs-text);
+}
+
+/* 값 뒤 단위 (A·V·%) */
+.harmonics-unit {
+  margin-left: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--pmcs-text-muted);
+}
+
+/* 전압 표는 3칸뿐이라 전체 너비로 퍼지면 숫자 사이가 너무 멀다 */
+.harmonics-table-wrap--narrow {
+  width: 100%;
+  max-width: 640px;
 }
 
 .fault-table.harmonics-table td,
@@ -5109,7 +5196,7 @@ main.dashboard-full {
 }
 
 .fault-table.harmonics-table th[scope="row"] {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0;
@@ -5119,7 +5206,7 @@ main.dashboard-full {
 
 .fault-table.harmonics-table .harmonics-group {
   text-align: center;
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.04em;
   color: var(--pmcs-text);
 }
@@ -5146,6 +5233,19 @@ main.dashboard-full {
 
 .fault-table.harmonics-table td.harmonics-col--rate {
   color: var(--pmcs-text-muted);
+}
+
+/* 전압 표: 보라 띠 (전류의 보상 전/후 색과 겹치지 않게) */
+.fault-table.harmonics-table .harmonics-group.harmonics-col--volt {
+  border-top: 3px solid #a78bfa;
+}
+
+.fault-table.harmonics-table .harmonics-col--volt {
+  background: rgba(167, 139, 250, 0.07);
+}
+
+.fault-table.harmonics-table tbody tr:hover td.harmonics-col--volt {
+  background: rgba(167, 139, 250, 0.12);
 }
 
 .fault-table.harmonics-table .harmonics-group,
@@ -10658,6 +10758,33 @@ body.pmcs-control-room .global-header:hover {
   margin: 0 0 8px;
 }
 
+/* 이력 탭 위쪽: 1줄 항목 탭 + 기간·집계(오른쪽), 2줄 데이터 날짜 + 날짜 입력(오른쪽) */
+.history-head {
+  flex-shrink: 0;
+  margin: 0 0 8px;
+}
+
+.history-head-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.history-head .monitor-view-nav {
+  margin: 0 0 6px;
+}
+
+.history-head .history-range-bar {
+  margin: 0 0 0 auto;
+  justify-content: flex-end;
+}
+
+.history-head-sub .history-data-date-line {
+  margin: 0;
+  white-space: nowrap;
+}
+
 .history-range-input {
   height: 32px;
   padding: 0 8px;
@@ -14483,4 +14610,1088 @@ body.pmcs-control-room .global-header:hover {
   .device-firmware-steps li.is-active .device-firmware-step-dot {
     animation: none;
   }
+}
+
+/* ── 알람 목록 서랍 (흐르는 띠 → "알람 보기") ───────────────────────
+ * 4단계: 발생·미확인(빨강 깜빡임) / 해제·미확인(회색 깜빡임) / 발생·확인(빨강 고정) / 해제·확인(이력)
+ * 지도를 가리지 않도록 오른쪽에서 밀려 나오고 배경을 막지 않는다.
+ * ─────────────────────────────────────────────────────────────── */
+.alarm-ticker-list-btn {
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.alarm-ticker-list-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.alarm-ticker-list-btn--unacked {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+}
+.alarm-ticker-list-btn--unacked:hover {
+  background: rgba(239, 68, 68, 0.26);
+}
+
+.alarm-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 900;
+  width: min(420px, 100vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--pmcs-bg-elevated);
+  border-left: 1px solid var(--pmcs-panel-border);
+  box-shadow: -12px 0 32px rgba(0, 0, 0, 0.45);
+  transform: translateX(100%);
+  visibility: hidden;
+  transition: transform 0.22s ease, visibility 0s linear 0.22s;
+  color: var(--pmcs-text);
+}
+.alarm-drawer--open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform 0.22s ease, visibility 0s;
+}
+
+.alarm-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--pmcs-divider);
+}
+.alarm-drawer-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+.alarm-drawer-title h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+.alarm-drawer-counts {
+  font-size: 12px;
+  color: var(--pmcs-text-muted);
+}
+.alarm-drawer-counts strong {
+  color: #fca5a5;
+}
+.alarm-drawer-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--pmcs-panel-border);
+  background: transparent;
+  color: var(--pmcs-text);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.alarm-drawer-close:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.alarm-drawer-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px 0;
+  border-bottom: 1px solid var(--pmcs-divider);
+}
+.alarm-drawer-tabs button,
+.alarm-history-ranges button {
+  padding: 7px 12px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--pmcs-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.alarm-drawer-tabs button.active {
+  color: var(--pmcs-text);
+  border-bottom-color: var(--pmcs-accent);
+}
+
+.alarm-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 16px 24px;
+}
+.alarm-drawer-empty,
+.alarm-drawer-error {
+  margin: 16px 0;
+  font-size: 13px;
+  color: var(--pmcs-text-muted);
+}
+.alarm-drawer-error {
+  color: #fca5a5;
+}
+
+.alarm-drawer-group {
+  margin-top: 14px;
+}
+.alarm-drawer-group-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+.alarm-drawer-group-title span {
+  margin-left: 4px;
+  font-weight: 600;
+  color: var(--pmcs-text-muted);
+}
+.alarm-drawer-group-title--active_unacked {
+  color: #f87171;
+}
+.alarm-drawer-group-title--cleared_unacked {
+  color: #cbd5e1;
+}
+.alarm-drawer-group-title--active_acked {
+  color: #fca5a5;
+}
+.alarm-drawer-group-hint {
+  margin: 2px 0 8px;
+  font-size: 11px;
+  color: var(--pmcs-text-muted);
+}
+
+.alarm-drawer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.alarm-row {
+  position: relative;
+  padding: 9px 10px 9px 13px;
+  border-radius: 6px;
+  border: 1px solid var(--pmcs-panel-border);
+  background: rgba(255, 255, 255, 0.02);
+}
+.alarm-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 2px;
+  background: rgba(148, 163, 184, 0.4);
+}
+.alarm-row--active_unacked {
+  border-color: rgba(239, 68, 68, 0.45);
+  background: rgba(239, 68, 68, 0.08);
+}
+.alarm-row--active_unacked::before {
+  background: #ef4444;
+  animation: alarm-row-blink 1s steps(2, start) infinite;
+}
+.alarm-row--active_acked::before {
+  background: #ef4444;
+}
+.alarm-row--cleared_unacked::before {
+  background: #94a3b8;
+  animation: alarm-row-blink 1.4s steps(2, start) infinite;
+}
+.alarm-row--cleared_acked {
+  opacity: 0.75;
+}
+@keyframes alarm-row-blink {
+  to {
+    visibility: hidden;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .alarm-row--active_unacked::before,
+  .alarm-row--cleared_unacked::before {
+    animation: none;
+  }
+}
+
+.alarm-row-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.alarm-row-kind,
+.alarm-row-state {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(148, 163, 184, 0.16);
+  color: #e2e8f0;
+}
+.alarm-row-kind--fault .alarm-row-kind {
+  background: rgba(239, 68, 68, 0.22);
+  color: #fecaca;
+}
+.alarm-row-kind--comm_lost .alarm-row-kind {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fde68a;
+}
+.alarm-row-state--active_unacked {
+  background: rgba(239, 68, 68, 0.22);
+  color: #fecaca;
+}
+.alarm-row-state--cleared_acked {
+  background: rgba(52, 199, 89, 0.15);
+  color: #bbf7d0;
+}
+.alarm-row-site {
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--pmcs-text);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.alarm-row-site:hover strong {
+  text-decoration: underline;
+}
+.alarm-row-sep {
+  margin: 0 5px;
+  color: var(--pmcs-text-muted);
+}
+.alarm-row-time,
+.alarm-row-ack {
+  margin: 5px 0 0;
+  font-size: 11px;
+  color: var(--pmcs-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.alarm-row-ack {
+  color: #86efac;
+}
+.alarm-row-note {
+  display: block;
+  margin-top: 2px;
+  color: var(--pmcs-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.alarm-row-ack-btn,
+.alarm-row-cancel-btn {
+  margin-top: 8px;
+  padding: 5px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.alarm-row-ack-btn {
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.18);
+  color: #fecaca;
+}
+.alarm-row-ack-btn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.3);
+}
+.alarm-row-cancel-btn {
+  border: 1px solid var(--pmcs-panel-border);
+  background: transparent;
+  color: var(--pmcs-text-muted);
+}
+.alarm-row-ack-btn:disabled,
+.alarm-row-cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.alarm-row-form textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--pmcs-panel-border);
+  background: var(--pmcs-hmi-inset);
+  color: var(--pmcs-text);
+  font: inherit;
+  font-size: 12px;
+  resize: vertical;
+}
+.alarm-row-form-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.alarm-history-ranges {
+  display: flex;
+  gap: 4px;
+  margin: 10px 0 6px;
+}
+.alarm-history-ranges button {
+  padding: 4px 10px;
+  border: 1px solid var(--pmcs-panel-border);
+  border-radius: 6px;
+  font-size: 12px;
+}
+.alarm-history-ranges button.active {
+  color: var(--pmcs-text);
+  border-color: var(--pmcs-accent-border);
+  background: var(--pmcs-accent-dim);
+}
+
+@media (max-width: 480px) {
+  .alarm-drawer {
+    width: 100vw;
+    border-left: none;
+  }
+  .alarm-ticker-list-btn {
+    padding: 3px 8px;
+  }
+}
+
+/* 알람 서랍: 전체 확인 바 */
+.alarm-bulk-bar {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px dashed rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.05);
+}
+.alarm-bulk-btn {
+  width: 100%;
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.14);
+  color: #fecaca;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.alarm-bulk-btn:hover {
+  background: rgba(239, 68, 68, 0.26);
+}
+.alarm-bulk-warn {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--pmcs-text);
+}
+.alarm-bulk-warn strong {
+  color: #fca5a5;
+}
+.alarm-bulk-bar textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--pmcs-panel-border);
+  background: var(--pmcs-hmi-inset);
+  color: var(--pmcs-text);
+  font: inherit;
+  font-size: 12px;
+  resize: vertical;
+}
+
+/* 관리자 현장관리: 출고검사 현장 표시·지점 일괄 삭제 */
+.admin-sites-inspection-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: middle;
+  background: rgba(245, 158, 11, 0.16);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+.admin-sites-clear-btn {
+  white-space: nowrap;
+}
+
+/* 알람 띠: 서버 알람 기준 상태 표시 */
+.alarm-ticker--acked {
+  background: rgba(245, 158, 11, 0.05);
+  border-bottom-color: rgba(245, 158, 11, 0.15);
+}
+.alarm-ticker-item--acked {
+  opacity: 0.55;
+}
+.alarm-ticker-item--cleared strong {
+  color: #cbd5e1;
+}
+.alarm-ticker-acked-mark {
+  color: #86efac;
+  font-size: 11px;
+}
+
+/* "알람" 레이아웃: 서버 알람 목록 패널 */
+.alarm-panel--server .alarm-panel-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.alarm-panel--server .alarm-drawer-body {
+  flex: 1;
+  min-height: 0;
+}
+.alarm-row--selected {
+  outline: 1px solid var(--pmcs-accent-border);
+}
+
+/* 알람 서랍: 점검 중 */
+.alarm-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.alarm-row-maint-btn {
+  margin-top: 8px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  background: rgba(96, 165, 250, 0.1);
+  color: #bfdbfe;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.alarm-row-maint-btn:hover:not(:disabled) {
+  background: rgba(96, 165, 250, 0.2);
+}
+.alarm-row-maint-btn--primary {
+  background: rgba(96, 165, 250, 0.22);
+}
+.alarm-maint-form-title {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--pmcs-text-muted);
+}
+.alarm-maint-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.alarm-maint-days button {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--pmcs-panel-border);
+  background: transparent;
+  color: var(--pmcs-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.alarm-maint-days button.active {
+  border-color: rgba(96, 165, 250, 0.55);
+  background: rgba(96, 165, 250, 0.16);
+  color: #dbeafe;
+}
+.alarm-drawer-group-title--maint {
+  color: #93c5fd;
+}
+.alarm-row--maint::before {
+  background: #60a5fa;
+}
+.alarm-row .alarm-row-kind--maint {
+  background: rgba(96, 165, 250, 0.18);
+  color: #bfdbfe;
+}
+.alarm-maint-note {
+  margin-top: 4px;
+  font-size: 11px;
+}
+.alarm-maint-alarms {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--pmcs-text-muted);
+}
+
+/* 대시보드 목록: 설치지점이 없는 현장 */
+.site-group-empty {
+  margin: 4px 0 2px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px dashed rgba(148, 163, 184, 0.25);
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.55);
+}
+
+/* ── 관리자 > 통신 로그 (HMI ↔ 서버) ───────────────────────── */
+.commlog {
+  --cl-ok: #4ade80;
+  --cl-ok-bg: rgba(34, 197, 94, 0.12);
+  --cl-warn: #fbbf24;
+  --cl-warn-bg: rgba(245, 158, 11, 0.12);
+  --cl-err: #f87171;
+  --cl-err-bg: rgba(239, 68, 68, 0.12);
+  --cl-border: var(--pmcs-panel-border);
+  --cl-surface: rgba(255, 255, 255, 0.025);
+  max-width: 1280px;
+}
+
+.commlog-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.commlog-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--pmcs-text-muted);
+  min-width: 0;
+}
+
+.commlog-field select,
+.commlog-field input {
+  height: 34px;
+  min-width: 180px;
+  max-width: 100%;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid var(--cl-border);
+  background: var(--pmcs-bg-elevated);
+  color: var(--pmcs-text);
+  font-size: 13px;
+}
+
+.commlog-search input {
+  min-width: 240px;
+}
+
+.commlog-field select:focus,
+.commlog-field input:focus {
+  outline: none;
+  border-color: var(--pmcs-accent-border);
+  box-shadow: 0 0 0 3px var(--pmcs-accent-dim);
+}
+
+.commlog-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.commlog-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--cl-border);
+  background: transparent;
+  color: var(--pmcs-text-muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.commlog-chip:hover {
+  color: var(--pmcs-text);
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+.commlog-chip.is-on {
+  color: var(--pmcs-accent-bright);
+  border-color: var(--pmcs-accent-border);
+  background: var(--pmcs-accent-dim);
+}
+
+.commlog-chip.is-on.is-error {
+  color: var(--cl-err);
+  border-color: rgba(239, 68, 68, 0.35);
+  background: var(--cl-err-bg);
+}
+
+.commlog-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.5);
+}
+
+.commlog-live-dot.is-on {
+  background: var(--pmcs-accent);
+  animation: commlog-pulse 2s infinite;
+}
+
+@keyframes commlog-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(45, 212, 191, 0.5); }
+  70% { box-shadow: 0 0 0 7px rgba(45, 212, 191, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(45, 212, 191, 0); }
+}
+
+.commlog-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.commlog-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--cl-border);
+  background: var(--cl-surface);
+}
+
+.commlog-stat-num {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.commlog-stat-label {
+  font-size: 12px;
+  color: var(--pmcs-text-muted);
+}
+
+.commlog-stat.is-ok .commlog-stat-num { color: var(--cl-ok); }
+.commlog-stat.is-error { border-color: rgba(239, 68, 68, 0.3); background: var(--cl-err-bg); }
+.commlog-stat.is-error .commlog-stat-num { color: var(--cl-err); }
+.commlog-stat.is-warn { border-color: rgba(245, 158, 11, 0.3); background: var(--cl-warn-bg); }
+.commlog-stat.is-warn .commlog-stat-num { color: var(--cl-warn); }
+
+.commlog-stats-note {
+  font-size: 12px;
+  color: var(--pmcs-text-muted);
+  margin-left: auto;
+}
+
+.commlog-empty {
+  padding: 48px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--pmcs-text-muted);
+  border: 1px dashed var(--cl-border);
+  border-radius: 10px;
+}
+
+.commlog-empty.is-error {
+  color: var(--cl-err);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.commlog-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--cl-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--pmcs-bg-panel);
+}
+
+.commlog-day {
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pmcs-text-muted);
+  background: var(--pmcs-bg-elevated);
+  border-bottom: 1px solid var(--pmcs-divider);
+}
+
+.commlog-row {
+  border-bottom: 1px solid var(--pmcs-divider);
+  border-left: 3px solid transparent;
+  transition: background-color 0.6s;
+}
+
+.commlog-row:last-child { border-bottom: none; }
+.commlog-row.tone-error { border-left-color: var(--cl-err); }
+.commlog-row.tone-warn { border-left-color: var(--cl-warn); }
+.commlog-row.is-fresh { background: var(--pmcs-accent-dim); }
+.commlog-row.is-open { background: rgba(255, 255, 255, 0.02); }
+
+.commlog-row-head {
+  display: grid;
+  grid-template-columns: 92px 96px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 11px 16px 11px 13px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.commlog-row-head:hover { background: rgba(255, 255, 255, 0.03); }
+
+.commlog-row-head:focus-visible {
+  outline: 2px solid var(--pmcs-accent-border);
+  outline-offset: -2px;
+}
+
+.commlog-time {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.commlog-time-clock {
+  font-family: var(--pmcs-font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.commlog-time-rel {
+  font-size: 11px;
+  color: var(--pmcs-text-muted);
+}
+
+.commlog-badge {
+  justify-self: start;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.commlog-badge.tone-ok { color: var(--cl-ok); background: var(--cl-ok-bg); }
+.commlog-badge.tone-warn { color: var(--cl-warn); background: var(--cl-warn-bg); }
+.commlog-badge.tone-error { color: var(--cl-err); background: var(--cl-err-bg); }
+
+.commlog-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.commlog-line1 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  min-width: 0;
+}
+
+.commlog-kind {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.commlog-where {
+  font-size: 13px;
+  color: var(--pmcs-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.commlog-line2 {
+  font-size: 13px;
+  color: rgba(226, 232, 240, 0.75);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commlog-missing-inline { color: var(--cl-warn); }
+
+.commlog-chevron {
+  color: var(--pmcs-text-muted);
+  font-size: 15px;
+}
+
+.commlog-detail {
+  padding: 4px 16px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.commlog-explain {
+  font-size: 13px;
+  line-height: 1.55;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.commlog-explain.tone-ok { background: var(--cl-ok-bg); color: #bbf7d0; }
+.commlog-explain.tone-warn { background: var(--cl-warn-bg); color: #fde68a; }
+.commlog-explain.tone-error { background: var(--cl-err-bg); color: #fecaca; }
+.commlog-explain-kind { opacity: 0.75; }
+
+.commlog-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px 20px;
+  margin: 0;
+}
+
+.commlog-meta dt {
+  font-size: 11px;
+  color: var(--pmcs-text-muted);
+  margin-bottom: 3px;
+}
+
+.commlog-meta dd {
+  margin: 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.commlog-meta dd a { color: var(--pmcs-accent-bright); }
+
+.commlog .mono {
+  font-family: var(--pmcs-font-mono);
+  font-size: 12px;
+}
+
+.commlog-link-btn {
+  margin-left: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--pmcs-text-muted);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.commlog-bodies {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.commlog-body {
+  border: 1px solid var(--cl-border);
+  border-radius: 8px;
+  background: var(--pmcs-hmi-inset);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.commlog-body-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--pmcs-divider);
+}
+
+.commlog-body-head h3 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.commlog-body-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.commlog-seg {
+  display: inline-flex;
+  border: 1px solid var(--cl-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.commlog-seg button,
+.commlog-copy {
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  color: var(--pmcs-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.commlog-seg button.is-on {
+  background: var(--pmcs-accent-dim);
+  color: var(--pmcs-accent-bright);
+}
+
+.commlog-copy {
+  border: 1px solid var(--cl-border);
+  border-radius: 6px;
+}
+
+.commlog-copy:hover,
+.commlog-seg button:hover { color: var(--pmcs-text); }
+
+.commlog-body-empty,
+.commlog-body-warn {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--pmcs-text-muted);
+}
+
+.commlog-body-warn { color: var(--cl-warn); }
+
+.commlog-pre {
+  margin: 0;
+  padding: 10px 12px;
+  max-height: 420px;
+  overflow: auto;
+  font-family: var(--pmcs-font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: #cbd5e1;
+}
+
+.commlog-pre .j-key { color: #7dd3fc; }
+.commlog-pre .j-str { color: #a7f3d0; }
+.commlog-pre .j-num { color: #fcd34d; }
+.commlog-pre .j-lit { color: #f0abfc; }
+
+.commlog-table-wrap {
+  max-height: 420px;
+  overflow: auto;
+}
+
+.commlog-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.commlog-table th,
+.commlog-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--pmcs-divider);
+  text-align: left;
+  vertical-align: top;
+}
+
+.commlog-table th {
+  width: 46%;
+  font-weight: 500;
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.commlog-table td { overflow-wrap: anywhere; }
+
+.commlog-key {
+  display: block;
+  font-family: var(--pmcs-font-mono);
+  font-size: 11px;
+  color: var(--pmcs-text-muted);
+  font-weight: 400;
+}
+
+.commlog-table tr.is-empty td,
+.commlog-table tr.is-empty th { color: var(--cl-warn); background: var(--cl-warn-bg); }
+
+.commlog-more {
+  display: block;
+  margin: 14px auto 0;
+  padding: 9px 22px;
+  border-radius: 999px;
+  border: 1px solid var(--cl-border);
+  background: transparent;
+  color: var(--pmcs-text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.commlog-more:disabled { opacity: 0.6; cursor: default; }
+
+@media (max-width: 900px) {
+  .commlog-bodies { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .commlog-field,
+  .commlog-search { width: 100%; }
+  .commlog-field select,
+  .commlog-field input,
+  .commlog-search input { min-width: 0; width: 100%; }
+  .commlog-stats-note { margin-left: 0; width: 100%; }
+  .commlog-row-head {
+    grid-template-columns: auto minmax(0, 1fr) 12px;
+    grid-template-areas:
+      "time badge chev"
+      "main main main";
+    gap: 6px 10px;
+    padding: 10px 12px 10px 10px;
+  }
+  .commlog-time { grid-area: time; flex-direction: row; align-items: baseline; gap: 6px; }
+  .commlog-badge { grid-area: badge; }
+  .commlog-main { grid-area: main; }
+  .commlog-chevron { grid-area: chev; }
+  .commlog-detail { padding: 4px 12px 14px; }
+  .commlog-line2 { white-space: normal; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .commlog-live-dot.is-on { animation: none; }
+  .commlog-row { transition: none; }
+}
+
+/* 장비 상세 상단: 관리자 전용 "통신 로그" 바로가기 */
+.device-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.device-commlog-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid var(--pmcs-panel-border);
+  color: var(--pmcs-text-muted);
+  font-size: 12px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.device-commlog-link svg {
+  width: 14px;
+  height: 14px;
+}
+
+.device-commlog-link:hover {
+  color: var(--pmcs-accent-bright);
+  border-color: var(--pmcs-accent-border);
+  background: var(--pmcs-accent-dim);
 }

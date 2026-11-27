@@ -7,6 +7,8 @@ import { siteService } from "../services/siteService.js";
 import { registryService } from "../services/registryService.js";
 import { validatePassword } from "../modules/auth/passwordPolicy.js";
 import { inspectRetention, purgeIfEnabled, runAggregationPass } from "../services/summaryService.js";
+import { receiverLogService } from "../services/receiverLogService.js";
+import { retentionConfig } from "../lib/retentionConfig.js";
 
 const firstZodMessage = (error: z.ZodError) =>
   error.issues[0]?.message ?? "입력값이 올바르지 않습니다.";
@@ -250,6 +252,23 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
     }
   });
 
+  /* ── DELETE /admin/sites/:siteId/installations ─── 출고검사 현장 설치지점 일괄 삭제 */
+  // 검사가 끝난 장비를 한 번에 정리한다. 실수로 고객 현장을 비우지 않도록 출고검사 현장만 허용.
+  server.delete("/sites/:siteId/installations", { preHandler: requireAdmin }, async (request, reply) => {
+    const { siteId } = request.params as { siteId: string };
+    if (!(await siteService.exists(siteId))) {
+      return reply.status(404).send({ message: "현장을 찾을 수 없습니다." });
+    }
+    if (!(await siteService.isInspectionSite(siteId))) {
+      return reply
+        .status(409)
+        .send({ message: "출고검사 현장만 설치지점을 일괄 삭제할 수 있습니다." });
+    }
+    const deleted = await siteService.deleteAllInstallations(siteId);
+    request.log.info({ siteId, deleted, by: request.user.username }, "inspection installations cleared");
+    return reply.send({ deleted });
+  });
+
   /* ── DELETE /admin/installations/:installationId ───── 설치지점 삭제 */
   server.delete("/installations/:installationId", { preHandler: requireAdmin }, async (request, reply) => {
     const { installationId } = request.params as { installationId: string };
@@ -431,6 +450,38 @@ export const adminRoutes: FastifyPluginAsync = async (server) => {
       return reply.status(500).send({ message: result.message });
     }
     return reply.send(result);
+  });
+
+  /**
+   * HMI 통신 로그 (관리자만). 최신순, beforeId 로 다음 페이지.
+   * ?installationId= | ?iccid=  &path=/receiver/commands  &q=검색어  &errorsOnly=1  &limit=50
+   */
+  server.get("/receiver-logs", { preHandler: requireAdmin }, async (request, reply) => {
+    const q = request.query as Record<string, string | undefined>;
+    const beforeId = q.beforeId ? Number.parseInt(q.beforeId, 10) : undefined;
+    const limit = q.limit ? Number.parseInt(q.limit, 10) : undefined;
+    try {
+      const result = await receiverLogService.list({
+        installationId: q.installationId?.trim() || undefined,
+        iccid: q.iccid?.trim() || undefined,
+        path: q.path?.trim() || undefined,
+        q: q.q?.trim().slice(0, 100) || undefined,
+        errorsOnly: q.errorsOnly === "1" || q.errorsOnly === "true",
+        beforeId: Number.isFinite(beforeId) ? beforeId : undefined,
+        limit: Number.isFinite(limit) ? limit : undefined,
+      });
+      const cfg = retentionConfig();
+      return reply.send({
+        ...result,
+        enabled: cfg.receiverLogEnabled,
+        retentionDays: cfg.receiverLogDays,
+      });
+    } catch (error) {
+      request.log.error({ error }, "receiver log list failed");
+      return reply.status(503).send({
+        message: "통신 로그 테이블이 없습니다. prisma migrate deploy 를 먼저 실행하세요.",
+      });
+    }
   });
 
   /* ── Registry: 역할 옵션 ─────────────────────────── */

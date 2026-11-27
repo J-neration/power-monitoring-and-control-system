@@ -9,10 +9,14 @@ import {
   formatKstMonthDayHour,
   formatKstShortDate,
 } from "../lib/kstTime";
+import { harmonicsSupported, harmonicsUnsupportedText } from "../lib/harmonicsSupport";
+import { VOLT_PHASE_COLORS } from "../lib/harmonicColors";
 
 /**
  * 이력 탭 → 고조파: 고른 차수 하나의 기간별 추세.
- * 보상 전 차트 1개, 보상 후 차트 1개. 각 차트에 L1·L2·L3 선 (상끼리 비교).
+ * [전류 | 전압] 전환 (모니터 → 고조파와 같다).
+ *   전류: 보상 전 차트 1개, 보상 후 차트 1개 / 전압: 계통 전압 차트 1개.
+ * 각 차트에 L1·L2·L3 선 (상끼리 비교).
  * 기간·시작일·집계는 이력 탭 위쪽 버튼(DeviceHistoryCharts)을 그대로 따른다.
  */
 
@@ -40,7 +44,8 @@ type HarmonicHistoryPayload = {
   orders: number[];
   resolution: Resolution;
   aggregation: Agg;
-  points: { recordedAt: string; uncomp: Triple; comp: Triple }[];
+  /** volt: 예전 서버면 없음, 전압을 안 보낸 기록이면 값이 null */
+  points: { recordedAt: string; uncomp: Triple; comp: Triple; volt?: Triple }[];
   message?: string;
 };
 
@@ -55,6 +60,7 @@ export default function HarmonicHistoryCharts({
   start,
   aggregation,
   faults = [],
+  fwVersion,
 }: {
   installationId: string;
   period: Period;
@@ -62,8 +68,12 @@ export default function HarmonicHistoryCharts({
   start: string;
   aggregation: Agg;
   faults?: FaultEvent[];
+  /** HMI 펌웨어 버전. v2.5.1 미만이면 고조파를 보내지 않는다. */
+  fwVersion?: string | null;
 }) {
+  const unsupported = harmonicsSupported(fwVersion) === false;
   const [order, setOrder] = useState(5);
+  const [quantity, setQuantity] = useState<"current" | "volt">("current");
   const [payload, setPayload] = useState<HarmonicHistoryPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,25 +130,53 @@ export default function HarmonicHistoryCharts({
       aL1: p.comp.a,
       aL2: p.comp.b,
       aL3: p.comp.c,
+      vL1: p.volt?.a ?? null,
+      vL2: p.volt?.b ?? null,
+      vL3: p.volt?.c ?? null,
     }));
   }, [payload, resolution]);
 
-  const hasData = data.some((row) =>
+  const hasVolt = data.some((row) => [row.vL1, row.vL2, row.vL3].some((v) => v != null));
+  const hasCurrent = data.some((row) =>
     [row.bL1, row.bL2, row.bL3, row.aL1, row.aL2, row.aL3].some((v) => v != null),
   );
+  const hasData = quantity === "volt" ? hasVolt : hasCurrent;
 
-  const series = (prefix: "b" | "a") =>
+  const series = (prefix: "b" | "a" | "v") =>
     PHASES.map((p) => ({
       dataKey: `${prefix}${p.label}`,
       name: p.label,
-      stroke: p.color,
+      // 전압은 보라 한 계열 (모니터 전압 막대와 같은 색), 전류는 이력 THD 와 같은 상 색
+      stroke: prefix === "v" ? VOLT_PHASE_COLORS[p.key] : p.color,
       fill: `url(#harm-${prefix}-${p.key})`,
     }));
-  const grads = (prefix: "b" | "a") =>
-    PHASES.map((p) => ({ id: `harm-${prefix}-${p.key}`, color: p.color, opacity: 0.12 }));
+  const grads = (prefix: "b" | "a" | "v") =>
+    PHASES.map((p) => ({
+      id: `harm-${prefix}-${p.key}`,
+      color: prefix === "v" ? VOLT_PHASE_COLORS[p.key] : p.color,
+      opacity: 0.12,
+    }));
 
   const orderPicker = (
-    <div className="harmonics-history-orders" role="group" aria-label="차수 선택">
+    <div className="harmonics-history-orders" role="group" aria-label="전류·전압과 차수 선택">
+      <div className="harmonics-view-switch harmonics-history-quantity" role="tablist" aria-label="전류 또는 전압">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={quantity === "current"}
+          onClick={() => setQuantity("current")}
+        >
+          전류
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={quantity === "volt"}
+          onClick={() => setQuantity("volt")}
+        >
+          전압
+        </button>
+      </div>
       <span className="harmonics-history-orders-label">차수</span>
       <div className="monitor-view-chips">
         {QUICK_ORDERS.map((o) => (
@@ -186,8 +224,14 @@ export default function HarmonicHistoryCharts({
       <>
         {orderPicker}
         <div className="chart-card chart-card-wide history-empty">
-          <p>{error ?? "이 기간에 받은 고조파 데이터가 없습니다."}</p>
-          <p className="history-empty-sub">고조파는 200A 장치가 1시간마다 1번 보냅니다.</p>
+          <p>
+            {error ??
+              (unsupported
+                ? harmonicsUnsupportedText(fwVersion)
+                : quantity === "volt"
+                  ? "전압 고조파 데이터 없음"
+                  : "데이터 없음")}
+          </p>
         </div>
       </>
     );
@@ -197,7 +241,7 @@ export default function HarmonicHistoryCharts({
     <>
       {orderPicker}
       <div className="device-history-body device-charts-grid">
-        {(["b", "a"] as const).map((prefix) => (
+        {quantity === "current" ? (["b", "a"] as const).map((prefix) => (
           <ChartCard
             key={prefix}
             title={`${order}차 고조파 전류 (A)`}
@@ -219,7 +263,18 @@ export default function HarmonicHistoryCharts({
               faults={faults}
             />
           </ChartCard>
-        ))}
+        )) : (
+          <ChartCard title={`${order}차 고조파 전압 (V)`} subtitle={`— 계통 전압 · ${rangeLabel}`} wide>
+            <HistoryAreaChart
+              data={data}
+              grads={grads("v")}
+              series={series("v")}
+              yDomain={[0, "auto"]}
+              yUnit=" V"
+              faults={faults}
+            />
+          </ChartCard>
+        )}
       </div>
     </>
   );

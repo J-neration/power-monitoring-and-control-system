@@ -15,7 +15,6 @@ export type AlarmItem = {
   /** 오프라인·통신 끊김일 때 마지막 수신 — UI에서 마운트 후 상대시각으로 표시 */
   lastSeenAt: string | null;
   sortKey: number;
-  ackKey: string;
 };
 
 export const ALARM_STATUS_LABEL: Record<AlarmStatus, string> = {
@@ -23,10 +22,6 @@ export const ALARM_STATUS_LABEL: Record<AlarmStatus, string> = {
   offline: "오프라인",
   comm_lost: "통신 끊김",
 };
-
-export function alarmAckKey(installationId: string, status: AlarmStatus) {
-  return `${installationId}:${status}`;
-}
 
 const RANK: Record<AlarmStatus, number> = {
   fault: 3,
@@ -52,7 +47,6 @@ export function buildAlarms(sites: Site[]): AlarmItem[] {
           status: "comm_lost",
           detail: `통신 끊김 · 마지막 ${STATUS_LABEL[processStatus]}`,
           lastSeenAt: d?.lastSeenAt ?? null,
-          ackKey: alarmAckKey(inst.id, "comm_lost"),
           sortKey:
             RANK.comm_lost * 1e15 +
             (d?.lastSeenAt ? Date.parse(d.lastSeenAt) : 0),
@@ -86,7 +80,6 @@ export function buildAlarms(sites: Site[]): AlarmItem[] {
         status: processStatus,
         detail,
         lastSeenAt,
-        ackKey: alarmAckKey(inst.id, processStatus),
         sortKey:
           RANK[processStatus] * 1e15 +
           (d?.lastSeenAt ? Date.parse(d.lastSeenAt) : 0),

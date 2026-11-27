@@ -126,6 +126,13 @@ model Installation {
   /// 고객 계정의 주·월·연 이력. 하루(24시간) 이력은 항상 보이고, 관리자는 이 값과 관계없이 전부 본다.
   historyVisible Boolean @default(false)
 
+  /// 관제 "점검 중" — 설정되면 이 설비의 알람을 띠·미확인 수·알람음에서 뺀다 (기록은 계속 남김).
+  /// maintenanceSince 가 있으면 점검 중, maintenanceUntil 이 지나면 자동 종료(null 이면 해제할 때까지).
+  maintenanceSince DateTime?
+  maintenanceUntil DateTime?
+  maintenanceBy    String?   @db.VarChar(64)
+  maintenanceNote  String?   @db.VarChar(200)
+
   /// Legacy — HMI ignores. Always leave false; do not use for settings upload.
   webSettingsActive      Boolean   @default(false)
   /// Settings 탭 heartbeat 시각 (legacy, unused)
@@ -150,6 +157,7 @@ model Installation {
   deviceSettings   InstallationDeviceSettings? // HMI POST /receiver/settings 스냅샷
   otaStatusEvents  OtaStatusEvent[]           // HMI POST /receiver/ota/status 이력
   harmonicRecords  HarmonicRecord[]           // HMI POST /receiver/harmonics 이력 (200A)
+  alarms           Alarm[]                    // 관제 알람 발생·해제·확인 기록
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -488,6 +496,32 @@ model ModuleFaultLog {
   @@index([installationId, occurredAt])
 }
 
+/// 관제 알람 (대시보드 띠·알람 목록). 설비별 이상/오프라인/통신 끊김이 생기면 한 행을 열고,
+/// 풀리면 clearedAt 을 채운다. 확인(ack)은 서버에 남겨 여러 관제 PC 가 같이 본다.
+/// 상태 4단계: 발생+미확인 / 발생+확인 / 해제+미확인 / 해제+확인(이력).
+/// (installationId, kind) 당 clearedAt 이 null 인 행은 하나뿐 — alarmService 가 1분 동기화로 보장한다.
+model Alarm {
+  id             Int          @id @default(autoincrement())
+  installationId String
+  installation   Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  /// fault | offline | comm_lost (프론트 AlarmStatus 와 동일)
+  kind           String       @db.VarChar(16)
+
+  raisedAt       DateTime     @default(now())
+  clearedAt      DateTime?
+
+  ackedAt        DateTime?
+  /// 확인한 사용자명 (audit)
+  ackedBy        String?      @db.VarChar(64)
+  /// 확인 시 남긴 조치 메모
+  ackNote        String?      @db.VarChar(200)
+
+  @@index([installationId, kind, clearedAt])
+  @@index([clearedAt, ackedAt])
+  @@index([raisedAt])
+}
+
 model DeviceCommand {
   id             String              @id
   installationId String
@@ -589,6 +623,34 @@ model HarmonicRecord {
   compA          Int[]
   compB          Int[]
   compC          Int[]
+  /// 계통 전압 고조파 (Vsa/Vsb/Vsc, 0.1 V 정수). 전압을 보내지 않는 펌웨어면 빈 배열
+  voltA          Int[]        @default([])
+  voltB          Int[]        @default([])
+  voltC          Int[]        @default([])
+  /// 전압을 읽은 시각. 전류와 따로 읽으므로 다를 수 있다. 전압이 없으면 null
+  voltRecordedAt DateTime?
 
   @@index([installationId, recordedAt])
+}
+
+/// HMI ↔ 서버 송수신 원문 (어드민 "통신 로그" 창). /receiver 로 들어온 HMI 요청과 서버 응답을 그대로 남긴다.
+/// HMI 가 이미 보내는 데이터라 LTE 데이터는 늘지 않는다. 서버 DB 만 쓰고, 짧게 보관한다
+/// (RECEIVER_LOG_RETENTION_DAYS, 기본 7일. 끄기: RECEIVER_LOG_ENABLED=false).
+model ReceiverLog {
+  id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
+  method       String   @db.VarChar(8)
+  /// 쿼리 포함 경로 (예: /receiver, /receiver/commands?iccid=…)
+  path         String   @db.VarChar(300)
+  statusCode   Int
+  durationMs   Int
+  /// 요청 본문 또는 쿼리에서 읽은 ICCID. 설치지점 이름은 조회할 때 붙인다
+  iccid        String?  @db.VarChar(32)
+  ip           String?  @db.VarChar(64)
+  /// 요청·응답 원문 (최대 16KB, 넘으면 잘라서 저장)
+  requestBody  String?
+  responseBody String?
+
+  @@index([createdAt])
+  @@index([iccid, createdAt])
 }

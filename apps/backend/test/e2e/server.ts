@@ -31,6 +31,9 @@ const { seedE2eData } = await import("./seed.js");
 const server = await buildServer(parseEnv(process.env));
 await resetDatabase();
 await seedE2eData(server);
+// 운영에서는 index.ts 의 1분 타이머가 돌리는 알람 동기화를 시드 직후 한 번 돌린다.
+const { syncAlarms } = await import("../../src/services/alarmService.js");
+await syncAlarms();
 
 const port = Number(process.env.E2E_API_PORT ?? 4100);
 await server.listen({ port, host: "127.0.0.1" });
