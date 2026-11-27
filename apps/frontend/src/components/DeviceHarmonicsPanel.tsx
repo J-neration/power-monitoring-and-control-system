@@ -13,6 +13,7 @@ import {
   type BarShapeProps,
 } from "recharts";
 import ChartCard from "./charts/ChartCard";
+import InfoTip from "./InfoTip";
 import {
   AXIS,
   GRID,
@@ -21,7 +22,8 @@ import {
   TOOLTIP_LABEL_STYLE,
   TOOLTIP_STYLE,
 } from "../lib/chartTheme";
-import { formatKstMonthDayTime } from "../lib/kstTime";
+import { formatKstMonthDayHour, formatKstMonthDayTime } from "../lib/kstTime";
+import { VOLT_PHASE_COLORS } from "../lib/harmonicColors";
 import { useWsEvents } from "../hooks/useWsEvents";
 import { harmonicsSupported, harmonicsUnsupportedText } from "../lib/harmonicsSupport";
 
@@ -88,7 +90,8 @@ type View = "chart" | "table";
 /** 무엇을 보나: 전류(보상 전/후) 또는 계통 전압 */
 type Quantity = "current" | "volt";
 
-/** A = 크기 그대로 (전압 보기에서는 V), % = 같은 상·같은 쪽(보상 전/후) 기본파(1차) 대비.
+/** A = 크기 그대로 (전압 보기에서는 V), % = 개별 고조파 함유율 Iₙ/I₁ (Vₙ/V₁). 기본파는 상별,
+ *  전류는 보상 전·후 각각의 기본파.
  *  고조파 기준(IEC·IEEE 519)은 % 로 정한다. */
 type Unit = "A" | "%";
 
@@ -123,16 +126,33 @@ const fmtNum = (v: number | null) => (v == null ? "-" : v.toFixed(2));
 const toVolt = (v: number | undefined): number | null =>
   typeof v === "number" && Number.isFinite(v) ? v / 10 : null;
 
-/** 전압 표·툴팁 값: V 는 소수 첫째 자리, % 는 둘째 자리 (전압 고조파는 보통 몇 % 아래라서) */
-const fmtVoltValue = (v: number | null, unit: Unit) =>
-  v == null ? "-" : unit === "A" ? v.toFixed(1) : v.toFixed(2);
+/** 표 칸: 숫자 뒤에 단위를 작게 붙인다 (예: 12.34 A). 값이 없으면 "-" */
+function NumUnit({ text, unit }: { text: string | null; unit: string }) {
+  if (text == null) return <>-</>;
+  return (
+    <>
+      {text}
+      <span className="harmonics-unit">{unit}</span>
+    </>
+  );
+}
+
+/** 전압 표 칸: V 는 소수 첫째 자리, % 는 둘째 자리 (전압 고조파는 보통 몇 % 아래라서) */
+const VoltCell = ({ v, unit }: { v: number | null; unit: Unit }) => (
+  <NumUnit
+    text={v == null ? null : unit === "A" ? v.toFixed(1) : v.toFixed(2)}
+    unit={unit === "A" ? "V" : "%"}
+  />
+);
 const fmtVoltWithUnit = (v: number | null, unit: Unit) =>
   v == null ? "-" : unit === "A" ? `${v.toFixed(1)} V` : `${v.toFixed(2)} %`;
 
-/** 표·툴팁 값: A 는 소수 둘째 자리, % 는 첫째 자리 */
-const fmtValue = (v: number | null, unit: Unit) =>
-  v == null ? "-" : unit === "A" ? v.toFixed(2) : v.toFixed(1);
-const fmtWithUnit = (v: number | null, unit: Unit) =>
+/** 전류 표 칸: A 는 소수 둘째 자리, % 는 첫째 자리 */
+const CurrentCell = ({ v, unit }: { v: number | null; unit: Unit }) => (
+  <NumUnit text={v == null ? null : unit === "A" ? v.toFixed(2) : v.toFixed(1)} unit={unit === "A" ? "A" : "%"} />
+);
+
+/** 툴팁 값 */const fmtWithUnit = (v: number | null, unit: Unit) =>
   v == null ? "-" : unit === "A" ? `${v.toFixed(2)} A` : `${v.toFixed(1)} %`;
 
 /** 전류(A) → 단위 변환. % 는 기본파(A)가 0 이하이면 계산할 수 없어 null. */
@@ -143,9 +163,10 @@ const convert = (amp: number | null, fund: number | null, unit: Unit): number | 
   return (amp / fund) * 100;
 };
 
-const reductionPct = (before: number | null, after: number | null): string => {
-  if (before == null || after == null || before <= 0) return "-";
-  return `${Math.round((1 - after / before) * 100)}%`;
+/** 저감률(%) 숫자. 계산할 수 없으면 null */
+const reductionPct = (before: number | null, after: number | null): string | null => {
+  if (before == null || after == null || before <= 0) return null;
+  return String(Math.round((1 - after / before) * 100));
 };
 
 /** y축 눈금: 0부터 1·2·5×10ⁿ 간격으로 4칸 안팎. 최대값이 0이면 0~1 A. */
@@ -199,6 +220,50 @@ function SpectrumTitle({ side, label }: { side: Side; label: string }) {
         ))}
       </ul>
     </div>
+  );
+}
+
+/**
+ * 측정 시각·갱신 안내 (ⓘ). 공진 판단 때 값이 언제 읽은 것인지 헷갈리지 않게.
+ * HMI 동작은 HMI 저장소 docs/LTE_HARMONIC_DATA_PLAN.md 3장·3-1장과 맞춘다.
+ */
+function HarmonicsTimingInfo({ isAdmin }: { isAdmin: boolean }) {
+  return (
+    <InfoTip label="고조파 측정 시각 안내">
+      <p className="thd-info-kicker">측정 시각</p>
+      <p>
+        &apos;측정&apos; 시각은 HMI가 지금 보는 값(전류 또는 전압)을 <b>실제로 읽은 시각</b>입니다.
+      </p>
+      <ul className="thd-info-defs">
+        <li>
+          1시간 주기: HMI는 30분마다 읽고 1시간마다 보냅니다. 그래서 값은 최대 30분 전에 읽은 것일 수 있습니다.
+        </li>
+        <li>전압은 전류를 읽은 직후에 따로 읽어서, 측정 시각이 몇 초 다를 수 있습니다.</li>
+      </ul>
+      {/* 고조파 갱신 버튼은 관리자에게만 보이므로 설명도 관리자에게만 */}
+      {isAdmin ? <HarmonicsRefreshInfo /> : null}
+    </InfoTip>
+  );
+}
+
+/** 관리자 전용: 고조파 갱신 명령으로 받은 값을 공진 판단에 쓸 때 주의할 점 */
+function HarmonicsRefreshInfo() {
+  return (
+    <>
+      <p className="thd-info-kicker">고조파 갱신 (관리자)</p>
+      <ul className="thd-info-defs">
+        <li>공진을 판단할 때는 &apos;측정&apos; 시각을 기준으로 보세요.</li>
+        <li>HMI가 명령을 받은 순간 전류와 전압을 새로 읽어서 보냅니다.</li>
+        <li>
+          버튼을 누른 시각이 아니라 <b>HMI가 명령을 받은 시각</b>의 값입니다. 명령이 HMI에 닿기까지 최대 약
+          10분 걸릴 수 있습니다.
+        </li>
+        <li>
+          모듈 통신이 느려 10초 안에 새로 읽지 못하면, 지난 값을 그 값을 읽은 시각과 함께 보냅니다. 갱신 뒤에도
+          시각이 바뀌지 않았다면 새 값이 아닙니다.
+        </li>
+      </ul>
+    </>
   );
 }
 
@@ -396,10 +461,12 @@ export default function DeviceHarmonicsPanel({
     return out;
   }, [latest, valueAt]);
 
-  const unitLabel = unit === "A" ? "A" : "% (기본파 대비)";
-  const voltUnitLabel = unit === "A" ? "V" : "% (기본파 대비)";
+  const unitLabel = unit === "A" ? "A" : "% (개별 고조파 함유율 Iₙ/I₁)";
+  const voltUnitLabel = unit === "A" ? "V" : "% (개별 고조파 함유율 Vₙ/V₁)";
 
   const volt = latest?.volt ?? null;
+  /** 지금 보고 있는 값의 측정 시각: 전압 보기면 전압을 읽은 시각, 아니면 전류를 읽은 시각 */
+  const measuredAt = quantity === "volt" && volt ? volt.recordedAt : (latest?.recordedAt ?? null);
 
   /** 기본파(1차) 전압(V) L1~L3. 1차가 없으면 null. */
   const fundamentalVolt = useMemo((): Record<Phase, number | null> | null => {
@@ -491,22 +558,32 @@ export default function DeviceHarmonicsPanel({
             role="radio"
             aria-checked={unit === "%"}
             onClick={() => setUnit("%")}
-            title="같은 상 기본파(1차) 대비 %"
+            title={
+              quantity === "volt"
+                ? "개별 고조파 전압 함유율 Vₙ/V₁ (%)"
+                : "개별 고조파 전류 함유율 Iₙ/I₁ (%)"
+            }
           >
             %
           </button>
         </div>
-        <p className="harmonics-meta">
-          {latest
-            ? `마지막 수신 ${formatKstMonthDayTime(latest.recordedAt)} · ${
-                latest.source === "command" ? "요청" : "1시간 주기"
-              }${
-                quantity === "volt" && volt && volt.recordedAt !== latest.recordedAt
-                  ? ` · 전압 측정 ${formatKstMonthDayTime(volt.recordedAt)}`
-                  : ""
-              }`
-            : null}
-        </p>
+        <div className="harmonics-meta">
+          {latest ? (
+            <>
+              <span className="harmonics-meta-item">
+                <span className="harmonics-meta-label">측정</span>
+                {/* 보고 있는 값(전류 또는 전압)을 HMI가 읽은 시각 */}
+                <time className="harmonics-meta-value" dateTime={measuredAt ?? undefined}>
+                  {measuredAt ? formatKstMonthDayHour(measuredAt) : "-"}
+                </time>
+              </span>
+              <span className={`harmonics-meta-badge${latest.source === "command" ? " is-command" : ""}`}>
+                {latest.source === "command" ? "갱신 요청" : "1시간 주기"}
+              </span>
+            </>
+          ) : null}
+          <HarmonicsTimingInfo isAdmin={isAdmin} />
+        </div>
         {isAdmin ? (
           <button
             type="button"
@@ -547,11 +624,16 @@ export default function DeviceHarmonicsPanel({
         </p>
       ) : quantity === "volt" && !volt ? (
         <p className="harmonics-empty">
-          전압 고조파 데이터 없음 (HMI가 전압 고조파를 보내는 펌웨어로 업데이트된 뒤 표시됩니다)
+          전압 고조파 데이터 없음
         </p>
       ) : quantity === "volt" && volt && view === "table" ? (
-        <ChartCard title="차수별 고조파 전압" subtitle={`계통 전압 · 단위 ${voltUnitLabel}`} wide fill>
-          <div className="fault-table-wrap harmonics-table-wrap">
+        <ChartCard
+          title="차수별 고조파 전압"
+          subtitle={unit === "%" ? "계통 전압 · % = 개별 고조파 함유율 Vₙ/V₁" : "계통 전압"}
+          wide
+          fill
+        >
+          <div className="fault-table-wrap harmonics-table-wrap harmonics-table-wrap--narrow">
             <table className="fault-table harmonics-table">
               <thead>
                 <tr>
@@ -583,7 +665,7 @@ export default function DeviceHarmonicsPanel({
                         key={key}
                         className={`harmonics-col--volt${pi === 0 ? " harmonics-group-start" : ""}`}
                       >
-                        {fmtVoltValue(voltAt(key, i), unit)}
+                        <VoltCell v={voltAt(key, i)} unit={unit} />
                       </td>
                     ))}
                   </tr>
@@ -608,7 +690,7 @@ export default function DeviceHarmonicsPanel({
                     return (
                       <div key={p.key} className="harmonics-fund-value">
                         <dt>
-                          <span className="harmonics-swatch" style={{ background: p.color }} aria-hidden />
+                          <span className="harmonics-swatch" style={{ background: VOLT_PHASE_COLORS[p.key] }} aria-hidden />
                           {p.label}
                         </dt>
                         <dd>
@@ -629,7 +711,7 @@ export default function DeviceHarmonicsPanel({
                 <ul className="harmonics-side-legend">
                   {PHASES.map((p) => (
                     <li key={p.key}>
-                      <span className="harmonics-swatch" style={{ background: p.color }} aria-hidden />
+                      <span className="harmonics-swatch" style={{ background: VOLT_PHASE_COLORS[p.key] }} aria-hidden />
                       {p.label}
                     </li>
                   ))}
@@ -664,7 +746,7 @@ export default function DeviceHarmonicsPanel({
                         key={p.key}
                         dataKey={p.key}
                         name={p.label}
-                        fill={p.color}
+                        fill={VOLT_PHASE_COLORS[p.key]}
                         radius={[3, 3, 0, 0]}
                         maxBarSize={9}
                         minPointSize={ZERO_BAR_PX}
@@ -679,11 +761,16 @@ export default function DeviceHarmonicsPanel({
           <p className="harmonics-axis-note">
             {unit === "A"
               ? "가로: 차수 · 세로: 계통 전압 (V). 바닥의 흐린 막대는 0입니다."
-              : "가로: 차수 · 세로: 같은 상 기본파(1차) 전압 대비 %. 바닥의 흐린 막대는 0입니다."}
+              : "가로: 차수 · 세로: 개별 고조파 전압 함유율 Vₙ/V₁ (%, 상별 기본파 기준). 바닥의 흐린 막대는 0입니다."}
           </p>
         </ChartCard>
       ) : view === "table" ? (
-        <ChartCard title="차수별 고조파 전류" subtitle={`단위 ${unitLabel}`} wide fill>
+        <ChartCard
+          title="차수별 고조파 전류"
+          subtitle={unit === "%" ? "% = 개별 고조파 함유율 Iₙ/I₁ (보상 전·후 각각의 기본파 기준)" : undefined}
+          wide
+          fill
+        >
           <div className="fault-table-wrap harmonics-table-wrap">
             <table className="fault-table harmonics-table">
               <thead>
@@ -730,7 +817,7 @@ export default function DeviceHarmonicsPanel({
                           key={`b${pi}`}
                           className={`harmonics-col--before${pi === 0 ? " harmonics-group-start" : ""}`}
                         >
-                          {fmtValue(v, unit)}
+                          <CurrentCell v={v} unit={unit} />
                         </td>
                       ))}
                       {after.map((v, pi) => (
@@ -738,7 +825,7 @@ export default function DeviceHarmonicsPanel({
                           key={`a${pi}`}
                           className={`harmonics-col--after${pi === 0 ? " harmonics-group-start" : ""}`}
                         >
-                          {fmtValue(v, unit)}
+                          <CurrentCell v={v} unit={unit} />
                         </td>
                       ))}
                       {beforeA.map((v, pi) => (
@@ -746,7 +833,7 @@ export default function DeviceHarmonicsPanel({
                           key={`r${pi}`}
                           className={`harmonics-col--rate${pi === 0 ? " harmonics-group-start" : ""}`}
                         >
-                          {o === 1 ? "-" : reductionPct(v, afterA[pi])}
+                          {o === 1 ? "-" : <NumUnit text={reductionPct(v, afterA[pi])} unit="%" />}
                         </td>
                       ))}
                     </tr>
@@ -849,7 +936,7 @@ export default function DeviceHarmonicsPanel({
           <p className="harmonics-axis-note">
             {unit === "A"
               ? "가로: 차수 · 세로: 전류 (A). 보상 전과 보상 후는 같은 세로 눈금입니다. 바닥의 흐린 막대는 0입니다."
-              : "가로: 차수 · 세로: 같은 상 기본파(1차) 대비 %. 보상 전은 보상 전 기본파, 보상 후는 보상 후 기본파로 나눕니다. 두 차트는 같은 세로 눈금입니다. 바닥의 흐린 막대는 0입니다."}
+              : "가로: 차수 · 세로: 개별 고조파 전류 함유율 Iₙ/I₁ (%, 상별·보상 전·후 각각의 기본파 기준). 두 차트는 같은 세로 눈금입니다. 바닥의 흐린 막대는 0입니다."}
           </p>
         </ChartCard>
       )}

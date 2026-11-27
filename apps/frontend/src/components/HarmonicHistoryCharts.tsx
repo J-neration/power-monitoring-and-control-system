@@ -10,10 +10,12 @@ import {
   formatKstShortDate,
 } from "../lib/kstTime";
 import { harmonicsSupported, harmonicsUnsupportedText } from "../lib/harmonicsSupport";
+import { VOLT_PHASE_COLORS } from "../lib/harmonicColors";
 
 /**
  * 이력 탭 → 고조파: 고른 차수 하나의 기간별 추세.
- * 보상 전 차트 1개, 보상 후 차트 1개, 전압을 받은 기록이 있으면 계통 전압 차트 1개.
+ * [전류 | 전압] 전환 (모니터 → 고조파와 같다).
+ *   전류: 보상 전 차트 1개, 보상 후 차트 1개 / 전압: 계통 전압 차트 1개.
  * 각 차트에 L1·L2·L3 선 (상끼리 비교).
  * 기간·시작일·집계는 이력 탭 위쪽 버튼(DeviceHistoryCharts)을 그대로 따른다.
  */
@@ -71,6 +73,7 @@ export default function HarmonicHistoryCharts({
 }) {
   const unsupported = harmonicsSupported(fwVersion) === false;
   const [order, setOrder] = useState(5);
+  const [quantity, setQuantity] = useState<"current" | "volt">("current");
   const [payload, setPayload] = useState<HarmonicHistoryPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -134,22 +137,46 @@ export default function HarmonicHistoryCharts({
   }, [payload, resolution]);
 
   const hasVolt = data.some((row) => [row.vL1, row.vL2, row.vL3].some((v) => v != null));
-  const hasData =
-    hasVolt ||
-    data.some((row) => [row.bL1, row.bL2, row.bL3, row.aL1, row.aL2, row.aL3].some((v) => v != null));
+  const hasCurrent = data.some((row) =>
+    [row.bL1, row.bL2, row.bL3, row.aL1, row.aL2, row.aL3].some((v) => v != null),
+  );
+  const hasData = quantity === "volt" ? hasVolt : hasCurrent;
 
   const series = (prefix: "b" | "a" | "v") =>
     PHASES.map((p) => ({
       dataKey: `${prefix}${p.label}`,
       name: p.label,
-      stroke: p.color,
+      // 전압은 보라 한 계열 (모니터 전압 막대와 같은 색), 전류는 이력 THD 와 같은 상 색
+      stroke: prefix === "v" ? VOLT_PHASE_COLORS[p.key] : p.color,
       fill: `url(#harm-${prefix}-${p.key})`,
     }));
   const grads = (prefix: "b" | "a" | "v") =>
-    PHASES.map((p) => ({ id: `harm-${prefix}-${p.key}`, color: p.color, opacity: 0.12 }));
+    PHASES.map((p) => ({
+      id: `harm-${prefix}-${p.key}`,
+      color: prefix === "v" ? VOLT_PHASE_COLORS[p.key] : p.color,
+      opacity: 0.12,
+    }));
 
   const orderPicker = (
-    <div className="harmonics-history-orders" role="group" aria-label="차수 선택">
+    <div className="harmonics-history-orders" role="group" aria-label="전류·전압과 차수 선택">
+      <div className="harmonics-view-switch harmonics-history-quantity" role="tablist" aria-label="전류 또는 전압">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={quantity === "current"}
+          onClick={() => setQuantity("current")}
+        >
+          전류
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={quantity === "volt"}
+          onClick={() => setQuantity("volt")}
+        >
+          전압
+        </button>
+      </div>
       <span className="harmonics-history-orders-label">차수</span>
       <div className="monitor-view-chips">
         {QUICK_ORDERS.map((o) => (
@@ -197,7 +224,14 @@ export default function HarmonicHistoryCharts({
       <>
         {orderPicker}
         <div className="chart-card chart-card-wide history-empty">
-          <p>{error ?? (unsupported ? harmonicsUnsupportedText(fwVersion) : "데이터 없음")}</p>
+          <p>
+            {error ??
+              (unsupported
+                ? harmonicsUnsupportedText(fwVersion)
+                : quantity === "volt"
+                  ? "전압 고조파 데이터 없음"
+                  : "데이터 없음")}
+          </p>
         </div>
       </>
     );
@@ -207,7 +241,7 @@ export default function HarmonicHistoryCharts({
     <>
       {orderPicker}
       <div className="device-history-body device-charts-grid">
-        {(["b", "a"] as const).map((prefix) => (
+        {quantity === "current" ? (["b", "a"] as const).map((prefix) => (
           <ChartCard
             key={prefix}
             title={`${order}차 고조파 전류 (A)`}
@@ -229,8 +263,7 @@ export default function HarmonicHistoryCharts({
               faults={faults}
             />
           </ChartCard>
-        ))}
-        {hasVolt ? (
+        )) : (
           <ChartCard title={`${order}차 고조파 전압 (V)`} subtitle={`— 계통 전압 · ${rangeLabel}`} wide>
             <HistoryAreaChart
               data={data}
@@ -241,7 +274,7 @@ export default function HarmonicHistoryCharts({
               faults={faults}
             />
           </ChartCard>
-        ) : null}
+        )}
       </div>
     </>
   );
