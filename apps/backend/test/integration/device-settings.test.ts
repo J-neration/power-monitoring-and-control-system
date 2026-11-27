@@ -111,3 +111,88 @@ describe("setBasic command uses the snapshot's module type", () => {
     assert.deepEqual(polled.fields, { tpf: 0.97 });
   });
 });
+
+describe("LTE settings (firmware 2.5.2+)", () => {
+  it("stores lte from the snapshot and serves it to the settings tab", async () => {
+    const { tokens } = await seedWorld(t.app);
+    const upload = await hmi(t.app).post("/receiver/settings", v3v4Snapshot({ lte: { postPeriodMin: 30 } }));
+    assert.equal(upload.statusCode, 200);
+
+    const { settings } = (await http(t.app).get(`/devices/${IDS.lotteInst}/settings`, { token: tokens.admin })).json();
+    assert.deepEqual(settings.lte, { postPeriodMin: 30 });
+  });
+
+  it("returns lte: null when the firmware never reported it", async () => {
+    const { tokens } = await seedWorld(t.app);
+    await hmi(t.app).post("/receiver/settings", v3v4Snapshot());
+    const { settings } = (await http(t.app).get(`/devices/${IDS.lotteInst}/settings`, { token: tokens.admin })).json();
+    assert.equal(settings.lte, null);
+  });
+
+  it("keeps the stored lte when a later snapshot omits it", async () => {
+    const { tokens } = await seedWorld(t.app);
+    await hmi(t.app).post("/receiver/settings", v3v4Snapshot({ lte: { postPeriodMin: 60 } }));
+    await hmi(t.app).post("/receiver/settings", v3v4Snapshot());
+    const { settings } = (await http(t.app).get(`/devices/${IDS.lotteInst}/settings`, { token: tokens.admin })).json();
+    assert.deepEqual(settings.lte, { postPeriodMin: 60 });
+  });
+
+  it("ignores an invalid lte but still saves the snapshot", async () => {
+    const { tokens } = await seedWorld(t.app);
+    await hmi(t.app).post("/receiver/settings", v3v4Snapshot({ lte: { postPeriodMin: 10 } }));
+    const upload = await hmi(t.app).post(
+      "/receiver/settings",
+      v3v4Snapshot({ numOfMods: 1, settings: { basic: [{ mod: 0, tpf: 0.9 }] }, lte: { postPeriodMin: 15 } }),
+    );
+    assert.equal(upload.statusCode, 200);
+    const { settings } = (await http(t.app).get(`/devices/${IDS.lotteInst}/settings`, { token: tokens.admin })).json();
+    assert.equal(settings.numOfMods, 1);
+    assert.deepEqual(settings.lte, { postPeriodMin: 10 });
+  });
+});
+
+describe("setLte command", () => {
+  const createSetLte = async (token: string, body: Record<string, unknown>) =>
+    http(t.app).post(
+      "/receiver/commands/create",
+      { installationId: IDS.lotteInst, module: 0, power: "setLte", ...body },
+      { token },
+    );
+
+  it("is handed to the HMI with its fields", async () => {
+    const { tokens } = await seedWorld(t.app);
+    const res = await createSetLte(tokens.admin, { fields: { postPeriodMin: 30 } });
+    assert.equal(res.statusCode, 201);
+    assert.equal(res.json().command.power, "setLte");
+    assert.deepEqual(res.json().command.fields, { postPeriodMin: 30 });
+
+    const polled = (await hmi(t.app).get(`/receiver/commands?iccid=${IDS.lotteIccid}`)).json();
+    assert.equal(polled.power, "setLte");
+    assert.equal(polled.module, 0);
+    assert.deepEqual(polled.fields, { postPeriodMin: 30 });
+  });
+
+  it("rejects a period other than 10, 30 or 60", async () => {
+    const { tokens } = await seedWorld(t.app);
+    for (const fields of [{ postPeriodMin: 15 }, { postPeriodMin: "30" }, {}]) {
+      const res = await createSetLte(tokens.admin, { fields });
+      assert.equal(res.statusCode, 400);
+      assert.equal(res.json().code, "INVALID_FIELDS");
+    }
+  });
+
+  it("only targets module 0", async () => {
+    const { tokens } = await seedWorld(t.app);
+    const res = await createSetLte(tokens.admin, { module: 1, fields: { postPeriodMin: 10 } });
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.json().code, "INVALID_MODULE");
+  });
+
+  it("is serialized with other module-0 commands", async () => {
+    const { tokens } = await seedWorld(t.app);
+    assert.equal((await createSetLte(tokens.admin, { fields: { postPeriodMin: 10 } })).statusCode, 201);
+    const second = await createSetLte(tokens.admin, { fields: { postPeriodMin: 60 } });
+    assert.equal(second.statusCode, 409);
+    assert.equal(second.json().code, "ACTIVE_COMMAND_EXISTS");
+  });
+});

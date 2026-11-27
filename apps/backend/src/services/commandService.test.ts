@@ -463,6 +463,40 @@ test("refreshHarmonics: unknown device type is let through (the HMI answers)", a
   assert.equal(cmd.power, "refreshHarmonics");
 });
 
+test("setLte: module 0 only, postPeriodMin 10/30/60, fields go out in the poll", async () => {
+  const repo = new InMemoryRepo();
+  const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });
+  const rejects = (input: Parameters<typeof service.create>[0], code: string) =>
+    assert.rejects(
+      () => service.create(input),
+      (err: unknown) => err instanceof CommandError && err.code === code && err.httpStatus === 400,
+    );
+
+  await rejects(
+    { installationId: "PSVG-RNDTEST5", module: 1, power: "setLte", fields: { postPeriodMin: 10 } },
+    "INVALID_MODULE",
+  );
+  await rejects(
+    { installationId: "PSVG-RNDTEST5", module: 0, power: "setLte", fields: { postPeriodMin: 20 } },
+    "INVALID_FIELDS",
+  );
+  await rejects({ installationId: "PSVG-RNDTEST5", module: 0, power: "setLte" }, "INVALID_FIELDS");
+
+  const cmd = await service.create({
+    installationId: "PSVG-RNDTEST5",
+    module: 0,
+    power: "setLte",
+    fields: { postPeriodMin: 60, extra: 1 },
+  });
+  assert.equal(cmd.power, "setLte");
+  assert.deepEqual(cmd.fields, { postPeriodMin: 60 });
+
+  const polled = await service.poll("PSVG-RNDTEST5");
+  assert.equal(polled.id, cmd.id);
+  assert.equal(polled.power, "setLte");
+  assert.deepEqual(polled.fields, { postPeriodMin: 60 });
+});
+
 test("hasPending is true only until the HMI polls an unexpired command", async () => {
   const repo = new InMemoryRepo();
   const service = createCommandService(repo, { maxModules: 6, ttlSeconds: 60 });

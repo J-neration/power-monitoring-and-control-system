@@ -32,7 +32,7 @@ type LoadState =
 
 type StatusTone = "pending" | "ok" | "err" | "info";
 
-type StatusBanner = {
+export type StatusBanner = {
   tone: StatusTone;
   title: string;
   detail?: string;
@@ -131,7 +131,7 @@ function formatSnapshotRelative(iso: string, nowMs: number): string {
   return `${day}일 전`;
 }
 
-function StatusCard({ status }: { status: StatusBanner }) {
+export function StatusCard({ status }: { status: StatusBanner }) {
   return (
     <div
       className={`device-settings-status device-settings-status--${status.tone}`}

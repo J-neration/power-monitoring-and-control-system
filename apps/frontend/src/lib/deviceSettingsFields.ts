@@ -9,8 +9,16 @@ export type DeviceSettingsSnapshot = {
   moduleType: ModuleType;
   numOfMods: number;
   basic: BasicSettingRow[];
+  /** LTE 설정 (HMI 펌웨어 2.5.2 이상이 보고). 보고하지 않는 펌웨어면 null */
+  lte?: LteSettings | null;
   updatedAt: string;
 };
+
+/** HMI LTE 설정. postPeriodMin = 텔레메트리 전송 주기(분) */
+export type LteSettings = { postPeriodMin: number };
+
+/** HMI 가 허용하는 텔레메트리 전송 주기(분) */
+export const LTE_POST_PERIODS_MIN = [10, 30, 60] as const;
 
 export type SettingFieldKind = "number" | "switch" | "select";
 

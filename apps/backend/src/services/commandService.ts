@@ -13,6 +13,7 @@ import {
 } from "../lib/deviceSettingsKeys.js";
 import { prisma } from "../lib/prisma.js";
 import { otaDownloadPath } from "./otaService.js";
+import { isLtePostPeriod } from "./settingsService.js";
 
 export const NO_COMMAND = { id: "", module: -1, power: "" } as const;
 
@@ -32,7 +33,7 @@ type OtaPollPayload = {
   /** package of the HMI's current screen data (rollback copy) */
   burl?: string;
   bsize?: number;
-  /** never: only setBasic carries fields */
+  /** never: only setBasic / setLte carry fields */
   fields?: undefined;
 };
 
@@ -54,7 +55,7 @@ type CreateInput = {
   power: string;
   requestedBy?: string | null;
   expiresAt?: Date | null;
-  /** setBasic partial field map */
+  /** setBasic partial field map; setLte { postPeriodMin } */
   fields?: Record<string, number | string | boolean | null> | null;
   /** Settings form moduleType; used when the stored snapshot type is stale. */
   moduleType?: string | null;
@@ -345,6 +346,7 @@ const parsePower = (power: string): DeviceCommandPower | null => {
   if (normalized === "setBasic") return "setBasic";
   if (normalized === "refreshSettings") return "refreshSettings";
   if (normalized === "refreshHarmonics") return "refreshHarmonics";
+  if (normalized === "setLte") return "setLte";
   const lower = normalized.toLowerCase() as DeviceCommandPower;
   if (lower === "on" || lower === "off" || lower === "refresh" || lower === "ota") return lower;
   return null;
@@ -431,13 +433,31 @@ export const createCommandService = (
         throw new CommandError(
           400,
           "INVALID_POWER",
-          "power must be 'on', 'off', 'refresh', 'refreshSettings', 'setBasic', 'refreshHarmonics', or 'ota'",
+          "power must be 'on', 'off', 'refresh', 'refreshSettings', 'setBasic', 'refreshHarmonics', 'setLte', or 'ota'",
         );
       }
 
       // refreshHarmonics: the HMI itself (module 0) posts /receiver/harmonics, 200A only.
       if (power === "refreshHarmonics" && input.module !== 0) {
         throw new CommandError(400, "INVALID_MODULE", "refreshHarmonics uses module 0 (the HMI itself)");
+      }
+
+      // setLte: the HMI itself (module 0) changes its LTE telemetry POST period,
+      // then posts /receiver/settings (with lte) and ACKs.
+      let lteFields: Prisma.InputJsonValue | null = null;
+      if (power === "setLte") {
+        if (input.module !== 0) {
+          throw new CommandError(400, "INVALID_MODULE", "setLte uses module 0 (the HMI itself)");
+        }
+        const period = input.fields?.postPeriodMin;
+        if (!isLtePostPeriod(period)) {
+          throw new CommandError(
+            400,
+            "INVALID_FIELDS",
+            "setLte requires fields.postPeriodMin of 10, 30 or 60",
+          );
+        }
+        lteFields = { postPeriodMin: period };
       }
 
       // ota: HMI itself (module 0), fields = { fileId } of an uploaded code package.
@@ -538,7 +558,9 @@ export const createCommandService = (
       const fields =
         power === "setBasic"
           ? sanitizeFields(input.fields ?? null, moduleType)
-          : otaFields;
+          : power === "setLte"
+            ? lteFields
+            : otaFields;
       if (power === "setBasic" && !fields) {
         const submitted = Object.keys(input.fields ?? {}).filter(
           (key) => key !== "mod",
@@ -652,7 +674,7 @@ export const createCommandService = (
         power: sent.power,
       };
       if (
-        sent.power === "setBasic" &&
+        (sent.power === "setBasic" || sent.power === "setLte") &&
         sent.fields &&
         typeof sent.fields === "object" &&
         !Array.isArray(sent.fields)

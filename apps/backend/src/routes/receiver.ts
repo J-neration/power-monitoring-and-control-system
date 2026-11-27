@@ -11,7 +11,11 @@ import { requireAdmin } from "../middleware/authenticate.js";
 import { commandService, CommandError } from "../services/commandService.js";
 import { faultService, oneShotEventKind } from "../services/faultService.js";
 import { notifyAdminAlerts } from "../services/adminAlertService.js";
-import { settingsService, SettingsError } from "../services/settingsService.js";
+import {
+  isLtePostPeriod,
+  settingsService,
+  SettingsError,
+} from "../services/settingsService.js";
 import { OTA_STATUS_STAGES, OTA_STATUS_STATES, otaStatusService } from "../services/otaStatusService.js";
 import {
   HARMONIC_SOURCES,
@@ -181,6 +185,19 @@ const receiverSettingsSchema = z.object({
   settings: z.object({
     basic: z.array(z.record(z.string(), z.unknown())),
   }),
+  /**
+   * LTE settings (firmware 2.5.2+): { postPeriodMin: 10 | 30 | 60 }.
+   * Invalid content is dropped (catch) instead of rejecting the whole snapshot.
+   */
+  lte: z
+    .object({
+      postPeriodMin: z
+        .number()
+        .int()
+        .refine((v) => isLtePostPeriod(v), "postPeriodMin must be 10, 30 or 60"),
+    })
+    .optional()
+    .catch(undefined),
 });
 
 /**
@@ -751,6 +768,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
         numOfMods: parsed.data.numOfMods,
         moduleCapacity: parsed.data.moduleCapacity,
         basic: parsed.data.settings.basic,
+        lte: parsed.data.lte,
       });
       wsHub.broadcast({
         type: "settings_updated",

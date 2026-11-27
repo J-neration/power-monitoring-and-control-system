@@ -14267,6 +14267,78 @@ body.pmcs-control-room .global-header:hover {
   cursor: not-allowed;
 }
 
+/* Settings tab sub-tabs (모듈 설정 / LTE 통신 설정) — reuses .monitor-view-chips */
+.device-settings-subtabs {
+  align-self: flex-start;
+  flex: 0 0 auto;
+}
+
+.device-settings-segment.device-settings-segment--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* LTE 통신 설정 card */
+.device-lte-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 520px;
+}
+
+.device-lte-current {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 32px;
+  margin: 0;
+}
+
+.device-lte-current-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.device-lte-current-row dd {
+  margin: 0;
+}
+
+.device-lte-current-value {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #f0fdfa;
+  font-variant-numeric: tabular-nums;
+}
+
+.device-lte-current-value--unknown {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(251, 191, 36, 0.9);
+}
+
+.device-lte-current-time {
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(226, 232, 240, 0.72);
+  font-variant-numeric: tabular-nums;
+}
+
+.device-lte-settings .device-settings-actions {
+  margin-top: 0;
+}
+
+.device-lte-help {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.55);
+}
+
 .device-settings-switch {
   align-self: flex-start;
   min-width: 52px;

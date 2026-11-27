@@ -32,6 +32,9 @@ enum DeviceCommandPower {
   ota
   /// 차수별 고조파 전류를 지금 보내 달라는 요청 (200A만). module 0. HMI 는 POST /receiver/harmonics 후 ACK
   refreshHarmonics
+  /// LTE 텔레메트리 전송 주기 변경. module 0, fields = { postPeriodMin: 10 | 30 | 60 }.
+  /// HMI 는 적용 후 POST /receiver/settings (lte 포함) 를 보내고 ACK
+  setLte
 }
 
 enum DeviceCommandStatus {
@@ -178,6 +181,9 @@ model InstallationDeviceSettings {
 
   /// settings.basic[] — UI engineering units (not raw Modbus)
   basic          Json
+
+  /// HMI 가 보고한 LTE 설정 { postPeriodMin: 10 | 30 | 60 }. 이 값을 보내지 않는 펌웨어면 null
+  lte            Json?
 
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
