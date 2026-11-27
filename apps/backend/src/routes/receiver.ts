@@ -937,6 +937,8 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
           type: "admin_session_linked",
           installationId,
         });
+        // The HMI knows now: a long window (30/60-min device) can shrink to 15 min.
+        await viewingState.shortenRemoteWindowAfterPoll(installationId);
       }
 
       // OTA download URL uses the host the HMI called (api-dev / api), always https.
@@ -954,7 +956,14 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
           "Command polled by device",
         );
       }
-      return reply.send(command);
+      // Same flag as the telemetry ACK. HMI 2.5.2+ also reads it here, so it stops
+      // polling as soon as the window closes instead of at the next telemetry ACK
+      // (up to 60 min of 1-min polls on a 60-min device).
+      const adminSessionActive = installationId
+        ? (await viewingState.isAdminSessionActive(installationId)) ||
+          (await commandService.hasPending(installationId))
+        : false;
+      return reply.send({ ...command, adminSessionActive });
     } catch (error) {
       if (error instanceof CommandError) {
         return reply

@@ -9,6 +9,12 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { prisma } from "../../src/lib/prisma.js";
 import { NO_COMMAND } from "../../src/services/commandService.js";
+
+/** Poll answer without the adminSessionActive flag (checked in device-settings.test.ts). */
+const withoutSessionFlag = (body: Record<string, unknown>) => {
+  const { adminSessionActive: _flag, ...command } = body;
+  return command;
+};
 import { hmi, http, useTestApp } from "./helpers/app.js";
 import { IDS, seedWorld, telemetryPayload } from "./helpers/fixtures.js";
 
@@ -32,12 +38,13 @@ describe("remote command round trip", () => {
     assert.equal(ack.adminSessionActive, true, "HMI must be told to start polling");
 
     const polled = (await hmi(t.app).get(`/receiver/commands?iccid=${IDS.lotteIccid}`)).json();
-    assert.deepEqual(polled, { id: command.id, module: 0, power: "off" });
+    assert.equal(polled.adminSessionActive, true, "keep polling while the command is open");
+    assert.deepEqual(withoutSessionFlag(polled), { id: command.id, module: 0, power: "off" });
     assert.equal((await prisma.deviceCommand.findUniqueOrThrow({ where: { id: command.id } })).status, "sent");
 
     // 이미 가져간 명령은 다시 내려주지 않는다.
     const again = (await hmi(t.app).get(`/receiver/commands?iccid=${IDS.lotteIccid}`)).json();
-    assert.deepEqual(again, NO_COMMAND);
+    assert.deepEqual(withoutSessionFlag(again), NO_COMMAND);
 
     const acked = await hmi(t.app).post("/receiver/commands/ack", { id: command.id, ok: true, message: "done" });
     assert.equal(acked.statusCode, 200);
@@ -69,7 +76,7 @@ describe("remote command round trip", () => {
     await seedWorld(t.app);
     const res = await hmi(t.app).get(`/receiver/commands?iccid=${IDS.lotteIccid}`);
     assert.equal(res.statusCode, 200);
-    assert.deepEqual(res.json(), NO_COMMAND);
+    assert.deepEqual(res.json(), { ...NO_COMMAND, adminSessionActive: false });
   });
 
   it("does not hand out an expired command", async () => {
@@ -79,7 +86,7 @@ describe("remote command round trip", () => {
 
     const polled = (await hmi(t.app).get(`/receiver/commands?iccid=${IDS.lotteIccid}`)).json();
 
-    assert.deepEqual(polled, NO_COMMAND);
+    assert.deepEqual(withoutSessionFlag(polled), NO_COMMAND);
     assert.equal((await prisma.deviceCommand.findUniqueOrThrow({ where: { id: command.id } })).status, "expired");
   });
 });
@@ -199,7 +206,8 @@ describe("ota command redelivery", () => {
         assetVersion: 1,
       },
     });
-  const poll = async () => (await hmi(t.app).get(`/receiver/commands?iccid=${IDS.lotteIccid}`)).json();
+  const poll = async () =>
+    withoutSessionFlag((await hmi(t.app).get(`/receiver/commands?iccid=${IDS.lotteIccid}`)).json());
   const backdateSent = (id: string) =>
     prisma.deviceCommand.update({ where: { id }, data: { sentAt: new Date(Date.now() - 181_000) } });
 

@@ -118,7 +118,7 @@ const SCREEN_STEPS: { key: Stage; label: string }[] = [
 ];
 
 const STAGE_HINT: Record<Stage, string> = {
-  queued: "HMI가 다음 보고 때 명령을 받습니다(최대 약 10분).",
+  queued: "HMI가 다음 보고 때 명령을 받습니다(최대 텔레메트리 전송 주기(10·30·60분)).",
   backup:
     "되돌리기에 쓸 지금 화면 데이터(보관본)를 받는 중입니다(처음 한 번만, 약 6분). 받는 동안 화면은 정상이고, 외부 플래시에 기록할 때 약 10초 멈춥니다.",
   screen:
@@ -243,7 +243,7 @@ function commandReason(c: OtaCommand): string {
     c.retryCount > 0 ? ` · 응답이 없어 다시 내려줌 ${c.retryCount}/${c.maxRedeliveries ?? 3}회` : "";
   switch (c.status) {
     case "pending":
-      return `HMI가 가져가기를 기다리는 중(다음 보고 때, 최대 약 10분)${redelivered}`;
+      return `HMI가 가져가기를 기다리는 중(다음 보고 때, 최대 텔레메트리 전송 주기(10·30·60분))${redelivered}`;
     case "sent":
       return `HMI가 ${c.sentAt ? fmtTime(c.sentAt) : "?"}에 가져감, 응답 기다리는 중${redelivered}`;
     case "acked": {

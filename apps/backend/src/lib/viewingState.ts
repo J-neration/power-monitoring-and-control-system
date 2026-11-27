@@ -1,4 +1,5 @@
 import { prisma } from "./prisma.js";
+import { devicePostPeriodMin, remoteReachMs } from "./remoteReach.js";
 
 /**
  * DB-backed admin remote window (`Installation.adminSessionActive`).
@@ -14,6 +15,15 @@ import { prisma } from "./prisma.js";
 /** Window must cover one telemetry cycle (~10 min) plus a few polls. */
 export const REMOTE_WINDOW_MS =
   Number(process.env.REMOTE_WINDOW_SECONDS ?? 900) * 1000;
+
+/**
+ * Window length for one installation: REMOTE_WINDOW_MS, or longer for a device
+ * on a 30/60-min telemetry period (the HMI learns the window is open only from
+ * the next telemetry ACK). lib/remoteReach.ts
+ */
+export async function remoteWindowMsFor(installationId: string): Promise<number> {
+  return Math.max(REMOTE_WINDOW_MS, remoteReachMs(await devicePostPeriodMin(installationId)));
+}
 
 /** Open (or extend) the remote window from now. Returns when it closes. */
 export async function openRemoteWindow(
@@ -32,7 +42,32 @@ export async function openRemoteWindow(
       webSettingsHeartbeatAt: null,
     },
   });
-  return new Date(now.getTime() + REMOTE_WINDOW_MS);
+  return new Date(now.getTime() + (await remoteWindowMsFor(installationId)));
+}
+
+/**
+ * The HMI is polling: it already knows the window is open, so the long window
+ * of a 30/60-min device is no longer needed. Shorten it to REMOTE_WINDOW_MS from
+ * now (never lengthen it), so the HMI stops its 1-min polls sooner.
+ * The schema stores only the open time, so the open time is moved back.
+ */
+export async function shortenRemoteWindowAfterPoll(installationId: string): Promise<void> {
+  if (!installationId) return;
+  const row = await prisma.installation.findUnique({
+    where: { id: installationId },
+    select: { adminSessionActive: true, adminSessionHeartbeatAt: true },
+  });
+  const openedAt = row?.adminSessionHeartbeatAt;
+  if (!row?.adminSessionActive || !openedAt) return;
+  const windowMs = await remoteWindowMsFor(installationId);
+  if (windowMs <= REMOTE_WINDOW_MS) return;
+  const now = Date.now();
+  if (openedAt.getTime() + windowMs <= now + REMOTE_WINDOW_MS) return;
+  await prisma.installation.updateMany({
+    // Match openedAt so a concurrent re-open is not overwritten.
+    where: { id: installationId, adminSessionHeartbeatAt: openedAt },
+    data: { adminSessionHeartbeatAt: new Date(now + REMOTE_WINDOW_MS - windowMs) },
+  });
 }
 
 /** Close the window for one installation now. */
@@ -88,7 +123,7 @@ export async function getRemoteWindowUntil(
   if (!row?.adminSessionActive) return null;
   const openedAt = row.adminSessionHeartbeatAt;
   const until = openedAt
-    ? new Date(openedAt.getTime() + REMOTE_WINDOW_MS)
+    ? new Date(openedAt.getTime() + (await remoteWindowMsFor(installationId)))
     : null;
   if (!until || until.getTime() <= Date.now()) {
     // Match openedAt so a concurrent re-open is not wiped.
