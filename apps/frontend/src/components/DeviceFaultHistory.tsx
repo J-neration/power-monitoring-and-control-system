@@ -163,11 +163,6 @@ const STATUS_LABEL: Record<FaultStatus, string> = {
 /** 이벤트 코드와 맞춰 보는 기준표. 문구는 자료 원문 그대로 둔다. */
 const FAULT_CODE_GUIDE: { code: string; detail: string }[] = [
   { code: "F0", detail: "Fault(no info)" },
-  { code: "S0", detail: "START (COMP ON) state (1: comp on; 0: comp off)" },
-  { code: "S1", detail: "bit7: Commissioning authorization status (1: authorized; 0: unauthorized)" },
-  { code: "S3", detail: "bit5: Authorization status (1: authorized; 0: unauthorized)" },
-  { code: "S4", detail: "bit4: Trial operation status (1: trial operation; 0: long-term operation)" },
-  { code: "S5", detail: "bit2: User on/off input status (1: user on; 0: user power off)" },
   { code: "F2", detail: "bit1: Short run fault" },
   { code: "F3", detail: "bit0: Emergency stop" },
   { code: "F4", detail: "bit15: Bus undervoltage A0" },
@@ -202,13 +197,36 @@ const FAULT_CODE_GUIDE: { code: string; detail: string }[] = [
   { code: "F32", detail: "bit2: Bridge arm overcurrent 3" },
   { code: "F33", detail: "bit1: Bridge arm overcurrent 4" },
   { code: "F34", detail: "bit0: Bridge arm overcurrent 5" },
-  // 자료에 없는 HMI 자체 코드 — HMI 가 재시작한 뒤 첫 서버 연결 때 리셋 원인과 함께 올린다
-  { code: "H1", detail: "HMI restart (1: power-on reset; 2: watchdog reset; 3: software reset; 4: reset pin)" },
 ];
 
-const GUIDE_BY_CODE = new Map(
-  FAULT_CODE_GUIDE.filter((row) => row.code !== "—").map((row) => [row.code, row.detail]),
-);
+/**
+ * 상태·이벤트 코드 표: 고장이 아닌 1회성 기록 (장애 표 상태 '기록').
+ * - S: 200A 모듈 상태 워드(word24 하위 바이트) 변화. 값(-1/-0)이 바뀔 때마다 HMI 가 보낸다
+ * - H: HMI 자체 이벤트. H1-x = HMI 재시작, x = 리셋 원인 (MCU RCC CSR)
+ */
+const STATUS_EVENT_GUIDE: { code: string; group: string; detail: string }[] = [
+  { code: "S0-1", group: "보상 운전", detail: "보상 운전 시작 (START, COMP ON)" },
+  { code: "S0-0", group: "보상 운전", detail: "보상 운전 정지 (COMP OFF)" },
+  { code: "S1-1", group: "시운전 승인 (bit7)", detail: "Commissioning authorized" },
+  { code: "S1-0", group: "시운전 승인 (bit7)", detail: "Commissioning unauthorized" },
+  { code: "S3-1", group: "운전 승인 (bit5)", detail: "Authorized" },
+  { code: "S3-0", group: "운전 승인 (bit5)", detail: "Unauthorized" },
+  { code: "S4-1", group: "운전 모드 (bit4)", detail: "Trial operation (시운전)" },
+  { code: "S4-0", group: "운전 모드 (bit4)", detail: "Long-term operation (상시 운전)" },
+  { code: "S5-1", group: "사용자 운전 입력 (bit2)", detail: "User on" },
+  { code: "S5-0", group: "사용자 운전 입력 (bit2)", detail: "User power off" },
+  { code: "H1-1", group: "HMI 재시작", detail: "전원 투입 리셋 (Power-on reset): 정전 후 복전, 전원 재투입" },
+  { code: "H1-2", group: "HMI 재시작", detail: "워치독 리셋 (Watchdog reset): 펌웨어 응답 정지로 자동 재시작" },
+  { code: "H1-3", group: "HMI 재시작", detail: "소프트웨어 리셋 (Software reset): 펌웨어 업데이트(OTA), 재시작 명령" },
+  { code: "H1-4", group: "HMI 재시작", detail: "외부 리셋 핀 (Reset pin): 디버거, 리셋 버튼" },
+  { code: "H1", group: "HMI 재시작", detail: "리셋 원인 미상 (리셋 원인을 보내기 전 펌웨어 포함)" },
+];
+
+const GUIDE_BY_CODE = new Map([
+  ...FAULT_CODE_GUIDE.filter((row) => row.code !== "—").map((row) => [row.code, row.detail] as const),
+  // 값 없이 온 S·H 코드 (예전 펌웨어의 H1): 묶음 이름
+  ...STATUS_EVENT_GUIDE.map((row) => [row.code.split("-")[0], row.group] as const),
+]);
 
 export default function DeviceFaultHistory({ installationId, faults, canAck = true }: Props) {
   const router = useRouter();
@@ -281,7 +299,7 @@ export default function DeviceFaultHistory({ installationId, faults, canAck = tr
             </span>
             오류 코드 표
             <span className="fault-code-guide-hint">
-              이벤트 코드와 맞춰 보기
+              고장 코드 (F)
             </span>
           </summary>
           <div className="fault-code-guide-body">
@@ -297,6 +315,48 @@ export default function DeviceFaultHistory({ installationId, faults, canAck = tr
                   {FAULT_CODE_GUIDE.map((row) => (
                     <tr key={`${row.code}-${row.detail}`}>
                       <td className="fault-code-cell">{row.code}</td>
+                      <td>{row.detail}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </details>
+
+        <details className="fault-code-guide">
+          <summary>
+            <span className="fault-code-guide-chevron" aria-hidden>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                <path
+                  d="M6 9l6 6 6-6"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+            상태·이벤트 코드 표
+            <span className="fault-code-guide-hint">
+              모듈 상태 (S) · HMI 이벤트 (H) — 상태 &apos;기록&apos;
+            </span>
+          </summary>
+          <div className="fault-code-guide-body">
+            <div className="fault-table-wrap fault-code-guide-table">
+              <table className="fault-table">
+                <thead>
+                  <tr>
+                    <th>코드</th>
+                    <th>구분</th>
+                    <th>내용</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {STATUS_EVENT_GUIDE.map((row) => (
+                    <tr key={row.code}>
+                      <td className="fault-code-cell">{row.code}</td>
+                      <td>{row.group}</td>
                       <td>{row.detail}</td>
                     </tr>
                   ))}
