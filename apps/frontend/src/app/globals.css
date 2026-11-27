@@ -12980,6 +12980,11 @@ body.pmcs-control-room .global-header:hover {
   background: rgba(0, 0, 0, 0.12);
 }
 
+/* 오류 코드 표 + 상태·이벤트 코드 표: 카드 간격(16px)보다 붙여 한 묶음으로 */
+.fault-code-guide + .fault-code-guide {
+  margin-top: -8px;
+}
+
 .fault-code-guide > summary {
   display: flex;
   align-items: center;
