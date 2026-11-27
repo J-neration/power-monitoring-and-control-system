@@ -355,6 +355,8 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       event,
       ts: Math.floor(Date.now() / 1000),
     });
+    // 열린 장비·현장 화면이 바로 고장 이력을 다시 읽게 한다 (화면은 이 신호로만 새로고침).
+    wsHub.broadcast({ type: "device_updated", installationId: identity.installationId });
     return reply.status(201).send({ ok: true });
   });
 
@@ -404,6 +406,7 @@ export const receiverRoutes: FastifyPluginAsync<ReceiverOptions> = async (
       identity.installationId,
       newRaises.map((fault) => faultCodeAlertLine(fault.faultCode, fault.eventName)),
     );
+    wsHub.broadcast({ type: "device_updated", installationId: identity.installationId });
     return reply.status(201).send({ ok: true });
   });
 
