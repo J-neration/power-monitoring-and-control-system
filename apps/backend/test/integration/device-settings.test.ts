@@ -196,3 +196,60 @@ describe("setLte command", () => {
     assert.equal(second.json().code, "ACTIVE_COMMAND_EXISTS");
   });
 });
+
+describe("remote commands on a 30/60-min telemetry period (lib/remoteReach.ts)", () => {
+  const MIN = 60_000;
+  const createRefresh = (token: string) =>
+    http(t.app).post(
+      "/receiver/commands/create",
+      { installationId: IDS.lotteInst, module: 0, power: "refreshHarmonics" },
+      { token },
+    );
+
+  it("keeps the command and the remote window open for one period + 5 min", async () => {
+    const { tokens } = await seedWorld(t.app);
+    await hmi(t.app).post("/receiver/settings", v3v4Snapshot({ lte: { postPeriodMin: 60 } }));
+    const before = Date.now();
+    const res = await createRefresh(tokens.admin);
+    assert.equal(res.statusCode, 201);
+    const { command, remoteWindowUntil } = res.json();
+    assert.ok(new Date(command.expiresAt).getTime() - before >= 65 * MIN - 1000, "command lives 65 min");
+    assert.ok(new Date(remoteWindowUntil).getTime() - before >= 65 * MIN - 1000, "window open 65 min");
+  });
+
+  it("keeps the plain 15-min limits on a 10-min device", async () => {
+    const { tokens } = await seedWorld(t.app);
+    await hmi(t.app).post("/receiver/settings", v3v4Snapshot({ lte: { postPeriodMin: 10 } }));
+    const before = Date.now();
+    const { command, remoteWindowUntil } = (await createRefresh(tokens.admin)).json();
+    assert.ok(new Date(command.expiresAt).getTime() - before <= 16 * MIN);
+    assert.ok(new Date(remoteWindowUntil).getTime() - before <= 16 * MIN);
+  });
+
+  it("tells the polling HMI whether to keep polling, and shortens the long window once it polls", async () => {
+    const { tokens } = await seedWorld(t.app);
+    await hmi(t.app).post("/receiver/settings", v3v4Snapshot({ lte: { postPeriodMin: 60 } }));
+    await createRefresh(tokens.admin);
+
+    const polled = (await hmi(t.app).get(`/receiver/commands?iccid=${IDS.lotteIccid}`)).json();
+    assert.equal(polled.power, "refreshHarmonics");
+    assert.equal(polled.adminSessionActive, true);
+
+    const inst = await prisma.installation.findUniqueOrThrow({
+      where: { id: IDS.lotteInst },
+      select: { adminSessionHeartbeatAt: true },
+    });
+    const until = inst.adminSessionHeartbeatAt!.getTime() + 65 * MIN;
+    assert.ok(until - Date.now() <= 15 * MIN + 1000, "window now ends 15 min after the first poll");
+
+    // window closed and nothing pending → the HMI is told to stop
+    await prisma.installation.update({
+      where: { id: IDS.lotteInst },
+      data: { adminSessionActive: false, adminSessionHeartbeatAt: null },
+    });
+    await prisma.deviceCommand.updateMany({ data: { status: "acked" } });
+    const idle = (await hmi(t.app).get(`/receiver/commands?iccid=${IDS.lotteIccid}`)).json();
+    assert.equal(idle.id, "");
+    assert.equal(idle.adminSessionActive, false);
+  });
+});

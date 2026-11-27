@@ -158,7 +158,7 @@ export default function ViewingBanner({ installationId }: Props) {
     }
   }
 
-  /** 원격 연결을 지금 닫는다. HMI 는 다음 정기 보고(최대 약 10분) 때 명령 조회를 멈춘다. */
+  /** 원격 연결을 지금 닫는다. HMI 2.5.2+ 는 다음 명령 조회(약 1분) 때, 이전 펌웨어는 다음 정기 보고 때 멈춘다. */
   async function closeWindow() {
     setBusy(true);
     setError(null);
@@ -198,7 +198,7 @@ export default function ViewingBanner({ installationId }: Props) {
       : phase === "signaled"
         ? "HMI 명령 조회 확인 중"
         : phase === "waiting"
-          ? "다음 정기 보고 때 연결 · 최대 약 10분"
+          ? "다음 정기 보고 때 연결 · 최대 텔레메트리 전송 주기(10·30·60분)"
           : "명령을 보내거나 버튼을 누르면 15분간 연결";
 
   return (
@@ -248,7 +248,7 @@ export default function ViewingBanner({ installationId }: Props) {
           className="remote-session-open-btn remote-session-close-btn"
           onClick={closeWindow}
           disabled={busy}
-          title="원격 연결을 지금 끕니다. HMI는 다음 정기 보고(최대 약 10분) 때 명령 조회를 멈춥니다."
+          title="원격 연결을 지금 끕니다. HMI는 다음 명령 조회(약 1분, 펌웨어 2.5.2 미만은 다음 정기 보고) 때 명령 조회를 멈춥니다."
         >
           끄기
         </button>

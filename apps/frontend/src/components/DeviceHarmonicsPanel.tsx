@@ -255,8 +255,8 @@ function HarmonicsRefreshInfo() {
         <li>공진을 판단할 때는 &apos;측정&apos; 시각을 기준으로 보세요.</li>
         <li>HMI가 명령을 받은 순간 전류와 전압을 새로 읽어서 보냅니다.</li>
         <li>
-          버튼을 누른 시각이 아니라 <b>HMI가 명령을 받은 시각</b>의 값입니다. 명령이 HMI에 닿기까지 최대 약
-          10분 걸릴 수 있습니다.
+          버튼을 누른 시각이 아니라 <b>HMI가 명령을 받은 시각</b>의 값입니다. 명령이 HMI에 닿기까지 최대
+          텔레메트리 전송 주기(10·30·60분)만큼 걸릴 수 있습니다.
         </li>
         <li>
           모듈 통신이 느려 10초 안에 새로 읽지 못하면, 지난 값을 그 값을 읽은 시각과 함께 보냅니다. 갱신 뒤에도
@@ -601,7 +601,7 @@ export default function DeviceHarmonicsPanel({
         <p className="harmonics-cmd harmonics-cmd--pending" role="status">
           {cmd.restoredAt
             ? `고조파 갱신을 이미 요청했습니다 (${formatKstMonthDayTime(cmd.restoredAt)}). HMI가 다음 명령 확인 때 보냅니다.`
-            : "요청을 등록했습니다. HMI가 다음 명령 확인 때 보냅니다 (최대 약 10분)."}
+            : "요청을 등록했습니다. HMI가 다음 명령 확인 때 보냅니다 (최대 텔레메트리 전송 주기(10·30·60분))."}
         </p>
       ) : cmd.tone === "busy" ? (
         <p className="harmonics-cmd harmonics-cmd--pending" role="status">

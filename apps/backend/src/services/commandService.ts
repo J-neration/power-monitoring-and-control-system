@@ -14,6 +14,7 @@ import {
 import { prisma } from "../lib/prisma.js";
 import { otaDownloadPath } from "./otaService.js";
 import { isLtePostPeriod } from "./settingsService.js";
+import { devicePostPeriodMin, remoteReachMs } from "../lib/remoteReach.js";
 
 export const NO_COMMAND = { id: "", module: -1, power: "" } as const;
 
@@ -76,6 +77,12 @@ type CommandRepository = {
   installationExists(installationId: string): Promise<boolean>;
   /** Latest settings moduleType for setBasic key filtering; null if unknown. */
   getModuleType(installationId: string): Promise<string | null>;
+  /**
+   * Telemetry POST period the HMI reported (min, default 10). A command must stay
+   * valid at least that long plus a margin, or a 30/60-min device never sees it
+   * (lib/remoteReach.ts). Optional: test repos without it keep the plain TTL.
+   */
+  getPostPeriodMin?(installationId: string): Promise<number>;
   expireCommands(now: Date): Promise<number>;
   findActiveByInstallationModule(
     installationId: string,
@@ -145,6 +152,10 @@ class PrismaCommandRepository implements CommandRepository {
       select: { moduleType: true },
     });
     return row?.moduleType ?? null;
+  }
+
+  getPostPeriodMin(installationId: string): Promise<number> {
+    return devicePostPeriodMin(installationId);
   }
 
   async expireCommands(now: Date): Promise<number> {
@@ -586,7 +597,12 @@ export const createCommandService = (
       }
 
       const now = new Date();
-      const expiresAt = input.expiresAt ?? new Date(now.getTime() + ttlSeconds * 1000);
+      // At least one telemetry period of this device + margin (lib/remoteReach.ts)
+      const reachMs = repo.getPostPeriodMin
+        ? remoteReachMs(await repo.getPostPeriodMin(installationId))
+        : 0;
+      const expiresAt =
+        input.expiresAt ?? new Date(now.getTime() + Math.max(ttlSeconds * 1000, reachMs));
       return repo.createCommand({
         id: makeCommandId(),
         installationId,
